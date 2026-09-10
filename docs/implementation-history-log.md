@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-09-10T13:52:00Z — Structured decision-log transfer
+
+Transferred the completed decision-log restructuring from `/Users/huklee/Work/yestion` into this repository. Reformatted `docs/decisions.md` as bullet-based status, decision-record links, and Context/Decision/Alternatives/Consequences/Revisit fields without changing decision meaning. Validated all local Markdown links before publication.
+
 ## 2026-09-10T13:49:04Z — Installation guide and incremental publication
 
 Exact UTC recording time. Added root README.md with installation/production startup first, followed by development startup, configuration, tests and documentation links. Added the same quick-start at the head of docs/README.md and updated the runbook to Lotion configuration names and upgrade compatibility. Documentation links were validated; no additional application code changed for this documentation unit.
