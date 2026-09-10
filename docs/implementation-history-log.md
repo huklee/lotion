@@ -1,5 +1,17 @@
 # Implementation history log
 
+## 2026-09-10T05:25:13Z — Incremental GitHub publication completed
+
+Exact UTC recording time after verifying the fifth push. GitHub authentication is now available for huklee. Pushed each existing commit separately to https://github.com/huklee/lotion.git, branch main, verifying the remote SHA with git ls-remote after each operation:
+
+1. f9e935c — persistence and document service foundation.
+2. 22063f3 — block editor and workspace interactions.
+3. f60984b — browser and persistence verification.
+4. 5b0de3e — architecture and implementation history.
+5. fe69722 — draft-preserving revision conflict resolution.
+
+Configured local main to track origin/main. All five remote updates succeeded as fast-forwards (the first created main). No application code changed during publication; existing test evidence remains in test-results.md. This completion record is published as a separate documentation commit. Local data, dependencies and generated artifacts remain excluded.
+
 ## 2026-09-10T05:23:03Z — Destination verification completed for conflict fix
 
 Exact UTC recording time. Ported the conflict changes and tests to lotion; lint/type/build and 92 unit/integration tests passed. Full browser run: 64/66, then all 6 targeted cases passed after correcting two slash-page test assumptions. All 9 conflict/navigation/offline recovery browser cases passed. Exact scope is recorded in test-results.md. Updated the commit plan to reflect the four existing local commits plus a separate conflict fix. Attempted pushing only the first foundation commit; HTTPS credential lookup failed, and no later push was attempted.

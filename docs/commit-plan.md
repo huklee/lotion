@@ -1,6 +1,8 @@
 # Incremental commit and push plan
 
-The destination repository is `/Users/huklee/work/lotion`, branch `main`, with an empty `origin` at `https://github.com/huklee/lotion.git`.
+Completed at 2026-09-10T05:25:13Z: all five commits listed below were pushed individually to origin/main and each remote SHA was verified. The earlier authentication blocker is resolved. A final documentation commit records publication completion.
+
+The destination repository is `/Users/huklee/work/lotion`, branch `main`, with `origin` at `https://github.com/huklee/lotion.git`. The remote was empty at the initial audit.
 
 Push one commit hash at a time to main and verify with `git ls-remote` before pushing the next hash. The original four commits were prepared locally after authentication blocked the first push. Local runtime data, dependencies, build output, and browser artifacts remain ignored.
 
