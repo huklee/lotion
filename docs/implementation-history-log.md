@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-09-10T13:45:39Z — Remaining-work checklist prepared for publication
+
+Exact UTC recording time. Added docs/remained_job.md from the request audit, preserving its original audit timestamp, failed local/CI test counts, live-preview findings, missing features and completion gates. This backlog is published as its own documentation unit before the requested Lotion rename and installation guide. No backlog task is marked complete merely because the list has been committed.
+
 ## 2026-09-10T05:25:13Z — Incremental GitHub publication completed
 
 Exact UTC recording time after verifying the fifth push. GitHub authentication is now available for huklee. Pushed each existing commit separately to https://github.com/huklee/lotion.git, branch main, verifying the remote SHA with git ls-remote after each operation:
