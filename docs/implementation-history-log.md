@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-10T13:48:20Z — Lotion rename and compatibility verified
+
+Exact UTC recording time. Renamed UI/wordmark, titles, slash groups, CSS/MIME namespaces, package/lockfile, exports, markers, environment configuration and current documentation to Lotion. Retained old literals only in compatibility readers/tests for browser session/theme/token settings, draft recovery, environment aliases, directory uploads and exact bundles/TOC imports. No canonical document data or asset IDs were renamed. Decision: [ADR-013](adr/013-lotion-naming-and-compatibility.md).
+
+`npm run check` passed lint, type/build and 96 unit/integration tests; 67/69 browser tests passed. All three new browser migration tests passed. The two WebKit failures reproduce previously recorded paste-scroll positioning and ResizeObserver errors, still open in remained_job.md. This commit publishes the requested rename without claiming that the remaining-jobs backlog or full release gate is complete.
+
 ## 2026-09-10T13:45:39Z — Remaining-work checklist prepared for publication
 
 Exact UTC recording time. Added docs/remained_job.md from the request audit, preserving its original audit timestamp, failed local/CI test counts, live-preview findings, missing features and completion gates. This backlog is published as its own documentation unit before the requested Lotion rename and installation guide. No backlog task is marked complete merely because the list has been committed.

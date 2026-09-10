@@ -67,7 +67,7 @@ export async function fetchPublic(
             signal,
             agent: false,
             headers: {
-              "User-Agent": "Yestion-LinkPreview/1.0",
+              "User-Agent": "Lotion-LinkPreview/1.0",
               Accept:
                 kind === "html"
                   ? "text/html"

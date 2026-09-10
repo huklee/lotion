@@ -4,6 +4,36 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
+test("Lotion restores legacy browser settings and drafts after the rename", async ({ page }) => {
+  const doc = await seed(page, "Before rename");
+  await page.evaluate(async (id) => {
+    const session = sessionStorage.getItem("lotion-session")!;
+    sessionStorage.setItem("yestion-session", session);
+    sessionStorage.removeItem("lotion-session");
+    localStorage.setItem("yestion-theme", "dark");
+    localStorage.removeItem("lotion-theme");
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open("keyval-store");
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const db = request.result;
+        const transaction = db.transaction("keyval", "readwrite");
+        transaction.objectStore("keyval").put({revision:1,generation:1,content:{title:"Legacy draft retained",blocks:[{id:"legacy-body",type:"paragraph",content:[]}]}}, `yestion-draft:${session}:${id}`);
+        transaction.oncomplete = () => {db.close();resolve();};
+        transaction.onerror = () => {db.close();reject(transaction.error);};
+      };
+    });
+  }, doc.id);
+  await page.reload();
+  await expect(page.getByRole("textbox", {name:"Page title"})).toHaveValue("Legacy draft retained");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page).toHaveTitle(/Lotion/);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(page.getByRole("textbox", {name:"Page title"})).toHaveValue("Legacy draft retained");
+});
+
 test("Mermaid slash block renders, handles invalid source and persists edits", async ({
   page,
 }) => {
@@ -23,7 +53,7 @@ test("Mermaid slash block renders, handles invalid source and persists edits", a
     )
     .toBeGreaterThan(0);
   await source.fill("this is not a diagram");
-  await expect(page.locator(".yestion-mermaid [role=status]")).not.toHaveText(
+  await expect(page.locator(".lotion-mermaid [role=status]")).not.toHaveText(
     "Rendering diagram…",
   );
   await expect(preview).toHaveCount(0);
@@ -59,7 +89,7 @@ test("code tokens remain readable on beige in light and dark themes", async ({
   );
   for (const theme of ["light", "dark"]) {
     await page.evaluate(
-      (value) => localStorage.setItem("yestion-theme", value),
+      (value) => localStorage.setItem("lotion-theme", value),
       theme,
     );
     await page.reload();
@@ -223,7 +253,7 @@ test("two tabs preserve conflicting drafts", async ({ page, context }) => {
 });
 test("whole folder import, nested assets, ZIP download", async ({ page }) => {
   const dir = await fs.mkdtemp(
-    path.join(os.tmpdir(), "yestion-browser-folder-"),
+    path.join(os.tmpdir(), "lotion-browser-folder-"),
   );
   const topic = `topic-${path.basename(dir)}`;
   await fs.mkdir(path.join(dir, "Research"));
@@ -258,7 +288,7 @@ test("whole folder import, nested assets, ZIP download", async ({ page }) => {
     await page.getByRole("button", { name: "Export", exact: true }).click();
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: /Entire workspace/ }).click();
-    expect((await download).suggestedFilename()).toBe("yestion-workspace.zip");
+    expect((await download).suggestedFilename()).toBe("lotion-workspace.zip");
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }
@@ -851,7 +881,7 @@ test("toggle, callout and database blocks work and code uses beige and red", asy
   await page.keyboard.type("/callout");
   await page.getByRole("option").filter({ hasText: "important note" }).click();
   await page.keyboard.insertText("Remember this");
-  await expect(page.locator(".yestion-callout")).toContainText("Remember this");
+  await expect(page.locator(".lotion-callout")).toContainText("Remember this");
   await page.keyboard.press("Enter");
   await page.keyboard.type("/toggle");
   await page
@@ -866,7 +896,7 @@ test("toggle, callout and database blocks work and code uses beige and red", asy
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
-  await expect(page.locator(".yestion-callout")).toContainText("Remember this");
+  await expect(page.locator(".lotion-callout")).toContainText("Remember this");
   await expect(page.locator(".tiptap table")).toContainText("Status");
 });
 

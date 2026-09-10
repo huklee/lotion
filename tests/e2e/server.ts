@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { Repository } from "../../packages/persistence/repository";
 import { createApp } from "../../apps/server/app";
-const dir = await fs.mkdtemp(path.join(os.tmpdir(), "yestion-e2e-"));
+const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lotion-e2e-"));
 const app = await createApp(await new Repository(dir).init(), {
   production: true,
 });

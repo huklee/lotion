@@ -12,7 +12,7 @@ import {
 } from "../../packages/markdown/bundle";
 let dir: string, repo: Repository;
 beforeEach(async () => {
-  dir = await fs.mkdtemp(path.join(os.tmpdir(), "yestion-import-"));
+  dir = await fs.mkdtemp(path.join(os.tmpdir(), "lotion-import-"));
   repo = await new Repository(dir).init();
 });
 afterEach(async () => {
@@ -53,7 +53,7 @@ it("imports a whole nested folder, images and internal links", async () => {
   expect(JSON.stringify(notes.blocks)).toContain(`#/page/${topic.id}`);
   expect(JSON.stringify(notes.blocks)).toContain("/api/assets/");
 });
-it("exact bundle restores image bytes and rich layout", async () => {
+it.each(["lotion", "yestion"])("%s exact bundle restores image bytes and rich layout", async (format) => {
   const d = await repo.create("Original", null, crypto.randomUUID());
   const asset = await repo.putAsset(
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
@@ -86,6 +86,11 @@ it("exact bundle restores image bytes and rich layout", async () => {
   );
   const bundle = await exportBundle(repo);
   const entries = await readZip(bundle.bytes);
+  const manifestEntry = entries.find(entry => entry.path.endsWith("manifest.json"))!;
+  const manifest = JSON.parse(manifestEntry.bytes.toString());
+  expect(manifest.format).toBe("lotion");
+  manifest.format = format;
+  manifestEntry.bytes = Buffer.from(JSON.stringify(manifest));
   const imported = await importEntries(repo, entries, crypto.randomUUID());
   expect(imported.documents).toHaveLength(1);
   expect(imported.documents[0].blocks).toEqual(saved.blocks);

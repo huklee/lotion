@@ -199,7 +199,7 @@ export async function createApp(
           ),
           bytes,
           directory:
-            part.mimetype === "application/x-yestion-directory" &&
+            ["application/x-lotion-directory", "application/x-yestion-directory"].includes(part.mimetype) &&
             bytes.length === 0,
         });
     }
@@ -217,7 +217,7 @@ export async function createApp(
       .type("application/zip")
       .header(
         "Content-Disposition",
-        'attachment; filename="yestion-workspace.zip"',
+        'attachment; filename="lotion-workspace.zip"',
       );
     return bundle.bytes;
   });

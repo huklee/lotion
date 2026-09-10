@@ -17,7 +17,7 @@ Status: accepted. Recorded 2026-09-10; see implementation-history-log.md for exa
 
 ## Alternatives and limitations
 
-Inline SVG would enable diagram callbacks but increases the security and DOM-interference surface. Dark code backgrounds would match default token colors but violate the requested beige appearance. Plain Markdown cannot preserve every custom block's exact visual style: exact bundles preserve structured snapshots and preview metadata; portable callouts become quotes and TOCs use a Yestion marker.
+Inline SVG would enable diagram callbacks but increases the security and DOM-interference surface. Dark code backgrounds would match default token colors but violate the requested beige appearance. Plain Markdown cannot preserve every custom block's exact visual style: exact bundles preserve structured snapshots and preview metadata; portable callouts become quotes and TOCs use a Lotion marker.
 
 Mermaid renders in the browser, not a worker. Size/edge limits reduce expensive input but do not provide a hard CPU deadline. Browser/OS emoji availability and external sites' metadata availability cannot be guaranteed.
 

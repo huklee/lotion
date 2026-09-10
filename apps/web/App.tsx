@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { get, set, del } from "idb-keyval";
+import { set } from "idb-keyval";
+import { readSetting, readDraft, writeDraft } from "./storage-compat";
 import emojiData from "emojibase-data/en/data.json";
 const emojiCatalog = emojiData.flatMap((item) => [
   item,
@@ -31,13 +32,13 @@ import {
 } from "lucide-react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
 import { api, ApiError, authHeaders } from "./api";
-import { SaveCoordinator, type Checkpoint } from "./save-coordinator";
+import { SaveCoordinator } from "./save-coordinator";
 import Editor from "./Editor";
 
 const sessionId =
-  sessionStorage.getItem("yestion-session") ?? crypto.randomUUID();
-sessionStorage.setItem("yestion-session", sessionId);
-const draftKey = (id: string) => `yestion-draft:${sessionId}:${id}`;
+  readSetting(sessionStorage, "session") ?? crypto.randomUUID();
+sessionStorage.setItem("lotion-session", sessionId);
+const draftKey = (id: string) => `lotion-draft:${sessionId}:${id}`;
 export default function App() {
   const [tree, setTree] = useState<TreeNode[]>([]),
     [treeTag, setTreeTag] = useState(""),
@@ -48,7 +49,7 @@ export default function App() {
     [auth, setAuth] = useState(false),
     [token, setToken] = useState("");
   const [themeMode, setThemeMode] = useState(
-      localStorage.getItem("yestion-theme") ?? "system",
+      readSetting(localStorage, "theme") ?? "system",
     ),
     [systemDark, setSystemDark] = useState(
       matchMedia("(prefers-color-scheme: dark)").matches,
@@ -149,15 +150,14 @@ export default function App() {
           save?.dispose();
           save = new SaveCoordinator(doc, {
             load: () => api<Document>(`/api/documents/${id}`),
-            archive: (draft) => set(`yestion-recovery:${id}:${new Date().toISOString()}:${crypto.randomUUID()}`, draft),
+            archive: (draft) => set(`lotion-recovery:${id}:${new Date().toISOString()}:${crypto.randomUUID()}`, draft),
             save: (revision, content, mutationId) =>
               api<Document>(`/api/documents/${id}/content`, {
                 method: "PUT",
                 headers: { "If-Match": String(revision) },
                 body: JSON.stringify({ ...content, mutationId }),
               }),
-            checkpoint: (draft) =>
-              draft ? set(draftKey(id), draft) : del(draftKey(id)),
+            checkpoint: (draft) => writeDraft(draftKey(id), draft),
             changed: () => setVersion((v) => v + 1),
             committed: (committed) =>
               setTree((nodes) =>
@@ -174,7 +174,7 @@ export default function App() {
           });
           coordinators.current.set(id, save);
           try {
-            const draft = await get<Checkpoint>(draftKey(id));
+            const draft = await readDraft(draftKey(id));
             if (draft) {
               save.recover(draft);
               if (save.status === "Conflict") await save.review();
@@ -231,7 +231,7 @@ export default function App() {
   }, [refresh, handleError]);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("yestion-theme", themeMode);
+    localStorage.setItem("lotion-theme", themeMode);
   }, [theme, themeMode]);
   useEffect(() => {
     const media = matchMedia("(prefers-color-scheme: dark)");
@@ -240,7 +240,7 @@ export default function App() {
     return () => media.removeEventListener("change", changed);
   }, []);
   useEffect(() => {
-    document.title = title ? `${title} — Yestion` : "Yestion";
+    document.title = title ? `${title} — Lotion` : "Lotion";
   }, [title]);
   useEffect(() => {
     if (!dialog && !search && !auth) return;
@@ -421,7 +421,7 @@ export default function App() {
       const url = URL.createObjectURL(await response.blob()),
         a = document.createElement("a");
       a.href = url;
-      a.download = "yestion-workspace.zip";
+      a.download = "lotion-workspace.zip";
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
       setDialog(null);
@@ -482,7 +482,7 @@ export default function App() {
         if (!found)
           files.push({
             file: new File([], "directory", {
-              type: "application/x-yestion-directory",
+              type: "application/x-lotion-directory",
             }),
             path: prefix + entry.name + "/",
           });
@@ -512,10 +512,10 @@ export default function App() {
           style={{ paddingLeft: 12 + depth * 16 }}
           draggable
           onDragStart={(e) =>
-            e.dataTransfer.setData("application/yestion-page", node.id)
+            e.dataTransfer.setData("application/lotion-page", node.id)
           }
           onDragOver={(e) => {
-            if (e.dataTransfer.types.includes("application/yestion-page")) {
+            if (e.dataTransfer.types.includes("application/lotion-page")) {
               e.preventDefault();
               const rect = e.currentTarget.getBoundingClientRect(),
                 ratio = (e.clientY - rect.top) / rect.height;
@@ -531,7 +531,7 @@ export default function App() {
           onDrop={(e) => {
             e.preventDefault();
             e.currentTarget.classList.remove("drag-target");
-            const id = e.dataTransfer.getData("application/yestion-page");
+            const id = e.dataTransfer.getData("application/lotion-page");
             const mode = e.currentTarget.dataset.dropMode;
             delete e.currentTarget.dataset.dropMode;
             if (id && id !== node.id) {
@@ -608,10 +608,10 @@ export default function App() {
       <aside className="sidebar">
         <div className="workspace">
           <div className="brand-mark">
-            y<span>.</span>
+            l<span>.</span>
           </div>
           <div>
-            <strong>Yestion</strong>
+            <strong>Lotion</strong>
             <span>Personal workspace</span>
           </div>
           <ChevronsUpDown size={14} className="muted" />
@@ -1134,7 +1134,7 @@ export default function App() {
                 <button
                   className="primary"
                   onClick={() => {
-                    sessionStorage.setItem("yestion-token", token);
+                    sessionStorage.setItem("lotion-token", token);
                     setAuth(false);
                     void refresh().catch(handleError);
                   }}
@@ -1175,7 +1175,7 @@ export default function App() {
                 </div>
                 <h2>Bring your ideas along.</h2>
                 <p>
-                  Import Markdown, a whole folder, or a Yestion ZIP. Nested
+                  Import Markdown, a whole folder, or a Lotion ZIP. Nested
                   pages and images stay together.
                 </p>
                 <div

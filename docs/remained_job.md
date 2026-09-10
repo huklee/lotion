@@ -2,6 +2,8 @@
 
 Recorded: **2026-09-10T05:32:53Z**. Audited application revision: `8423b85` in `/Users/huklee/work/lotion`.
 
+Update **2026-09-10T13:48:20Z**: the requested Lotion rename and install/run guide have been implemented. Rename verification passed lint/type/build and 96 unit/integration tests; 67/69 browser tests passed, including legacy migration in all three browsers. The existing two WebKit failures remain. The checklist below retains the original audit evidence and is not marked complete by this branding/documentation work.
+
 This checklist records unfinished requirements, failed verification, and remaining qualification work. Unchecked items are not complete. Fixes below have not been implemented as part of this audit.
 
 ## Current evidence

@@ -1,3 +1,4 @@
+import { readSetting } from "./storage-compat";
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -7,8 +8,8 @@ export class ApiError extends Error {
   }
 }
 export const authHeaders = (): Record<string, string> =>
-  sessionStorage.getItem("yestion-token")
-    ? { Authorization: `Bearer ${sessionStorage.getItem("yestion-token")}` }
+  readSetting(sessionStorage, "token")
+    ? { Authorization: `Bearer ${readSetting(sessionStorage, "token")}` }
     : {};
 export async function api<T>(url: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);

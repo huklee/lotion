@@ -27,7 +27,7 @@ Tests use synthetic content and isolated OS temporary directories. Failure injec
 
 ## Local hosting and authentication
 
-Loopback-only default with optional bearer token. Non-loopback binding requires `YESTION_TOKEN`; TLS is supplied by the operator's reverse proxy. The frontend stores the token in tab session storage and authenticates document, import/export, and asset requests. Cross-origin browser requests are rejected. No remote link-preview fetcher is implemented, avoiding an unnecessary server-fetch surface.
+Loopback-only default with optional bearer token. Non-loopback binding requires `LOTION_TOKEN`; TLS is supplied by the operator's reverse proxy. The frontend stores the token in tab session storage and authenticates document, import/export, and asset requests. Cross-origin browser requests are rejected. No remote link-preview fetcher is implemented, avoiding an unnecessary server-fetch surface.
 
 Fonts are bundled with the application so core UI rendering does not depend on an external font CDN. External images/links remain explicit user content.
 

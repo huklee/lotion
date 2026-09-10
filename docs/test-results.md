@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-10T13:48:20Z — Lotion rename verification
+
+Executed `npm run check` in `/Users/huklee/work/lotion`: lint and type/build passed; **96 unit/integration tests passed**, **67/69 browser cases passed**. The new legacy-settings/draft migration scenario passed in Chromium, Firefox and WebKit. Unit/integration tests verify old/new bundle imports, legacy TOC/new marker export, settings precedence and old-draft cleanup after save.
+
+The full command exited 1 because of the previously reported WebKit paste-chooser scroll-position assertion and ResizeObserver notification in the legacy-code/failed-subpage scenario. These remain open in [remaining jobs](remained_job.md); no broad browser-error suppression was added. Build warnings about large chunks remain.
+
+README/documentation validation: 19 Markdown files, 61 local links, no missing targets. Naming audit found former-brand literals only in explicit compatibility readers and tests; current UI, output and configuration names use Lotion.
+
 ## 2026-09-10T05:23:03Z — Destination verification and follow-up
 
 In `/Users/huklee/work/lotion`, `npm run check` passed lint, type/build and all 92 unit/integration tests; the browser run passed 64/66. Two existing slash-page test assumptions failed: an unscoped Untitled selector matched multiple pages, and typing began in the code block instead of the intended trailing paragraph. Removed the redundant ambiguous selector (the test still verifies the newly created child's parent ID) and explicitly positioned the caret at the document end for the failed-request test.
@@ -68,4 +76,4 @@ Executed `npm run test:performance`: PASS. With 10,000 synthetic pages and a 500
 
 Failures found and fixed during verification: typed request headers, unsafe ZIP stream assumptions, restore re-open race, initial page creation race, modified bundle selectors, selection-toolbar layout shifting the rectangle, quote nesting conversion, pending image cancellation, and cross-browser sidebar edge dragging. Every affected test was rerun, followed by the complete green suite.
 
-Unverified limits: native IME composition was not manually tested; Korean text insertion was automated. Screen-reader and full assistive-technology checks remain manual. Linux, Windows, network shares, synchronized folders, and actual power-loss durability are not qualified by this macOS run. GitHub Actions is configured but has not executed in this workspace. Retention-aware garbage collection is not implemented. Browser folder pickers may omit empty directories; Yestion manifests/ZIP entries preserve them when supplied.
+Unverified limits: native IME composition was not manually tested; Korean text insertion was automated. Screen-reader and full assistive-technology checks remain manual. Linux, Windows, network shares, synchronized folders, and actual power-loss durability are not qualified by this macOS run. GitHub Actions is configured but has not executed in this workspace. Retention-aware garbage collection is not implemented. Browser folder pickers may omit empty directories; Lotion manifests/ZIP entries preserve them when supplied.

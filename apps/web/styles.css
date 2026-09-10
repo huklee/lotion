@@ -653,14 +653,14 @@ h1 span {
   background: #91a87830;
   border-radius: 4px;
 }
-.yestion-toc {
+.lotion-toc {
   border-left: 2px solid var(--border);
   display: grid;
   gap: 2px;
   margin: 8px 0;
   padding: 8px 0 8px 10px;
 }
-.yestion-toc-title {
+.lotion-toc-title {
   color: var(--muted);
   font-size: 10px;
   font-weight: 700;
@@ -668,7 +668,7 @@ h1 span {
   padding: 0 10px 5px;
   text-transform: uppercase;
 }
-.yestion-toc button {
+.lotion-toc button {
   background: transparent;
   border: 0;
   color: var(--text);
@@ -681,16 +681,16 @@ h1 span {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.yestion-toc button:hover {
+.lotion-toc button:hover {
   background: var(--soft);
   text-decoration: underline;
 }
-.yestion-toc-empty {
+.lotion-toc-empty {
   color: var(--muted);
   font-size: 12px;
   padding: 2px 10px;
 }
-.yestion-callout {
+.lotion-callout {
   align-items: flex-start;
   background: #f4f1e8;
   border: 1px solid #e6dfcf;
@@ -700,14 +700,14 @@ h1 span {
   padding: 13px 15px;
   width: 100%;
 }
-.yestion-callout-icon {
+.lotion-callout-icon {
   line-height: 1.8;
 }
-.yestion-callout-content {
+.lotion-callout-content {
   flex: 1;
   min-width: 2px;
 }
-[data-theme="dark"] .yestion-callout {
+[data-theme="dark"] .lotion-callout {
   background: #342f27;
   border-color: #514839;
 }
@@ -748,14 +748,14 @@ h1 span {
   background: var(--hover);
   text-decoration: underline;
 }
-.yestion-mermaid {
+.lotion-mermaid {
   width: 100%;
   padding: 16px;
   border: 1px solid var(--border);
   border-radius: 8px;
   margin: 10px 0;
 }
-.yestion-mermaid textarea {
+.lotion-mermaid textarea {
   display: block;
   width: 100%;
   min-height: 110px;
@@ -766,7 +766,7 @@ h1 span {
   font-family: monospace;
   resize: vertical;
 }
-.yestion-mermaid img {
+.lotion-mermaid img {
   display: block;
   max-width: 100%;
   max-height: 600px;
@@ -774,7 +774,7 @@ h1 span {
   padding: 12px;
   border-radius: 6px;
 }
-.yestion-mermaid pre {
+.lotion-mermaid pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

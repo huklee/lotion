@@ -16,7 +16,7 @@ it("rejects DNS-rebinding Host headers", async () => {
   ).toBe(403);
 });
 beforeEach(async () => {
-  dir = await fs.mkdtemp(path.join(os.tmpdir(), "yestion-api-"));
+  dir = await fs.mkdtemp(path.join(os.tmpdir(), "lotion-api-"));
   app = await createApp(await new Repository(dir).init());
 });
 afterEach(async () => {

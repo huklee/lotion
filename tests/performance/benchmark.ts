@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { Repository } from "../../packages/persistence/repository";
-const dir = await fs.mkdtemp(path.join(os.tmpdir(), "yestion-benchmark-"));
+const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lotion-benchmark-"));
 let repo = await new Repository(dir).init();
 const measure = async <T>(fn: () => T | Promise<T>) => {
   const start = performance.now();

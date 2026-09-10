@@ -117,7 +117,7 @@ export async function exportBundle(
     return location;
   }
   docs.forEach(filePath);
-  const manifest: any = { format: "yestion", version: 1, documents: [] };
+  const manifest: any = { format: "lotion", version: 1, documents: [] };
   const assets = new Set<string>();
   for (const doc of docs) {
     for (const preview of Object.values(doc.linkPreviews ?? {})) {
@@ -226,7 +226,7 @@ export async function importEntries(
       const asset = await repo.putAsset(e.bytes, path.posix.basename(name));
       assetUrls.set(name, asset.url);
     }
-  if (manifest?.format === "yestion") {
+  if (manifest?.format === "lotion" || manifest?.format === "yestion") {
     if (
       manifest.version !== 1 ||
       !Array.isArray(manifest.documents) ||

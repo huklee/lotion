@@ -7,7 +7,7 @@ import { Repository } from "../../packages/persistence/repository";
 it.concurrent.each(["beforeManifest", "afterCommit"])(
   "recovers after a real SIGKILL at %s",
   async (stage) => {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "yestion-crash-"));
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lotion-crash-"));
     let repo = await new Repository(dir).init();
     const doc = await repo.create("Original", null, crypto.randomUUID());
     await repo.close();

@@ -66,7 +66,7 @@ export function MermaidBlock({
     };
   }, [code]);
   return (
-    <section className="yestion-mermaid" contentEditable={false}>
+    <section className="lotion-mermaid" contentEditable={false}>
       <strong>Mermaid diagram</strong>
       <textarea
         aria-label="Mermaid source"

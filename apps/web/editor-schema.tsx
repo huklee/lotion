@@ -45,11 +45,11 @@ function TableOfContents({ editor }: { editor: any }) {
   const headings = headingsIn(editor.document);
   return (
     <nav
-      className="yestion-toc"
+      className="lotion-toc"
       aria-label="Table of contents"
       contentEditable={false}
     >
-      <div className="yestion-toc-title">Table of contents</div>
+      <div className="lotion-toc-title">Table of contents</div>
       {headings.length ? (
         headings.map((heading) => (
           <button
@@ -69,7 +69,7 @@ function TableOfContents({ editor }: { editor: any }) {
           </button>
         ))
       ) : (
-        <span className="yestion-toc-empty">
+        <span className="lotion-toc-empty">
           Add headings to populate this table.
         </span>
       )}
@@ -98,11 +98,11 @@ const callout = createReactBlockSpec(
   },
   {
     render: ({ block, contentRef }) => (
-      <aside className="yestion-callout">
-        <span className="yestion-callout-icon" aria-hidden="true">
+      <aside className="lotion-callout">
+        <span className="lotion-callout-icon" aria-hidden="true">
           {block.props.icon}
         </span>
-        <div className="yestion-callout-content" ref={contentRef} />
+        <div className="lotion-callout-content" ref={contentRef} />
       </aside>
     ),
   },

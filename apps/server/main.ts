@@ -1,22 +1,25 @@
 import { Repository } from "../../packages/persistence/repository";
 import { createApp } from "./app";
 const host = process.env.HOST ?? "127.0.0.1";
+// Legacy environment aliases keep existing deployments pointed at their workspace.
+const token = process.env.LOTION_TOKEN ?? process.env.YESTION_TOKEN;
+const dataDir = process.env.LOTION_DATA_DIR ?? process.env.YESTION_DATA_DIR ?? "data";
 if (
   !["127.0.0.1", "localhost", "::1"].includes(host) &&
-  !process.env.YESTION_TOKEN
+  !token
 )
   throw new Error(
-    "Remote binding requires YESTION_TOKEN; terminate TLS at your reverse proxy.",
+    "Remote binding requires LOTION_TOKEN; terminate TLS at your reverse proxy.",
   );
 const repo = await new Repository(
-  process.env.YESTION_DATA_DIR ?? "data",
+  dataDir,
 ).init();
 const app = await createApp(repo, {
-  token: process.env.YESTION_TOKEN,
+  token,
   production: true,
 });
 await app.listen({ host, port: Number(process.env.PORT ?? 3001) });
-console.log(`Yestion is running at http://${host}:${process.env.PORT ?? 3001}`);
+console.log(`Lotion is running at http://${host}:${process.env.PORT ?? 3001}`);
 for (const signal of ["SIGINT", "SIGTERM"] as const)
   process.once(signal, async () => {
     await app.close();

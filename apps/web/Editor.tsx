@@ -191,7 +191,7 @@ export default function Editor({
     resolveFileUrl: async (url) => {
       if (
         !url.startsWith("/api/assets/") ||
-        !sessionStorage.getItem("yestion-token")
+        !sessionStorage.getItem("lotion-token")
       )
         return url;
       const response = await fetch(url, { headers: authHeaders() });
@@ -309,7 +309,7 @@ export default function Editor({
     ];
     const drag = (event: DragEvent) => {
       event.dataTransfer?.setData(
-        "application/yestion-blocks",
+        "application/lotion-blocks",
         JSON.stringify(selected),
       );
       if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
@@ -503,7 +503,7 @@ export default function Editor({
             title: "Page",
             subtext: "Create a subpage in this page",
             aliases: ["subpage", "child page"],
-            group: "Yestion",
+            group: "Lotion",
             icon: <FilePlus2 size={18} />,
             onItemClick: async () => {
               if (creatingSubpage.current) return;
@@ -559,7 +559,7 @@ export default function Editor({
             title: "Table of contents",
             subtext: "Live links to headings in this page",
             aliases: ["toc", "outline"],
-            group: "Yestion",
+            group: "Lotion",
             icon: <BookOpenText size={18} />,
             onItemClick: () =>
               insertOrUpdateBlockForSlashMenu(editor, {
@@ -570,7 +570,7 @@ export default function Editor({
             title: "Mermaid",
             subtext: "Diagram with editable Mermaid source",
             aliases: ["diagram", "flowchart"],
-            group: "Yestion",
+            group: "Lotion",
             icon: <BookOpenText size={18} />,
             onItemClick: () =>
               insertOrUpdateBlockForSlashMenu(editor, { type: "mermaid" }),
@@ -579,7 +579,7 @@ export default function Editor({
             title: "Callout",
             subtext: "Emphasize an important note",
             aliases: ["notice", "info", "alert"],
-            group: "Yestion",
+            group: "Lotion",
             icon: <MessageSquareQuote size={18} />,
             onItemClick: () =>
               insertOrUpdateBlockForSlashMenu(editor, {
@@ -591,7 +591,7 @@ export default function Editor({
             title: "Database",
             subtext: "Insert an editable table database",
             aliases: ["data source", "collection"],
-            group: "Yestion",
+            group: "Lotion",
             icon: <Database size={18} />,
             onItemClick: () => {
               const table = insertOrUpdateBlockForSlashMenu(editor, {
@@ -778,7 +778,7 @@ export default function Editor({
       onDragOverCapture={(e) => {
         if (
           e.dataTransfer.types.includes("Files") ||
-          e.dataTransfer.types.includes("application/yestion-blocks")
+          e.dataTransfer.types.includes("application/lotion-blocks")
         ) {
           e.preventDefault();
           const target = targetAt(e);
@@ -798,7 +798,7 @@ export default function Editor({
         }
       }}
       onDropCapture={(e) => {
-        if (e.dataTransfer.types.includes("application/yestion-blocks")) {
+        if (e.dataTransfer.types.includes("application/lotion-blocks")) {
           e.preventDefault();
           e.stopPropagation();
           const target = targetAt(e);
@@ -835,7 +835,7 @@ export default function Editor({
             draggable
             onDragStart={(e) =>
               e.dataTransfer.setData(
-                "application/yestion-blocks",
+                "application/lotion-blocks",
                 JSON.stringify(selected),
               )
             }

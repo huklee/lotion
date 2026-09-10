@@ -51,7 +51,7 @@ export function fromMarkdown(markdown: string): {
     return nodes.flatMap((n): Block[] => {
       switch (n.type) {
         case "html":
-          if (n.value.trim() === "<!-- yestion:table-of-contents -->")
+          if (["<!-- lotion:table-of-contents -->", "<!-- yestion:table-of-contents -->"].includes(n.value.trim()))
             return [
               {
                 id: crypto.randomUUID(),
@@ -230,10 +230,10 @@ export function toMarkdown(blocks: Block[]): {
       else if (b.type === "tableOfContents") {
         output.push({
           type: "html",
-          value: "<!-- yestion:table-of-contents -->",
+          value: "<!-- lotion:table-of-contents -->",
         });
         warnings.push(
-          "Table of contents is a Yestion marker; external Markdown viewers do not render the live index.",
+          "Table of contents is a Lotion marker; external Markdown viewers do not render the live index.",
         );
       } else if (b.type === "callout") {
         output.push({

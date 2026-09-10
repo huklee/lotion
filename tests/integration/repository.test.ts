@@ -9,7 +9,7 @@ import {
 let dir: string, repo: Repository;
 let fail: FaultStage | undefined;
 beforeEach(async () => {
-  dir = await fs.mkdtemp(path.join(os.tmpdir(), "yestion-test-"));
+  dir = await fs.mkdtemp(path.join(os.tmpdir(), "lotion-test-"));
   repo = await new Repository(dir, (stage) => {
     if (stage === fail) throw new Error("Injected I/O failure");
   }).init();
@@ -27,7 +27,7 @@ it("restores a stopped full workspace backup including trash and asset bytes", a
   await repo.mutate(d.id, 1, "trash");
   await repo.close();
   const restoredDir = await fs.mkdtemp(
-    path.join(os.tmpdir(), "yestion-restore-"),
+    path.join(os.tmpdir(), "lotion-restore-"),
   );
   try {
     await fs.cp(dir, restoredDir, { recursive: true });

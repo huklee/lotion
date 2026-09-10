@@ -1,5 +1,10 @@
 import { expect, it } from "vitest";
 import { fromMarkdown, toMarkdown } from "../../packages/markdown/convert";
+it("imports legacy TOC markers and exports Lotion markers", () => {
+  const parsed = fromMarkdown("<!-- yestion:table-of-contents -->");
+  expect(parsed.blocks[0].type).toBe("tableOfContents");
+  expect(toMarkdown(parsed.blocks).markdown).toContain("<!-- lotion:table-of-contents -->");
+});
 function semantic(value: any): any {
   if (Array.isArray(value)) return value.map(semantic);
   if (value && typeof value === "object")
