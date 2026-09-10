@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-10T13:49:04Z — Installation guide and incremental publication
+
+Exact UTC recording time. Added root README.md with installation/production startup first, followed by development startup, configuration, tests and documentation links. Added the same quick-start at the head of docs/README.md and updated the runbook to Lotion configuration names and upgrade compatibility. Documentation links were validated; no additional application code changed for this documentation unit.
+
+Published and verified separate remote updates for 2ff487e (remaining-work checklist) and 7ed19a5 (Lotion rename with compatibility). This guide and record form the next individual commit/push unit. Outstanding WebKit failures and feature work remain documented rather than being marked finished.
+
 ## 2026-09-10T13:48:20Z — Lotion rename and compatibility verified
 
 Exact UTC recording time. Renamed UI/wordmark, titles, slash groups, CSS/MIME namespaces, package/lockfile, exports, markers, environment configuration and current documentation to Lotion. Retained old literals only in compatibility readers/tests for browser session/theme/token settings, draft recovery, environment aliases, directory uploads and exact bundles/TOC imports. No canonical document data or asset IDs were renamed. Decision: [ADR-013](adr/013-lotion-naming-and-compatibility.md).

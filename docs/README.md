@@ -1,4 +1,20 @@
-# Yestion documentation
+# Lotion documentation
+
+## Install and run
+
+Use Node.js 24 LTS and npm (minimum Node 22.12). From the repository root:
+
+```sh
+npm ci
+npm run build
+npm start
+```
+
+Open **http://127.0.0.1:3001**. For development, run `npm run dev` and open **http://127.0.0.1:5173**. Documents are saved to the backend's `data/` directory by default. Stop an existing server before starting another on the same port/workspace.
+
+See the [repository README](../README.md) for cloning instructions, the [runbook](running.md) for configuration, and [remaining jobs](remained_job.md) for known gaps.
+
+## Project documentation
 
 Self-hosted, web-based, block-oriented document editing without AI.
 

@@ -1,4 +1,4 @@
-# Running Yestion
+# Running Lotion
 
 ## Editor additions
 
@@ -33,12 +33,14 @@ Open `http://127.0.0.1:3001`. This single server serves the built web UI and API
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `YESTION_DATA_DIR` | `data` | Backend-owned workspace directory |
+| `LOTION_DATA_DIR` | `data` | Backend-owned workspace directory |
 | `PORT` | `3001` | Backend HTTP port |
 | `HOST` | `127.0.0.1` | Bind address; non-loopback requires token |
-| `YESTION_TOKEN` | unset | Optional local / required remote bearer token |
+| `LOTION_TOKEN` | unset | Optional local / required remote bearer token |
 
 Set configuration in the process environment. Do not commit tokens. For remote access, configure a strong token and HTTPS reverse proxy; keep the proxy's Host/Origin handling consistent. Authenticate in the browser token dialog. All `/api` routes, including assets, require the configured token. Core document editing has no AI or external service dependency.
+
+Existing deployments can continue to use the former environment-variable names as fallback aliases; explicitly set Lotion variables take precedence. Existing browser settings/drafts and previous exact exports remain readable. Switching origins or changing `LOTION_DATA_DIR` does not transfer an existing workspace automatically. See [rename compatibility](adr/013-lotion-naming-and-compatibility.md).
 
 ## Import/export
 
@@ -63,6 +65,6 @@ npm run test:e2e
 
 For a full backup including trash and history, stop the backend and copy the entire workspace directory to a separate destination/device. Copy `workspace.json`, all referenced `documents/` revisions, and `assets/` together. Do not copy a live mutating directory without a filesystem snapshot. Application ZIP export is for active-page portability, not a full historical backup.
 
-Restore into an empty directory, set `YESTION_DATA_DIR` to that path, and start one backend. Do not restore over a live workspace. The server validates committed references and fails startup on corrupt/unsupported data rather than replacing it with an empty workspace. After a disk-full or permission failure, correct the environment and retry the retained browser draft.
+Restore into an empty directory, set `LOTION_DATA_DIR` to that path, and start one backend. Do not restore over a live workspace. The server validates committed references and fails startup on corrupt/unsupported data rather than replacing it with an empty workspace. After a disk-full or permission failure, correct the environment and retry the retained browser draft.
 
 No schema upgrade beyond version 1 is currently defined. Never edit the canonical files while the backend runs. For future migrations, stop, back up, run a versioned migration, and test rollback against a copy before upgrading real data.
