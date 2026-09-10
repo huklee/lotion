@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-09-10T13:55:00Z — Codex memory and history transferred
+
+Copied the two Yestion-specific raw Codex session logs into the local ignored `.codex/yestion-session-history/` directory in Lotion (about 10.3 MB total) without deleting their originals in the global Codex session store. Added root `AGENTS.md` and `docs/codex-handover.md` so future sessions begin with portable project context, current state, workflow, known regressions, paths and documentation references. Raw transcripts remain outside Git; the handover is versioned.
+
 ## 2026-09-10T13:52:00Z — Structured decision-log transfer
 
 Transferred the completed decision-log restructuring from `/Users/huklee/Work/yestion` into this repository. Reformatted `docs/decisions.md` as bullet-based status, decision-record links, and Context/Decision/Alternatives/Consequences/Revisit fields without changing decision meaning. Validated all local Markdown links before publication.
