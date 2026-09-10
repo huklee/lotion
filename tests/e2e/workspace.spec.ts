@@ -210,6 +210,15 @@ test("two tabs preserve conflicting drafts", async ({ page, context }) => {
   await expect(
     second.getByRole("button", { name: "Save draft as a copy" }),
   ).toBeVisible();
+  await second.reload();
+  await expect(second.getByRole("button", {name:"Review latest versions"})).toBeVisible();
+  await expect(second.getByRole("button", {name:"Use my draft"})).toBeVisible();
+  second.once("dialog", dialog => dialog.accept());
+  await second.getByRole("button", {name:"Use my draft"}).click();
+  await expect(second.locator(".save-status")).toHaveText("Saved");
+  await second.reload();
+  await expect(second.getByRole("textbox", {name:"Page title"})).toHaveValue("Second writer draft");
+  expect((await (await second.request.get(`/api/documents/${doc.id}`)).json()).title).toBe("Second writer draft");
   await second.close();
 });
 test("whole folder import, nested assets, ZIP download", async ({ page }) => {
@@ -627,9 +636,6 @@ test("slash page creates a child and table of contents follows headings", async 
     .filter({ hasText: "Create a subpage" })
     .click();
   await expect(
-    page.getByRole("navigation", { name: "Pages" }).getByText("Untitled"),
-  ).toBeVisible();
-  await expect(
     page.locator('.bn-inline-content a[href^="#/page/"]'),
   ).toContainText("Untitled");
   const tree = await (await page.request.get("/api/tree")).json();
@@ -935,6 +941,7 @@ test("legacy code pages render and a failed subpage request leaves the editor us
     route.fulfill({ status: 503, json: { error: "Temporary outage" } }),
   );
   await page.locator('[data-id="new-child"] .bn-inline-content').click();
+  await page.keyboard.press("ControlOrMeta+End");
   await page.keyboard.type("/page");
   await page
     .getByRole("option")

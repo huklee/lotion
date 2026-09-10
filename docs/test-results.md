@@ -1,5 +1,19 @@
 # Test results
 
+## 2026-09-10T05:23:03Z — Destination verification and follow-up
+
+In `/Users/huklee/work/lotion`, `npm run check` passed lint, type/build and all 92 unit/integration tests; the browser run passed 64/66. Two existing slash-page test assumptions failed: an unscoped Untitled selector matched multiple pages, and typing began in the code block instead of the intended trailing paragraph. Removed the redundant ambiguous selector (the test still verifies the newly created child's parent ID) and explicitly positioned the caret at the document end for the failed-request test.
+
+Follow-up: `npx playwright test -g 'slash page creates|legacy code pages'` passed all 6 cases in 24.8 seconds across Chromium, Firefox and WebKit. This is a full-run-plus-targeted-retest record, not a claim that the original 66-test invocation exited successfully. The separate 9-case conflict/navigation/recovery browser run passed completely.
+
+The first incremental GitHub push remains blocked by unavailable HTTPS credentials. No commits were pushed; the conflict fix is prepared as an additional local commit with its tests and design rationale.
+
+## 2026-09-10T05:17:23Z — Conflict resolution
+
+`npm test`: 92 tests passed in 10 files. Build/typecheck and ESLint passed. `npx playwright test -g 'two tabs|offline browser draft|pending page A'`: 9 passed in 29.3 seconds across Chromium, Firefox and WebKit. Added assertions for recovered conflict controls, explicit resolution and persistence after another reload. Unit coverage includes independent block merges, overlap/ordering conflicts, legacy checkpoints, archive failure, new mutation IDs and a second server race.
+
+Live target page f63edb5a-4d08-4145-8f55-f41a6bc130df: API 200 and editor rendered; document writes were blocked during the browser smoke check. The server document at revision 47 is valid. Existing user-session browser drafts were not accessed or deleted. Earlier full-suite verification remains separate; this checkpoint is a targeted saving/conflict regression gate.
+
 ## 2026-09-10 — Editor follow-up verification (in progress)
 
 Executed `npm test`: 86 unit/integration tests passed, including the full configured syntax palette, Markdown Mermaid round-trip, nested-folder Mermaid import and exact-bundle icon/preview/diagram preservation. ESLint and TypeScript passed after formatting.

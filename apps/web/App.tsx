@@ -148,6 +148,8 @@ export default function App() {
         ) {
           save?.dispose();
           save = new SaveCoordinator(doc, {
+            load: () => api<Document>(`/api/documents/${id}`),
+            archive: (draft) => set(`yestion-recovery:${id}:${new Date().toISOString()}:${crypto.randomUUID()}`, draft),
             save: (revision, content, mutationId) =>
               api<Document>(`/api/documents/${id}/content`, {
                 method: "PUT",
@@ -173,7 +175,10 @@ export default function App() {
           coordinators.current.set(id, save);
           try {
             const draft = await get<Checkpoint>(draftKey(id));
-            if (draft) save.recover(draft);
+            if (draft) {
+              save.recover(draft);
+              if (save.status === "Conflict") await save.review();
+            }
           } catch {
             setNotice(
               "Browser draft recovery is unavailable. Server auto-save remains active.",
@@ -902,13 +907,27 @@ export default function App() {
                 </span>
                 <span className="meta-line" />
               </div>
-              {coordinator.error && (
+              {(coordinator.error || status === "Conflict") && (
                 <div className="conflict-box">
                   <p>{coordinator.error}</p>
                   {status === "Conflict" ? (
                     <>
+                      <p>Your draft is preserved. Changes to different blocks can be merged; overlapping edits need your choice.</p>
+                      <button onClick={() => void coordinator.review().catch(handleError)}>Review latest versions</button>
+                      {coordinator.remote && <div>
+                        <p>Conflicting fields: {coordinator.conflicts.join(", ") || "none"}</p>
+                        <details><summary>Your draft</summary><pre style={{whiteSpace: "pre-wrap"}}>{JSON.stringify(coordinator.content, null, 2)}</pre></details>
+                        <details><summary>Server version (revision {coordinator.remote.revision})</summary><pre style={{whiteSpace: "pre-wrap"}}>{JSON.stringify({title: coordinator.remote.title, blocks: coordinator.remote.blocks}, null, 2)}</pre></details>
+                        <button onClick={() => {
+                          if (confirm("Use your draft for this page? The server revision remains in history. A newer server change will require another review."))
+                            void coordinator.resolve("local").then(refresh).catch(handleError);
+                        }}>Use my draft</button>
+                        <button onClick={() => void coordinator.resolve("server").then(refresh).catch(handleError)}>Use server version (archive draft)</button>
+                        <p>A recovery copy of your draft is kept in this browser.</p>
+                      </div>}
                       <button
                         onClick={async () => {
+                          try {
                           const copy = await api<Document>("/api/documents", {
                             method: "POST",
                             body: JSON.stringify({
@@ -925,28 +944,13 @@ export default function App() {
                               mutationId: crypto.randomUUID(),
                             }),
                           });
+                          if (coordinator.remote) await coordinator.resolve("server");
                           await refresh();
                           await openPage(copy.id);
+                          } catch (error) { handleError(error); }
                         }}
                       >
                         Save draft as a copy
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (
-                            confirm(
-                              "Discard the local draft and load the server version?",
-                            )
-                          ) {
-                            coordinator.dispose();
-                            coordinators.current.delete(active.id);
-                            void del(draftKey(active.id)).then(() =>
-                              openPage(active.id),
-                            );
-                          }
-                        }}
-                      >
-                        Reload server version
                       </button>
                     </>
                   ) : (
@@ -957,7 +961,7 @@ export default function App() {
                 </div>
               )}
               <Editor
-                key={`${active.id}:${active.revision}`}
+                key={`${active.id}:${active.revision}:${coordinator.editorVersion}`}
                 initial={coordinator.content}
                 theme={theme}
                 pages={visible}

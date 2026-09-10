@@ -1,5 +1,7 @@
 # Architecture decision log
 
+[ADR-012: draft-preserving conflict resolution](adr/012-conflict-resolution.md) defines merge boundaries, recovery, explicit choices and race protection.
+
 Editor follow-up decisions: [ADR-011: previews, navigation, code contrast and Mermaid](adr/011-editor-previews-and-diagrams.md).
 
 Status convention: Baseline means selected for planning; Validated requires implementation evidence. All entries below are Baseline as of 2026-09-09.

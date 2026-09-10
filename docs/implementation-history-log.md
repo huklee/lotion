@@ -1,5 +1,17 @@
 # Implementation history log
 
+## 2026-09-10T05:23:03Z — Destination verification completed for conflict fix
+
+Exact UTC recording time. Ported the conflict changes and tests to lotion; lint/type/build and 92 unit/integration tests passed. Full browser run: 64/66, then all 6 targeted cases passed after correcting two slash-page test assumptions. All 9 conflict/navigation/offline recovery browser cases passed. Exact scope is recorded in test-results.md. Updated the commit plan to reflect the four existing local commits plus a separate conflict fix. Attempted pushing only the first foundation commit; HTTPS credential lookup failed, and no later push was attempted.
+
+## 2026-09-10T05:17:23Z — Conflict recovery and resolution verified
+
+Exact UTC recording time. Investigated page f63edb5a-4d08-4145-8f55-f41a6bc130df: server revision 47, 13 blocks, schema-valid. A read-only live browser smoke check returned API 200 and rendered the editor with content writes blocked. The user's existing browser draft is inaccessible to the automation browser, so no claim is made that a competing draft has already been selected or discarded.
+
+Fixed invisible recovery controls caused by Conflict without an error message. Checkpoints now carry base content; recovery preserves the original revision. Added conservative three-way merge for independent fields/top-level blocks, latest-version review, explicit local/server choice, archived local drafts, conditional revision-safe resolution, fresh mutation IDs, editor refresh, and error handling for recovery-copy creation. Removed the unarchived discard button. Existing ambiguous drafts remain available for the user's choice after reloading the updated app.
+
+Verification: build/typecheck and ESLint passed; 92 unit/integration tests passed. Nine browser tests passed across Chromium, Firefox and WebKit covering two-tab conflict, reload/resolve/save/reload, navigation during saves and offline draft recovery. Decision: [ADR-012](adr/012-conflict-resolution.md). Port this change into lotion as its own fix commit before completing the pending incremental pushes.
+
 ## 2026-09-09T22:09:19Z — Editor follow-ups, previews, Mermaid and contrast
 
 Exact UTC checkpoint recording time (2026-09-10 07:09:19 KST), not reconstructed individual edit times.

@@ -1,5 +1,9 @@
 # Test plan
 
+## Conflict resolution regression gate
+
+Verify stale recovered drafts always expose resolution controls; separate-field/block edits merge; competing edits and structural changes stay in Conflict; local archives survive resolution; archive failure prevents replacement; a server change after review triggers another conflict; successful resolution replaces the rejected mutation and persists across reload. Execute real two-tab resolution and offline recovery in all three browsers. Never erase the user's browser storage to clear a conflict.
+
 ## Editor regression additions — 2026-09-10
 
 - Verify every supported code grammar (JSON/HTML/Python/Go/C++) in light and dark modes. Measure computed token colors against the actual beige background; require at least 4.5:1, including comments. Keep spacing, selector and highlighting tests.

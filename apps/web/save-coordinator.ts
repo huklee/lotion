@@ -1,4 +1,5 @@
 import type { Content, Document } from "../../packages/document-schema/index";
+import { mergeContent } from "./merge-content";
 export type SaveStatus =
   "Saved" | "Unsaved" | "Saving" | "Offline draft" | "Conflict" | "Save failed";
 export type Checkpoint = {
@@ -6,6 +7,7 @@ export type Checkpoint = {
   revision: number;
   generation: number;
   mutationId?: string;
+  base?: Content;
 };
 type Dependencies = {
   save: (
@@ -16,6 +18,8 @@ type Dependencies = {
   checkpoint: (draft: Checkpoint | null) => Promise<void>;
   changed: () => void;
   committed?: (doc: Document) => void;
+  load?: () => Promise<Document>;
+  archive?: (draft: Checkpoint) => Promise<void>;
 };
 export class SaveCoordinator {
   status: SaveStatus = "Saved";
@@ -23,6 +27,10 @@ export class SaveCoordinator {
   content: Content;
   revision: number;
   generation = 0;
+  editorVersion = 0;
+  base?: Content;
+  remote?: Document;
+  conflicts: string[] = [];
   private savedGeneration = 0;
   private debounce?: ReturnType<typeof setTimeout>;
   private maxWait?: ReturnType<typeof setTimeout>;
@@ -36,12 +44,19 @@ export class SaveCoordinator {
   };
   private draftQueue = Promise.resolve();
   private failures = 0;
+  private automaticReviews = 0;
   constructor(
     doc: Document,
     private deps: Dependencies,
   ) {
-    this.content = { title: doc.title, icon: doc.icon, blocks: doc.blocks, linkPreviews: doc.linkPreviews };
+    this.content = {
+      title: doc.title,
+      icon: doc.icon,
+      blocks: doc.blocks,
+      linkPreviews: doc.linkPreviews,
+    };
     this.revision = doc.revision;
+    this.base = structuredClone(this.content);
   }
   private checkpoint(draft: Checkpoint | null) {
     this.draftQueue = this.draftQueue
@@ -60,6 +75,7 @@ export class SaveCoordinator {
       content: structuredClone(content),
       revision: this.revision,
       generation: this.generation,
+      base: this.base,
     });
     this.deps.changed();
     if (this.status === "Conflict") return;
@@ -68,11 +84,73 @@ export class SaveCoordinator {
     this.maxWait ??= setTimeout(() => void this.flush(), 10000);
   }
   recover(draft: Checkpoint) {
+    const currentRevision = this.revision;
     this.content = draft.content;
     this.generation = draft.generation || 1;
-    this.status = draft.revision === this.revision ? "Unsaved" : "Conflict";
+    this.base = draft.base;
+    this.revision = draft.revision;
+    this.status = draft.revision === currentRevision ? "Unsaved" : "Conflict";
     if (this.status === "Unsaved") this.edit(draft.content);
+    else {
+      this.error =
+        "A recovered draft was based on an older revision. Review both versions to resolve it.";
+      this.deps.changed();
+    }
+  }
+  async review(): Promise<void> {
+    if (!this.deps.load) return;
+    const remote = await this.deps.load();
+    this.remote = remote;
+    const result = mergeContent(
+      this.base,
+      this.content,
+      this.toContent(remote),
+    );
+    this.conflicts = result.conflicts;
+    if (!result.conflicts.length) await this.resolve("merge");
     else this.deps.changed();
+  }
+  private toContent(doc: Document): Content {
+    return {
+      title: doc.title,
+      icon: doc.icon,
+      blocks: doc.blocks,
+      linkPreviews: doc.linkPreviews,
+    };
+  }
+  async resolve(choice: "merge" | "local" | "server"): Promise<void> {
+    if (!this.remote || this.inFlight) return;
+    const generation = this.generation;
+    const local = structuredClone(this.content);
+    const remote = this.remote;
+    const result = mergeContent(this.base, local, this.toContent(remote));
+    if (choice === "merge" && result.conflicts.length) return;
+    await this.deps.archive?.({
+      content: local,
+      base: this.base,
+      revision: this.revision,
+      generation,
+    });
+    if (generation !== this.generation)
+      throw new Error(
+        "The draft changed during resolution. Please review again.",
+      );
+    this.pending = undefined;
+    this.base = this.toContent(remote);
+    this.revision = remote.revision;
+    this.content =
+      choice === "server"
+        ? this.base
+        : choice === "local"
+          ? local
+          : result.content;
+    this.remote = undefined;
+    this.conflicts = [];
+    this.error = "";
+    this.status = "Unsaved";
+    this.editorVersion++;
+    this.edit(this.content);
+    await this.flush();
   }
   async flush(): Promise<void> {
     clearTimeout(this.debounce);
@@ -110,9 +188,11 @@ export class SaveCoordinator {
           snapshot.mutationId,
         );
         this.revision = doc.revision;
+        this.base = structuredClone(snapshot.content);
         this.savedGeneration = snapshot.generation;
         this.pending = undefined;
         this.failures = 0;
+        this.automaticReviews = 0;
         this.error = "";
         this.deps.committed?.(doc);
         this.status =
@@ -124,6 +204,7 @@ export class SaveCoordinator {
                 content: structuredClone(this.content),
                 revision: this.revision,
                 generation: this.generation,
+                base: this.base,
               },
         );
       } catch (error: any) {
@@ -148,6 +229,19 @@ export class SaveCoordinator {
       }
     })();
     await this.inFlight;
+    if (
+      (this.status as SaveStatus) === "Conflict" &&
+      this.deps.load &&
+      !this.remote &&
+      this.automaticReviews++ === 0
+    ) {
+      try {
+        await this.review();
+      } catch (error) {
+        this.error = `Could not load conflict versions: ${(error as Error).message}`;
+        this.deps.changed();
+      }
+    }
   }
   dispose() {
     clearTimeout(this.debounce);
