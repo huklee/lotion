@@ -28,7 +28,7 @@ This is a minor release from 0.1.0. No stored-document migration is required. Ma
 
 See [test results](test-results.md) for executed checks and [implementation history](implementation-history-log.md) for publication evidence.
 
-Local release gate: `npm run check` passed lint/type/build, 100 unit/integration tests and 90 browser cases on 2026-09-13. Remote CI is recorded separately after publication.
+Release verification: `npm run check` passed lint/type/build, 100 unit/integration tests and 90 browser cases locally and in [GitHub CI for cd018bc](https://github.com/huklee/lotion/actions/runs/34763348532) on 2026-09-13.
 
 ## 0.1.0 — baseline
 

@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-09-13T14:45:53Z — 0.2.0 published and CI verified
+
+Committed and pushed `cd018bc` (`feat: release v0.2.0 clipboard, calendar and block editing improvements`) to `main`. [GitHub verification](https://github.com/huklee/lotion/actions/runs/34763348532) succeeded on Ubuntu / Node 24 with 100 unit/integration tests and 90 browser tests. Updated release/backlog/handover evidence in this documentation-only follow-up; version stays 0.2.0. No release tag was created. User data remains untracked and untouched.
+
 ## 2026-09-13T14:39:13Z — 0.2.0 features and release preparation verified
 
 Prepared minor version 0.2.0 from 0.1.0 at the user's direction. Added persistent versioning guidance linked from AGENTS, README and the handover, plus a release changelog. Consolidated Mermaid fenced paste, complete-current-draft Markdown clipboard copy, selected-block Backspace deletion/undo, line-validated plain text pasting, the `@` calendar module, and left-aligned TOC labels. Dates remain portable text; current data formats and user data are preserved.

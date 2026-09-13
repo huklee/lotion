@@ -6,6 +6,8 @@ Latest local checkpoint: version 0.2.0 includes Mermaid fenced paste, Markdown c
 
 ## Project identity
 
+- Current published application version: **0.2.0**, commit `cd018bc`. [GitHub CI](https://github.com/huklee/lotion/actions/runs/34763348532) passed 100 unit/integration and 90 browser tests on Ubuntu / Node 24. Earlier failure records below are historical. Read the latest entries before resuming old backlog work.
+
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
 - Do not copy the old tree wholesale over Lotion. Lotion is ahead: it contains the rename, compatibility code, a root README, remaining-work documentation, ADR-013, new migration tests, and Git history.

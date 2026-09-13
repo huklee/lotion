@@ -9,9 +9,9 @@
 - [x] Record minor version 0.2.0, feature changelog and reusable version-management guide.
 - [x] Provide and README-link a three-option document-search plan. Implementation remains pending selection of an option.
 - [x] Complete full local verification: lint/type/build, 100 unit/integration tests and 90 browser tests passed.
-- [ ] Confirm GitHub CI for the release commit after pushing.
+- [x] Confirm GitHub CI for the release commit after pushing: `cd018bc`, [run 34763348532](https://github.com/huklee/lotion/actions/runs/34763348532), 100 unit/integration and 90 browser tests passed.
 
-This update supersedes historical local P0 failure evidence below, but does not assert remote CI success. See the [changelog](changelog.md), [version guide](versioning.md), and [search plan](document-search-plan.md).
+This update supersedes historical local and remote P0 failure evidence below. The complete 0.2.0 local and GitHub gates passed. See the [changelog](changelog.md), [version guide](versioning.md), and [search plan](document-search-plan.md).
 
 ## Update — 2026-09-13T09:13:54Z
 

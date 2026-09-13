@@ -1,5 +1,9 @@
 # Test results
 
+## 2026-09-13T14:45:53Z — 0.2.0 GitHub CI confirmed
+
+Release commit `cd018bc` was pushed to `origin/main`. [GitHub Actions run 34763348532](https://github.com/huklee/lotion/actions/runs/34763348532) completed **successfully** on Ubuntu / Node 24: `npm ci`, browser installation and `npm run check` passed, including **100 unit/integration tests** and **90/90 browser tests** (3.1 minutes). This verifies the exact application commit and resolves the prior local/CI regression gate. The following documentation-only commit records this result without changing the application version.
+
 ## 2026-09-13T14:39:13Z — 0.2.0 complete local release verification
 
 `npm run check` exited **0** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/build, **100 unit/integration tests**, and **90/90 browser tests** passed. Browser duration: 2.8 minutes. Tests include the earlier CI regressions and all new clipboard, calendar, TOC and Backspace behavior. A preceding focused invocation passed 21/21 cases across Chromium, Firefox and WebKit.
