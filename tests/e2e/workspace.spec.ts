@@ -4,6 +4,135 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
+test("clipboard lines are saved as plain text without HTML or Markdown formatting", async ({ page }) => {
+  await seed(page, "Plain clipboard");
+  await page.locator(".tiptap").click();
+  const text = "# Literal heading\n**literal bold**\n<script>alert(1)</script>\n[link](javascript:alert(1))\nLast line";
+  await page.locator(".tiptap").evaluate((element, text) => {
+    const data = new DataTransfer();
+    data.setData("text/plain", text);
+    data.setData("text/html", "<h1>Unwanted HTML</h1>");
+    const event = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clipboardData", { value: data });
+    element.dispatchEvent(event);
+  }, text);
+  for (const line of text.split("\n")) await expect(page.locator(".tiptap")).toContainText(line);
+  await expect(page.locator(".tiptap h1, .tiptap strong, .tiptap a, .tiptap script")).toHaveCount(0);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  for (const line of text.split("\n")) await expect(page.locator(".tiptap")).toContainText(line);
+});
+
+test("at-sign calendar inserts a chosen date, persists and cancels without insertion", async ({ page }) => {
+  await seed(page, "Dates");
+  await page.locator(".tiptap").click();
+  await page.keyboard.type("@date");
+  await page.getByRole("option").filter({ hasText: "Choose a date from the calendar" }).click();
+  const dialog = page.getByRole("dialog", { name: "Insert date" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Date", { exact: true }).fill("2026-09-15");
+  await dialog.getByRole("button", { name: "Next month" }).click();
+  await dialog.getByRole("button", { name: "2026-10-20", exact: true }).click();
+  await dialog.getByRole("button", { name: "Insert date", exact: true }).click();
+  await expect(page.locator(".tiptap")).toContainText("📅 2026-10-20");
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(page.locator(".tiptap")).toContainText("📅 2026-10-20");
+  await page.locator(".bn-inline-content").first().click();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.type(" @date");
+  await page.getByRole("option").filter({ hasText: "Choose a date from the calendar" }).click();
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  expect((await page.locator(".tiptap").innerText()).match(/📅/g)).toHaveLength(1);
+});
+
+test("table of contents labels align left while preserving heading indentation", async ({ page }) => {
+  await seed(page, "TOC alignment", [
+    { id: "toc-block", type: "tableOfContents" },
+    { id: "left-heading", type: "heading", props: { level: 1 }, content: [{ type: "text", text: "Heading", styles: {} }] },
+    { id: "left-subheading", type: "heading", props: { level: 2 }, content: [{ type: "text", text: "Subheading", styles: {} }] },
+  ]);
+  const toc = page.getByRole("navigation", { name: "Table of contents" });
+  for (const label of ["Heading", "Subheading"]) {
+    const button = toc.getByRole("button", { name: label, exact: true });
+    await expect(button).toHaveCSS("justify-content", "flex-start");
+    await expect(button).toHaveCSS("text-align", "left");
+    const gap = await button.evaluate((el) => {
+      const range = document.createRange(); range.selectNodeContents(el);
+      return range.getBoundingClientRect().left - el.getBoundingClientRect().left - parseFloat(getComputedStyle(el).paddingLeft);
+    });
+    expect(Math.abs(gap)).toBeLessThan(2);
+  }
+  await expect(toc.getByRole("button", { name: "Subheading", exact: true })).toHaveCSS("padding-left", "26px");
+});
+
+test("fenced Mermaid paste renders, unwraps source input, and persists", async ({ page, context, browserName }) => {
+  await seed(page, "Pasted diagram");
+  const editor = page.locator(".tiptap");
+  await editor.click();
+  async function pasteInto(selector: string, text: string) {
+    await page.locator(selector).first().evaluate((element, value) => {
+      const transfer = new DataTransfer();
+      transfer.setData("text/plain", value);
+      const event = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
+      Object.defineProperty(event, "clipboardData", { value: transfer });
+      element.dispatchEvent(event);
+    }, text);
+  }
+  const source = "graph TD;\n    A --> B;";
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.evaluate((text) => navigator.clipboard.writeText(text), "```mermaid\n" + source + "\n```");
+    await page.keyboard.press("ControlOrMeta+v");
+  } else await pasteInto(".tiptap", "```mermaid\n" + source + "\n```");
+  await expect(page.getByRole("textbox", { name: "Mermaid source" })).toHaveValue(source);
+  const preview = page.getByRole("img", { name: "Mermaid diagram preview" });
+  await expect(preview).toBeVisible({ timeout: 15000 });
+  await pasteInto(".lotion-mermaid textarea", "```mermaid\ngraph LR;\n B --> C;\n```");
+  await expect(page.getByRole("textbox", { name: "Mermaid source" })).toHaveValue("graph LR;\n B --> C;");
+  await expect(page.locator(".lotion-mermaid")).toHaveCount(1);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(page.getByRole("textbox", { name: "Mermaid source" })).toHaveValue("graph LR;\n B --> C;");
+  await expect(preview).toBeVisible({ timeout: 15000 });
+});
+
+test("export copies the entire current draft as Markdown and reports clipboard denial", async ({ page, context, browserName }) => {
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  } else await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: {
+      writeText: async (text: string) => { (window as any).copiedMarkdown = text; },
+    } });
+  });
+  await seed(page, "Clipboard page", [
+    { id: "copy-body", type: "paragraph", content: [{ type: "text", text: "Complete body", styles: { bold: true } }] },
+    { id: "copy-diagram", type: "mermaid", props: { code: "graph TD;\n A --> B;" } },
+    { id: "copy-end", type: "paragraph", content: [{ type: "text", text: "Last paragraph", styles: {} }] },
+  ]);
+  await page.getByRole("textbox", { name: "Page title" }).fill("Latest unsaved title");
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  await page.getByRole("button", { name: /Copy page as Markdown/ }).click();
+  const markdown = browserName === "chromium"
+    ? await page.evaluate(() => navigator.clipboard.readText())
+    : await page.evaluate(() => (window as any).copiedMarkdown);
+  expect(markdown).toContain("# Latest unsaved title");
+  expect(markdown).toContain("**Complete body**");
+  expect(markdown).toContain("```mermaid\ngraph TD;\n A --> B;\n```");
+  expect(markdown).toContain("Last paragraph");
+  await expect(page.getByText("Copied this page as Markdown.", { exact: true })).toBeVisible();
+  await page.evaluate(() => { navigator.clipboard.writeText = async () => { throw new Error("Clipboard permission denied"); }; });
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  await page.getByRole("button", { name: /Copy page as Markdown/ }).click();
+  await expect(page.getByText("Clipboard permission denied", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Copy page as Markdown/ })).toBeEnabled();
+});
+
 test("Lotion restores legacy browser settings and drafts after the rename", async ({ page }) => {
   const doc = await seed(page, "Before rename");
   await page.evaluate(async (id) => {
@@ -333,6 +462,46 @@ test("section selection moves a complete section and undo restores it", async ({
     .poll(() => page.locator(".tiptap").innerText())
     .toMatch(/^First section/);
 });
+test("Backspace deletes a selected section with children, supports undo and preserves text editing", async ({ page }) => {
+  await seed(page, "Delete selection", [
+    { id: "delete-heading", type: "heading", props: { level: 1 }, content: [{ type: "text", text: "Delete section", styles: {} }] },
+    { id: "delete-body", type: "paragraph", content: [{ type: "text", text: "Delete body", styles: {} }], children: [
+      { id: "delete-child", type: "paragraph", content: [{ type: "text", text: "Nested child", styles: {} }] },
+    ] },
+    { id: "keep-heading", type: "heading", props: { level: 1 }, content: [{ type: "text", text: "Keep section", styles: {} }] },
+  ]);
+  await page.locator('[data-id="delete-heading"] .bn-inline-content').first().click();
+  await page.getByRole("button", { name: "Select section", exact: true }).click();
+  await page.keyboard.press("Backspace");
+  await expect(page.locator('[data-id="delete-heading"]')).toHaveCount(0);
+  await expect(page.locator('[data-id="delete-body"]')).toHaveCount(0);
+  await expect(page.locator('[data-id="delete-child"]')).toHaveCount(0);
+  await expect(page.locator(".tiptap")).toContainText("Keep section");
+  await expect(page.getByRole("toolbar", { name: "Selected blocks" })).toHaveCount(0);
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(page.locator(".tiptap")).toContainText("Nested child");
+  await page.locator('[data-id="delete-heading"] .bn-inline-content').first().click();
+  await page.getByRole("button", { name: "Select section", exact: true }).click();
+  await page.keyboard.press("Backspace");
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(page.locator('[data-id="delete-body"]')).toHaveCount(0);
+  const remaining = page.locator('[data-id="keep-heading"] .bn-inline-content').first();
+  await remaining.click();
+  await page.getByRole("button", { name: "Select section", exact: true }).click();
+  await remaining.click();
+  await remaining.evaluate((element) => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    range.collapse(false);
+    window.getSelection()!.removeAllRanges();
+    window.getSelection()!.addRange(range);
+  });
+  await page.keyboard.press("Backspace");
+  await expect(remaining).toHaveText("Keep sectio");
+});
+
 test("image file drop inserts a durable image", async ({ page }) => {
   await seed(page, "Dropped image");
   const data = await page.evaluateHandle(() => {
@@ -398,6 +567,26 @@ test("rectangle-selects blocks without changing ordinary text content", async ({
   expect(
     (await page.locator(".tiptap").innerText()).indexOf("Gamma block"),
   ).toBe(0);
+});
+
+test("Backspace deletes a rectangle selection and leaves an editable empty document", async ({ page }) => {
+  await seed(page, "Delete rectangle", [
+    { id: "rect-delete-a", type: "paragraph", content: [{ type: "text", text: "Alpha", styles: {} }] },
+    { id: "rect-delete-b", type: "paragraph", content: [{ type: "text", text: "Beta", styles: {} }] },
+  ]);
+  const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+  const first = (await page.locator('[data-id="rect-delete-a"]').first().boundingBox())!;
+  const second = (await page.locator('[data-id="rect-delete-b"]').first().boundingBox())!;
+  await page.mouse.move(gutter.x + 5, Math.max(gutter.y + 1, first.y + 2));
+  await page.mouse.down();
+  await page.mouse.move(second.x + second.width - 10, second.y + second.height - 2, { steps: 12 });
+  await page.mouse.up();
+  await expect(page.getByRole("toolbar", { name: "Selected blocks" })).toContainText("2 selected");
+  await page.keyboard.press("Backspace");
+  await expect(page.locator('[data-id="rect-delete-a"]')).toHaveCount(0);
+  await expect(page.locator('[data-id="rect-delete-b"]')).toHaveCount(0);
+  await page.keyboard.insertText("Still editable");
+  await expect(page.locator(".tiptap")).toContainText("Still editable");
 });
 
 test("drags a rectangle-selected block group to a new insertion point", async ({
@@ -913,13 +1102,17 @@ test("paste chooser follows the cursor block and supports cancellation and URL i
     })),
   );
   const line = page.locator('[data-id="paste-line-18"] .bn-inline-content');
+  await page.evaluate(() => document.fonts.ready);
   await line.click();
   await page.keyboard.press("End");
   async function paste() {
     await line.evaluate((element) => {
       const transfer = new DataTransfer();
       transfer.setData("text/plain", "https://example.com/article#section");
-      const event = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
+      const event = new ClipboardEvent("paste", {
+        bubbles: true,
+        cancelable: true,
+      });
       Object.defineProperty(event, "clipboardData", { value: transfer });
       element.dispatchEvent(event);
     });
@@ -927,15 +1120,48 @@ test("paste chooser follows the cursor block and supports cancellation and URL i
   await paste();
   const chooser = page.getByRole("dialog", { name: "Paste link" });
   await expect(chooser).toBeVisible();
+  const scroller = page.locator(".main-scroll");
+  await scroller.evaluate((element) => {
+    element.scrollTop = 450;
+  });
+  await expect
+    .poll(() => scroller.evaluate((element) => element.scrollTop))
+    .toBe(450);
+  // Caret scrolling and floating UI can keep adjusting layout after a paste.
+  // Require stable geometry across frames before measuring the scroll delta.
+  let previousGeometry = "";
+  let stableSamples = 0;
+  await expect
+    .poll(
+      async () => {
+        const geometry = JSON.stringify([
+          await scroller.evaluate((element) => element.scrollTop),
+          await line.boundingBox(),
+          await chooser.boundingBox(),
+        ]);
+        stableSamples = geometry === previousGeometry ? stableSamples + 1 : 0;
+        previousGeometry = geometry;
+        return stableSamples;
+      },
+      { intervals: [100] },
+    )
+    .toBeGreaterThanOrEqual(3);
   const lineBox = await line.boundingBox(),
     menuBox = await chooser.boundingBox();
   expect(Math.abs(menuBox!.y - lineBox!.y)).toBeLessThan(100);
-  await page.locator(".main-scroll").evaluate((element) => {
-    element.scrollTop += 35;
+  const scrollBefore = await scroller.evaluate((element) => element.scrollTop);
+  await scroller.evaluate((element) => {
+    element.scrollTop -= 35;
   });
   await expect
+    .poll(() => scroller.evaluate((element) => element.scrollTop))
+    .toBeCloseTo(scrollBefore - 35, 0);
+  await expect
+    .poll(async () => (await line.boundingBox())!.y)
+    .toBeCloseTo(lineBox!.y + 35, 0);
+  await expect
     .poll(async () => (await chooser.boundingBox())!.y)
-    .not.toBe(menuBox!.y);
+    .toBeCloseTo(menuBox!.y + 35, 0);
   await chooser.getByRole("button", { name: "Cancel paste" }).click();
   await expect(chooser).toHaveCount(0);
   await expect(line).toHaveText("Line 18 keep this");
@@ -982,5 +1208,8 @@ test("legacy code pages render and a failed subpage request leaves the editor us
   ).toBeVisible();
   await page.keyboard.insertText("Still editable");
   await expect(page.locator(".tiptap")).toContainText("Still editable");
+  await expect(page.getByRole("listbox")).toHaveCount(0);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
   expect(errors).toEqual([]);
 });

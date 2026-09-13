@@ -1,5 +1,23 @@
 # Implementation history log
 
+## 2026-09-13T14:39:13Z — 0.2.0 features and release preparation verified
+
+Prepared minor version 0.2.0 from 0.1.0 at the user's direction. Added persistent versioning guidance linked from AGENTS, README and the handover, plus a release changelog. Consolidated Mermaid fenced paste, complete-current-draft Markdown clipboard copy, selected-block Backspace deletion/undo, line-validated plain text pasting, the `@` calendar module, and left-aligned TOC labels. Dates remain portable text; current data formats and user data are preserved.
+
+The initial deletion implementation exposed focus/drag issues; the final handler listens only while a custom selection exists and excludes input fields/outside targets. Rectangle-ending clicks do not clear the selected group. Plain text paste bypasses Markdown paste rules after schema validation. Oversized Mermaid input remains plain text instead of becoming an unsavable diagram.
+
+Created the requested Korean document-search plan with three options: browser find, a current-document panel (recommended), and a workspace-wide search extension. Linked it in README; search implementation awaits choosing an option.
+
+Release verification: `npm run check` passed lint/type/build, 100 unit/integration tests and 90 browser cases across three engines. Earlier focused fixes and failed iterations are recorded in test-results. This checkpoint precedes commit/push and does not claim a remote CI result.
+
+## 2026-09-13T09:13:54Z — Mermaid paste and current-page Markdown copying
+
+Implemented automatic conversion of a complete fenced Mermaid clipboard payload into a diagram using the existing insertion flow. Existing Mermaid source inputs unwrap the same payload and immediately update their diagram. Custom input pastes are handled by their own input, and ordinary clipboard content keeps its existing behavior.
+
+Added **Export → Copy page as Markdown**, using the current save-coordinator draft and the shared Markdown serializer to include the title and entire body, even before auto-save. Success/fidelity feedback follows a successful clipboard write; permission errors preserve retry access. Documented current-page scope and the ZIP alternative for subpages/assets in README and ADR-011. Preserved the pre-existing uncommitted CI regression work and all user data.
+
+Verification: final `npm run check` exited 0, with 98 unit/integration tests and 75 browser tests passing. Actual Chromium clipboard paste/read was verified, alongside event/adapter checks in Firefox and WebKit. No GitHub run or publication is asserted by this checkpoint.
+
 ## 2026-09-10T13:55:00Z — Codex memory and history transferred
 
 Copied the two Yestion-specific raw Codex session logs into the local ignored `.codex/yestion-session-history/` directory in Lotion (about 10.3 MB total) without deleting their originals in the global Codex session store. Added root `AGENTS.md` and `docs/codex-handover.md` so future sessions begin with portable project context, current state, workflow, known regressions, paths and documentation references. Raw transcripts remain outside Git; the handover is versioned.

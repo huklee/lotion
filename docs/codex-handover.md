@@ -1,6 +1,8 @@
 # Codex handover: Yestion to Lotion
 
-Updated: 2026-09-10. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
+Updated: 2026-09-13. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
+
+Latest local checkpoint: version 0.2.0 includes Mermaid fenced paste, Markdown clipboard export, line-validated plain text pasting, Backspace deletion of selected blocks, an `@` calendar, and left-aligned TOC labels. `npm run check` passed 100 unit/integration and 90 browser tests on 2026-09-13. A three-option search plan is ready for review, not implemented. Publication/CI evidence is recorded in test-results and implementation-history-log; older status entries below are historical.
 
 ## Project identity
 
@@ -26,11 +28,13 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible small feature additions use a minor increment; this release is 0.2.0, not 1.0.0.
+
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.
 - Use `apply_patch` for source edits. Preserve existing user changes and data.
 - Commit functional changes in small units, run focused tests first, then broader checks. Push only after the applicable checks and documentation are updated.
-- The standard command is `npm run check`; it runs lint, type/build, Vitest and the Playwright suite. It currently has two known WebKit failures listed below.
+- The standard command is `npm run check`; it runs lint, type/build, Vitest and the Playwright suite. The latest full local run passed; the old failures below are historical.
 
 ## Current status and open work
 

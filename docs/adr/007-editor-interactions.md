@@ -9,6 +9,8 @@ The user requires smooth Notion-like browser interactions for dropped images, se
 
 ## Decision and rationale
 
+- Backspace deletes the custom block/section selection as one editor transaction. Normalize selected descendants to their selected parent so nested content is removed once, and clear the selection afterward. Capture the key while a custom selection exists, including when the browser leaves focus on the document body after a gutter drag or toolbar click. Ignore input fields and keys outside the editor; clicking outside clears the selection. Suppress the click generated when a rectangle drag finishes, while ordinary text/input clicks return to text editing. Keep composition and modified shortcuts out of this handler; native editor selections retain BlockNote behavior. Deleting all blocks must leave a usable editor, and one undo restores a selected group.
+
 - Interpret selection boxes as rectangular multi-block selection initiated from the editor gutter. This preserves ordinary text selection inside block content. Offer Shift-based range selection and keyboard alternatives; Escape clears block selection.
 - Use stable block IDs as the selection model. If parent and child are selected, normalize to the parent subtree once to avoid duplicate movement. Once the rectangle selects multiple blocks, both the visible selection handle and selected block surfaces expose one native drag payload for the normalized group.
 - Show a precise insertion marker and auto-scroll near viewport edges while dragging. Commit only at a valid drop target; cancellation leaves the document unchanged.

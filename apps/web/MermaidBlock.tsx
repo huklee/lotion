@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { mermaidFromClipboard } from "./mermaid-paste";
 
 const renderer = () =>
   import("mermaid").then(({ default: mermaid }) => mermaid);
@@ -73,6 +74,15 @@ export function MermaidBlock({
         spellCheck={false}
         maxLength={20000}
         value={code}
+        onPaste={(event) => {
+          const source = mermaidFromClipboard(
+            event.clipboardData.getData("text/plain"),
+          );
+          if (source === null) return;
+          event.preventDefault();
+          event.stopPropagation();
+          onChange(source);
+        }}
         onChange={(event) => onChange(event.target.value)}
       />
       {error ? (

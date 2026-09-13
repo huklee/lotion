@@ -1,5 +1,26 @@
 # Remaining jobs
 
+## 0.2.0 update — 2026-09-13T14:39:13Z
+
+- [x] Delete selected blocks/sections with Backspace, with undo and continued editing.
+- [x] Validate ordinary pasted lines and store them as plain text; retain Mermaid and single-URL paste actions.
+- [x] Add `@` calendar-based date entry with persistent portable date text. File mentions and richer editable date chips remain open.
+- [x] Left-align TOC text while preserving heading-level indentation.
+- [x] Record minor version 0.2.0, feature changelog and reusable version-management guide.
+- [x] Provide and README-link a three-option document-search plan. Implementation remains pending selection of an option.
+- [x] Complete full local verification: lint/type/build, 100 unit/integration tests and 90 browser tests passed.
+- [ ] Confirm GitHub CI for the release commit after pushing.
+
+This update supersedes historical local P0 failure evidence below, but does not assert remote CI success. See the [changelog](changelog.md), [version guide](versioning.md), and [search plan](document-search-plan.md).
+
+## Update — 2026-09-13T09:13:54Z
+
+- [x] Convert a complete fenced Mermaid paste into a diagram, including fence removal in an existing source field.
+- [x] Add Export → Copy page as Markdown for the complete current draft (title and body), with clipboard failure feedback.
+- [x] Verify these changes with `npm run check`: lint/type/build, 98 unit/integration tests, and 75/75 browser cases passed locally.
+
+The historical P0 failures below passed in this local invocation. The corresponding GitHub CI gate is still unverified; the earlier checklist is retained as historical/open tracking rather than claiming a new remote success. The copied Markdown contains current-page text/source and links, not subpages or image bytes.
+
 Recorded: **2026-09-10T05:32:53Z**. Audited application revision: `8423b85` in `/Users/huklee/work/lotion`.
 
 Update **2026-09-10T13:48:20Z**: the requested Lotion rename and install/run guide have been implemented. Rename verification passed lint/type/build and 96 unit/integration tests; 67/69 browser tests passed, including legacy migration in all three browsers. The existing two WebKit failures remain. The checklist below retains the original audit evidence and is not marked complete by this branding/documentation work.

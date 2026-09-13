@@ -34,6 +34,7 @@ import type { Document, TreeNode } from "../../packages/document-schema/index";
 import { api, ApiError, authHeaders } from "./api";
 import { SaveCoordinator } from "./save-coordinator";
 import Editor from "./Editor";
+import { toMarkdown } from "../../packages/markdown/convert";
 
 const sessionId =
   readSetting(sessionStorage, "session") ?? crypto.randomUUID();
@@ -402,6 +403,30 @@ export default function App() {
       setDialog(null);
     } catch (e) {
       handleError(e);
+    }
+  }
+  async function copyPageMarkdown() {
+    if (!active) return;
+    setBusy(true);
+    try {
+      // Read the current draft, including edits still waiting for auto-save.
+      const content = coordinators.current.get(active.id)?.content ?? active;
+      const output = toMarkdown([
+        {
+          id: "title",
+          type: "heading",
+          props: { level: 1 },
+          content: [{ type: "text", text: content.title || "Untitled", styles: {} }],
+        },
+        ...content.blocks,
+      ]);
+      await navigator.clipboard.writeText(output.markdown);
+      setNotice(["Copied this page as Markdown.", ...output.warnings].join(" "));
+      setDialog(null);
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setBusy(false);
     }
   }
   async function exportWorkspace(rootId?: string, portable = false) {
@@ -1228,6 +1253,15 @@ export default function App() {
                   images, and exact document snapshots.
                 </p>
                 <div className="export-options">
+                  {active && (
+                    <button
+                      disabled={busy}
+                      onClick={() => void copyPageMarkdown()}
+                    >
+                      Copy page as Markdown
+                      <span>Title and complete page content</span>
+                    </button>
+                  )}
                   <button
                     disabled={busy}
                     onClick={() => void exportWorkspace()}

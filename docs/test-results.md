@@ -1,5 +1,23 @@
 # Test results
 
+## 2026-09-13T14:39:13Z — 0.2.0 complete local release verification
+
+`npm run check` exited **0** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/build, **100 unit/integration tests**, and **90/90 browser tests** passed. Browser duration: 2.8 minutes. Tests include the earlier CI regressions and all new clipboard, calendar, TOC and Backspace behavior. A preceding focused invocation passed 21/21 cases across Chromium, Firefox and WebKit.
+
+New deletion checks cover parent/child section removal, one-step undo, persistence after reload, ordinary text Backspace, rectangle deletion of all blocks and continued typing. Existing section/rectangle drag/move regressions passed. Clipboard checks verify each stored line is plain text (including literal Markdown, HTML and unsafe-looking links) and survives save/reload; unit checks cover CRLF, empty lines, spaces and rejecting more than 10,000 lines. Calendar tests exercise `@date`, direct date entry, next-month/day selection, insertion, save/reload and Escape cancellation. TOC tests check both computed alignment and actual text-left coordinates while retaining heading indentation.
+
+Intermediate tests exposed focus differences after selection, asynchronous focus calls disrupting native caret placement, and Markdown paste rules formatting text passed through `pasteHTML`. The final implementation scopes Backspace to active custom selections, preserves normal click focus, and inserts validated plain schema nodes without paste rules. Only the complete final invocation above is counted as release verification.
+
+Documentation validation: 24 Markdown files / 84 local links passed before the final result entries; package/lock versions match at 0.2.0, and `git diff --check` passed. The search document contains three reviewed implementation proposals, not an implemented search feature. Large build-chunk warnings remain. GitHub CI for the release commit is pending publication at this checkpoint.
+
+## 2026-09-13T09:13:54Z — Mermaid paste and Markdown clipboard export
+
+`npm run check` exited 0 on macOS arm64: ESLint, TypeScript/production build, **98 unit/integration tests**, and **75/75 browser tests** passed across Chromium, Firefox and WebKit. Existing paste-chooser and legacy-code regressions also passed in this invocation; this is local evidence, not a new GitHub CI result.
+
+New tests cover complete fenced Mermaid recognition (including CRLF), rejecting incomplete/mixed/other-language input, diagram creation from the supplied `graph TD; A --> B;` example, unwrapping a fence in an existing diagram source input without duplicating blocks, rendering, saving and reloading. Chromium uses an actual clipboard write and paste shortcut. Firefox/WebKit dispatch clipboard events into the editor root. Export tests check the latest draft title, bold body, Mermaid fence and final paragraph, successful-copy feedback, denied clipboard writes and retry availability. Chromium reads the actual Clipboard API result; Firefox/WebKit use a clipboard adapter because automated clipboard permissions differ by engine.
+
+The initial browser attempt could not launch because the Playwright browser cache was missing; `npx playwright install chromium firefox webkit` restored it. The six focused new browser cases then passed. An intermediate full check was interrupted to correct handling of native paste events targeting the editor root and add the real Chromium paste path; the final complete invocation above supersedes it. Large-bundle build warnings remain.
+
 ## 2026-09-10T13:48:20Z — Lotion rename verification
 
 Executed `npm run check` in `/Users/huklee/work/lotion`: lint and type/build passed; **96 unit/integration tests passed**, **67/69 browser cases passed**. The new legacy-settings/draft migration scenario passed in Chromium, Firefox and WebKit. Unit/integration tests verify old/new bundle imports, legacy TOC/new marker export, settings precedence and old-draft cleanup after save.

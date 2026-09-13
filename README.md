@@ -1,5 +1,11 @@
 # Lotion
 
+Current version: **0.2.0**. See the [version history and added features](docs/changelog.md).
+
+Release workflow: [version management guide](docs/versioning.md).
+
+검토할 계획: [문서 내 검색 기능 3가지 안](docs/document-search-plan.md).
+
 ## Install and run
 
 Use Node.js 24 LTS and npm (minimum supported Node version: 22.12).
@@ -30,6 +36,18 @@ Optional environment variables: `LOTION_DATA_DIR` (default `data`), `PORT` (defa
 ## About
 
 Lotion is a self-hosted document editor without AI. It supports block editing, automatic saving, page hierarchy, image drops, mentions, Markdown folder import/export, and Mermaid diagrams.
+
+## Paste diagrams and copy Markdown
+
+Paste a complete fenced `mermaid` Markdown block into the editor to create a diagram. Pasting it into an existing Mermaid source field replaces that diagram's source and removes the fences.
+
+Use **Export → Copy page as Markdown** to copy the current page's title and full body, including unsaved edits. Mermaid diagrams are copied as fenced source. This copies the current page only; use ZIP export for subpages and image files.
+
+Select blocks by dragging a selection rectangle or choosing **Select section**, then press **Backspace** to delete them. Use **⌘Z / Ctrl+Z** to undo.
+
+Type **@date** (or type **@** and choose **Date**) to open the calendar, choose a day and insert it. Dates are stored as portable `📅 YYYY-MM-DD` text.
+
+Ordinary clipboard text is checked line by line and pasted as plain paragraphs, preserving literal Markdown/HTML text. Complete Mermaid fences retain diagram conversion; a single HTTP(S) URL retains the link chooser. Oversized pastes show an error rather than silently dropping text. Use Markdown import when you want Markdown formatting interpreted.
 
 ## Tests
 

@@ -260,6 +260,7 @@ a {
 }
 main {
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -654,6 +655,8 @@ h1 span {
   border-radius: 4px;
 }
 .lotion-toc {
+  text-align: left;
+  width: 100%;
   border-left: 2px solid var(--border);
   display: grid;
   gap: 2px;
@@ -669,6 +672,7 @@ h1 span {
   text-transform: uppercase;
 }
 .lotion-toc button {
+  justify-content: flex-start;
   background: transparent;
   border: 0;
   color: var(--text);
@@ -690,6 +694,20 @@ h1 span {
   font-size: 12px;
   padding: 2px 10px;
 }
+.date-picker {
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  background: var(--bg);
+  color: var(--text);
+}
+.date-picker::backdrop { background: #0005; }
+.calendar-header { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 16px; text-align: center; }
+.calendar-grid button { min-height: 32px; }
+.calendar-grid button[aria-pressed="true"] { background: var(--accent); color: white; }
 .lotion-callout {
   align-items: flex-start;
   background: #f4f1e8;

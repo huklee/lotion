@@ -5,6 +5,11 @@ import {
 } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { readableCodeColor } from "./code-colors";
+import { mermaidFromClipboard } from "./mermaid-paste";
+import { clipboardLines } from "./clipboard-lines";
+import { DatePicker } from "./DatePicker";
+import { blockToNode } from "@blocknote/core";
+import { contentSchema } from "../../packages/document-schema/index";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
@@ -205,6 +210,7 @@ export default function Editor({
   const mounted = useRef(true);
   const host = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<string[]>([]);
+  const rectangleClick = useRef(false);
   const [rectangle, setRectangle] = useState<{
     x: number;
     y: number;
@@ -216,6 +222,41 @@ export default function Editor({
   const [dropLine, setDropLine] = useState<number | null>(null);
   const [pasteChoice, setPasteChoice] = useState<string | null>(null);
   const [pasteLoading, setPasteLoading] = useState(false);
+  const [dateSelection, setDateSelection] = useState<{ from: number; to: number } | null>(null);
+  useEffect(() => {
+    if (!selected.length) return;
+    const outside = (event: PointerEvent) => {
+      if (!host.current?.contains(event.target as Node)) setSelected([]);
+    };
+    const removeSelection = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (
+        event.key !== "Backspace" || pasteLoading || event.isComposing ||
+        event.metaKey || event.ctrlKey || event.altKey ||
+        target.closest("input, textarea, select") ||
+        (target !== document.body && !host.current?.contains(target))
+      ) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const ids: string[] = [];
+      const collect = (blocks: Block[]) => {
+        for (const block of blocks) {
+          if (selected.includes(block.id)) ids.push(block.id);
+          else collect(block.children ?? []);
+        }
+      };
+      collect(editor.document as unknown as Block[]);
+      if (ids.length) editor.transact(() => editor.removeBlocks(ids));
+      setSelected([]);
+      editor.focus();
+    };
+    window.addEventListener("keydown", removeSelection, true);
+    window.addEventListener("pointerdown", outside, true);
+    return () => {
+      window.removeEventListener("keydown", removeSelection, true);
+      window.removeEventListener("pointerdown", outside, true);
+    };
+  }, [selected, pasteLoading, editor]);
   const pasteAbort = useRef<AbortController | null>(null);
   const [pastePosition, setPastePosition] = useState({ left: 0, top: 0 });
   const pasteMenu = useRef<HTMLDivElement>(null);
@@ -364,6 +405,7 @@ export default function Editor({
       if (!active && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 5)
         return;
       active = true;
+      rectangleClick.current = true;
       e.preventDefault();
       window.getSelection()?.removeAllRanges();
       const box = {
@@ -622,8 +664,19 @@ export default function Editor({
     [editor, onCreateSubpage],
   );
   const atMentionItems = useCallback(
-    async (query: string) => mentionItems(query),
-    [pages],
+    async (query: string) => [
+      ...filterSuggestionItems([{
+        title: "Date", subtext: "Choose a date from the calendar",
+        aliases: ["calendar", "today", "날짜", "달력"], group: "Lotion",
+        icon: <BookOpenText size={18} />,
+        onItemClick: () => {
+          const { from, to } = editor._tiptapEditor.state.selection;
+          setDateSelection({ from, to });
+        },
+      }], query),
+      ...mentionItems(query),
+    ],
+    [pages, editor],
   );
   const bracketMentionItems = useCallback(
     async (query: string) => mentionItems(query),
@@ -723,6 +776,11 @@ export default function Editor({
     <div
       className="editor-shell"
       ref={host}
+      onPointerDownCapture={(event) => {
+        rectangleClick.current = false;
+        if ((event.target as HTMLElement).closest("input, textarea, select"))
+          setSelected([]);
+      }}
       onKeyDownCapture={(e) => {
         if (
           (e.metaKey || e.ctrlKey) &&
@@ -735,6 +793,19 @@ export default function Editor({
         }
       }}
       onClickCapture={(event) => {
+        if (rectangleClick.current) {
+          rectangleClick.current = false;
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        if ((event.target as HTMLElement).closest(".bn-inline-content")) {
+          if (selected.length) {
+            (event.target as HTMLElement).closest<HTMLElement>('[contenteditable="true"]')
+              ?.focus({ preventScroll: true });
+          }
+          setSelected([]);
+        }
         const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>(
           ".bn-inline-content a[href]",
         );
@@ -754,8 +825,47 @@ export default function Editor({
         if (href && initial.linkPreviews?.[href]) setPreviewHref(href);
       }}
       onPasteCapture={(event) => {
-        const value = event.clipboardData.getData("text/plain").trim();
-        if (!/^https?:\/\/\S+$/i.test(value)) return;
+        // Custom block inputs own their paste events (including Mermaid source).
+        if (
+          (event.target as HTMLElement).closest(
+            'textarea, input, [contenteditable="false"]',
+          )
+        ) return;
+        const raw = event.clipboardData.getData("text/plain");
+        const value = raw.trim();
+        const code = mermaidFromClipboard(value);
+        if (code !== null) {
+          event.preventDefault();
+          event.stopPropagation();
+          insertOrUpdateBlockForSlashMenu(editor, {
+            type: "mermaid",
+            props: { code },
+          });
+          return;
+        }
+        if (!/^https?:\/\/\S+$/i.test(value)) {
+          if (!raw || event.clipboardData.files.length) return;
+          event.preventDefault();
+          event.stopPropagation();
+          try {
+            const blocks = clipboardLines(raw);
+            const checked = contentSchema.safeParse({
+              title: initial.title, blocks: [...editor.document, ...blocks],
+            });
+            if (!checked.success) throw new Error("This paste exceeds the document's save limits. Paste a smaller section.");
+            // Insert schema nodes directly: pasteHTML still applies Markdown
+            // paste rules such as **bold**, even for otherwise plain paragraphs.
+            const tiptap = editor._tiptapEditor;
+            tiptap.commands.insertContentAt(
+              { from: tiptap.state.selection.from, to: tiptap.state.selection.to },
+              blocks.map((block) => blockToNode(block as any, tiptap.schema, editor.schema.styleSchema).toJSON()),
+              { applyPasteRules: false, applyInputRules: false },
+            );
+          } catch (error) {
+            setPreviewError((error as Error).message);
+          }
+          return;
+        }
         event.preventDefault();
         event.stopPropagation();
         pasteSelection.current = {
@@ -871,7 +981,13 @@ export default function Editor({
         slashMenu={false}
         onChange={() => onChange(editor.document as unknown as Block[])}
       >
-        <SuggestionMenuController triggerCharacter="/" getItems={slashItems} />
+        <SuggestionMenuController
+          triggerCharacter="/"
+          getItems={slashItems}
+          // A fading, closing menu keeps Floating UI's resize observer alive
+          // while the failed-command status changes layout in WebKit.
+          floatingUIOptions={{ useTransitionStylesProps: { duration: 0 } }}
+        />
         <SuggestionMenuController
           triggerCharacter="@"
           getItems={atMentionItems}
@@ -881,6 +997,17 @@ export default function Editor({
           getItems={bracketMentionItems}
         />
       </BlockNoteView>
+      {dateSelection && (
+        <DatePicker
+          onCancel={() => { setDateSelection(null); editor.focus(); }}
+          onInsert={(date) => {
+            editor._tiptapEditor.commands.setTextSelection(dateSelection);
+            editor.insertInlineContent(`📅 ${date} `);
+            setDateSelection(null);
+            editor.focus();
+          }}
+        />
+      )}
       {pasteChoice && (
         <div
           ref={pasteMenu}

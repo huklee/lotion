@@ -22,6 +22,10 @@ All project plans, design records, implementation notes, test plans, and test re
 
 ## Reading order
 
+- [Version history](changelog.md): features, fixes and compatibility for each version.
+- [Version management guide](versioning.md): version increments, release documentation and verification.
+- [문서 내 검색 기능 계획](document-search-plan.md): 3가지 접근법과 추천안.
+
 1. [Architecture](architecture.md): scope, stack, boundaries, data, APIs, persistence, portability, and deployment.
 2. [Roadmap](roadmap.md): milestones, tasks, dependencies, and completion gates.
 3. [Test plan](test-plan.md): scenarios, execution requirements, fixtures, and release criteria.
