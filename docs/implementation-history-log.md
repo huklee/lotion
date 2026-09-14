@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-09-14T22:27:44Z — 0.3.0 published and CI verified
+
+Published release commit `dbce105` and Linux-portable test follow-up `5ad6cce` to `main`. [GitHub verification 34903723704](https://github.com/huklee/lotion/actions/runs/34903723704) succeeded on Ubuntu / Node 24, including the complete `npm run check`. This documentation-only follow-up records the remote result; application version remains 0.3.0 and no release tag was created. User data remains ignored and untouched.
+
 ## 2026-09-14T22:12:57Z — 0.3.0 complete local gate passed
 
 Final `npm run check` passed lint, type/production build, 101 unit/integration tests and 105 browser tests across Chromium, Firefox, and WebKit. The folder-import pagination regression found during the full gate was corrected in the import completion path and passed the complete rerun. Documentation, version metadata, and application changes are ready for commit/push; this entry does not yet claim remote CI success.

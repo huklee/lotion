@@ -11,7 +11,7 @@
 - [x] Disable misleading browser dictionary underlines in document content.
 - [x] Keep newly imported roots visible beyond the sidebar's first 100 pages.
 - [x] Complete the local release check: lint/type/build, 101 unit/integration tests, and 105 browser tests passed.
-- [ ] Confirm the corresponding GitHub CI for the 0.3.0 release commit after push.
+- [x] Confirm GitHub CI for the 0.3.0 release and Linux-portable test follow-up: [run 34903723704](https://github.com/huklee/lotion/actions/runs/34903723704) passed.
 
 The document-search implementation remains pending selection from the [three-option plan](document-search-plan.md).
 

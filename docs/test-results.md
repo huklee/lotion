@@ -1,5 +1,9 @@
 # Test results
 
+## 2026-09-14T22:27:44Z — 0.3.0 GitHub CI confirmed
+
+The test/documentation follow-up commit `5ad6cce` was pushed to `origin/main`. [GitHub Actions run 34903723704](https://github.com/huklee/lotion/actions/runs/34903723704) completed **successfully** on Ubuntu / Node 24 in 5 minutes 35 seconds: checkout, `npm ci`, browser installation, and the complete `npm run check` passed. This remotely verifies the 0.3.0 application release and its Linux-portable regression suite.
+
 ## 2026-09-14T22:12:57Z — 0.3.0 complete local release verification
 
 The final `npm run check` exited **0** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **101/101 unit and integration tests**, and **105/105 browser tests** passed across Chromium, Firefox, and WebKit in 2.9 minutes. Coverage includes favorites persistence/cross-tab sync, native modified-click links, route history, checklist click/shortcut/paste behavior, spellcheck suppression, calendar Enter acceptance, blank-line Markdown clipboard output, and all prior regressions.
