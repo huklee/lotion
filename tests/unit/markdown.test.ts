@@ -39,3 +39,25 @@ it("preserves mixed text/image/text order", () =>
   expect(
     fromMarkdown("before ![x](a.png) after").blocks.map((b) => b.type),
   ).toEqual(["paragraph", "image", "paragraph"]));
+
+it("exports whitespace-only editor blocks as blank Markdown without HTML space entities", () => {
+  const result = toMarkdown([
+    {
+      id: "before",
+      type: "paragraph",
+      content: [{ type: "text", text: "Before", styles: {} }],
+    },
+    {
+      id: "blank",
+      type: "paragraph",
+      content: [{ type: "text", text: "   ", styles: {} }],
+    },
+    {
+      id: "after",
+      type: "paragraph",
+      content: [{ type: "text", text: "After", styles: {} }],
+    },
+  ]);
+  expect(result.markdown).not.toContain("&#x20;");
+  expect(result.markdown).toBe("Before\n\n\n\nAfter\n");
+});

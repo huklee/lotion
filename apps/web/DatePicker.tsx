@@ -11,12 +11,18 @@ export function DatePicker({
   onCancel: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const insertButton = useRef<HTMLButtonElement>(null);
   const [selected, setSelected] = useState(() => dateValue(new Date()));
   const [month, setMonth] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   );
   useEffect(() => {
     dialog.current?.showModal();
+    const focusTimer = window.setTimeout(
+      () => insertButton.current?.focus(),
+      50,
+    );
+    return () => window.clearTimeout(focusTimer);
   }, []);
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   return (
@@ -27,6 +33,12 @@ export function DatePicker({
       onCancel={(event) => {
         event.preventDefault();
         onCancel();
+      }}
+      onKeyDownCapture={(event) => {
+        if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+        event.preventDefault();
+        event.stopPropagation();
+        onInsert(selected);
       }}
     >
       <h2>Insert date</h2>
@@ -99,6 +111,7 @@ export function DatePicker({
           Cancel
         </button>
         <button
+          ref={insertButton}
           type="button"
           disabled={!/^\d{4}-\d{2}-\d{2}$/.test(selected)}
           onClick={() => onInsert(selected)}

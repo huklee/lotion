@@ -224,6 +224,32 @@ export default function Editor({
   const [pasteLoading, setPasteLoading] = useState(false);
   const [dateSelection, setDateSelection] = useState<{ from: number; to: number } | null>(null);
   useEffect(() => {
+    const toggleChecklist = (event: PointerEvent) => {
+      if (!host.current?.contains(event.target as Node)) return;
+      const checkbox = (event.target as HTMLElement).closest<HTMLInputElement>(
+        '[data-content-type="checkListItem"] input[type="checkbox"]',
+      );
+      const id = checkbox
+        ?.closest<HTMLElement>(".bn-block-outer")
+        ?.dataset.id;
+      if (!checkbox || !id) return;
+      const block = editor.getBlock(id);
+      const checked =
+        block?.type !== "checkListItem" || block.props.checked !== true;
+      // Let the browser finish its pointer/click sequence before replacing
+      // BlockNote's imperative checkbox DOM. This avoids Firefox retrying a
+      // click against a node detached during pointer-down.
+      window.setTimeout(() => {
+        if (editor.getBlock(id)?.type === "checkListItem")
+          editor.updateBlock(id, { props: { checked } });
+      }, 0);
+    };
+    // BlockNote stops the imperatively-created input event before it reaches
+    // React, so listen above the editor at the window capture boundary.
+    window.addEventListener("pointerup", toggleChecklist, true);
+    return () => window.removeEventListener("pointerup", toggleChecklist, true);
+  }, [editor]);
+  useEffect(() => {
     if (!selected.length) return;
     const outside = (event: PointerEvent) => {
       if (!host.current?.contains(event.target as Node)) setSelected([]);
@@ -776,12 +802,29 @@ export default function Editor({
     <div
       className="editor-shell"
       ref={host}
+      spellCheck="false"
       onPointerDownCapture={(event) => {
         rectangleClick.current = false;
         if ((event.target as HTMLElement).closest("input, textarea, select"))
           setSelected([]);
       }}
       onKeyDownCapture={(e) => {
+        if (
+          (e.ctrlKey || e.metaKey) &&
+          !e.altKey &&
+          !e.shiftKey &&
+          e.key === "Enter"
+        ) {
+          const current = editor.getTextCursorPosition().block;
+          if (current.type === "checkListItem") {
+            e.preventDefault();
+            e.stopPropagation();
+            editor.updateBlock(current.id, {
+              props: { checked: !current.props.checked },
+            });
+            return;
+          }
+        }
         if (
           (e.metaKey || e.ctrlKey) &&
           e.key.toLowerCase() === "z" &&
@@ -849,8 +892,22 @@ export default function Editor({
           event.stopPropagation();
           try {
             const blocks = clipboardLines(raw);
+            const current = editor.getTextCursorPosition().block;
+            // Inserting paragraph nodes at an inline checklist selection
+            // changes the containing block into a paragraph. Keep checklist
+            // semantics for every pasted line instead.
+            const inserted = current.type === "checkListItem"
+              ? blocks.map((block, index) => ({
+                  ...block,
+                  type: "checkListItem" as const,
+                  props: {
+                    checked:
+                      index === 0 ? current.props.checked === true : false,
+                  },
+                }))
+              : blocks;
             const checked = contentSchema.safeParse({
-              title: initial.title, blocks: [...editor.document, ...blocks],
+              title: initial.title, blocks: [...editor.document, ...inserted],
             });
             if (!checked.success) throw new Error("This paste exceeds the document's save limits. Paste a smaller section.");
             // Insert schema nodes directly: pasteHTML still applies Markdown
@@ -858,7 +915,7 @@ export default function Editor({
             const tiptap = editor._tiptapEditor;
             tiptap.commands.insertContentAt(
               { from: tiptap.state.selection.from, to: tiptap.state.selection.to },
-              blocks.map((block) => blockToNode(block as any, tiptap.schema, editor.schema.styleSchema).toJSON()),
+              inserted.map((block) => blockToNode(block as any, tiptap.schema, editor.schema.styleSchema).toJSON()),
               { applyPasteRules: false, applyInputRules: false },
             );
           } catch (error) {

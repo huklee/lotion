@@ -194,6 +194,13 @@ export function toMarkdown(blocks: Block[]): {
     const output: any[] = [];
     for (const b of items) {
       const content = toInline(b.content);
+      // remark encodes a whitespace-only paragraph as `&#x20;`. Empty editor
+      // blocks should become ordinary blank Markdown lines when copied.
+      const portableContent = content.every(
+        (item: any) => item.type === "text" && /^\s*$/.test(item.value),
+      )
+        ? []
+        : content;
       const props = b.props ?? {};
       if (
         ["bulletListItem", "numberedListItem", "checkListItem"].includes(b.type)
@@ -215,7 +222,7 @@ export function toMarkdown(blocks: Block[]): {
           checked: b.type === "checkListItem" ? !!props.checked : null,
           spread: false,
           children: [
-            { type: "paragraph", children: content },
+            { type: "paragraph", children: portableContent },
             ...convert(b.children ?? []),
           ],
         });
@@ -225,7 +232,7 @@ export function toMarkdown(blocks: Block[]): {
         output.push({
           type: "heading",
           depth: Math.min(6, Math.max(1, Number(props.level) || 1)),
-          children: content,
+          children: portableContent,
         });
       else if (b.type === "tableOfContents") {
         output.push({
@@ -239,7 +246,7 @@ export function toMarkdown(blocks: Block[]): {
         output.push({
           type: "blockquote",
           children: [
-            { type: "paragraph", children: content },
+            { type: "paragraph", children: portableContent },
             ...convert(b.children ?? []),
           ],
         });
@@ -265,7 +272,7 @@ export function toMarkdown(blocks: Block[]): {
         output.push({
           type: "blockquote",
           children: [
-            { type: "paragraph", children: content },
+            { type: "paragraph", children: portableContent },
             ...convert(b.children ?? []),
           ],
         });
@@ -304,7 +311,7 @@ export function toMarkdown(blocks: Block[]): {
           })),
         });
       else {
-        output.push({ type: "paragraph", children: content });
+        output.push({ type: "paragraph", children: portableContent });
         if (b.type !== "paragraph")
           warnings.push(`Portable Markdown flattens ${b.type}`);
       }

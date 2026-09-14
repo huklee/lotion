@@ -1,5 +1,20 @@
 # Remaining jobs
 
+## 0.3.0 update — 2026-09-15
+
+- [x] Add persistent browser favorites with current page titles and cross-tab synchronization.
+- [x] Add browser-history navigation and native modified-click sidebar links.
+- [x] Restore checklist click completion and add Ctrl+Enter/⌘Enter toggling.
+- [x] Preserve checklist types during line-validated plain-text paste.
+- [x] Export whitespace-only blocks as blank Markdown lines rather than `&#x20;`.
+- [x] Make the next Enter in a newly opened `@date` calendar insert today.
+- [x] Disable misleading browser dictionary underlines in document content.
+- [x] Keep newly imported roots visible beyond the sidebar's first 100 pages.
+- [x] Complete the local release check: lint/type/build, 101 unit/integration tests, and 105 browser tests passed.
+- [ ] Confirm the corresponding GitHub CI for the 0.3.0 release commit after push.
+
+The document-search implementation remains pending selection from the [three-option plan](document-search-plan.md).
+
 ## 0.2.0 update — 2026-09-13T14:39:13Z
 
 - [x] Delete selected blocks/sections with Backspace, with undo and continued editing.

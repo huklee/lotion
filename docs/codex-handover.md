@@ -1,12 +1,12 @@
 # Codex handover: Yestion to Lotion
 
-Updated: 2026-09-13. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
+Updated: 2026-09-15. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Latest local checkpoint: version 0.2.0 includes Mermaid fenced paste, Markdown clipboard export, line-validated plain text pasting, Backspace deletion of selected blocks, an `@` calendar, and left-aligned TOC labels. `npm run check` passed 100 unit/integration and 90 browser tests on 2026-09-13. A three-option search plan is ready for review, not implemented. Publication/CI evidence is recorded in test-results and implementation-history-log; older status entries below are historical.
+Latest worktree checkpoint: version 0.3.0 adds browser favorites, native sidebar links, and Back/Forward history, plus checklist completion/paste fixes, blank-line Markdown copying, today-by-Enter calendar input, and editor spellcheck suppression. The complete local gate passes 101 unit/integration and 105 browser tests; publication/CI evidence is recorded in test-results and implementation-history-log when finished. A three-option search plan is ready for review, not implemented.
 
 ## Project identity
 
-- Current published application version: **0.2.0**, commit `cd018bc`. [GitHub CI](https://github.com/huklee/lotion/actions/runs/34763348532) passed 100 unit/integration and 90 browser tests on Ubuntu / Node 24. Earlier failure records below are historical. Read the latest entries before resuming old backlog work.
+- Current prepared application version: **0.3.0**. The last remotely verified release remains **0.2.0**, commit `cd018bc`; [GitHub CI](https://github.com/huklee/lotion/actions/runs/34763348532) passed 100 unit/integration and 90 browser tests on Ubuntu / Node 24. Read the latest test/history entries for 0.3.0 publication status before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -30,7 +30,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible small feature additions use a minor increment; this release is 0.2.0, not 1.0.0.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible small feature additions use a minor increment; the prepared release is 0.3.0, not a major increment.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.

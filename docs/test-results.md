@@ -1,5 +1,17 @@
 # Test results
 
+## 2026-09-14T22:12:57Z — 0.3.0 complete local release verification
+
+The final `npm run check` exited **0** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **101/101 unit and integration tests**, and **105/105 browser tests** passed across Chromium, Firefox, and WebKit in 2.9 minutes. Coverage includes favorites persistence/cross-tab sync, native modified-click links, route history, checklist click/shortcut/paste behavior, spellcheck suppression, calendar Enter acceptance, blank-line Markdown clipboard output, and all prior regressions.
+
+Two preceding full attempts each passed 104/105 browser cases and exposed the same WebKit folder-import assertion once the shared isolated test workspace exceeded 100 root pages. The imported hierarchy and editor link were valid, but its root was outside the sidebar's first rendered page. The final implementation expands the rendered root limit after a successful import; the complete rerun above passed. A focused WebKit folder-import run also passed 3/3. Large build-chunk warnings remain non-fatal. GitHub CI is pending the release push at this checkpoint.
+
+## 2026-09-14T21:50:33Z — 0.3.0 focused editor verification
+
+`npm run lint`, `npm run typecheck`, and 14 focused Markdown/clipboard unit tests passed. After a production rebuild, six focused browser scenarios passed across Chromium, Firefox, and WebKit: checklist mouse completion, Ctrl+Enter/⌘Enter toggling, checklist-preserving multi-line paste and reload, inherited spellcheck suppression, and next-Enter insertion of today's date. Earlier iterations correctly exposed the production-test server's stale build, BlockNote's stopped checkbox event, and Firefox target detachment; those were corrected before the passing run.
+
+This focused checkpoint is superseded by the complete passing release gate above.
+
 ## 2026-09-13T14:45:53Z — 0.2.0 GitHub CI confirmed
 
 Release commit `cd018bc` was pushed to `origin/main`. [GitHub Actions run 34763348532](https://github.com/huklee/lotion/actions/runs/34763348532) completed **successfully** on Ubuntu / Node 24: `npm ci`, browser installation and `npm run check` passed, including **100 unit/integration tests** and **90/90 browser tests** (3.1 minutes). This verifies the exact application commit and resolves the prior local/CI regression gate. The following documentation-only commit records this result without changing the application version.

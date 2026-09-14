@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.2.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.3.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -41,13 +41,19 @@ Lotion is a self-hosted document editor without AI. It supports block editing, a
 
 Paste a complete fenced `mermaid` Markdown block into the editor to create a diagram. Pasting it into an existing Mermaid source field replaces that diagram's source and removes the fences.
 
-Use **Export → Copy page as Markdown** to copy the current page's title and full body, including unsaved edits. Mermaid diagrams are copied as fenced source. This copies the current page only; use ZIP export for subpages and image files.
+Use **Export → Copy page as Markdown** to copy the current page's title and full body, including unsaved edits. Mermaid diagrams are copied as fenced source, and blank editor blocks remain blank lines rather than `&#x20;`. This copies the current page only; use ZIP export for subpages and image files.
 
 Select blocks by dragging a selection rectangle or choosing **Select section**, then press **Backspace** to delete them. Use **⌘Z / Ctrl+Z** to undo.
 
-Type **@date** (or type **@** and choose **Date**) to open the calendar, choose a day and insert it. Dates are stored as portable `📅 YYYY-MM-DD` text.
+Type **@date** (or type **@** and choose **Date**) to open the calendar, choose a day and insert it. Press Enter once more immediately after opening to insert today. Dates are stored as portable `📅 YYYY-MM-DD` text.
 
 Ordinary clipboard text is checked line by line and pasted as plain paragraphs, preserving literal Markdown/HTML text. Complete Mermaid fences retain diagram conversion; a single HTTP(S) URL retains the link chooser. Oversized pastes show an error rather than silently dropping text. Use Markdown import when you want Markdown formatting interpreted.
+
+Checklist items can be completed by clicking their checkbox or pressing **Ctrl+Enter / ⌘Enter** while editing the item. Multi-line plain-text paste inside a checklist retains checklist blocks. Browser spellcheck is disabled in the document editor to avoid misleading red dictionary underlines on code, product names, and mixed-language text.
+
+## Favorites and navigation
+
+Mark a page with the top-bar star to add it to **Favorites** in the sidebar. Favorites persist in this browser and sync across its tabs; they are not server-side workspace data. Page navigation supports browser Back/Forward. Use ⌘click on macOS or Ctrl+click on Windows/Linux on sidebar links to open another tab (Shift+click follows the browser's new-window behavior).
 
 ## Tests
 

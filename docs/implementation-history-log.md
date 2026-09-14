@@ -1,5 +1,17 @@
 # Implementation history log
 
+## 2026-09-14T22:12:57Z — 0.3.0 complete local gate passed
+
+Final `npm run check` passed lint, type/production build, 101 unit/integration tests and 105 browser tests across Chromium, Firefox, and WebKit. The folder-import pagination regression found during the full gate was corrected in the import completion path and passed the complete rerun. Documentation, version metadata, and application changes are ready for commit/push; this entry does not yet claim remote CI success.
+
+## 2026-09-14T21:50:33Z — 0.3.0 navigation and editor fixes prepared
+
+Prepared the backward-compatible 0.3.0 minor release. Added persistent browser favorites, native sidebar page links with modified-click behavior, and route-aware browser Back/Forward history. Fixed checklist completion by mouse and Ctrl+Enter/⌘Enter, retained checklist types during validated plain-text paste, removed `&#x20;` output for whitespace-only Markdown blocks, made the next calendar Enter accept today, and disabled misleading browser dictionary underlines in document content.
+
+Focused lint/type/unit checks and six cross-browser checklist/date scenarios passed. The complete local release gate is recorded above; commit, push, and GitHub CI status are recorded separately when complete. User data under `data/` remains untouched and untracked.
+
+The full browser gate exposed a deterministic pagination edge: after shared test data exceeded 100 root pages, WebKit's newly imported folder was valid but hidden behind the sidebar's initial render limit. Import now expands that limit to include all current roots, keeping the new folder visible without removing normal incremental rendering.
+
 ## 2026-09-13T14:45:53Z — 0.2.0 published and CI verified
 
 Committed and pushed `cd018bc` (`feat: release v0.2.0 clipboard, calendar and block editing improvements`) to `main`. [GitHub verification](https://github.com/huklee/lotion/actions/runs/34763348532) succeeded on Ubuntu / Node 24 with 100 unit/integration tests and 90 browser tests. Updated release/backlog/handover evidence in this documentation-only follow-up; version stays 0.2.0. No release tag was created. User data remains untracked and untouched.

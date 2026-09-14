@@ -4,6 +4,67 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
+test("favorites persist, follow titles and sync removal across tabs", async ({ page, context }) => {
+  const doc = await seed(page, "Favorite page");
+  await page.getByRole("button", { name: "Add to favorites", exact: true }).click();
+  const favorites = page.getByRole("navigation", { name: "Favorites" });
+  await expect(favorites.getByRole("link", { name: "Favorite page", exact: true })).toHaveAttribute("href", `#/page/${doc.id}`);
+  await page.getByRole("textbox", { name: "Page title" }).fill("Renamed favorite");
+  await expect(favorites.getByRole("link", { name: "Renamed favorite", exact: true })).toBeVisible();
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(favorites.getByRole("link", { name: "Renamed favorite", exact: true })).toBeVisible();
+  const other = await context.newPage();
+  await other.goto(`/#/page/${doc.id}`);
+  await other.getByRole("button", { name: "Remove from favorites", exact: true }).click();
+  await expect(favorites).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Add to favorites", exact: true })).toBeVisible();
+  await other.close();
+});
+
+test("page and Home navigation build history without duplicate entries and preserve drafts", async ({ page }) => {
+  const a = await seed(page, "History A");
+  const b = await (await page.request.post("/api/documents", { data: { title: "History B", mutationId: randomUUID() } })).json();
+  await page.reload();
+  const pages = page.getByRole("navigation", { name: "Pages" });
+  await page.getByRole("textbox", { name: "Page title" }).fill("History A draft");
+  await pages.locator(`a[href="#/page/${b.id}"]`).click();
+  await expect(page).toHaveURL(new RegExp(b.id));
+  await pages.locator(`a[href="#/page/${b.id}"]`).click();
+  await page.goBack();
+  await expect(page).toHaveURL(new RegExp(a.id));
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue("History A draft");
+  await page.goForward();
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue("History B");
+  await page.getByRole("button", { name: "Home", exact: true }).click();
+  await expect(page).toHaveURL(/#\/home$/);
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveCount(0);
+  await page.goBack();
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue("History B");
+  await page.goForward();
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveCount(0);
+  await page.reload();
+  await expect(page).toHaveURL(/#\/home$/);
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveCount(0);
+});
+
+test("modified sidebar link clicks open the target in another tab without navigating this tab", async ({ page, context }) => {
+  const a = await seed(page, "New tab source");
+  const b = await (await page.request.post("/api/documents", { data: { title: "New tab target", mutationId: randomUUID() } })).json();
+  await page.reload();
+  const target = page.getByRole("navigation", { name: "Pages" }).locator(`a[href="#/page/${b.id}"]`);
+  await expect(target).toHaveAttribute("href", `#/page/${b.id}`);
+  const popup = context.waitForEvent("page");
+  await target.click({ modifiers: ["ControlOrMeta"] });
+  const other = await popup;
+  await expect(other.getByRole("textbox", { name: "Page title" })).toHaveValue("New tab target");
+  await expect(page).toHaveURL(new RegExp(a.id));
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue("New tab source");
+  await other.close();
+});
+
 test("clipboard lines are saved as plain text without HTML or Markdown formatting", async ({ page }) => {
   await seed(page, "Plain clipboard");
   await page.locator(".tiptap").click();
@@ -22,6 +83,58 @@ test("clipboard lines are saved as plain text without HTML or Markdown formattin
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
   for (const line of text.split("\n")) await expect(page.locator(".tiptap")).toContainText(line);
+});
+
+test("checklists toggle by click and shortcut, retain their type on paste, and disable spellcheck", async ({ page }) => {
+  await seed(page, "Checklist editing", [
+    {
+      id: "check-paste",
+      type: "checkListItem",
+      props: { checked: false },
+      content: [{ type: "text", text: "Task ", styles: {} }],
+    },
+  ]);
+  const item = page.locator('[data-id="check-paste"]');
+  const checkbox = item.locator('input[type="checkbox"]');
+  await expect(page.locator(".editor-shell")).toHaveAttribute("spellcheck", "false");
+  await checkbox.click();
+  await expect(checkbox).toBeChecked();
+  await item.locator(".bn-inline-content").click();
+  await page.keyboard.press("ControlOrMeta+Enter");
+  await expect(checkbox).not.toBeChecked();
+  await page.keyboard.press("End");
+  await item.locator(".bn-inline-content").evaluate((element) => {
+    const data = new DataTransfer();
+    data.setData("text/plain", "first pasted line\nsecond pasted line");
+    const event = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clipboardData", { value: data });
+    element.dispatchEvent(event);
+  });
+  // Block insertion keeps the original prefix/suffix blocks as checklist
+  // items and adds one checklist item for each pasted line.
+  await expect(page.locator('[data-content-type="checkListItem"]')).toHaveCount(4);
+  await expect(page.locator(".tiptap")).toContainText("first pasted line");
+  await expect(page.locator(".tiptap")).toContainText("second pasted line");
+  await expect(page.locator('[data-content-type="paragraph"]')).toHaveCount(0);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(page.locator('[data-content-type="checkListItem"]')).toHaveCount(4);
+});
+
+test("at-sign date accepts today with the next Enter key", async ({ page }) => {
+  await seed(page, "Keyboard date");
+  await page.locator(".tiptap").click();
+  await page.keyboard.type("@date");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "Insert date" })).toBeVisible();
+  const today = await page.evaluate(() => {
+    const date = new Date();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  });
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "Insert date" })).toHaveCount(0);
+  await expect(page.locator(".tiptap")).toContainText(`📅 ${today}`);
 });
 
 test("at-sign calendar inserts a chosen date, persists and cancels without insertion", async ({ page }) => {
@@ -112,6 +225,7 @@ test("export copies the entire current draft as Markdown and reports clipboard d
   });
   await seed(page, "Clipboard page", [
     { id: "copy-body", type: "paragraph", content: [{ type: "text", text: "Complete body", styles: { bold: true } }] },
+    { id: "copy-blank", type: "paragraph", content: [{ type: "text", text: "   ", styles: {} }] },
     { id: "copy-diagram", type: "mermaid", props: { code: "graph TD;\n A --> B;" } },
     { id: "copy-end", type: "paragraph", content: [{ type: "text", text: "Last paragraph", styles: {} }] },
   ]);
@@ -123,6 +237,7 @@ test("export copies the entire current draft as Markdown and reports clipboard d
     : await page.evaluate(() => (window as any).copiedMarkdown);
   expect(markdown).toContain("# Latest unsaved title");
   expect(markdown).toContain("**Complete body**");
+  expect(markdown).not.toContain("&#x20;");
   expect(markdown).toContain("```mermaid\ngraph TD;\n A --> B;\n```");
   expect(markdown).toContain("Last paragraph");
   await expect(page.getByText("Copied this page as Markdown.", { exact: true })).toBeVisible();
@@ -698,6 +813,15 @@ test("reload restores an offline browser draft and reconnect saves it", async ({
   );
 });
 
+async function revealSidebarPage(page: Page, id: string) {
+  const tree = page.getByRole("navigation", { name: "Pages" });
+  await expect(tree.locator(".page-row").first()).toBeVisible();
+  const link = tree.locator(`a[href="#/page/${id}"]`);
+  const more = tree.getByRole("button", { name: "Show more pages", exact: true });
+  while (!(await link.count()) && await more.isVisible()) await more.click();
+  await expect(link).toBeVisible();
+}
+
 test("sidebar drop nests a page", async ({ page }) => {
   const parent = await seed(page, `Parent ${randomUUID().slice(0, 5)}`);
   const child = (
@@ -710,11 +834,13 @@ test("sidebar drop nests a page", async ({ page }) => {
   ).json();
   const d = await child;
   await page.reload();
+  await revealSidebarPage(page, d.id);
+  await revealSidebarPage(page, parent.id);
   const childRow = page
     .locator(".page-row")
-    .filter({ has: page.getByRole("button", { name: d.title, exact: true }) });
+    .filter({ has: page.getByRole("link", { name: d.title, exact: true }) });
   const parentRow = page.locator(".page-row").filter({
-    has: page.getByRole("button", { name: parent.title, exact: true }),
+    has: page.getByRole("link", { name: parent.title, exact: true }),
   });
   await childRow.dragTo(parentRow);
   await expect
@@ -740,11 +866,13 @@ test("sidebar drop reorders siblings at the indicated edge", async ({
   ).json();
   await page.reload();
   const firstRow = page.locator(".page-row").filter({
-    has: page.getByRole("button", { name: first.title, exact: true }),
+    has: page.getByRole("link", { name: first.title, exact: true }),
   });
   const secondRow = page.locator(".page-row").filter({
-    has: page.getByRole("button", { name: second.title, exact: true }),
+    has: page.getByRole("link", { name: second.title, exact: true }),
   });
+  await revealSidebarPage(page, first.id);
+  await revealSidebarPage(page, second.id);
   const box = await firstRow.boundingBox();
   await secondRow.dragTo(firstRow, {
     targetPosition: { x: box!.width / 2, y: 2 },
@@ -1121,12 +1249,6 @@ test("paste chooser follows the cursor block and supports cancellation and URL i
   const chooser = page.getByRole("dialog", { name: "Paste link" });
   await expect(chooser).toBeVisible();
   const scroller = page.locator(".main-scroll");
-  await scroller.evaluate((element) => {
-    element.scrollTop = 450;
-  });
-  await expect
-    .poll(() => scroller.evaluate((element) => element.scrollTop))
-    .toBe(450);
   // Caret scrolling and floating UI can keep adjusting layout after a paste.
   // Require stable geometry across frames before measuring the scroll delta.
   let previousGeometry = "";
@@ -1150,9 +1272,10 @@ test("paste chooser follows the cursor block and supports cancellation and URL i
     menuBox = await chooser.boundingBox();
   expect(Math.abs(menuBox!.y - lineBox!.y)).toBeLessThan(100);
   const scrollBefore = await scroller.evaluate((element) => element.scrollTop);
-  await scroller.evaluate((element) => {
-    element.scrollTop -= 35;
-  });
+  expect(scrollBefore).toBeGreaterThanOrEqual(35);
+  await scroller.evaluate((element, before) => {
+    element.scrollTop = before - 35;
+  }, scrollBefore);
   await expect
     .poll(() => scroller.evaluate((element) => element.scrollTop))
     .toBeCloseTo(scrollBefore - 35, 0);

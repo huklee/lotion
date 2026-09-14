@@ -29,6 +29,7 @@ import {
   Move,
   RotateCcw,
   LockKeyhole,
+  Star,
 } from "lucide-react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
 import { api, ApiError, authHeaders } from "./api";
@@ -40,7 +41,22 @@ const sessionId =
   readSetting(sessionStorage, "session") ?? crypto.randomUUID();
 sessionStorage.setItem("lotion-session", sessionId);
 const draftKey = (id: string) => `lotion-draft:${sessionId}:${id}`;
+const favoritesKey = "lotion-favorites";
+function readFavorites(): string[] {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(favoritesKey) ?? "[]");
+    return Array.isArray(value) ? [...new Set(value.filter((id): id is string => typeof id === "string"))] : [];
+  } catch { return []; }
+}
 export default function App() {
+  const [favorites, setFavorites] = useState(readFavorites);
+  useEffect(() => {
+    const sync = (event: StorageEvent) => {
+      if (event.key === favoritesKey || event.key === null) setFavorites(readFavorites());
+    };
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
   const [tree, setTree] = useState<TreeNode[]>([]),
     [treeTag, setTreeTag] = useState(""),
     [active, setActive] = useState<Document | null>(null),
@@ -131,7 +147,7 @@ export default function App() {
     return response.nodes;
   }, []);
   const openPage = useCallback(
-    async (id: string) => {
+    async (id: string, navigation: "push" | "replace" | "none" = "push") => {
       const sequence = ++loadNumber.current;
       setError("");
       setTrash(false);
@@ -189,7 +205,10 @@ export default function App() {
         if (sequence !== loadNumber.current) return;
         setActive(doc);
         setSearch(false);
-        history.replaceState(null, "", `#/page/${id}`);
+        const hash = `#/page/${id}`;
+        if (navigation === "replace") history.replaceState(null, "", hash);
+        else if (navigation === "push" && location.hash !== hash)
+          history.pushState(null, "", hash);
         if (newId.current === id) {
           newId.current = null;
           setTimeout(() => {
@@ -211,7 +230,7 @@ export default function App() {
         const id =
           location.hash.match(/^#\/page\/([^#]+)/)?.[1] ??
           nodes.find((n) => !n.hidden)?.id;
-        if (id) void openPage(id);
+        if (id && location.hash !== "#/home") void openPage(id, "replace");
       })
       .catch(handleError);
     return () => {
@@ -276,7 +295,14 @@ export default function App() {
   useEffect(() => {
     const navigate = () => {
       const id = location.hash.match(/^#\/page\/([^#]+)/)?.[1];
-      if (id) void openPage(id);
+      if (id) void openPage(id, "none");
+      else {
+        ++loadNumber.current;
+        setActive(null);
+        setTrash(false);
+        setSearch(false);
+        setIconPicker(false);
+      }
     };
     window.addEventListener("hashchange", navigate);
     return () => window.removeEventListener("hashchange", navigate);
@@ -394,7 +420,7 @@ export default function App() {
       await refresh();
       if (action === "trash" && active?.id === id) {
         setActive(null);
-        history.replaceState(null, "", "#");
+        history.replaceState(null, "", "#/home");
       } else if (active?.id === id || action === "restore") {
         c?.dispose();
         coordinators.current.delete(id);
@@ -469,6 +495,9 @@ export default function App() {
         { method: "POST", body },
       );
       await refresh();
+      // Keep a newly imported root visible even in workspaces whose root list
+      // has already crossed the sidebar's incremental-rendering boundary.
+      setTreeLimit(Number.MAX_SAFE_INTEGER);
       setNotice(
         result.warnings.length
           ? `Imported ${result.documents.length} pages. ${result.warnings.join(" · ")}`
@@ -526,6 +555,28 @@ export default function App() {
     } catch (e) {
       handleError(e);
     }
+  }
+  function toggleFavorite(id: string) {
+    const current = readFavorites();
+    const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+    try {
+      localStorage.setItem(favoritesKey, JSON.stringify(next));
+      setFavorites(next);
+    } catch {
+      handleError(new Error("Could not save favorites in this browser."));
+    }
+  }
+  function pageLink(node: TreeNode) {
+    return <a className="page-open" href={`#/page/${node.id}`} draggable={false}
+      aria-current={active?.id === node.id && !trash ? "page" : undefined}
+      onClick={(event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        void openPage(node.id);
+      }}>
+      <span className="page-tree-icon" aria-hidden="true">{coordinators.current.get(node.id)?.content.icon || node.icon || "📄"}</span>
+      <span>{coordinators.current.get(node.id)?.content.title || node.title || "Untitled"}</span>
+    </a>;
   }
   function pageRow(node: TreeNode, depth = 0) {
     const children = childrenByParent.get(node.id) ?? [],
@@ -590,18 +641,7 @@ export default function App() {
               <ChevronDown size={13} />
             )}
           </button>
-          <button className="page-open" onClick={() => void openPage(node.id)}>
-            <span className="page-tree-icon" aria-hidden="true">
-              {coordinators.current.get(node.id)?.content.icon ||
-                node.icon ||
-                "📄"}
-            </span>
-            <span>
-              {coordinators.current.get(node.id)?.content.title ||
-                node.title ||
-                "Untitled"}
-            </span>
-          </button>
+          {pageLink(node)}
           <button
             className="row-add"
             aria-label={`Add child to ${node.title || "Untitled"}`}
@@ -648,14 +688,32 @@ export default function App() {
           </button>
           <button
             onClick={() => {
+              ++loadNumber.current;
               setActive(null);
               setTrash(false);
+              setSearch(false);
+              setIconPicker(false);
+              if (location.hash !== "#/home") history.pushState(null, "", "#/home");
             }}
           >
             <Home size={16} />
             Home
           </button>
         </div>
+        {favorites.some((id) => visible.some((node) => node.id === id)) && (
+          <>
+            <div className="section-label"><span>FAVORITES</span></div>
+            <nav className="favorite-pages" aria-label="Favorites">
+              {favorites.map((id) => {
+                const node = visible.find((item) => item.id === id);
+                return node ? <div className="page-row" key={id}>
+                  {pageLink(node)}
+                  <button aria-label={`Remove ${node.title || "Untitled"} from favorites`} onClick={() => toggleFavorite(id)}><Star size={13} fill="currentColor" /></button>
+                </div> : null;
+              })}
+            </nav>
+          </>
+        )}
         <div className="section-label">
           <span>YOUR PAGES</span>
           <button aria-label="New page" onClick={() => void create()}>
@@ -780,6 +838,10 @@ export default function App() {
                 <button className="quiet" onClick={() => setDialog("export")}>
                   <ArrowDownToLine size={14} />
                   Export
+                </button>
+                <button className="icon-button" aria-label={favorites.includes(active.id) ? "Remove from favorites" : "Add to favorites"}
+                  aria-pressed={favorites.includes(active.id)} onClick={() => toggleFavorite(active.id)}>
+                  <Star size={16} fill={favorites.includes(active.id) ? "currentColor" : "none"} />
                 </button>
                 <button
                   className="icon-button"

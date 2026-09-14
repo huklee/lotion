@@ -2,6 +2,25 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.3.0 — 2026-09-15
+
+### Added
+
+- Favorite/unfavorite the current page with a star. The sidebar lists favorites using their current titles/icons; changes persist in this browser and synchronize across its tabs. Hidden/trashed pages are omitted without deleting the preference, so restoring a page makes its favorite visible again.
+- Sidebar page and favorite entries are native links: ⌘click/Ctrl+click opens another tab and browser link context menus remain available.
+- Checklist items support click completion and Ctrl+Enter/⌘Enter toggling.
+
+### Fixed
+
+- Page and Home navigation add history entries instead of replacing the current entry. Back/Forward restores the matching view without adding another entry; reopening the same route adds no duplicate. Home cancels pending page loads and survives reload.
+- Plain-text paste within a checklist keeps checklist block types instead of converting them to paragraphs.
+- Markdown clipboard export writes whitespace-only editor blocks as blank lines instead of `&#x20;` entities.
+- The calendar's next Enter inserts today's preselected date instead of activating previous-month navigation.
+- Browser spellcheck is disabled for document content, removing misleading dictionary underlines from code, names, and mixed-language text.
+- Newly imported folders remain visible immediately when a workspace already has more than 100 root pages.
+
+No document schema migration is needed. Favorites are a browser preference, not shared server metadata or an exported document field. Verification is recorded in [test results](test-results.md).
+
 ## 0.2.0 — 2026-09-13
 
 ### Added
