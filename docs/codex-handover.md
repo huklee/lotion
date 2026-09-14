@@ -2,11 +2,11 @@
 
 Updated: 2026-09-15. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Latest published application checkpoint: version 0.3.0 adds browser favorites, native sidebar links, and Back/Forward history, plus checklist completion/paste fixes, blank-line Markdown copying, today-by-Enter calendar input, and editor spellcheck suppression. The complete release gate passed 101 unit/integration and 105 browser tests; [GitHub CI 34903723704](https://github.com/huklee/lotion/actions/runs/34903723704) passed on Ubuntu / Node 24. Browser tests now use isolated per-worker servers/workspaces and full Playwright parallelism; local 4-worker measurement reduced the 105-case browser suite from 174 to 90.79 seconds. A three-option search plan is ready for review, not implemented.
+Latest published application checkpoint: version 0.3.0 adds browser favorites, native sidebar links, and Back/Forward history, plus checklist completion/paste fixes, blank-line Markdown copying, today-by-Enter calendar input, and editor spellcheck suppression. Browser tests now use isolated per-worker servers/workspaces and full Playwright parallelism. Local four-worker measurement reduced the 105-case suite from 174 to 90.79 seconds; [GitHub CI 34905987686](https://github.com/huklee/lotion/actions/runs/34905987686) passed and reduced the full check step from 278 to 151 seconds. A three-option search plan is ready for review, not implemented.
 
 ## Project identity
 
-- Current published application version: **0.3.0**, release commit `dbce105` with test follow-up `5ad6cce`. [GitHub CI](https://github.com/huklee/lotion/actions/runs/34903723704) passed the complete gate on Ubuntu / Node 24. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current published application version: **0.3.0**, release commit `dbce105`, functional-test follow-up `5ad6cce`, and parallel-harness commit `48f9c9f`. [Latest GitHub CI](https://github.com/huklee/lotion/actions/runs/34905987686) passed the complete gate on Ubuntu / Node 24. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.

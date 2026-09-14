@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-09-14T22:53:10Z — parallel harness published and CI verified
+
+Committed and pushed `48f9c9f` (`test: parallelize isolated browser suite`) to `main`. [GitHub verification 34905987686](https://github.com/huklee/lotion/actions/runs/34905987686) passed the complete Ubuntu / Node 24 gate with two workers. Its `npm run check` step took 151 seconds versus 278 seconds in the preceding comparable success, a 45.7% reduction and 1.84× speedup. This documentation-only follow-up records publication evidence; application version remains 0.3.0 and user data remains untouched.
+
 ## 2026-09-14T22:45:47Z — parallel harness complete local gate passed
 
 The final `npm run check` passed in 120.96 seconds: lint, type/production build, 101 unit/integration tests and all 105 Chromium, Firefox and WebKit cases with four workers. Documentation and harness changes are ready to publish; this entry does not claim remote CI success.

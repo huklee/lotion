@@ -12,7 +12,7 @@
 - [x] Keep newly imported roots visible beyond the sidebar's first 100 pages.
 - [x] Complete the local release check: lint/type/build, 101 unit/integration tests, and 105 browser tests passed.
 - [x] Confirm GitHub CI for the 0.3.0 release and Linux-portable test follow-up: [run 34903723704](https://github.com/huklee/lotion/actions/runs/34903723704) passed.
-- [x] Isolate every browser-test worker's server and temporary repository, enable full Playwright parallelism, and reduce the local 105-case suite from 174 to 90.79 seconds with four stable workers.
+- [x] Isolate every browser-test worker's server and temporary repository, enable full Playwright parallelism, and reduce the local 105-case suite from 174 to 90.79 seconds with four stable workers. [GitHub CI 34905987686](https://github.com/huklee/lotion/actions/runs/34905987686) passed with a 45.7% faster check step.
 
 The document-search implementation remains pending selection from the [three-option plan](document-search-plan.md).
 

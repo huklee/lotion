@@ -21,7 +21,7 @@ Versions are recorded in `package.json` and `package-lock.json`. Each release re
 
 ### Tooling
 
-- Browser tests now run fully in parallel with an isolated temporary repository and dynamic localhost server per worker. Four workers completed the 105-case local suite in 90.79 seconds versus the previous single-worker 174 seconds. Test-only infrastructure does not change application behavior or the 0.3.0 version.
+- Browser tests now run fully in parallel with an isolated temporary repository and dynamic localhost server per worker. Four workers completed the 105-case local suite in 90.79 seconds versus the previous single-worker 174 seconds; the GitHub CI check step fell from 278 to 151 seconds. Test-only infrastructure does not change application behavior or the 0.3.0 version.
 
 No document schema migration is needed. Favorites are a browser preference, not shared server metadata or an exported document field. Verification is recorded in [test results](test-results.md).
 
