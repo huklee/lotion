@@ -1,5 +1,15 @@
 # Test results
 
+## 2026-09-14T22:45:47Z — parallel harness complete local gate passed
+
+The final `npm run check` exited **0** in **120.96 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **101/101 unit and integration tests**, and **105/105 browser tests** passed across Chromium, Firefox and WebKit with four workers. The browser phase reported 1.5 minutes; the dedicated benchmark below provides the less noisy before/after measurement. Large build-chunk warnings remain non-fatal. GitHub CI is pending the push at this checkpoint.
+
+## 2026-09-14T22:42:20Z — parallel browser-test benchmark
+
+Refactored the Playwright harness so each worker owns a production server on an operating-system-assigned localhost port and an independent temporary repository. With `fullyParallel` enabled on macOS arm64 (8 logical CPUs, 8 GiB memory; Node 25.8.2), the unchanged **105/105 browser cases passed** across Chromium, Firefox and WebKit using the configured four local workers in **90.79 seconds** (Playwright: 1.5 minutes). The preceding single-worker release gate took **174 seconds** (Playwright: 2.9 minutes), so elapsed browser-test time fell by **83.21 seconds / 47.8%**, a **1.92× speedup**.
+
+An explicit eight-worker capacity probe was rejected as the default: resource contention caused five Firefox timeouts before the run was stopped, with 56 cases passed and 44 not run. This is benchmark evidence for the four-worker limit on this 8 GiB machine, not an application regression. The checked-in policy uses 50% of logical CPUs locally and two workers in CI. Lint and typecheck passed after the harness change; the complete local gate is recorded above.
+
 ## 2026-09-14T22:27:44Z — 0.3.0 GitHub CI confirmed
 
 The test/documentation follow-up commit `5ad6cce` was pushed to `origin/main`. [GitHub Actions run 34903723704](https://github.com/huklee/lotion/actions/runs/34903723704) completed **successfully** on Ubuntu / Node 24 in 5 minutes 35 seconds: checkout, `npm ci`, browser installation, and the complete `npm run check` passed. This remotely verifies the 0.3.0 application release and its Linux-portable regression suite.

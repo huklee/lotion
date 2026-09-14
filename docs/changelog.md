@@ -19,6 +19,10 @@ Versions are recorded in `package.json` and `package-lock.json`. Each release re
 - Browser spellcheck is disabled for document content, removing misleading dictionary underlines from code, names, and mixed-language text.
 - Newly imported folders remain visible immediately when a workspace already has more than 100 root pages.
 
+### Tooling
+
+- Browser tests now run fully in parallel with an isolated temporary repository and dynamic localhost server per worker. Four workers completed the 105-case local suite in 90.79 seconds versus the previous single-worker 174 seconds. Test-only infrastructure does not change application behavior or the 0.3.0 version.
+
 No document schema migration is needed. Favorites are a browser preference, not shared server metadata or an exported document field. Verification is recorded in [test results](test-results.md).
 
 ## 0.2.0 — 2026-09-13

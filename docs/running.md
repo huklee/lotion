@@ -59,7 +59,7 @@ npx playwright install chromium firefox webkit
 npm run test:e2e
 ```
 
-`npm run check` runs lint, type/build, unit/integration tests, and the browser suite. Browser tests use a separate temporary workspace and port 3101. They do not touch `data/`. Failure traces are in `test-results/` and the HTML report in `playwright-report/`; Markdown execution summaries belong in `docs/test-results.md`.
+`npm run check` runs lint, type/build, unit/integration tests, and the browser suite. Browser tests are fully parallel: every Playwright worker starts its own server on a dynamic localhost port and owns a separate temporary workspace, then removes both after teardown. They do not touch `data/`. Local runs use half of the available logical CPUs; CI uses two workers to fit the standard runner. Override with `npx playwright test --workers=N` only when benchmarking the current machine—higher worker counts can be slower or time out under resource contention. Failure traces are in `test-results/` and the HTML report in `playwright-report/`; Markdown execution summaries belong in `docs/test-results.md`.
 
 ## Backup and recovery
 

@@ -2,7 +2,7 @@
 
 Updated: 2026-09-15. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Latest published checkpoint: version 0.3.0 adds browser favorites, native sidebar links, and Back/Forward history, plus checklist completion/paste fixes, blank-line Markdown copying, today-by-Enter calendar input, and editor spellcheck suppression. The complete local gate passes 101 unit/integration and 105 browser tests; [GitHub CI 34903723704](https://github.com/huklee/lotion/actions/runs/34903723704) also passed on Ubuntu / Node 24. A three-option search plan is ready for review, not implemented.
+Latest published application checkpoint: version 0.3.0 adds browser favorites, native sidebar links, and Back/Forward history, plus checklist completion/paste fixes, blank-line Markdown copying, today-by-Enter calendar input, and editor spellcheck suppression. The complete release gate passed 101 unit/integration and 105 browser tests; [GitHub CI 34903723704](https://github.com/huklee/lotion/actions/runs/34903723704) passed on Ubuntu / Node 24. Browser tests now use isolated per-worker servers/workspaces and full Playwright parallelism; local 4-worker measurement reduced the 105-case browser suite from 174 to 90.79 seconds. A three-option search plan is ready for review, not implemented.
 
 ## Project identity
 
@@ -57,4 +57,4 @@ They are copied from the global Codex session store, retained read-only as a his
 - Canonical repository: `/Users/huklee/Work/lotion`
 - Legacy source/reference tree: `/Users/huklee/Work/yestion`
 - Production local URL: `http://127.0.0.1:3001`
-- Browser tests: temporary data and `http://127.0.0.1:3101`
+- Browser tests: one temporary workspace and dynamic localhost port per worker; fully parallel, 50% of logical CPUs locally and two workers in CI

@@ -62,7 +62,7 @@ npx playwright install chromium firefox webkit
 npm run check
 ```
 
-On Linux, use `npx playwright install --with-deps chromium firefox webkit`. Browser tests use isolated temporary data and port 3101.
+On Linux, use `npx playwright install --with-deps chromium firefox webkit`. Browser tests run fully in parallel with an isolated temporary workspace and dynamic localhost port per worker, so they never touch `data/`. Local runs use half of the available logical CPUs; CI uses two workers.
 
 ## Documentation
 

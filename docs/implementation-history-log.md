@@ -1,5 +1,15 @@
 # Implementation history log
 
+## 2026-09-14T22:45:47Z — parallel harness complete local gate passed
+
+The final `npm run check` passed in 120.96 seconds: lint, type/production build, 101 unit/integration tests and all 105 Chromium, Firefox and WebKit cases with four workers. Documentation and harness changes are ready to publish; this entry does not claim remote CI success.
+
+## 2026-09-14T22:42:20Z — browser-test workers isolated and parallelized
+
+Replaced the shared fixed-port Playwright server/repository with a worker fixture that starts one server on a dynamic localhost port and one temporary repository per worker, and always closes/removes both during teardown. Enabled full test parallelism, using half of logical CPUs locally and two workers in CI. The stable four-worker run passed all 105 browser cases in 90.79 seconds versus the previous 174-second single-worker gate (47.8% less elapsed time, 1.92× speedup). An eight-worker probe produced Firefox timeouts under resource contention and was not selected. See [ADR-015](adr/015-parallel-browser-test-isolation.md).
+
+This is test infrastructure only: it does not change product behavior, stored data or public interfaces, so the application remains at 0.3.0 under the version guide. User data under `data/` was untouched. Final complete gate and publication evidence follow in later entries.
+
 ## 2026-09-14T22:27:44Z — 0.3.0 published and CI verified
 
 Published release commit `dbce105` and Linux-portable test follow-up `5ad6cce` to `main`. [GitHub verification 34903723704](https://github.com/huklee/lotion/actions/runs/34903723704) succeeded on Ubuntu / Node 24, including the complete `npm run check`. This documentation-only follow-up records the remote result; application version remains 0.3.0 and no release tag was created. User data remains ignored and untouched.
