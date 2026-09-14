@@ -4,6 +4,8 @@
 
 Final `npm run check` passed lint, type/production build, 101 unit/integration tests and 105 browser tests across Chromium, Firefox, and WebKit. The folder-import pagination regression found during the full gate was corrected in the import completion path and passed the complete rerun. Documentation, version metadata, and application changes are ready for commit/push; this entry does not yet claim remote CI success.
 
+Release commit `dbce105` was pushed to `main`. Initial GitHub run [34903052123](https://github.com/huklee/lotion/actions/runs/34903052123) exposed a platform-specific test assumption rather than lost checklist content: Linux removes an empty suffix created by caret splitting, while macOS retained it. The follow-up test asserts the required checklist types, pasted text, absence of paragraphs, and reload persistence without fixing a meaningless empty-block count. Application version remains 0.3.0 for this test/documentation follow-up.
+
 ## 2026-09-14T21:50:33Z — 0.3.0 navigation and editor fixes prepared
 
 Prepared the backward-compatible 0.3.0 minor release. Added persistent browser favorites, native sidebar page links with modified-click behavior, and route-aware browser Back/Forward history. Fixed checklist completion by mouse and Ctrl+Enter/⌘Enter, retained checklist types during validated plain-text paste, removed `&#x20;` output for whitespace-only Markdown blocks, made the next calendar Enter accept today, and disabled misleading browser dictionary underlines in document content.
