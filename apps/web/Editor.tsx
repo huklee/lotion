@@ -41,7 +41,11 @@ import type {
   TreeNode,
   LinkPreview,
 } from "../../packages/document-schema/index";
-import { moveBlocks, sectionIds } from "../../packages/editor-adapter/movement";
+import {
+  moveBlocks,
+  removeBlocksPreservingHierarchy,
+  sectionIds,
+} from "../../packages/editor-adapter/movement";
 import { api, authHeaders } from "./api";
 import { editorSchema } from "./editor-schema";
 import {
@@ -492,15 +496,13 @@ export default function Editor({
         return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      const ids: string[] = [];
-      const collect = (blocks: Block[]) => {
-        for (const block of blocks) {
-          if (selected.includes(block.id)) ids.push(block.id);
-          else collect(block.children ?? []);
-        }
-      };
-      collect(editor.document as unknown as Block[]);
-      if (ids.length) editor.transact(() => editor.removeBlocks(ids));
+      const current = editor.document as unknown as Block[];
+      const next = removeBlocksPreservingHierarchy(current, selected);
+      if (next !== current)
+        editor.replaceBlocks(
+          editor.document,
+          (next.length ? next : [{ type: "paragraph" }]) as any,
+        );
       setSelected([]);
       editor.focus();
     };

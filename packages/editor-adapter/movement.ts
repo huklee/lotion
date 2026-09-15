@@ -1,4 +1,30 @@
 import type { Block } from "../document-schema/index";
+
+export function removeBlocksPreservingHierarchy(
+  blocks: Block[],
+  selected: readonly string[],
+): Block[] {
+  const ids = new Set(selected);
+  const remove = (items: Block[]): Block[] => {
+    let changed = false;
+    const result: Block[] = [];
+    for (const block of items) {
+      if (ids.has(block.id)) {
+        changed = true;
+        continue;
+      }
+      const originalChildren = block.children ?? [];
+      const children = remove(originalChildren);
+      if (children !== originalChildren) {
+        changed = true;
+        result.push({ ...block, children });
+      } else result.push(block);
+    }
+    return changed ? result : items;
+  };
+  return remove(blocks);
+}
+
 export function sectionIds(blocks: Block[], id: string): string[] {
   const index = blocks.findIndex((b) => b.id === id);
   if (index < 0) {

@@ -1134,6 +1134,87 @@ test("Backspace deletes a selected section with children, supports undo and pres
   await expect(remaining).toHaveText("Keep sectio");
 });
 
+test("deleting a selected nested block preserves following block indentation", async ({
+  page,
+}) => {
+  const doc = await seed(page, "Preserve indentation", [
+    {
+      id: "indent-parent",
+      type: "paragraph",
+      content: [{ type: "text", text: "Parent", styles: {} }],
+      children: [
+        {
+          id: "indent-delete",
+          type: "paragraph",
+          content: [{ type: "text", text: "Delete child", styles: {} }],
+        },
+        {
+          id: "indent-keep",
+          type: "paragraph",
+          content: [{ type: "text", text: "Keep child", styles: {} }],
+          children: [
+            {
+              id: "indent-grandchild",
+              type: "paragraph",
+              content: [{ type: "text", text: "Grandchild", styles: {} }],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "indent-following",
+      type: "paragraph",
+      content: [{ type: "text", text: "Following root", styles: {} }],
+      children: [
+        {
+          id: "indent-following-child",
+          type: "paragraph",
+          content: [{ type: "text", text: "Following child", styles: {} }],
+        },
+      ],
+    },
+  ]);
+  await page.locator('[data-id="indent-delete"] .bn-inline-content').click();
+  await page
+    .getByRole("button", { name: "Select section", exact: true })
+    .click();
+  await page.keyboard.press("Backspace");
+  await expect(page.locator('[data-id="indent-delete"]')).toHaveCount(0);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+
+  const content = (await (
+    await page.request.get(`/api/documents/${doc.id}`)
+  ).json()) as { blocks: any[] };
+  expect(content.blocks[0].id).toBe("indent-parent");
+  expect(content.blocks[0].children[0].id).toBe("indent-keep");
+  expect(content.blocks[0].children[0].children[0].id).toBe(
+    "indent-grandchild",
+  );
+  expect(content.blocks[1].id).toBe("indent-following");
+  expect(content.blocks[1].children[0].id).toBe("indent-following-child");
+
+  await page.reload();
+  const horizontalPositions = await Promise.all(
+    [
+      "indent-parent",
+      "indent-keep",
+      "indent-grandchild",
+      "indent-following",
+      "indent-following-child",
+    ].map((id) =>
+      page
+        .locator(`[data-id="${id}"] .bn-inline-content`)
+        .first()
+        .evaluate((element) => element.getBoundingClientRect().left),
+    ),
+  );
+  expect(horizontalPositions[1]).toBeGreaterThan(horizontalPositions[0]);
+  expect(horizontalPositions[2]).toBeGreaterThan(horizontalPositions[1]);
+  expect(horizontalPositions[4]).toBeGreaterThan(horizontalPositions[3]);
+});
+
 test("image file drop inserts a durable image", async ({ page }) => {
   await seed(page, "Dropped image");
   const data = await page.evaluateHandle(() => {

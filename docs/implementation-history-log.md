@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-15T14:09:46Z — 0.6.1 hierarchy-preserving deletion prepared
+
+Prepared patch release 0.6.1 as the fifth requested incremental item. Replaced selected-block deletion's direct multi-node editor removal with an immutable tree transform that drops selected subtrees while retaining unselected parents, siblings and descendants at the same depth. The transformed hierarchy is applied in one replace transaction, retains stable IDs, leaves one editable paragraph when everything is deleted, and remains a single undo step.
+
+Focused unit tests, lint/type checks and nine deletion browser cases passed before the full gate. The final `npm run check` passed lint/type/build, 111 unit/integration tests and 123 browser cases in 139.63 seconds. The three-browser regression checks both persisted `children` relationships and rendered indentation after reload. Existing section deletion/undo and rectangle deletion cases passed. User data under `data/` was untouched. Commit, push and remote CI evidence are recorded separately.
+
 ## 2026-09-15T14:00:35Z — 0.6.0 Notion-style block lasso prepared
 
 Prepared backward-compatible minor release 0.6.0 as the fourth requested incremental item. Block lasso selection now normalizes every drag direction, extends with Shift/Command/Control, auto-scrolls near vertical editor edges, retains off-screen hits, and removes redundant nested hits when an ancestor is selected. A drag kept within one editable block remains native text selection; crossing into another block transitions to lasso selection. Fixed, pointer-transparent viewport overlays replace selection attributes on editor-owned DOM so BlockNote node replacement no longer removes the visible selection. Existing selected-block Backspace and group dragging continue to use stable block IDs. See [ADR-018](adr/018-block-lasso-selection.md).

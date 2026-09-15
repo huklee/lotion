@@ -1,5 +1,9 @@
 import { expect, it } from "vitest";
-import { moveBlocks, sectionIds } from "../../packages/editor-adapter/movement";
+import {
+  moveBlocks,
+  removeBlocksPreservingHierarchy,
+  sectionIds,
+} from "../../packages/editor-adapter/movement";
 import {
   contentSchema,
   safeUrl,
@@ -35,6 +39,37 @@ it("does not duplicate selected parent and child", () =>
   ).toHaveLength(1));
 it("leaves unknown destinations unchanged", () =>
   expect(moveBlocks(blocks, ["b"], "missing", "after")).toBe(blocks));
+it("removes only selected subtrees without changing following indentation", () => {
+  const nested: Block[] = [
+    {
+      id: "parent",
+      type: "paragraph",
+      children: [
+        { id: "delete", type: "paragraph" },
+        {
+          id: "keep",
+          type: "paragraph",
+          children: [{ id: "grandchild", type: "paragraph" }],
+        },
+      ],
+    },
+    {
+      id: "following",
+      type: "paragraph",
+      children: [{ id: "following-child", type: "paragraph" }],
+    },
+  ];
+  const result = removeBlocksPreservingHierarchy(nested, ["delete"]);
+  expect(result.map((block) => block.id)).toEqual(["parent", "following"]);
+  expect(result[0].children?.map((block) => block.id)).toEqual(["keep"]);
+  expect(result[0].children?.[0].children?.[0].id).toBe("grandchild");
+  expect(result[1]).toBe(nested[1]);
+  expect(removeBlocksPreservingHierarchy(nested, ["missing"])).toBe(nested);
+});
+it("removes a selected parent and its complete subtree", () => {
+  const result = removeBlocksPreservingHierarchy(blocks, ["b", "nested"]);
+  expect(result.map((block) => block.id)).toEqual(["a", "c", "d", "e"]);
+});
 it("rejects duplicate block IDs", () =>
   expect(() =>
     contentSchema.parse({ title: "", blocks: [blocks[0], blocks[0]] }),

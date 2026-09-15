@@ -1,8 +1,12 @@
 # Test results
 
+## 2026-09-15T14:09:46Z — 0.6.1 hierarchy-preserving deletion gate passed
+
+The final `npm run check` exited **0** in **139.63 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **111/111 unit and integration tests**, and **123/123 browser tests** passed across Chromium, Firefox and WebKit with four workers. New unit cases prove that deleting a nested block retains following siblings and grandchildren at their original tree depth, that unknown selections preserve object identity, and that selecting a parent removes its complete subtree. The new three-browser regression verifies the saved hierarchy and rendered horizontal indentation after reload; existing section deletion, undo and rectangle deletion regressions also passed. Large build-chunk warnings remain non-fatal. GitHub CI is pending the release push at this checkpoint.
+
 ## 2026-09-15T14:00:35Z — 0.6.0 block-lasso gate passed
 
-The final `npm run check` exited **0** in **141.06 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **109/109 unit and integration tests**, and **120/120 browser tests** passed across Chromium, Firefox and WebKit with four workers. New unit coverage verifies rectangle normalization, edge-touch intersection and stable selection comparison. New three-browser regressions verify within-block native text dragging, reverse lasso, Shift extension, edge auto-scroll and retention of off-screen hits; existing rectangle Backspace and selected-group drag regressions also passed. Large build-chunk warnings remain non-fatal. GitHub CI is pending the release push at this checkpoint.
+The final `npm run check` exited **0** in **141.06 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **109/109 unit and integration tests**, and **120/120 browser tests** passed across Chromium, Firefox and WebKit with four workers. New unit coverage verifies rectangle normalization, edge-touch intersection and stable selection comparison. New three-browser regressions verify within-block native text dragging, reverse lasso, Shift extension, edge auto-scroll and retention of off-screen hits; existing rectangle Backspace and selected-group drag regressions also passed. Large build-chunk warnings remain non-fatal. [GitHub CI run 34979252469](https://github.com/huklee/lotion/actions/runs/34979252469) subsequently passed the complete Ubuntu / Node 24 gate for release commit `e45d7c8`.
 
 ## 2026-09-15T11:21:54Z — 0.5.0 configurable color-shortcut gate passed
 
