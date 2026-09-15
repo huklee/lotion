@@ -1,5 +1,15 @@
 # Remaining jobs
 
+## TypeScript modularization — 2026-09-16
+
+- [x] Establish SRP, size, dependency and value gates before moving production code.
+- [x] Extract editor block-selection and direct-link lifecycles, the formatting toolbar and pure legacy-code normalization; add isolated unit coverage and a first feature-specific E2E specification.
+- [ ] Reduce `Editor.tsx` below the automatic 1,000-line threshold when the next editor feature touches a cohesive boundary such as paste/link handling. Require focused regression coverage rather than moving code only to reduce line count.
+- [ ] Split `tests/e2e/workspace.spec.ts` by stable product areas while retaining the shared fixture helper and full worker isolation.
+- [ ] Extract cohesive routing/sidebar or import/export responsibilities from `App.tsx` with explicit props or hook contracts and behavior-preserving browser coverage.
+
+See [TypeScript file and module structure rules](typescript-file-structure.md) for the measured baseline, completed first slice and review gates.
+
 ## Requested incremental work — 2026-09-15
 
 - [x] Keep single-line paste inline at a checklist's current cursor without removing/splitting the checkbox; verify the same cursor behavior inside callouts, and stop checkbox clicks from moving the document viewport.

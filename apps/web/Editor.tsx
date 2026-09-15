@@ -1,14 +1,8 @@
 import {
-  ColorStyleButton,
-  FormattingToolbar,
   FormattingToolbarController,
   getDefaultReactSlashMenuItems,
-  getFormattingToolbarItems,
   SuggestionMenuController,
-  useBlockNoteEditor,
-  useComponentsContext,
   useCreateBlockNote,
-  useEditorState,
 } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { readableCodeColor } from "./code-colors";
@@ -42,157 +36,22 @@ import type {
   TreeNode,
   LinkPreview,
 } from "../../packages/document-schema/index";
-import {
-  moveBlocks,
-  removeBlocksPreservingHierarchy,
-  sectionIds,
-} from "../../packages/editor-adapter/movement";
+import { moveBlocks, sectionIds } from "../../packages/editor-adapter/movement";
 import { api, authHeaders } from "./api";
 import { editorSchema } from "./editor-schema";
 import {
-  displayShortcut,
   matchesFormattingShortcut,
   textColors,
   type FormattingShortcuts,
-  type TextColor,
 } from "./format-shortcuts";
-import {
-  rectangleFromPoints,
-  rectanglesIntersect,
-  sameSelection,
-} from "./rectangle-selection";
 import { blockIdFromHash, pageIdFromHash } from "./block-links";
-
-type AppliedColorStyle = {
-  kind: "textColor" | "backgroundColor";
-  color: string;
-};
-
-const colorLabels = Object.fromEntries(
-  textColors.map((color) => [
-    color,
-    color === "default"
-      ? "Default"
-      : `${color[0].toUpperCase()}${color.slice(1)}`,
-  ]),
-) as Record<TextColor, string>;
-
-function ColorLetter({
-  textColor,
-  backgroundColor,
-}: Partial<{ textColor: string; backgroundColor: string }>) {
-  return (
-    <span
-      className="bn-color-icon lotion-color-letter"
-      data-text-color={textColor ?? "default"}
-      data-background-color={backgroundColor ?? "default"}
-    >
-      A
-    </span>
-  );
-}
-
-function ShortcutColorStyleButton({
-  shortcuts,
-  onApplied,
-}: {
-  shortcuts: FormattingShortcuts;
-  onApplied: (style: AppliedColorStyle) => void;
-}) {
-  const editor = useBlockNoteEditor();
-  const Components = useComponentsContext()!;
-  const active = useEditorState({
-    editor,
-    selector: ({ editor }) => ({
-      textColor: String(editor.getActiveStyles().textColor ?? "default"),
-      backgroundColor: String(
-        editor.getActiveStyles().backgroundColor ?? "default",
-      ),
-    }),
-  });
-  const apply = (kind: AppliedColorStyle["kind"], color: string) => {
-    if (color === "default") editor.removeStyles({ [kind]: color });
-    else editor.addStyles({ [kind]: color });
-    onApplied({ kind, color });
-    setTimeout(() => editor.focus());
-  };
-  return (
-    <Components.Generic.Menu.Root>
-      <Components.Generic.Menu.Trigger>
-        <Components.FormattingToolbar.Button
-          className="bn-button"
-          label="Colors"
-          mainTooltip="Colors"
-          icon={
-            <ColorLetter
-              textColor={active.textColor}
-              backgroundColor={active.backgroundColor}
-            />
-          }
-        />
-      </Components.Generic.Menu.Trigger>
-      <Components.Generic.Menu.Dropdown className="bn-menu-dropdown bn-color-picker-dropdown">
-        <Components.Generic.Menu.Label>
-          Text color
-        </Components.Generic.Menu.Label>
-        {textColors.map((color) => (
-          <Components.Generic.Menu.Item
-            className="lotion-color-option"
-            icon={<ColorLetter textColor={color} />}
-            checked={active.textColor === color}
-            key={`text-${color}`}
-            onClick={() => apply("textColor", color)}
-          >
-            <span>{colorLabels[color]}</span>
-            {!!shortcuts.textColors[color] && (
-              <kbd className="color-shortcut-hint">
-                {displayShortcut(shortcuts.textColors[color])}
-              </kbd>
-            )}
-          </Components.Generic.Menu.Item>
-        ))}
-        <Components.Generic.Menu.Label>
-          Background color
-        </Components.Generic.Menu.Label>
-        {textColors.map((color) => (
-          <Components.Generic.Menu.Item
-            className="lotion-background-option"
-            icon={<ColorLetter backgroundColor={color} />}
-            checked={active.backgroundColor === color}
-            key={`background-${color}`}
-            onClick={() => apply("backgroundColor", color)}
-          >
-            {colorLabels[color]}
-          </Components.Generic.Menu.Item>
-        ))}
-      </Components.Generic.Menu.Dropdown>
-    </Components.Generic.Menu.Root>
-  );
-}
-
-function ShortcutFormattingToolbar({
-  shortcuts,
-  onApplied,
-}: {
-  shortcuts: FormattingShortcuts;
-  onApplied: (style: AppliedColorStyle) => void;
-}) {
-  return (
-    <FormattingToolbar>
-      {getFormattingToolbarItems().map((item) =>
-        item.type === ColorStyleButton ? (
-          <ShortcutColorStyleButton
-            key="colorStyleButton"
-            shortcuts={shortcuts}
-            onApplied={onApplied}
-          />
-        ) : (
-          item
-        ),
-      )}
-    </FormattingToolbar>
-  );
-}
+import { useBlockSelection } from "./use-block-selection";
+import { useDirectBlockLinkTarget } from "./use-direct-block-link";
+import {
+  EditorFormattingToolbar,
+  type AppliedColorStyle,
+} from "./EditorFormattingToolbar";
+import { normalizeEditorContent } from "./normalize-editor-content";
 
 function PreviewImage({ url }: { url: string }) {
   const [source, setSource] = useState("");
@@ -252,45 +111,10 @@ export default function Editor({
   theme: "light" | "dark";
   formattingShortcuts: FormattingShortcuts;
 }) {
-  const normalizedInitial = useMemo(() => {
-    let changed = false;
-    const normalize = (blocks: Block[]): Block[] =>
-      blocks.map((block) => {
-        let next = block;
-        if (block.type === "codeBlock") {
-          const allowed = new Set(["json", "html", "python", "go", "cpp"]);
-          const language = String(block.props?.language ?? "").toLowerCase();
-          if (!allowed.has(language)) {
-            const source = Array.isArray(block.content)
-              ? block.content.map((item) => item.text ?? "").join("")
-              : "";
-            const inferred = /^\s*</.test(source)
-              ? "html"
-              : /#include|std::|\bnamespace\s+\w+/.test(source)
-                ? "cpp"
-                : /\bpackage\s+main\b|\bfunc\s+\w+\s*\(/.test(source)
-                  ? "go"
-                  : /\bdef\s+\w+\s*\(|\bfrom\s+\w+\s+import\b|\bprint\s*\(/.test(
-                        source,
-                      )
-                    ? "python"
-                    : "json";
-            next = {
-              ...block,
-              props: { ...block.props, language: inferred },
-            };
-            changed = true;
-          }
-        }
-        if (next.children?.length) {
-          const children = normalize(next.children);
-          if (children !== next.children) next = { ...next, children };
-        }
-        return next;
-      });
-    const blocks = normalize(initial.blocks);
-    return { content: { ...initial, blocks }, changed };
-  }, [initial]);
+  const normalizedInitial = useMemo(
+    () => normalizeEditorContent(initial),
+    [initial],
+  );
   const upload = async (file: File) => {
     const body = new FormData();
     body.append("file", file);
@@ -379,24 +203,6 @@ export default function Editor({
   const lastColorStyle = useRef<AppliedColorStyle | null>(null);
   const mounted = useRef(true);
   const host = useRef<HTMLDivElement>(null);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [selectedBoxes, setSelectedBoxes] = useState<
-    { id: string; x: number; y: number; w: number; h: number }[]
-  >([]);
-  const [directLinkBox, setDirectLinkBox] = useState<{
-    id: string;
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-  } | null>(null);
-  const rectangleClick = useRef(false);
-  const [rectangle, setRectangle] = useState<{
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-  } | null>(null);
   const [uploadState, setUploadState] = useState("");
   const applyColorStyle = useCallback(
     (style: AppliedColorStyle) => {
@@ -411,6 +217,15 @@ export default function Editor({
   const [dropLine, setDropLine] = useState<number | null>(null);
   const [pasteChoice, setPasteChoice] = useState<string | null>(null);
   const [pasteLoading, setPasteLoading] = useState(false);
+  const {
+    rectangle,
+    rectangleClick,
+    selected,
+    selectedBoxes,
+    setSelected,
+    startRectangle,
+  } = useBlockSelection({ editor, host, pasteLoading });
+  const directLinkBox = useDirectBlockLinkTarget(host);
   const [dateSelection, setDateSelection] = useState<{
     from: number;
     to: number;
@@ -496,43 +311,6 @@ export default function Editor({
       window.removeEventListener("pointerup", finishChecklist, true);
     };
   }, [editor]);
-  useEffect(() => {
-    if (!selected.length) return;
-    const outside = (event: PointerEvent) => {
-      if (!host.current?.contains(event.target as Node)) setSelected([]);
-    };
-    const removeSelection = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement;
-      if (
-        event.key !== "Backspace" ||
-        pasteLoading ||
-        event.isComposing ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.altKey ||
-        target.closest("input, textarea, select") ||
-        (target !== document.body && !host.current?.contains(target))
-      )
-        return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      const current = editor.document as unknown as Block[];
-      const next = removeBlocksPreservingHierarchy(current, selected);
-      if (next !== current)
-        editor.replaceBlocks(
-          editor.document,
-          (next.length ? next : [{ type: "paragraph" }]) as any,
-        );
-      setSelected([]);
-      editor.focus();
-    };
-    window.addEventListener("keydown", removeSelection, true);
-    window.addEventListener("pointerdown", outside, true);
-    return () => {
-      window.removeEventListener("keydown", removeSelection, true);
-      window.removeEventListener("pointerdown", outside, true);
-    };
-  }, [selected, pasteLoading, editor]);
   const pasteAbort = useRef<AbortController | null>(null);
   const [pastePosition, setPastePosition] = useState({ left: 0, top: 0 });
   const pasteMenu = useRef<HTMLDivElement>(null);
@@ -618,140 +396,6 @@ export default function Editor({
     window.addEventListener("keydown", undo, true);
     return () => window.removeEventListener("keydown", undo, true);
   });
-  useEffect(() => {
-    const element = host.current;
-    if (!element) return;
-    const drag = (event: DragEvent) => {
-      event.dataTransfer?.setData(
-        "application/lotion-blocks",
-        JSON.stringify(selected),
-      );
-      if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
-    };
-    const sync = () => {
-      const blocks = element.querySelectorAll<HTMLElement>(
-        ".bn-block-outer[data-id]",
-      );
-      for (const block of blocks) {
-        const active = selected.includes(block.dataset.id!);
-        block.removeEventListener("dragstart", drag);
-        if (active) {
-          block.draggable = true;
-          block.addEventListener("dragstart", drag);
-        } else block.removeAttribute("draggable");
-      }
-    };
-    sync();
-    const firstFrame = requestAnimationFrame(() => {
-      sync();
-      secondFrame = requestAnimationFrame(sync);
-    });
-    let secondFrame = 0;
-    return () => {
-      cancelAnimationFrame(firstFrame);
-      cancelAnimationFrame(secondFrame);
-      for (const block of element.querySelectorAll<HTMLElement>(
-        ".bn-block-outer[data-id]",
-      )) {
-        block.removeEventListener("dragstart", drag);
-        block.removeAttribute("draggable");
-      }
-    };
-  }, [selected]);
-  useEffect(() => {
-    const element = host.current;
-    if (!element) return;
-    let frame = 0;
-    let attempts = 0;
-    let currentId: string | null = null;
-    const findTarget = () =>
-      currentId
-        ? ([
-            ...element.querySelectorAll<HTMLElement>(
-              ".bn-block-outer[data-id]",
-            ),
-          ].find((candidate) => candidate.dataset.id === currentId) ?? null)
-        : null;
-    const measure = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const target = findTarget();
-        if (!target) {
-          setDirectLinkBox(null);
-          return;
-        }
-        const rect = target.getBoundingClientRect();
-        setDirectLinkBox({
-          id: currentId!,
-          x: rect.x,
-          y: rect.y,
-          w: rect.width,
-          h: rect.height,
-        });
-      });
-    };
-    const reveal = () => {
-      currentId = blockIdFromHash(location.hash);
-      setDirectLinkBox(null);
-      attempts = 0;
-      const findAndReveal = () => {
-        const target = findTarget();
-        if (!target && currentId && attempts++ < 20) {
-          frame = requestAnimationFrame(findAndReveal);
-          return;
-        }
-        target?.scrollIntoView({ block: "center" });
-        measure();
-      };
-      frame = requestAnimationFrame(findAndReveal);
-    };
-    reveal();
-    window.addEventListener("hashchange", reveal);
-    window.addEventListener("scroll", measure, true);
-    window.addEventListener("resize", measure);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("hashchange", reveal);
-      window.removeEventListener("scroll", measure, true);
-      window.removeEventListener("resize", measure);
-    };
-  }, []);
-  useEffect(() => {
-    const element = host.current;
-    if (!element || !selected.length) {
-      setSelectedBoxes([]);
-      return;
-    }
-    let frame = 0;
-    const measure = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const next = [
-          ...element.querySelectorAll<HTMLElement>(".bn-block-outer[data-id]"),
-        ]
-          .filter((block) => selected.includes(block.dataset.id!))
-          .map((block) => {
-            const rect = block.getBoundingClientRect();
-            return {
-              id: block.dataset.id!,
-              x: rect.x,
-              y: rect.y,
-              w: rect.width,
-              h: rect.height,
-            };
-          });
-        setSelectedBoxes(next);
-      });
-    };
-    measure();
-    window.addEventListener("scroll", measure, true);
-    window.addEventListener("resize", measure);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", measure, true);
-      window.removeEventListener("resize", measure);
-    };
-  }, [selected]);
   function applyMove(target: string, side: "before" | "after") {
     const blocks = editor.document as unknown as Block[];
     const next = moveBlocks(blocks, selected, target, side);
@@ -772,122 +416,6 @@ export default function Editor({
         ? blocks[Math.min(...indices) - 1]
         : blocks[Math.max(...indices) + 1];
     if (target) applyMove(target.id, direction === "up" ? "before" : "after");
-  }
-  function startRectangle(event: React.PointerEvent<HTMLDivElement>) {
-    const target = event.target as HTMLElement;
-    if (
-      event.button !== 0 ||
-      target.closest("button, a, input, select, textarea, [draggable=true]")
-    )
-      return;
-    const start = { x: event.clientX, y: event.clientY };
-    const startedInText = !!target.closest(
-      ".bn-inline-content, [contenteditable=true]",
-    );
-    const startBlockId = target.closest<HTMLElement>(".bn-block-outer[data-id]")
-      ?.dataset.id;
-    const pointerId = event.pointerId;
-    const additive = event.shiftKey || event.metaKey || event.ctrlKey;
-    const baseSelection = additive ? selected : [];
-    const scroller = document.querySelector<HTMLElement>(".main-scroll");
-    const startDocumentY = start.y + (scroller?.scrollTop ?? 0);
-    let lastPoint = start;
-    let active = false;
-    let autoScrollFrame = 0;
-    const update = (point: { x: number; y: number }) => {
-      lastPoint = point;
-      const scrollTop = scroller?.scrollTop ?? 0;
-      const startViewportY = startDocumentY - scrollTop;
-      const visibleBox = rectangleFromPoints(
-        { x: start.x, y: startViewportY },
-        point,
-      );
-      setRectangle(visibleBox);
-      const documentBox = rectangleFromPoints(
-        { x: start.x, y: startDocumentY },
-        { x: point.x, y: point.y + scrollTop },
-      );
-      const elements = [
-        ...(host.current?.querySelectorAll<HTMLElement>(
-          ".bn-block-outer[data-id]",
-        ) ?? []),
-      ];
-      const rawHits = elements.filter((element) => {
-        const rect = element.getBoundingClientRect();
-        return rectanglesIntersect(documentBox, {
-          x: rect.x,
-          y: rect.y + scrollTop,
-          w: rect.width,
-          h: rect.height,
-        });
-      });
-      const hitElements = new Set(rawHits);
-      const hits = rawHits
-        .filter((element) => {
-          let parent = element.parentElement?.closest<HTMLElement>(
-            ".bn-block-outer[data-id]",
-          );
-          while (parent) {
-            if (hitElements.has(parent)) return false;
-            parent = parent.parentElement?.closest<HTMLElement>(
-              ".bn-block-outer[data-id]",
-            );
-          }
-          return true;
-        })
-        .map((element) => element.dataset.id!);
-      const next = additive ? [...new Set([...baseSelection, ...hits])] : hits;
-      setSelected((current) => (sameSelection(current, next) ? current : next));
-    };
-    const autoScroll = () => {
-      if (!active || !scroller) return;
-      const bounds = scroller.getBoundingClientRect();
-      const edge = 48;
-      const topDistance = lastPoint.y - bounds.top;
-      const bottomDistance = bounds.bottom - lastPoint.y;
-      const speed =
-        topDistance < edge
-          ? -Math.ceil((edge - topDistance) / 3)
-          : bottomDistance < edge
-            ? Math.ceil((edge - bottomDistance) / 3)
-            : 0;
-      if (speed) {
-        const before = scroller.scrollTop;
-        scroller.scrollTop += Math.max(-18, Math.min(18, speed));
-        if (scroller.scrollTop !== before) update(lastPoint);
-      }
-      autoScrollFrame = requestAnimationFrame(autoScroll);
-    };
-    function move(e: PointerEvent) {
-      if (e.pointerId !== pointerId) return;
-      if (!active && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 5)
-        return;
-      if (!active && startedInText && startBlockId) {
-        const currentBlockId = document
-          .elementFromPoint(e.clientX, e.clientY)
-          ?.closest<HTMLElement>(".bn-block-outer[data-id]")?.dataset.id;
-        if (currentBlockId === startBlockId) return;
-      }
-      if (!active) {
-        active = true;
-        rectangleClick.current = true;
-        autoScrollFrame = requestAnimationFrame(autoScroll);
-      }
-      e.preventDefault();
-      window.getSelection()?.removeAllRanges();
-      update({ x: e.clientX, y: e.clientY });
-    }
-    function end(e: PointerEvent) {
-      if (e.pointerId !== pointerId) return;
-      setRectangle(null);
-      cancelAnimationFrame(autoScrollFrame);
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", end);
-      window.removeEventListener("pointercancel", end);
-    }
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", end);
-    window.addEventListener("pointercancel", end);
   }
   const targetAt = (event: { clientX: number; clientY: number }) => {
     const el = document
@@ -1537,7 +1065,7 @@ export default function Editor({
       >
         <FormattingToolbarController
           formattingToolbar={() => (
-            <ShortcutFormattingToolbar
+            <EditorFormattingToolbar
               shortcuts={formattingShortcuts}
               onApplied={(style) => {
                 lastColorStyle.current = style;
@@ -1646,8 +1174,8 @@ export default function Editor({
           style={{
             left: box.x,
             top: box.y,
-            width: box.w,
-            height: box.h,
+            width: box.width,
+            height: box.height,
           }}
         />
       ))}
@@ -1658,8 +1186,8 @@ export default function Editor({
           style={{
             left: directLinkBox.x,
             top: directLinkBox.y,
-            width: directLinkBox.w,
-            height: directLinkBox.h,
+            width: directLinkBox.width,
+            height: directLinkBox.height,
           }}
         />
       )}

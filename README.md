@@ -75,6 +75,7 @@ On Linux, use `npx playwright install --with-deps chromium firefox webkit`. Brow
 ## Documentation
 
 - [Documentation index](docs/README.md)
+- [TypeScript file and module structure rules](docs/typescript-file-structure.md)
 - [Remaining jobs and known issues](docs/remained_job.md)
 - [Architecture](docs/architecture.md)
 - [Test results](docs/test-results.md)
