@@ -1,8 +1,12 @@
 # Test results
 
+## 2026-09-15T11:21:54Z — 0.5.0 configurable color-shortcut gate passed
+
+The final `npm run check` exited **0** in **126.87 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **106/106 unit and integration tests**, and **114/114 browser tests** passed across Chromium, Firefox and WebKit with four workers. Unit coverage verifies portable shortcut normalization/matching, malformed-setting fallback and duplicate reassignment. The new browser regression records and persists a custom red-text chord, applies it to a selection, reveals its toolbar hint on hover, chooses blue through the toolbar, reapplies blue with the default repeat chord, then proves that a subsequently chosen yellow background becomes the repeat target; all styles survive save/reload. Large build-chunk warnings remain non-fatal. GitHub CI is pending the release push at this checkpoint.
+
 ## 2026-09-15T11:09:08Z — 0.4.0 control panel gate passed
 
-The final `npm run check` exited **0** in **129.57 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **103/103 unit and integration tests**, and **111/111 browser tests** passed across Chromium, Firefox and WebKit with four workers. New unit coverage verifies supported, invalid and boolean preference values. The three-browser regression verifies immediate theme/text-size/page-width application, computed CSS, persistence after reload, sidebar startup visibility and complete reset behavior. Large build-chunk warnings remain non-fatal. GitHub CI is pending the release push at this checkpoint.
+The final `npm run check` exited **0** in **129.57 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **103/103 unit and integration tests**, and **111/111 browser tests** passed across Chromium, Firefox and WebKit with four workers. New unit coverage verifies supported, invalid and boolean preference values. The three-browser regression verifies immediate theme/text-size/page-width application, computed CSS, persistence after reload, sidebar startup visibility and complete reset behavior. Large build-chunk warnings remain non-fatal. [GitHub CI run 34961824186](https://github.com/huklee/lotion/actions/runs/34961824186) subsequently passed the complete Ubuntu / Node 24 gate for release commit `0751d6c`.
 
 ## 2026-09-15T10:56:21Z — 0.3.1 checklist/callout paste and scroll gate passed
 

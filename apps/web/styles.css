@@ -1087,6 +1087,87 @@ h1 span {
   font-size: 11px;
   padding: 9px 12px;
 }
+.settings-heading {
+  font:
+    600 13px "Manrope",
+    sans-serif;
+  margin: 28px 0 4px;
+}
+.settings-description {
+  margin-top: 0 !important;
+}
+.shortcut-settings {
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 12px 0 18px;
+}
+.shortcut-setting {
+  align-items: center;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  min-height: 46px;
+  padding-right: 8px;
+}
+.shortcut-setting:nth-child(even) {
+  border-left: 1px solid var(--border);
+  padding-left: 8px;
+  padding-right: 0;
+}
+.shortcut-setting > span {
+  align-items: center;
+  display: flex;
+  font-size: 10px;
+  gap: 7px;
+}
+.shortcut-setting input {
+  background: var(--soft);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 9px;
+  padding: 6px;
+  text-align: center;
+  width: 78px;
+}
+.shortcut-setting input:focus {
+  border-color: var(--accent);
+  outline: 2px solid #8ba77128;
+}
+.shortcut-repeat {
+  grid-column: 1 / -1;
+  padding-right: 0;
+}
+.shortcut-repeat > span {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 1px;
+}
+.shortcut-repeat small {
+  color: var(--muted);
+  font-size: 9px;
+}
+.text-color-swatch,
+.lotion-color-letter {
+  font-style: normal;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  width: 20px;
+}
+.color-shortcut-hint {
+  float: right;
+  margin-left: 18px;
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+.lotion-color-option:hover .color-shortcut-hint,
+.lotion-color-option:focus-visible .color-shortcut-hint {
+  opacity: 1;
+}
 kbd {
   font-size: 10px;
   color: var(--muted);

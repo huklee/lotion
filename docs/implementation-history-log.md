@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-15T11:21:54Z — 0.5.0 configurable color shortcuts prepared
+
+Prepared backward-compatible minor release 0.5.0 as the third requested incremental item. Extended the control panel with capture fields for every text color and the repeat-last action. Chords use a platform-neutral `Mod` representation, reject unsafe plain typing, validate persisted JSON, clear duplicates when reassigned and default repeat-last to ⌘ShiftH / Ctrl+Shift+H. Replaced only BlockNote's color toolbar control, preserving the rest of its default formatting UI; assigned text-color shortcuts appear on hover/focus. Direct chords and menu choices both update the last-color state, including background colors. See [ADR-017](adr/017-color-shortcuts.md).
+
+Focused shortcut unit tests and the full three-browser interaction regression passed. The final `npm run check` passed lint/type/build, 106 unit/integration tests and 114 browser cases in 126.87 seconds. Applied styles persisted through the normal save/reload path, shortcut preferences remained browser-local, and user data under `data/` was untouched. Commit, push and remote CI evidence are recorded separately.
+
 ## 2026-09-15T11:09:08Z — 0.4.0 browser-local control panel prepared
 
 Prepared backward-compatible minor release 0.4.0 as the second requested incremental item. Added a single sidebar control panel for theme mode, editor text size, page width and sidebar startup visibility, with immediate root-attribute application, canonical local-storage persistence, stale-value validation and a full reset. Preferences do not enter document data, revisions or exports. The existing appearance-cycle button remains available, and the panel is intentionally ready for the separately requested shortcut configuration without implementing that next item in this commit. See [ADR-016](adr/016-control-panel.md).

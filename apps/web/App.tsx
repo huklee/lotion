@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { set } from "idb-keyval";
 import { readSetting, readDraft, writeDraft } from "./storage-compat";
 import emojiData from "emojibase-data/en/data.json";
@@ -43,11 +50,28 @@ import {
   type PageWidth,
   type ThemeMode,
 } from "./preferences";
+import {
+  assignFormattingShortcut,
+  defaultFormattingShortcuts,
+  displayShortcut,
+  readFormattingShortcuts,
+  shortcutFromKeyboardEvent,
+  textColors,
+  type FormattingShortcutTarget,
+} from "./format-shortcuts";
 
 const sessionId = readSetting(sessionStorage, "session") ?? crypto.randomUUID();
 sessionStorage.setItem("lotion-session", sessionId);
 const draftKey = (id: string) => `lotion-draft:${sessionId}:${id}`;
 const favoritesKey = "lotion-favorites";
+const colorLabels = Object.fromEntries(
+  textColors.map((color) => [
+    color,
+    color === "default"
+      ? "Default text"
+      : `${color[0].toUpperCase()}${color.slice(1)} text`,
+  ]),
+) as Record<(typeof textColors)[number], string>;
 function readFavorites(): string[] {
   try {
     const value: unknown = JSON.parse(
@@ -124,6 +148,9 @@ export default function App() {
     [notice, setNotice] = useState("");
   const [iconPicker, setIconPicker] = useState(false);
   const [iconQuery, setIconQuery] = useState("");
+  const [formattingShortcuts, setFormattingShortcuts] = useState(() =>
+    readFormattingShortcuts(localStorage),
+  );
   const coordinators = useRef(new Map<string, SaveCoordinator>()),
     loadNumber = useRef(0),
     fileInput = useRef<HTMLInputElement>(null),
@@ -303,6 +330,12 @@ export default function App() {
     localStorage.setItem("lotion-page-width", pageWidth);
     localStorage.setItem("lotion-sidebar-on-start", String(sidebarOnStart));
   }, [editorTextSize, pageWidth, sidebarOnStart]);
+  useEffect(() => {
+    localStorage.setItem(
+      "lotion-formatting-shortcuts",
+      JSON.stringify(formattingShortcuts),
+    );
+  }, [formattingShortcuts]);
   useEffect(() => {
     const media = matchMedia("(prefers-color-scheme: dark)");
     const changed = () => setSystemDark(media.matches);
@@ -621,6 +654,28 @@ export default function App() {
     } catch {
       handleError(new Error("Could not save favorites in this browser."));
     }
+  }
+  function captureFormattingShortcut(
+    event: ReactKeyboardEvent<HTMLInputElement>,
+    target: FormattingShortcutTarget,
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.key === "Escape") {
+      event.currentTarget.blur();
+      return;
+    }
+    if (event.key === "Backspace" || event.key === "Delete") {
+      setFormattingShortcuts((current) =>
+        assignFormattingShortcut(current, target, ""),
+      );
+      return;
+    }
+    const shortcut = shortcutFromKeyboardEvent(event.nativeEvent);
+    if (shortcut)
+      setFormattingShortcuts((current) =>
+        assignFormattingShortcut(current, target, shortcut),
+      );
   }
   function pageLink(node: TreeNode) {
     return (
@@ -1213,6 +1268,7 @@ export default function App() {
                 key={`${active.id}:${active.revision}:${coordinator.editorVersion}`}
                 initial={coordinator.content}
                 theme={theme}
+                formattingShortcuts={formattingShortcuts}
                 pages={visible}
                 onCreateSubpage={() => createSubpage(active.id)}
                 onOpenPage={(id) => void openPage(id)}
@@ -1635,6 +1691,62 @@ export default function App() {
                   }}
                 >
                   Reset display settings
+                </button>
+                <h3 className="settings-heading">Formatting shortcuts</h3>
+                <p className="settings-description">
+                  Focus a field and press a modifier shortcut. Backspace clears
+                  it. Assigning a shortcut moves it from any previous action.
+                </p>
+                <div className="shortcut-settings">
+                  {textColors.map((color) => (
+                    <label className="shortcut-setting" key={color}>
+                      <span>
+                        <i
+                          className="text-color-swatch"
+                          data-text-color={color}
+                        >
+                          A
+                        </i>
+                        {colorLabels[color]}
+                      </span>
+                      <input
+                        aria-label={`${colorLabels[color]} shortcut`}
+                        placeholder="Unassigned"
+                        readOnly
+                        value={displayShortcut(
+                          formattingShortcuts.textColors[color],
+                        )}
+                        onKeyDown={(event) =>
+                          captureFormattingShortcut(event, color)
+                        }
+                      />
+                    </label>
+                  ))}
+                  <label className="shortcut-setting shortcut-repeat">
+                    <span>
+                      Repeat last color
+                      <small>Reapply the last text or background color.</small>
+                    </span>
+                    <input
+                      aria-label="Repeat last color shortcut"
+                      placeholder="Unassigned"
+                      readOnly
+                      value={displayShortcut(formattingShortcuts.repeatLast)}
+                      onKeyDown={(event) =>
+                        captureFormattingShortcut(event, "repeatLast")
+                      }
+                    />
+                  </label>
+                </div>
+                <button
+                  className="settings-reset"
+                  onClick={() =>
+                    setFormattingShortcuts(
+                      structuredClone(defaultFormattingShortcuts),
+                    )
+                  }
+                >
+                  Reset formatting shortcuts
                 </button>
               </>
             ) : (

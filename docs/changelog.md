@@ -2,6 +2,16 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.5.0 — 2026-09-15
+
+### Added
+
+- Every text color can have a browser-local modifier-key shortcut configured in the control panel. Duplicate assignments move to the new action, invalid saved combinations are ignored, and individual assignments can be cleared or reset.
+- The editor color menu shows an assigned shortcut when its text-color row is hovered or keyboard-focused.
+- A configurable **Repeat last color** shortcut reapplies the last text or background color; it defaults to the Notion-style ⌘ShiftH / Ctrl+Shift+H combination.
+
+No document schema migration is needed. Shortcut preferences remain in browser local storage; the colors they apply use the existing portable inline style schema. Verification is recorded in [test results](test-results.md).
+
 ## 0.4.0 — 2026-09-15
 
 ### Added

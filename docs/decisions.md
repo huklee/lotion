@@ -4,6 +4,7 @@
   - **Baseline**: selected for planning.
   - **Validated**: supported by implementation and recorded test evidence.
 - Dedicated implementation decisions:
+  - [ADR-017: Configurable color shortcuts](adr/017-color-shortcuts.md)
   - [ADR-016: Browser-local control panel](adr/016-control-panel.md)
   - [ADR-015: Parallel browser-test isolation](adr/015-parallel-browser-test-isolation.md)
   - [ADR-014: Favorites and browser navigation](adr/014-favorites-and-navigation.md)

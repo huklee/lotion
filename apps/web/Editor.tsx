@@ -1,7 +1,14 @@
 import {
+  ColorStyleButton,
+  FormattingToolbar,
+  FormattingToolbarController,
   getDefaultReactSlashMenuItems,
+  getFormattingToolbarItems,
   SuggestionMenuController,
+  useBlockNoteEditor,
+  useComponentsContext,
   useCreateBlockNote,
+  useEditorState,
 } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { readableCodeColor } from "./code-colors";
@@ -37,6 +44,144 @@ import type {
 import { moveBlocks, sectionIds } from "../../packages/editor-adapter/movement";
 import { api, authHeaders } from "./api";
 import { editorSchema } from "./editor-schema";
+import {
+  displayShortcut,
+  matchesFormattingShortcut,
+  textColors,
+  type FormattingShortcuts,
+  type TextColor,
+} from "./format-shortcuts";
+
+type AppliedColorStyle = {
+  kind: "textColor" | "backgroundColor";
+  color: string;
+};
+
+const colorLabels = Object.fromEntries(
+  textColors.map((color) => [
+    color,
+    color === "default"
+      ? "Default"
+      : `${color[0].toUpperCase()}${color.slice(1)}`,
+  ]),
+) as Record<TextColor, string>;
+
+function ColorLetter({
+  textColor,
+  backgroundColor,
+}: Partial<{ textColor: string; backgroundColor: string }>) {
+  return (
+    <span
+      className="bn-color-icon lotion-color-letter"
+      data-text-color={textColor ?? "default"}
+      data-background-color={backgroundColor ?? "default"}
+    >
+      A
+    </span>
+  );
+}
+
+function ShortcutColorStyleButton({
+  shortcuts,
+  onApplied,
+}: {
+  shortcuts: FormattingShortcuts;
+  onApplied: (style: AppliedColorStyle) => void;
+}) {
+  const editor = useBlockNoteEditor();
+  const Components = useComponentsContext()!;
+  const active = useEditorState({
+    editor,
+    selector: ({ editor }) => ({
+      textColor: String(editor.getActiveStyles().textColor ?? "default"),
+      backgroundColor: String(
+        editor.getActiveStyles().backgroundColor ?? "default",
+      ),
+    }),
+  });
+  const apply = (kind: AppliedColorStyle["kind"], color: string) => {
+    if (color === "default") editor.removeStyles({ [kind]: color });
+    else editor.addStyles({ [kind]: color });
+    onApplied({ kind, color });
+    setTimeout(() => editor.focus());
+  };
+  return (
+    <Components.Generic.Menu.Root>
+      <Components.Generic.Menu.Trigger>
+        <Components.FormattingToolbar.Button
+          className="bn-button"
+          label="Colors"
+          mainTooltip="Colors"
+          icon={
+            <ColorLetter
+              textColor={active.textColor}
+              backgroundColor={active.backgroundColor}
+            />
+          }
+        />
+      </Components.Generic.Menu.Trigger>
+      <Components.Generic.Menu.Dropdown className="bn-menu-dropdown bn-color-picker-dropdown">
+        <Components.Generic.Menu.Label>
+          Text color
+        </Components.Generic.Menu.Label>
+        {textColors.map((color) => (
+          <Components.Generic.Menu.Item
+            className="lotion-color-option"
+            icon={<ColorLetter textColor={color} />}
+            checked={active.textColor === color}
+            key={`text-${color}`}
+            onClick={() => apply("textColor", color)}
+          >
+            <span>{colorLabels[color]}</span>
+            {!!shortcuts.textColors[color] && (
+              <kbd className="color-shortcut-hint">
+                {displayShortcut(shortcuts.textColors[color])}
+              </kbd>
+            )}
+          </Components.Generic.Menu.Item>
+        ))}
+        <Components.Generic.Menu.Label>
+          Background color
+        </Components.Generic.Menu.Label>
+        {textColors.map((color) => (
+          <Components.Generic.Menu.Item
+            className="lotion-background-option"
+            icon={<ColorLetter backgroundColor={color} />}
+            checked={active.backgroundColor === color}
+            key={`background-${color}`}
+            onClick={() => apply("backgroundColor", color)}
+          >
+            {colorLabels[color]}
+          </Components.Generic.Menu.Item>
+        ))}
+      </Components.Generic.Menu.Dropdown>
+    </Components.Generic.Menu.Root>
+  );
+}
+
+function ShortcutFormattingToolbar({
+  shortcuts,
+  onApplied,
+}: {
+  shortcuts: FormattingShortcuts;
+  onApplied: (style: AppliedColorStyle) => void;
+}) {
+  return (
+    <FormattingToolbar>
+      {getFormattingToolbarItems().map((item) =>
+        item.type === ColorStyleButton ? (
+          <ShortcutColorStyleButton
+            key="colorStyleButton"
+            shortcuts={shortcuts}
+            onApplied={onApplied}
+          />
+        ) : (
+          item
+        ),
+      )}
+    </FormattingToolbar>
+  );
+}
 
 function PreviewImage({ url }: { url: string }) {
   const [source, setSource] = useState("");
@@ -82,6 +227,7 @@ export default function Editor({
   onLinkPreview,
   pages,
   theme,
+  formattingShortcuts,
 }: {
   initial: Content;
   onChange: (blocks: Block[]) => void;
@@ -91,6 +237,7 @@ export default function Editor({
   onLinkPreview: (url: string, preview: LinkPreview) => void;
   pages: TreeNode[];
   theme: "light" | "dark";
+  formattingShortcuts: FormattingShortcuts;
 }) {
   const normalizedInitial = useMemo(() => {
     let changed = false;
@@ -207,6 +354,7 @@ export default function Editor({
     },
   });
   const objectUrls = useRef<string[]>([]);
+  const lastColorStyle = useRef<AppliedColorStyle | null>(null);
   const mounted = useRef(true);
   const host = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<string[]>([]);
@@ -218,6 +366,15 @@ export default function Editor({
     h: number;
   } | null>(null);
   const [uploadState, setUploadState] = useState("");
+  const applyColorStyle = useCallback(
+    (style: AppliedColorStyle) => {
+      if (style.color === "default")
+        editor.removeStyles({ [style.kind]: style.color });
+      else editor.addStyles({ [style.kind]: style.color });
+      lastColorStyle.current = style;
+    },
+    [editor],
+  );
   const [failed, setFailed] = useState<{ file: File; id: string }[]>([]);
   const [dropLine, setDropLine] = useState<number | null>(null);
   const [pasteChoice, setPasteChoice] = useState<string | null>(null);
@@ -885,6 +1042,30 @@ export default function Editor({
         if (control) setSelected([]);
       }}
       onKeyDownCapture={(e) => {
+        const color = textColors.find((candidate) =>
+          matchesFormattingShortcut(
+            e.nativeEvent,
+            formattingShortcuts.textColors[candidate],
+          ),
+        );
+        if (color) {
+          e.preventDefault();
+          e.stopPropagation();
+          applyColorStyle({ kind: "textColor", color });
+          return;
+        }
+        if (
+          lastColorStyle.current &&
+          matchesFormattingShortcut(
+            e.nativeEvent,
+            formattingShortcuts.repeatLast,
+          )
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
+          applyColorStyle(lastColorStyle.current);
+          return;
+        }
         if (
           (e.ctrlKey || e.metaKey) &&
           !e.altKey &&
@@ -1138,9 +1319,20 @@ export default function Editor({
         editor={editor}
         editable={!pasteLoading}
         theme={theme}
+        formattingToolbar={false}
         slashMenu={false}
         onChange={() => onChange(editor.document as unknown as Block[])}
       >
+        <FormattingToolbarController
+          formattingToolbar={() => (
+            <ShortcutFormattingToolbar
+              shortcuts={formattingShortcuts}
+              onApplied={(style) => {
+                lastColorStyle.current = style;
+              }}
+            />
+          )}
+        />
         <SuggestionMenuController
           triggerCharacter="/"
           getItems={slashItems}

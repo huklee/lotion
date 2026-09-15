@@ -806,6 +806,122 @@ test("control panel applies, persists and resets browser display settings", asyn
   await expect(reopened.getByLabel("Page width")).toHaveValue("comfortable");
   await expect(reopened.getByLabel("Open sidebar on startup")).toBeChecked();
 });
+test("configurable text-color shortcuts show on hover and repeat the last color", async ({
+  page,
+}) => {
+  await seed(page, "Formatting shortcut page", [
+    {
+      id: "shortcut-text",
+      type: "paragraph",
+      content: [
+        { type: "text", text: "First Second Third Fourth", styles: {} },
+      ],
+    },
+  ]);
+  await page
+    .getByRole("button", { name: "Control panel", exact: true })
+    .click();
+  const panel = page.getByRole("dialog", { name: "Control panel" });
+  const redShortcut = panel.getByLabel("Red text shortcut");
+  await redShortcut.focus();
+  await page.keyboard.press("ControlOrMeta+Alt+R");
+  await expect(redShortcut).toHaveValue(/R/);
+  await panel.getByRole("button", { name: "Close dialog" }).click();
+  await page.reload();
+
+  const inline = page.locator('[data-id="shortcut-text"] .bn-inline-content');
+  const selectWord = async (word: string) => {
+    await inline.click();
+    await inline.evaluate((element, word) => {
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      let node: Node | null;
+      while ((node = walker.nextNode())) {
+        const start = node.textContent?.indexOf(word) ?? -1;
+        if (start < 0) continue;
+        const range = document.createRange();
+        range.setStart(node, start);
+        range.setEnd(node, start + word.length);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        document.dispatchEvent(new Event("selectionchange"));
+        return;
+      }
+      throw new Error(`Could not select ${word}`);
+    }, word);
+  };
+
+  await selectWord("First");
+  await page.keyboard.press("ControlOrMeta+Alt+R");
+  await expect(
+    inline.locator('[data-style-type="textColor"][data-value="red"]'),
+  ).toContainText("First");
+
+  await selectWord("Second");
+  await page.getByRole("button", { name: "Colors", exact: true }).click();
+  const redOption = page.locator(".lotion-color-option").filter({
+    hasText: "Red",
+  });
+  await redOption.hover();
+  await expect(redOption.locator(".color-shortcut-hint")).toHaveCSS(
+    "opacity",
+    "1",
+  );
+  await expect(redOption.locator(".color-shortcut-hint")).toContainText("R");
+  await page
+    .locator(".lotion-color-option")
+    .filter({ hasText: "Blue" })
+    .click();
+  await expect(
+    inline.locator('[data-style-type="textColor"][data-value="blue"]'),
+  ).toContainText("Second");
+
+  await selectWord("Third");
+  await page.keyboard.press("ControlOrMeta+Shift+H");
+  await expect(
+    inline
+      .locator('[data-style-type="textColor"][data-value="blue"]')
+      .filter({ hasText: "Third" }),
+  ).toContainText("Third");
+
+  await selectWord("First");
+  await page.getByRole("button", { name: "Colors", exact: true }).click();
+  await page
+    .locator(".lotion-background-option")
+    .filter({ hasText: "Yellow" })
+    .click();
+  await selectWord("Fourth");
+  await page.keyboard.press("ControlOrMeta+Shift+H");
+  await expect(
+    inline
+      .locator('[data-style-type="backgroundColor"][data-value="yellow"]')
+      .filter({ hasText: "First" }),
+  ).toContainText("First");
+  await expect(
+    inline
+      .locator('[data-style-type="backgroundColor"][data-value="yellow"]')
+      .filter({ hasText: "Fourth" }),
+  ).toContainText("Fourth");
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(
+    inline.locator('[data-style-type="textColor"][data-value="red"]'),
+  ).toContainText("First");
+  await expect(
+    inline
+      .locator('[data-style-type="textColor"][data-value="blue"]')
+      .filter({ hasText: "Second" }),
+  ).toContainText("Second");
+  await expect(
+    inline
+      .locator('[data-style-type="textColor"][data-value="blue"]')
+      .filter({ hasText: "Third" }),
+  ).toContainText("Third");
+  await expect(
+    inline.locator('[data-style-type="backgroundColor"][data-value="yellow"]'),
+  ).toHaveCount(2);
+});
 test("trash and restore retain content", async ({ page }) => {
   await seed(page, "Restore me");
   await page

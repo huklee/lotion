@@ -2,11 +2,11 @@
 
 Updated: 2026-09-15. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Prepared application checkpoint 0.4.0 adds a browser-local control panel for appearance, editor text size, page width and sidebar startup behavior. Release 0.3.1 fixed single-line inline paste in checklists/callouts and checkbox click scroll stability. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. A three-option search plan and the remaining requested incremental work are tracked under `docs/`.
+Prepared application checkpoint 0.5.0 adds configurable text-color shortcuts, toolbar shortcut hints and last text/background color reapplication to the browser-local control panel introduced in 0.4.0. Release 0.3.1 fixed checklist/callout inline paste and checkbox click scroll stability. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining requested incremental work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.4.0**. Publication commit and CI evidence are recorded after push. The 0.3.1 release commit is `0bdb9b0`; [its GitHub CI](https://github.com/huklee/lotion/actions/runs/34960911713) passed the complete gate on Ubuntu / Node 24. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.5.0**. Publication commit and CI evidence are recorded after push. The 0.4.0 release commit is `0751d6c`; [its GitHub CI](https://github.com/huklee/lotion/actions/runs/34961824186) passed the complete gate on Ubuntu / Node 24. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -30,7 +30,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible small feature additions use a minor increment; the prepared release is 0.4.0, not a major increment.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible small feature additions use a minor increment; the prepared release is 0.5.0, not a major increment.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.
