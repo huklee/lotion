@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.6.1**. See the [version history and added features](docs/changelog.md).
+Current version: **0.7.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -44,6 +44,8 @@ Paste a complete fenced `mermaid` Markdown block into the editor to create a dia
 Use **Export → Copy page as Markdown** to copy the current page's title and full body, including unsaved edits. Mermaid diagrams are copied as fenced source, and blank editor blocks remain blank lines rather than `&#x20;`. This copies the current page only; use ZIP export for subpages and image files.
 
 Select blocks by dragging a selection rectangle in any direction or choosing **Select section**, then press **Backspace** to delete them. Hold Shift, Command, or Control while drawing another rectangle to extend the selection. Dragging within one block still performs native text selection; drag near the editor's top or bottom edge to scroll while selecting. Use **⌘Z / Ctrl+Z** to undo.
+
+Place the cursor in any block and choose **Copy block link** to copy a direct URL to that exact location. Opening the URL loads the page, scrolls the referenced block into view, and highlights it. If the block was later deleted, the page still opens without forcing a fallback block.
 
 Type **@date** (or type **@** and choose **Date**) to open the calendar, choose a day and insert it. Press Enter once more immediately after opening to insert today. Dates are stored as portable `📅 YYYY-MM-DD` text.
 

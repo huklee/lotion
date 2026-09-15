@@ -59,6 +59,12 @@ import {
   textColors,
   type FormattingShortcutTarget,
 } from "./format-shortcuts";
+import {
+  blockIdFromHash,
+  directBlockUrl,
+  pageHash,
+  pageIdFromHash,
+} from "./block-links";
 
 const sessionId = readSetting(sessionStorage, "session") ?? crypto.randomUUID();
 sessionStorage.setItem("lotion-session", sessionId);
@@ -275,8 +281,15 @@ export default function App() {
         if (sequence !== loadNumber.current) return;
         setActive(doc);
         setSearch(false);
-        const hash = `#/page/${id}`;
-        if (navigation === "replace") history.replaceState(null, "", hash);
+        const hash = pageHash(id);
+        const replacementHash =
+          navigation === "replace" &&
+          pageIdFromHash(location.hash) === id &&
+          blockIdFromHash(location.hash)
+            ? location.hash
+            : hash;
+        if (navigation === "replace")
+          history.replaceState(null, "", replacementHash);
         else if (navigation === "push" && location.hash !== hash)
           history.pushState(null, "", hash);
         if (newId.current === id) {
@@ -298,8 +311,7 @@ export default function App() {
       .then((nodes) => {
         if (!alive || loadNumber.current > 0) return;
         const id =
-          location.hash.match(/^#\/page\/([^#]+)/)?.[1] ??
-          nodes.find((n) => !n.hidden)?.id;
+          pageIdFromHash(location.hash) ?? nodes.find((n) => !n.hidden)?.id;
         if (id && location.hash !== "#/home") void openPage(id, "replace");
       })
       .catch(handleError);
@@ -377,7 +389,7 @@ export default function App() {
   }, [dialog, search, auth]);
   useEffect(() => {
     const navigate = () => {
-      const id = location.hash.match(/^#\/page\/([^#]+)/)?.[1];
+      const id = pageIdFromHash(location.hash);
       if (id) void openPage(id, "none");
       else {
         ++loadNumber.current;
@@ -540,6 +552,17 @@ export default function App() {
       handleError(e);
     } finally {
       setBusy(false);
+    }
+  }
+  async function copyBlockLink(blockId: string) {
+    if (!active) return;
+    try {
+      await navigator.clipboard.writeText(
+        directBlockUrl(location.href, active.id, blockId),
+      );
+      setNotice("Copied a direct link to this block.");
+    } catch (e) {
+      handleError(e);
     }
   }
   async function exportWorkspace(rootId?: string, portable = false) {
@@ -1271,6 +1294,7 @@ export default function App() {
                 formattingShortcuts={formattingShortcuts}
                 pages={visible}
                 onCreateSubpage={() => createSubpage(active.id)}
+                onCopyBlockLink={copyBlockLink}
                 onOpenPage={(id) => void openPage(id)}
                 onLinkPreview={(url, preview) =>
                   coordinator.edit({

@@ -26,6 +26,7 @@ import {
   FilePlus2,
   GripVertical,
   Layers,
+  Link,
   MessageSquareQuote,
   X,
 } from "lucide-react";
@@ -60,6 +61,7 @@ import {
   rectanglesIntersect,
   sameSelection,
 } from "./rectangle-selection";
+import { blockIdFromHash, pageIdFromHash } from "./block-links";
 
 type AppliedColorStyle = {
   kind: "textColor" | "backgroundColor";
@@ -216,12 +218,12 @@ function PreviewImage({ url }: { url: string }) {
 }
 
 function pageIdFromHref(href: string): string | null {
-  const direct = /^#\/page\/([a-zA-Z0-9_-]+)$/.exec(href);
-  if (direct) return direct[1];
+  const direct = pageIdFromHash(href);
+  if (direct) return direct;
   try {
     const url = new URL(href, location.href);
     if (url.origin !== location.origin) return null;
-    return /^#\/page\/([a-zA-Z0-9_-]+)$/.exec(url.hash)?.[1] ?? null;
+    return pageIdFromHash(url.hash);
   } catch {
     return null;
   }
@@ -232,6 +234,7 @@ export default function Editor({
   onChange,
   onBackgroundImage,
   onCreateSubpage,
+  onCopyBlockLink,
   onOpenPage,
   onLinkPreview,
   pages,
@@ -242,6 +245,7 @@ export default function Editor({
   onChange: (blocks: Block[]) => void;
   onBackgroundImage: (id: string, url: string, name: string) => void;
   onCreateSubpage: () => Promise<Document>;
+  onCopyBlockLink: (blockId: string) => Promise<void>;
   onOpenPage: (id: string) => void;
   onLinkPreview: (url: string, preview: LinkPreview) => void;
   pages: TreeNode[];
@@ -310,7 +314,16 @@ export default function Editor({
         if (!href) return false;
         event.preventDefault();
         const id = pageIdFromHref(href);
-        if (id) onOpenPage(id);
+        const destinationHash = (() => {
+          try {
+            return new URL(href, location.href).hash;
+          } catch {
+            return "";
+          }
+        })();
+        if (id && blockIdFromHash(destinationHash))
+          location.hash = destinationHash;
+        else if (id) onOpenPage(id);
         else window.location.assign(href);
         return true;
       },
@@ -370,6 +383,13 @@ export default function Editor({
   const [selectedBoxes, setSelectedBoxes] = useState<
     { id: string; x: number; y: number; w: number; h: number }[]
   >([]);
+  const [directLinkBox, setDirectLinkBox] = useState<{
+    id: string;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  } | null>(null);
   const rectangleClick = useRef(false);
   const [rectangle, setRectangle] = useState<{
     x: number;
@@ -638,6 +658,64 @@ export default function Editor({
       }
     };
   }, [selected]);
+  useEffect(() => {
+    const element = host.current;
+    if (!element) return;
+    let frame = 0;
+    let attempts = 0;
+    let currentId: string | null = null;
+    const findTarget = () =>
+      currentId
+        ? ([
+            ...element.querySelectorAll<HTMLElement>(
+              ".bn-block-outer[data-id]",
+            ),
+          ].find((candidate) => candidate.dataset.id === currentId) ?? null)
+        : null;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const target = findTarget();
+        if (!target) {
+          setDirectLinkBox(null);
+          return;
+        }
+        const rect = target.getBoundingClientRect();
+        setDirectLinkBox({
+          id: currentId!,
+          x: rect.x,
+          y: rect.y,
+          w: rect.width,
+          h: rect.height,
+        });
+      });
+    };
+    const reveal = () => {
+      currentId = blockIdFromHash(location.hash);
+      setDirectLinkBox(null);
+      attempts = 0;
+      const findAndReveal = () => {
+        const target = findTarget();
+        if (!target && currentId && attempts++ < 20) {
+          frame = requestAnimationFrame(findAndReveal);
+          return;
+        }
+        target?.scrollIntoView({ block: "center" });
+        measure();
+      };
+      frame = requestAnimationFrame(findAndReveal);
+    };
+    reveal();
+    window.addEventListener("hashchange", reveal);
+    window.addEventListener("scroll", measure, true);
+    window.addEventListener("resize", measure);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", reveal);
+      window.removeEventListener("scroll", measure, true);
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
   useEffect(() => {
     const element = host.current;
     if (!element || !selected.length) {
@@ -1385,18 +1463,29 @@ export default function Editor({
     >
       <div className="selection-gutter" aria-label="Drag to select blocks" />
       <div className="editor-tools">
-        <button
-          className="quiet"
-          onClick={() => {
-            const current = editor.getTextCursorPosition().block;
-            setSelected(
-              sectionIds(editor.document as unknown as Block[], current.id),
-            );
-          }}
-          title="Select the current heading and its section"
-        >
-          <Layers size={14} /> Select section
-        </button>
+        <div>
+          <button
+            className="quiet"
+            onClick={() => {
+              const current = editor.getTextCursorPosition().block;
+              setSelected(
+                sectionIds(editor.document as unknown as Block[], current.id),
+              );
+            }}
+            title="Select the current heading and its section"
+          >
+            <Layers size={14} /> Select section
+          </button>
+          <button
+            className="quiet"
+            onClick={() =>
+              void onCopyBlockLink(editor.getTextCursorPosition().block.id)
+            }
+            title="Copy a direct link to the current block"
+          >
+            <Link size={14} /> Copy block link
+          </button>
+        </div>
         <span>Drag across blocks to select them</span>
       </div>
       {!!selected.length && (
@@ -1562,6 +1651,18 @@ export default function Editor({
           }}
         />
       ))}
+      {directLinkBox && (
+        <div
+          className="direct-link-highlight"
+          data-direct-link-target={directLinkBox.id}
+          style={{
+            left: directLinkBox.x,
+            top: directLinkBox.y,
+            width: directLinkBox.w,
+            height: directLinkBox.h,
+          }}
+        />
+      )}
       {dropLine !== null && (
         <div
           className="drop-line"

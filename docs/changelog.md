@@ -2,6 +2,16 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.7.0 — 2026-09-15
+
+### Added
+
+- **Copy block link** copies an absolute URL for the block containing the current cursor. The deep link uses stable page and block IDs rather than titles or positions.
+- Opening a block URL preserves the deep fragment while loading, centers the referenced block, and renders a pointer-transparent highlight that remains aligned during scrolling and resizing.
+- Deep links pasted as internal links retain same-application routing. Deleted or unknown block targets still open their page without redirecting to an unrelated block, and clipboard failures remain visible for retry.
+
+No document schema migration is needed. Direct links reuse existing stable block IDs and store no extra document metadata. Verification is recorded in [test results](test-results.md).
+
 ## 0.6.1 — 2026-09-15
 
 ### Fixed

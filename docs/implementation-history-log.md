@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-15T14:20:47Z — 0.7.0 direct block links prepared
+
+Prepared backward-compatible minor release 0.7.0 as the sixth and final requested incremental item. Added a cursor-aware **Copy block link** action that copies an absolute stable-ID URL. Centralized strict page/block hash construction and parsing, retained deep fragments during initial page loading, and allowed internal deep links to use the existing history-aware router. Target blocks are centered and identified by a React-owned fixed overlay that follows scrolling/resizing without mutating BlockNote-owned DOM. Missing targets keep the requested page and URL open without selecting an unrelated fallback. See [ADR-019](adr/019-direct-block-links.md).
+
+Focused URL unit tests, lint/type/build and the three-browser direct-link scenario passed before the full gate. The final `npm run check` passed lint/type/build, 114 unit/integration tests and 126 browser cases in 143.62 seconds. It covers success, fresh navigation, target reveal, clipboard denial and deleted-target behavior. User data under `data/` was untouched. Commit, push and remote CI evidence are recorded separately.
+
 ## 2026-09-15T14:09:46Z — 0.6.1 hierarchy-preserving deletion prepared
 
 Prepared patch release 0.6.1 as the fifth requested incremental item. Replaced selected-block deletion's direct multi-node editor removal with an immutable tree transform that drops selected subtrees while retaining unselected parents, siblings and descendants at the same depth. The transformed hierarchy is applied in one replace transaction, retains stable IDs, leaves one editable paragraph when everything is deleted, and remains a single undo step.

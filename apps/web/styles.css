@@ -639,6 +639,10 @@ h1 span {
 .editor-tools button {
   font-size: 10px;
 }
+.editor-tools > div {
+  display: flex;
+  gap: 6px;
+}
 .editor-tools > span {
   font-size: 8px;
   color: #b0b6a7;
@@ -679,6 +683,14 @@ h1 span {
   pointer-events: none;
   position: fixed;
   z-index: 4;
+}
+.direct-link-highlight {
+  background: #91a87824;
+  border-radius: 4px;
+  border-left: 3px solid #7d9d61;
+  pointer-events: none;
+  position: fixed;
+  z-index: 3;
 }
 .lotion-toc {
   text-align: left;

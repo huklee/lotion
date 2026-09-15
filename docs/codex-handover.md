@@ -2,11 +2,11 @@
 
 Updated: 2026-09-15. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Prepared application checkpoint 0.6.1 preserves the exact hierarchy and indentation of unselected blocks when a selected block is deleted. Release 0.6.0 added Notion-style bidirectional/additive block lasso selection, edge auto-scroll and stable viewport overlays. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining requested incremental work is tracked under `docs/`.
+Prepared application checkpoint 0.7.0 adds copyable stable block URLs with deep-link loading, centered target reveal and viewport-aligned highlighting. Release 0.6.1 preserves the hierarchy and indentation of unselected blocks during deletion. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.6.1**. Publication commit and CI evidence are recorded after push. The 0.6.0 release commit is `e45d7c8`; [its GitHub CI](https://github.com/huklee/lotion/actions/runs/34979252469) passed the complete gate on Ubuntu / Node 24. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.7.0**. Publication commit and CI evidence are recorded after push. The 0.6.1 release commit is `090baf0`; [its GitHub CI](https://github.com/huklee/lotion/actions/runs/34980141786) passed the complete gate on Ubuntu / Node 24. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -30,7 +30,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this prepared fix is 0.6.1.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this prepared feature release is 0.7.0.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.
