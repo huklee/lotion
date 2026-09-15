@@ -1201,6 +1201,125 @@ test("rectangle-selects blocks without changing ordinary text content", async ({
   ).toBe(0);
 });
 
+test("block lasso preserves text dragging, supports reverse selection and extends with Shift", async ({
+  page,
+}) => {
+  await seed(page, "Notion-style lasso", [
+    {
+      id: "lasso-a",
+      type: "paragraph",
+      content: [{ type: "text", text: "Selectable words", styles: {} }],
+    },
+    {
+      id: "lasso-b",
+      type: "paragraph",
+      content: [{ type: "text", text: "Second block", styles: {} }],
+    },
+    {
+      id: "lasso-c",
+      type: "paragraph",
+      content: [{ type: "text", text: "Third block", styles: {} }],
+    },
+  ]);
+  const firstText = page.locator('[data-id="lasso-a"] .bn-inline-content');
+  const textBox = (await firstText.boundingBox())!;
+  await page.mouse.move(textBox.x + 3, textBox.y + textBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    textBox.x + Math.min(textBox.width - 3, 70),
+    textBox.y + textBox.height / 2,
+    { steps: 8 },
+  );
+  await page.mouse.up();
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toHaveCount(0);
+  expect(
+    await page.evaluate(() => window.getSelection()?.toString().length),
+  ).toBeGreaterThan(0);
+
+  const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+  const second = (await page
+    .locator('.bn-block-outer[data-id="lasso-b"]')
+    .boundingBox())!;
+  await page.mouse.move(gutter.x + 5, second.y + second.height - 2);
+  await page.mouse.down();
+  await page.mouse.move(second.x + second.width - 10, second.y + 2, {
+    steps: 10,
+  });
+  await page.mouse.up();
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toContainText("1 selected");
+
+  const third = (await page
+    .locator('.bn-block-outer[data-id="lasso-c"]')
+    .boundingBox())!;
+  await page.keyboard.down("Shift");
+  await page.mouse.move(gutter.x + 5, third.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    third.x + third.width - 10,
+    third.y + third.height - 2,
+    {
+      steps: 10,
+    },
+  );
+  await page.mouse.up();
+  await page.keyboard.up("Shift");
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toContainText("2 selected");
+  await expect(
+    page.locator('.block-selection-highlight[data-block-id="lasso-a"]'),
+  ).toHaveCount(0);
+  await expect(
+    page.locator('.block-selection-highlight[data-block-id="lasso-b"]'),
+  ).toHaveCount(1);
+  await expect(
+    page.locator('.block-selection-highlight[data-block-id="lasso-c"]'),
+  ).toHaveCount(1);
+});
+
+test("block lasso auto-scrolls and retains offscreen hits", async ({
+  page,
+}) => {
+  await seed(
+    page,
+    "Auto-scroll lasso",
+    Array.from({ length: 40 }, (_, index) => ({
+      id: `auto-lasso-${index}`,
+      type: "paragraph",
+      content: [{ type: "text", text: `Block ${index}`, styles: {} }],
+    })),
+  );
+  const scroller = page.locator(".main-scroll");
+  const bounds = (await scroller.boundingBox())!;
+  const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+  const first = (await page
+    .locator('.bn-block-outer[data-id="auto-lasso-0"]')
+    .boundingBox())!;
+  await page.mouse.move(gutter.x + 5, first.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    bounds.x + bounds.width - 80,
+    bounds.y + bounds.height - 3,
+    {
+      steps: 12,
+    },
+  );
+  await expect
+    .poll(() => scroller.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(80);
+  await page.mouse.up();
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toContainText(/\d+ selected/);
+  await expect
+    .poll(() => page.locator(".block-selection-highlight").count())
+    .toBeGreaterThan(5);
+});
+
 test("Backspace deletes a rectangle selection and leaves an editable empty document", async ({
   page,
 }) => {

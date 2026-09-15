@@ -51,6 +51,11 @@ import {
   type FormattingShortcuts,
   type TextColor,
 } from "./format-shortcuts";
+import {
+  rectangleFromPoints,
+  rectanglesIntersect,
+  sameSelection,
+} from "./rectangle-selection";
 
 type AppliedColorStyle = {
   kind: "textColor" | "backgroundColor";
@@ -358,6 +363,9 @@ export default function Editor({
   const mounted = useRef(true);
   const host = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<string[]>([]);
+  const [selectedBoxes, setSelectedBoxes] = useState<
+    { id: string; x: number; y: number; w: number; h: number }[]
+  >([]);
   const rectangleClick = useRef(false);
   const [rectangle, setRectangle] = useState<{
     x: number;
@@ -591,9 +599,6 @@ export default function Editor({
   useEffect(() => {
     const element = host.current;
     if (!element) return;
-    const blocks = [
-      ...element.querySelectorAll<HTMLElement>(".bn-block-outer[data-id]"),
-    ];
     const drag = (event: DragEvent) => {
       event.dataTransfer?.setData(
         "application/lotion-blocks",
@@ -601,19 +606,70 @@ export default function Editor({
       );
       if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
     };
-    for (const block of blocks) {
-      const active = selected.includes(block.dataset.id!);
-      block.dataset.boxSelected = String(active);
-      if (active) {
-        block.draggable = true;
-        block.addEventListener("dragstart", drag);
-      } else block.removeAttribute("draggable");
-    }
-    return () => {
+    const sync = () => {
+      const blocks = element.querySelectorAll<HTMLElement>(
+        ".bn-block-outer[data-id]",
+      );
       for (const block of blocks) {
+        const active = selected.includes(block.dataset.id!);
+        block.removeEventListener("dragstart", drag);
+        if (active) {
+          block.draggable = true;
+          block.addEventListener("dragstart", drag);
+        } else block.removeAttribute("draggable");
+      }
+    };
+    sync();
+    const firstFrame = requestAnimationFrame(() => {
+      sync();
+      secondFrame = requestAnimationFrame(sync);
+    });
+    let secondFrame = 0;
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+      for (const block of element.querySelectorAll<HTMLElement>(
+        ".bn-block-outer[data-id]",
+      )) {
         block.removeEventListener("dragstart", drag);
         block.removeAttribute("draggable");
       }
+    };
+  }, [selected]);
+  useEffect(() => {
+    const element = host.current;
+    if (!element || !selected.length) {
+      setSelectedBoxes([]);
+      return;
+    }
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const next = [
+          ...element.querySelectorAll<HTMLElement>(".bn-block-outer[data-id]"),
+        ]
+          .filter((block) => selected.includes(block.dataset.id!))
+          .map((block) => {
+            const rect = block.getBoundingClientRect();
+            return {
+              id: block.dataset.id!,
+              x: rect.x,
+              y: rect.y,
+              w: rect.width,
+              h: rect.height,
+            };
+          });
+        setSelectedBoxes(next);
+      });
+    };
+    measure();
+    window.addEventListener("scroll", measure, true);
+    window.addEventListener("resize", measure);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", measure, true);
+      window.removeEventListener("resize", measure);
     };
   }, [selected]);
   function applyMove(target: string, side: "before" | "after") {
@@ -638,48 +694,113 @@ export default function Editor({
     if (target) applyMove(target.id, direction === "up" ? "before" : "after");
   }
   function startRectangle(event: React.PointerEvent<HTMLDivElement>) {
+    const target = event.target as HTMLElement;
     if (
       event.button !== 0 ||
-      (event.target as HTMLElement).closest(
-        "button, a, input, select, textarea, [draggable=true]",
-      )
+      target.closest("button, a, input, select, textarea, [draggable=true]")
     )
       return;
     const start = { x: event.clientX, y: event.clientY };
+    const startedInText = !!target.closest(
+      ".bn-inline-content, [contenteditable=true]",
+    );
+    const startBlockId = target.closest<HTMLElement>(".bn-block-outer[data-id]")
+      ?.dataset.id;
+    const pointerId = event.pointerId;
+    const additive = event.shiftKey || event.metaKey || event.ctrlKey;
+    const baseSelection = additive ? selected : [];
+    const scroller = document.querySelector<HTMLElement>(".main-scroll");
+    const startDocumentY = start.y + (scroller?.scrollTop ?? 0);
+    let lastPoint = start;
     let active = false;
-    function move(e: PointerEvent) {
-      if (!active && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 5)
-        return;
-      active = true;
-      rectangleClick.current = true;
-      e.preventDefault();
-      window.getSelection()?.removeAllRanges();
-      const box = {
-        x: Math.min(start.x, e.clientX),
-        y: Math.min(start.y, e.clientY),
-        w: Math.abs(start.x - e.clientX),
-        h: Math.abs(start.y - e.clientY),
-      };
-      setRectangle(box);
-      const hits = [
+    let autoScrollFrame = 0;
+    const update = (point: { x: number; y: number }) => {
+      lastPoint = point;
+      const scrollTop = scroller?.scrollTop ?? 0;
+      const startViewportY = startDocumentY - scrollTop;
+      const visibleBox = rectangleFromPoints(
+        { x: start.x, y: startViewportY },
+        point,
+      );
+      setRectangle(visibleBox);
+      const documentBox = rectangleFromPoints(
+        { x: start.x, y: startDocumentY },
+        { x: point.x, y: point.y + scrollTop },
+      );
+      const elements = [
         ...(host.current?.querySelectorAll<HTMLElement>(
           ".bn-block-outer[data-id]",
         ) ?? []),
-      ]
-        .filter((el) => {
-          const r = el.getBoundingClientRect();
-          return (
-            r.bottom > box.y &&
-            r.top < box.y + box.h &&
-            r.right > box.x &&
-            r.left < box.x + box.w
+      ];
+      const rawHits = elements.filter((element) => {
+        const rect = element.getBoundingClientRect();
+        return rectanglesIntersect(documentBox, {
+          x: rect.x,
+          y: rect.y + scrollTop,
+          w: rect.width,
+          h: rect.height,
+        });
+      });
+      const hitElements = new Set(rawHits);
+      const hits = rawHits
+        .filter((element) => {
+          let parent = element.parentElement?.closest<HTMLElement>(
+            ".bn-block-outer[data-id]",
           );
+          while (parent) {
+            if (hitElements.has(parent)) return false;
+            parent = parent.parentElement?.closest<HTMLElement>(
+              ".bn-block-outer[data-id]",
+            );
+          }
+          return true;
         })
-        .map((el) => el.dataset.id!);
-      setSelected(hits);
+        .map((element) => element.dataset.id!);
+      const next = additive ? [...new Set([...baseSelection, ...hits])] : hits;
+      setSelected((current) => (sameSelection(current, next) ? current : next));
+    };
+    const autoScroll = () => {
+      if (!active || !scroller) return;
+      const bounds = scroller.getBoundingClientRect();
+      const edge = 48;
+      const topDistance = lastPoint.y - bounds.top;
+      const bottomDistance = bounds.bottom - lastPoint.y;
+      const speed =
+        topDistance < edge
+          ? -Math.ceil((edge - topDistance) / 3)
+          : bottomDistance < edge
+            ? Math.ceil((edge - bottomDistance) / 3)
+            : 0;
+      if (speed) {
+        const before = scroller.scrollTop;
+        scroller.scrollTop += Math.max(-18, Math.min(18, speed));
+        if (scroller.scrollTop !== before) update(lastPoint);
+      }
+      autoScrollFrame = requestAnimationFrame(autoScroll);
+    };
+    function move(e: PointerEvent) {
+      if (e.pointerId !== pointerId) return;
+      if (!active && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 5)
+        return;
+      if (!active && startedInText && startBlockId) {
+        const currentBlockId = document
+          .elementFromPoint(e.clientX, e.clientY)
+          ?.closest<HTMLElement>(".bn-block-outer[data-id]")?.dataset.id;
+        if (currentBlockId === startBlockId) return;
+      }
+      if (!active) {
+        active = true;
+        rectangleClick.current = true;
+        autoScrollFrame = requestAnimationFrame(autoScroll);
+      }
+      e.preventDefault();
+      window.getSelection()?.removeAllRanges();
+      update({ x: e.clientX, y: e.clientY });
     }
-    function end() {
+    function end(e: PointerEvent) {
+      if (e.pointerId !== pointerId) return;
       setRectangle(null);
+      cancelAnimationFrame(autoScrollFrame);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", end);
       window.removeEventListener("pointercancel", end);
@@ -1426,6 +1547,19 @@ export default function Editor({
           }}
         />
       )}
+      {selectedBoxes.map((box) => (
+        <div
+          className="block-selection-highlight"
+          data-block-id={box.id}
+          key={box.id}
+          style={{
+            left: box.x,
+            top: box.y,
+            width: box.w,
+            height: box.h,
+          }}
+        />
+      ))}
       {dropLine !== null && (
         <div
           className="drop-line"

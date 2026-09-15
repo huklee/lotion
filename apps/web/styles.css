@@ -672,9 +672,13 @@ h1 span {
 [data-editor-text-size="large"] .bn-editor {
   font-size: 16px;
 }
-.bn-block-outer[data-box-selected="true"] > .bn-block {
+.block-selection-highlight {
   background: #91a87830;
+  border: 1px solid #91a87866;
   border-radius: 4px;
+  pointer-events: none;
+  position: fixed;
+  z-index: 4;
 }
 .lotion-toc {
   text-align: left;

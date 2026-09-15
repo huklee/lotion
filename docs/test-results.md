@@ -1,8 +1,12 @@
 # Test results
 
+## 2026-09-15T14:00:35Z — 0.6.0 block-lasso gate passed
+
+The final `npm run check` exited **0** in **141.06 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **109/109 unit and integration tests**, and **120/120 browser tests** passed across Chromium, Firefox and WebKit with four workers. New unit coverage verifies rectangle normalization, edge-touch intersection and stable selection comparison. New three-browser regressions verify within-block native text dragging, reverse lasso, Shift extension, edge auto-scroll and retention of off-screen hits; existing rectangle Backspace and selected-group drag regressions also passed. Large build-chunk warnings remain non-fatal. GitHub CI is pending the release push at this checkpoint.
+
 ## 2026-09-15T11:21:54Z — 0.5.0 configurable color-shortcut gate passed
 
-The final `npm run check` exited **0** in **126.87 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **106/106 unit and integration tests**, and **114/114 browser tests** passed across Chromium, Firefox and WebKit with four workers. Unit coverage verifies portable shortcut normalization/matching, malformed-setting fallback and duplicate reassignment. The new browser regression records and persists a custom red-text chord, applies it to a selection, reveals its toolbar hint on hover, chooses blue through the toolbar, reapplies blue with the default repeat chord, then proves that a subsequently chosen yellow background becomes the repeat target; all styles survive save/reload. Large build-chunk warnings remain non-fatal. GitHub CI is pending the release push at this checkpoint.
+The final `npm run check` exited **0** in **126.87 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **106/106 unit and integration tests**, and **114/114 browser tests** passed across Chromium, Firefox and WebKit with four workers. Unit coverage verifies portable shortcut normalization/matching, malformed-setting fallback and duplicate reassignment. The new browser regression records and persists a custom red-text chord, applies it to a selection, reveals its toolbar hint on hover, chooses blue through the toolbar, reapplies blue with the default repeat chord, then proves that a subsequently chosen yellow background becomes the repeat target; all styles survive save/reload. Large build-chunk warnings remain non-fatal. [GitHub CI run 34977521325](https://github.com/huklee/lotion/actions/runs/34977521325) subsequently passed the complete Ubuntu / Node 24 gate for release commit `4f62db2`.
 
 ## 2026-09-15T11:09:08Z — 0.4.0 control panel gate passed
 

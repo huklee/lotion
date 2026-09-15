@@ -2,6 +2,19 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.6.0 — 2026-09-15
+
+### Added
+
+- Block lasso selection now works in every drag direction, supports Shift/Command/Control additive selection, keeps already hit off-screen blocks selected while auto-scrolling near editor edges, and avoids selecting a nested child separately when its ancestor is selected.
+- Selected blocks use viewport overlays that stay aligned while scrolling and remain available for existing group drag and Backspace actions.
+
+### Fixed
+
+- Dragging inside a single editable block retains native text selection; crossing into another block intentionally transitions to block lasso selection.
+
+No document schema migration is needed. This release changes editor interaction and transient selection rendering only. Verification is recorded in [test results](test-results.md).
+
 ## 0.5.0 — 2026-09-15
 
 ### Added

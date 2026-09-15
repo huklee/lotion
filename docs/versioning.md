@@ -1,16 +1,16 @@
 # Version management guide
 
-Established 2026-09-13 from the user's versioning instructions. Read this guide before changing a version or preparing a release. Current release: **0.5.0**, incremented from **0.4.0**.
+Established 2026-09-13 from the user's versioning instructions. Read this guide before changing a version or preparing a release. Current release: **0.6.0**, incremented from **0.5.0**.
 
 ## Choose the increment
 
 Use `MAJOR.MINOR.PATCH` and the scope of the complete release, not the number of commits or features.
 
-| Increment | When to use | Example |
-| --- | --- | --- |
-| Major | Incompatible behavior/data/API changes, or an explicitly agreed major product milestone | `0.2.0` → `1.0.0` |
-| Minor | Backward-compatible, modest feature additions or interaction improvements | `0.1.0` → `0.2.0` |
-| Patch | Bug fixes without a new functional feature | `0.2.0` → `0.2.1` |
+| Increment | When to use                                                                             | Example           |
+| --------- | --------------------------------------------------------------------------------------- | ----------------- |
+| Major     | Incompatible behavior/data/API changes, or an explicitly agreed major product milestone | `0.2.0` → `1.0.0` |
+| Minor     | Backward-compatible, modest feature additions or interaction improvements               | `0.1.0` → `0.2.0` |
+| Patch     | Bug fixes without a new functional feature                                              | `0.2.0` → `0.2.1` |
 
 Do not promote a release to major merely because features were added. The Mermaid paste, Markdown clipboard copy and selected-block Backspace changes are the reference example for a **minor** release. Major/minor increments reset the lower components to zero. Documentation-only follow-ups normally retain the current version. An explicit user version instruction takes precedence.
 

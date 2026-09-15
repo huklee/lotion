@@ -42,6 +42,7 @@ All project plans, design records, implementation notes, test plans, and test re
 14. [Parallel browser-test isolation](adr/015-parallel-browser-test-isolation.md): per-worker servers/repositories, worker policy, cleanup and benchmark evidence.
 15. [Browser-local control panel](adr/016-control-panel.md): validated display preferences, persistence boundaries and reset behavior.
 16. [Configurable color shortcuts](adr/017-color-shortcuts.md): portable key chords, toolbar hints and last-color reapplication.
+17. [Notion-style block lasso selection](adr/018-block-lasso-selection.md): native text drag preservation, additive/reverse selection, edge scrolling and stable overlays.
 
 ## Current status
 

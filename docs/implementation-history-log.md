@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-15T14:00:35Z — 0.6.0 Notion-style block lasso prepared
+
+Prepared backward-compatible minor release 0.6.0 as the fourth requested incremental item. Block lasso selection now normalizes every drag direction, extends with Shift/Command/Control, auto-scrolls near vertical editor edges, retains off-screen hits, and removes redundant nested hits when an ancestor is selected. A drag kept within one editable block remains native text selection; crossing into another block transitions to lasso selection. Fixed, pointer-transparent viewport overlays replace selection attributes on editor-owned DOM so BlockNote node replacement no longer removes the visible selection. Existing selected-block Backspace and group dragging continue to use stable block IDs. See [ADR-018](adr/018-block-lasso-selection.md).
+
+Focused geometry unit tests and 15 lasso/selection browser cases passed across all three engines. The final `npm run check` passed lint/type/build, 109 unit/integration tests and 120 browser cases in 141.06 seconds. The release changes transient interaction state only, requires no document migration, and leaves user data under `data/` untouched. Commit, push and remote CI evidence are recorded separately.
+
 ## 2026-09-15T11:21:54Z — 0.5.0 configurable color shortcuts prepared
 
 Prepared backward-compatible minor release 0.5.0 as the third requested incremental item. Extended the control panel with capture fields for every text color and the repeat-last action. Chords use a platform-neutral `Mod` representation, reject unsafe plain typing, validate persisted JSON, clear duplicates when reassigned and default repeat-last to ⌘ShiftH / Ctrl+Shift+H. Replaced only BlockNote's color toolbar control, preserving the rest of its default formatting UI; assigned text-color shortcuts appear on hover/focus. Direct chords and menu choices both update the last-color state, including background colors. See [ADR-017](adr/017-color-shortcuts.md).
