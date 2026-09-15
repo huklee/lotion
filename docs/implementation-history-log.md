@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-16T06:54:18+09:00 — TypeScript structure rules established
+
+Created the mandatory pre-refactoring rules in [TypeScript file and module structure rules](typescript-file-structure.md). The baseline measured 10,103 TypeScript/TSX lines and identified only three automatic candidates: the 2,144-line workspace browser specification, 1,847-line application component and 1,695-line editor component. Recent history also concentrates changes in those files. Persistence and Markdown files in the 200–500-line healthy range are explicitly deferred because they already have cohesive responsibilities.
+
+The first implementation slice is constrained to editor selection/direct-link lifecycles and their browser-test boundary. It must improve isolated testing and conflict locality without changing document persistence or user data. This entry records the rules before any production code is moved; verification evidence follows after implementation.
+
 ## 2026-09-15T14:20:47Z — 0.7.0 direct block links prepared
 
 Prepared backward-compatible minor release 0.7.0 as the sixth and final requested incremental item. Added a cursor-aware **Copy block link** action that copies an absolute stable-ID URL. Centralized strict page/block hash construction and parsing, retained deep fragments during initial page loading, and allowed internal deep links to use the existing history-aware router. Target blocks are centered and identified by a React-owned fixed overlay that follows scrolling/resizing without mutating BlockNote-owned DOM. Missing targets keep the requested page and URL open without selecting an unrelated fallback. See [ADR-019](adr/019-direct-block-links.md).
