@@ -4,88 +4,150 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
-test("favorites persist, follow titles and sync removal across tabs", async ({ page, context }) => {
+test("favorites persist, follow titles and sync removal across tabs", async ({
+  page,
+  context,
+}) => {
   const doc = await seed(page, "Favorite page");
-  await page.getByRole("button", { name: "Add to favorites", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Add to favorites", exact: true })
+    .click();
   const favorites = page.getByRole("navigation", { name: "Favorites" });
-  await expect(favorites.getByRole("link", { name: "Favorite page", exact: true })).toHaveAttribute("href", `#/page/${doc.id}`);
-  await page.getByRole("textbox", { name: "Page title" }).fill("Renamed favorite");
-  await expect(favorites.getByRole("link", { name: "Renamed favorite", exact: true })).toBeVisible();
+  await expect(
+    favorites.getByRole("link", { name: "Favorite page", exact: true }),
+  ).toHaveAttribute("href", `#/page/${doc.id}`);
+  await page
+    .getByRole("textbox", { name: "Page title" })
+    .fill("Renamed favorite");
+  await expect(
+    favorites.getByRole("link", { name: "Renamed favorite", exact: true }),
+  ).toBeVisible();
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
-  await expect(favorites.getByRole("link", { name: "Renamed favorite", exact: true })).toBeVisible();
+  await expect(
+    favorites.getByRole("link", { name: "Renamed favorite", exact: true }),
+  ).toBeVisible();
   const other = await context.newPage();
   await other.goto(`/#/page/${doc.id}`);
-  await other.getByRole("button", { name: "Remove from favorites", exact: true }).click();
+  await other
+    .getByRole("button", { name: "Remove from favorites", exact: true })
+    .click();
   await expect(favorites).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole("button", { name: "Add to favorites", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Add to favorites", exact: true }),
+  ).toBeVisible();
   await other.close();
 });
 
-test("page and Home navigation build history without duplicate entries and preserve drafts", async ({ page }) => {
+test("page and Home navigation build history without duplicate entries and preserve drafts", async ({
+  page,
+}) => {
   const a = await seed(page, "History A");
-  const b = await (await page.request.post("/api/documents", { data: { title: "History B", mutationId: randomUUID() } })).json();
+  const b = await (
+    await page.request.post("/api/documents", {
+      data: { title: "History B", mutationId: randomUUID() },
+    })
+  ).json();
   await page.reload();
   const pages = page.getByRole("navigation", { name: "Pages" });
-  await page.getByRole("textbox", { name: "Page title" }).fill("History A draft");
+  await page
+    .getByRole("textbox", { name: "Page title" })
+    .fill("History A draft");
   await pages.locator(`a[href="#/page/${b.id}"]`).click();
   await expect(page).toHaveURL(new RegExp(b.id));
   await pages.locator(`a[href="#/page/${b.id}"]`).click();
   await page.goBack();
   await expect(page).toHaveURL(new RegExp(a.id));
-  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue("History A draft");
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "History A draft",
+  );
   await page.goForward();
-  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue("History B");
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "History B",
+  );
   await page.getByRole("button", { name: "Home", exact: true }).click();
   await expect(page).toHaveURL(/#\/home$/);
-  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveCount(
+    0,
+  );
   await page.goBack();
-  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue("History B");
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "History B",
+  );
   await page.goForward();
-  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveCount(
+    0,
+  );
   await page.reload();
   await expect(page).toHaveURL(/#\/home$/);
-  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveCount(
+    0,
+  );
 });
 
-test("modified sidebar link clicks open the target in another tab without navigating this tab", async ({ page, context }) => {
+test("modified sidebar link clicks open the target in another tab without navigating this tab", async ({
+  page,
+  context,
+}) => {
   const a = await seed(page, "New tab source");
-  const b = await (await page.request.post("/api/documents", { data: { title: "New tab target", mutationId: randomUUID() } })).json();
+  const b = await (
+    await page.request.post("/api/documents", {
+      data: { title: "New tab target", mutationId: randomUUID() },
+    })
+  ).json();
   await page.reload();
-  const target = page.getByRole("navigation", { name: "Pages" }).locator(`a[href="#/page/${b.id}"]`);
+  const target = page
+    .getByRole("navigation", { name: "Pages" })
+    .locator(`a[href="#/page/${b.id}"]`);
   await expect(target).toHaveAttribute("href", `#/page/${b.id}`);
   const popup = context.waitForEvent("page");
   await target.click({ modifiers: ["ControlOrMeta"] });
   const other = await popup;
-  await expect(other.getByRole("textbox", { name: "Page title" })).toHaveValue("New tab target");
+  await expect(other.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "New tab target",
+  );
   await expect(page).toHaveURL(new RegExp(a.id));
-  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue("New tab source");
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "New tab source",
+  );
   await other.close();
 });
 
-test("clipboard lines are saved as plain text without HTML or Markdown formatting", async ({ page }) => {
+test("clipboard lines are saved as plain text without HTML or Markdown formatting", async ({
+  page,
+}) => {
   await seed(page, "Plain clipboard");
   await page.locator(".tiptap").click();
-  const text = "# Literal heading\n**literal bold**\n<script>alert(1)</script>\n[link](javascript:alert(1))\nLast line";
+  const text =
+    "# Literal heading\n**literal bold**\n<script>alert(1)</script>\n[link](javascript:alert(1))\nLast line";
   await page.locator(".tiptap").evaluate((element, text) => {
     const data = new DataTransfer();
     data.setData("text/plain", text);
     data.setData("text/html", "<h1>Unwanted HTML</h1>");
-    const event = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
+    const event = new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+    });
     Object.defineProperty(event, "clipboardData", { value: data });
     element.dispatchEvent(event);
   }, text);
-  for (const line of text.split("\n")) await expect(page.locator(".tiptap")).toContainText(line);
-  await expect(page.locator(".tiptap h1, .tiptap strong, .tiptap a, .tiptap script")).toHaveCount(0);
+  for (const line of text.split("\n"))
+    await expect(page.locator(".tiptap")).toContainText(line);
+  await expect(
+    page.locator(".tiptap h1, .tiptap strong, .tiptap a, .tiptap script"),
+  ).toHaveCount(0);
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
-  for (const line of text.split("\n")) await expect(page.locator(".tiptap")).toContainText(line);
+  for (const line of text.split("\n"))
+    await expect(page.locator(".tiptap")).toContainText(line);
 });
 
-test("checklists toggle by click and shortcut, retain their type on paste, and disable spellcheck", async ({ page }) => {
+test("checklists toggle by click and shortcut, retain their type on paste, and disable spellcheck", async ({
+  page,
+}) => {
   await seed(page, "Checklist editing", [
     {
       id: "check-paste",
@@ -96,7 +158,10 @@ test("checklists toggle by click and shortcut, retain their type on paste, and d
   ]);
   const item = page.locator('[data-id="check-paste"]');
   const checkbox = item.locator('input[type="checkbox"]');
-  await expect(page.locator(".editor-shell")).toHaveAttribute("spellcheck", "false");
+  await expect(page.locator(".editor-shell")).toHaveAttribute(
+    "spellcheck",
+    "false",
+  );
   await checkbox.click();
   await expect(checkbox).toBeChecked();
   await item.locator(".bn-inline-content").click();
@@ -106,7 +171,10 @@ test("checklists toggle by click and shortcut, retain their type on paste, and d
   await item.locator(".bn-inline-content").evaluate((element) => {
     const data = new DataTransfer();
     data.setData("text/plain", "first pasted line\nsecond pasted line");
-    const event = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
+    const event = new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+    });
     Object.defineProperty(event, "clipboardData", { value: data });
     element.dispatchEvent(event);
   });
@@ -124,6 +192,124 @@ test("checklists toggle by click and shortcut, retain their type on paste, and d
   await expect(checklistItems).toHaveCount(checklistCount);
 });
 
+test("single-line checklist paste stays inline and checkbox clicks preserve scroll", async ({
+  page,
+}) => {
+  const filler = Array.from({ length: 45 }, (_, index) => ({
+    id: `check-scroll-filler-${index}`,
+    type: "paragraph",
+    content: [{ type: "text", text: `Filler ${index}`, styles: {} }],
+  }));
+  await seed(page, "Checklist paste and scroll", [
+    ...filler,
+    {
+      id: "callout-mid-paste",
+      type: "callout",
+      props: { icon: "💡" },
+      content: [{ type: "text", text: "Callout tail", styles: {} }],
+    },
+    {
+      id: "check-single-paste",
+      type: "checkListItem",
+      props: { checked: false },
+      content: [{ type: "text", text: "Task tail", styles: {} }],
+    },
+  ]);
+  const item = page.locator('.bn-block-outer[data-id="check-single-paste"]');
+  const inline = item.locator(".bn-inline-content");
+  await inline.scrollIntoViewIfNeeded();
+  await inline.click();
+  await inline.evaluate((element) => {
+    const text = document
+      .createTreeWalker(element, NodeFilter.SHOW_TEXT)
+      .nextNode();
+    if (!text) throw new Error("Checklist text node is missing");
+    const range = document.createRange();
+    range.setStart(text, 5);
+    range.collapse(true);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    document.dispatchEvent(new Event("selectionchange"));
+  });
+  await inline.evaluate((element) => {
+    const data = new DataTransfer();
+    data.setData("text/plain", "pasted text");
+    const event = new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, "clipboardData", { value: data });
+    element.dispatchEvent(event);
+  });
+  await expect(item).toContainText("Task pasted texttail");
+  await expect(page.locator('[data-content-type="checkListItem"]')).toHaveCount(
+    1,
+  );
+
+  const callout = page.locator('.bn-block-outer[data-id="callout-mid-paste"]');
+  const calloutInline = callout.locator(".bn-inline-content");
+  await calloutInline.click();
+  await calloutInline.evaluate((element) => {
+    const text = document
+      .createTreeWalker(element, NodeFilter.SHOW_TEXT)
+      .nextNode();
+    if (!text) throw new Error("Callout text node is missing");
+    const range = document.createRange();
+    range.setStart(text, 8);
+    range.collapse(true);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    document.dispatchEvent(new Event("selectionchange"));
+  });
+  await calloutInline.evaluate((element) => {
+    const data = new DataTransfer();
+    data.setData("text/plain", "inside ");
+    const event = new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, "clipboardData", { value: data });
+    element.dispatchEvent(event);
+  });
+  await expect(callout).toContainText("Callout inside tail");
+  await expect(page.locator('[data-content-type="callout"]')).toHaveCount(1);
+
+  const scroller = page.locator(".main-scroll");
+  await page
+    .locator('[data-id="check-scroll-filler-0"] .bn-inline-content')
+    .click();
+  await scroller.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  const before = await scroller.evaluate((element) => element.scrollTop);
+  const checkbox = item.locator('input[type="checkbox"]');
+  await checkbox.click();
+  await expect(checkbox).toBeChecked();
+  await expect
+    .poll(() => scroller.evaluate((element) => element.scrollTop))
+    .toBe(before);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(
+    page.locator('.bn-block-outer[data-id="check-single-paste"]'),
+  ).toContainText("Task pasted texttail");
+  await expect(
+    page.locator('.bn-block-outer[data-id="callout-mid-paste"]'),
+  ).toContainText("Callout inside tail");
+  await expect(page.locator('[data-content-type="checkListItem"]')).toHaveCount(
+    1,
+  );
+  await expect(page.locator('[data-content-type="callout"]')).toHaveCount(1);
+  await expect(
+    page.locator(
+      '.bn-block-outer[data-id="check-single-paste"] input[type="checkbox"]',
+    ),
+  ).toBeChecked();
+});
+
 test("at-sign date accepts today with the next Enter key", async ({ page }) => {
   await seed(page, "Keyboard date");
   await page.locator(".tiptap").click();
@@ -135,21 +321,30 @@ test("at-sign date accepts today with the next Enter key", async ({ page }) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   });
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("dialog", { name: "Insert date" })).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Insert date" })).toHaveCount(
+    0,
+  );
   await expect(page.locator(".tiptap")).toContainText(`📅 ${today}`);
 });
 
-test("at-sign calendar inserts a chosen date, persists and cancels without insertion", async ({ page }) => {
+test("at-sign calendar inserts a chosen date, persists and cancels without insertion", async ({
+  page,
+}) => {
   await seed(page, "Dates");
   await page.locator(".tiptap").click();
   await page.keyboard.type("@date");
-  await page.getByRole("option").filter({ hasText: "Choose a date from the calendar" }).click();
+  await page
+    .getByRole("option")
+    .filter({ hasText: "Choose a date from the calendar" })
+    .click();
   const dialog = page.getByRole("dialog", { name: "Insert date" });
   await expect(dialog).toBeVisible();
   await dialog.getByLabel("Date", { exact: true }).fill("2026-09-15");
   await dialog.getByRole("button", { name: "Next month" }).click();
   await dialog.getByRole("button", { name: "2026-10-20", exact: true }).click();
-  await dialog.getByRole("button", { name: "Insert date", exact: true }).click();
+  await dialog
+    .getByRole("button", { name: "Insert date", exact: true })
+    .click();
   await expect(page.locator(".tiptap")).toContainText("📅 2026-10-20");
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
@@ -158,18 +353,35 @@ test("at-sign calendar inserts a chosen date, persists and cancels without inser
   await page.locator(".bn-inline-content").first().click();
   await page.keyboard.press("ControlOrMeta+End");
   await page.keyboard.type(" @date");
-  await page.getByRole("option").filter({ hasText: "Choose a date from the calendar" }).click();
+  await page
+    .getByRole("option")
+    .filter({ hasText: "Choose a date from the calendar" })
+    .click();
   await expect(dialog).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
-  expect((await page.locator(".tiptap").innerText()).match(/📅/g)).toHaveLength(1);
+  expect((await page.locator(".tiptap").innerText()).match(/📅/g)).toHaveLength(
+    1,
+  );
 });
 
-test("table of contents labels align left while preserving heading indentation", async ({ page }) => {
+test("table of contents labels align left while preserving heading indentation", async ({
+  page,
+}) => {
   await seed(page, "TOC alignment", [
     { id: "toc-block", type: "tableOfContents" },
-    { id: "left-heading", type: "heading", props: { level: 1 }, content: [{ type: "text", text: "Heading", styles: {} }] },
-    { id: "left-subheading", type: "heading", props: { level: 2 }, content: [{ type: "text", text: "Subheading", styles: {} }] },
+    {
+      id: "left-heading",
+      type: "heading",
+      props: { level: 1 },
+      content: [{ type: "text", text: "Heading", styles: {} }],
+    },
+    {
+      id: "left-subheading",
+      type: "heading",
+      props: { level: 2 },
+      content: [{ type: "text", text: "Subheading", styles: {} }],
+    },
   ]);
   const toc = page.getByRole("navigation", { name: "Table of contents" });
   for (const label of ["Heading", "Subheading"]) {
@@ -177,80 +389,152 @@ test("table of contents labels align left while preserving heading indentation",
     await expect(button).toHaveCSS("justify-content", "flex-start");
     await expect(button).toHaveCSS("text-align", "left");
     const gap = await button.evaluate((el) => {
-      const range = document.createRange(); range.selectNodeContents(el);
-      return range.getBoundingClientRect().left - el.getBoundingClientRect().left - parseFloat(getComputedStyle(el).paddingLeft);
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return (
+        range.getBoundingClientRect().left -
+        el.getBoundingClientRect().left -
+        parseFloat(getComputedStyle(el).paddingLeft)
+      );
     });
     expect(Math.abs(gap)).toBeLessThan(2);
   }
-  await expect(toc.getByRole("button", { name: "Subheading", exact: true })).toHaveCSS("padding-left", "26px");
+  await expect(
+    toc.getByRole("button", { name: "Subheading", exact: true }),
+  ).toHaveCSS("padding-left", "26px");
 });
 
-test("fenced Mermaid paste renders, unwraps source input, and persists", async ({ page, context, browserName }) => {
+test("fenced Mermaid paste renders, unwraps source input, and persists", async ({
+  page,
+  context,
+  browserName,
+}) => {
   await seed(page, "Pasted diagram");
   const editor = page.locator(".tiptap");
   await editor.click();
   async function pasteInto(selector: string, text: string) {
-    await page.locator(selector).first().evaluate((element, value) => {
-      const transfer = new DataTransfer();
-      transfer.setData("text/plain", value);
-      const event = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
-      Object.defineProperty(event, "clipboardData", { value: transfer });
-      element.dispatchEvent(event);
-    }, text);
+    await page
+      .locator(selector)
+      .first()
+      .evaluate((element, value) => {
+        const transfer = new DataTransfer();
+        transfer.setData("text/plain", value);
+        const event = new ClipboardEvent("paste", {
+          bubbles: true,
+          cancelable: true,
+        });
+        Object.defineProperty(event, "clipboardData", { value: transfer });
+        element.dispatchEvent(event);
+      }, text);
   }
   const source = "graph TD;\n    A --> B;";
   if (browserName === "chromium") {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-    await page.evaluate((text) => navigator.clipboard.writeText(text), "```mermaid\n" + source + "\n```");
+    await page.evaluate(
+      (text) => navigator.clipboard.writeText(text),
+      "```mermaid\n" + source + "\n```",
+    );
     await page.keyboard.press("ControlOrMeta+v");
   } else await pasteInto(".tiptap", "```mermaid\n" + source + "\n```");
-  await expect(page.getByRole("textbox", { name: "Mermaid source" })).toHaveValue(source);
+  await expect(
+    page.getByRole("textbox", { name: "Mermaid source" }),
+  ).toHaveValue(source);
   const preview = page.getByRole("img", { name: "Mermaid diagram preview" });
   await expect(preview).toBeVisible({ timeout: 15000 });
-  await pasteInto(".lotion-mermaid textarea", "```mermaid\ngraph LR;\n B --> C;\n```");
-  await expect(page.getByRole("textbox", { name: "Mermaid source" })).toHaveValue("graph LR;\n B --> C;");
+  await pasteInto(
+    ".lotion-mermaid textarea",
+    "```mermaid\ngraph LR;\n B --> C;\n```",
+  );
+  await expect(
+    page.getByRole("textbox", { name: "Mermaid source" }),
+  ).toHaveValue("graph LR;\n B --> C;");
   await expect(page.locator(".lotion-mermaid")).toHaveCount(1);
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
-  await expect(page.getByRole("textbox", { name: "Mermaid source" })).toHaveValue("graph LR;\n B --> C;");
+  await expect(
+    page.getByRole("textbox", { name: "Mermaid source" }),
+  ).toHaveValue("graph LR;\n B --> C;");
   await expect(preview).toBeVisible({ timeout: 15000 });
 });
 
-test("export copies the entire current draft as Markdown and reports clipboard denial", async ({ page, context, browserName }) => {
+test("export copies the entire current draft as Markdown and reports clipboard denial", async ({
+  page,
+  context,
+  browserName,
+}) => {
   if (browserName === "chromium") {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  } else await page.addInitScript(() => {
-    Object.defineProperty(navigator, "clipboard", { configurable: true, value: {
-      writeText: async (text: string) => { (window as any).copiedMarkdown = text; },
-    } });
-  });
+  } else
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: {
+          writeText: async (text: string) => {
+            (window as any).copiedMarkdown = text;
+          },
+        },
+      });
+    });
   await seed(page, "Clipboard page", [
-    { id: "copy-body", type: "paragraph", content: [{ type: "text", text: "Complete body", styles: { bold: true } }] },
-    { id: "copy-blank", type: "paragraph", content: [{ type: "text", text: "   ", styles: {} }] },
-    { id: "copy-diagram", type: "mermaid", props: { code: "graph TD;\n A --> B;" } },
-    { id: "copy-end", type: "paragraph", content: [{ type: "text", text: "Last paragraph", styles: {} }] },
+    {
+      id: "copy-body",
+      type: "paragraph",
+      content: [
+        { type: "text", text: "Complete body", styles: { bold: true } },
+      ],
+    },
+    {
+      id: "copy-blank",
+      type: "paragraph",
+      content: [{ type: "text", text: "   ", styles: {} }],
+    },
+    {
+      id: "copy-diagram",
+      type: "mermaid",
+      props: { code: "graph TD;\n A --> B;" },
+    },
+    {
+      id: "copy-end",
+      type: "paragraph",
+      content: [{ type: "text", text: "Last paragraph", styles: {} }],
+    },
   ]);
-  await page.getByRole("textbox", { name: "Page title" }).fill("Latest unsaved title");
+  await page
+    .getByRole("textbox", { name: "Page title" })
+    .fill("Latest unsaved title");
   await page.getByRole("button", { name: "Export", exact: true }).click();
   await page.getByRole("button", { name: /Copy page as Markdown/ }).click();
-  const markdown = browserName === "chromium"
-    ? await page.evaluate(() => navigator.clipboard.readText())
-    : await page.evaluate(() => (window as any).copiedMarkdown);
+  const markdown =
+    browserName === "chromium"
+      ? await page.evaluate(() => navigator.clipboard.readText())
+      : await page.evaluate(() => (window as any).copiedMarkdown);
   expect(markdown).toContain("# Latest unsaved title");
   expect(markdown).toContain("**Complete body**");
   expect(markdown).not.toContain("&#x20;");
   expect(markdown).toContain("```mermaid\ngraph TD;\n A --> B;\n```");
   expect(markdown).toContain("Last paragraph");
-  await expect(page.getByText("Copied this page as Markdown.", { exact: true })).toBeVisible();
-  await page.evaluate(() => { navigator.clipboard.writeText = async () => { throw new Error("Clipboard permission denied"); }; });
+  await expect(
+    page.getByText("Copied this page as Markdown.", { exact: true }),
+  ).toBeVisible();
+  await page.evaluate(() => {
+    navigator.clipboard.writeText = async () => {
+      throw new Error("Clipboard permission denied");
+    };
+  });
   await page.getByRole("button", { name: "Export", exact: true }).click();
   await page.getByRole("button", { name: /Copy page as Markdown/ }).click();
-  await expect(page.getByText("Clipboard permission denied", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Copy page as Markdown/ })).toBeEnabled();
+  await expect(
+    page.getByText("Clipboard permission denied", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Copy page as Markdown/ }),
+  ).toBeEnabled();
 });
 
-test("Lotion restores legacy browser settings and drafts after the rename", async ({ page }) => {
+test("Lotion restores legacy browser settings and drafts after the rename", async ({
+  page,
+}) => {
   const doc = await seed(page, "Before rename");
   await page.evaluate(async (id) => {
     const session = sessionStorage.getItem("lotion-session")!;
@@ -264,20 +548,42 @@ test("Lotion restores legacy browser settings and drafts after the rename", asyn
       request.onsuccess = () => {
         const db = request.result;
         const transaction = db.transaction("keyval", "readwrite");
-        transaction.objectStore("keyval").put({revision:1,generation:1,content:{title:"Legacy draft retained",blocks:[{id:"legacy-body",type:"paragraph",content:[]}]}}, `yestion-draft:${session}:${id}`);
-        transaction.oncomplete = () => {db.close();resolve();};
-        transaction.onerror = () => {db.close();reject(transaction.error);};
+        transaction
+          .objectStore("keyval")
+          .put(
+            {
+              revision: 1,
+              generation: 1,
+              content: {
+                title: "Legacy draft retained",
+                blocks: [{ id: "legacy-body", type: "paragraph", content: [] }],
+              },
+            },
+            `yestion-draft:${session}:${id}`,
+          );
+        transaction.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        transaction.onerror = () => {
+          db.close();
+          reject(transaction.error);
+        };
       };
     });
   }, doc.id);
   await page.reload();
-  await expect(page.getByRole("textbox", {name:"Page title"})).toHaveValue("Legacy draft retained");
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "Legacy draft retained",
+  );
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page).toHaveTitle(/Lotion/);
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
-  await expect(page.getByRole("textbox", {name:"Page title"})).toHaveValue("Legacy draft retained");
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "Legacy draft retained",
+  );
 });
 
 test("Mermaid slash block renders, handles invalid source and persists edits", async ({
@@ -487,14 +793,22 @@ test("two tabs preserve conflicting drafts", async ({ page, context }) => {
     second.getByRole("button", { name: "Save draft as a copy" }),
   ).toBeVisible();
   await second.reload();
-  await expect(second.getByRole("button", {name:"Review latest versions"})).toBeVisible();
-  await expect(second.getByRole("button", {name:"Use my draft"})).toBeVisible();
-  second.once("dialog", dialog => dialog.accept());
-  await second.getByRole("button", {name:"Use my draft"}).click();
+  await expect(
+    second.getByRole("button", { name: "Review latest versions" }),
+  ).toBeVisible();
+  await expect(
+    second.getByRole("button", { name: "Use my draft" }),
+  ).toBeVisible();
+  second.once("dialog", (dialog) => dialog.accept());
+  await second.getByRole("button", { name: "Use my draft" }).click();
   await expect(second.locator(".save-status")).toHaveText("Saved");
   await second.reload();
-  await expect(second.getByRole("textbox", {name:"Page title"})).toHaveValue("Second writer draft");
-  expect((await (await second.request.get(`/api/documents/${doc.id}`)).json()).title).toBe("Second writer draft");
+  await expect(second.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "Second writer draft",
+  );
+  expect(
+    (await (await second.request.get(`/api/documents/${doc.id}`)).json()).title,
+  ).toBe("Second writer draft");
   await second.close();
 });
 test("whole folder import, nested assets, ZIP download", async ({ page }) => {
@@ -579,34 +893,71 @@ test("section selection moves a complete section and undo restores it", async ({
     .poll(() => page.locator(".tiptap").innerText())
     .toMatch(/^First section/);
 });
-test("Backspace deletes a selected section with children, supports undo and preserves text editing", async ({ page }) => {
+test("Backspace deletes a selected section with children, supports undo and preserves text editing", async ({
+  page,
+}) => {
   await seed(page, "Delete selection", [
-    { id: "delete-heading", type: "heading", props: { level: 1 }, content: [{ type: "text", text: "Delete section", styles: {} }] },
-    { id: "delete-body", type: "paragraph", content: [{ type: "text", text: "Delete body", styles: {} }], children: [
-      { id: "delete-child", type: "paragraph", content: [{ type: "text", text: "Nested child", styles: {} }] },
-    ] },
-    { id: "keep-heading", type: "heading", props: { level: 1 }, content: [{ type: "text", text: "Keep section", styles: {} }] },
+    {
+      id: "delete-heading",
+      type: "heading",
+      props: { level: 1 },
+      content: [{ type: "text", text: "Delete section", styles: {} }],
+    },
+    {
+      id: "delete-body",
+      type: "paragraph",
+      content: [{ type: "text", text: "Delete body", styles: {} }],
+      children: [
+        {
+          id: "delete-child",
+          type: "paragraph",
+          content: [{ type: "text", text: "Nested child", styles: {} }],
+        },
+      ],
+    },
+    {
+      id: "keep-heading",
+      type: "heading",
+      props: { level: 1 },
+      content: [{ type: "text", text: "Keep section", styles: {} }],
+    },
   ]);
-  await page.locator('[data-id="delete-heading"] .bn-inline-content').first().click();
-  await page.getByRole("button", { name: "Select section", exact: true }).click();
+  await page
+    .locator('[data-id="delete-heading"] .bn-inline-content')
+    .first()
+    .click();
+  await page
+    .getByRole("button", { name: "Select section", exact: true })
+    .click();
   await page.keyboard.press("Backspace");
   await expect(page.locator('[data-id="delete-heading"]')).toHaveCount(0);
   await expect(page.locator('[data-id="delete-body"]')).toHaveCount(0);
   await expect(page.locator('[data-id="delete-child"]')).toHaveCount(0);
   await expect(page.locator(".tiptap")).toContainText("Keep section");
-  await expect(page.getByRole("toolbar", { name: "Selected blocks" })).toHaveCount(0);
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toHaveCount(0);
   await page.keyboard.press("ControlOrMeta+z");
   await expect(page.locator(".tiptap")).toContainText("Nested child");
-  await page.locator('[data-id="delete-heading"] .bn-inline-content').first().click();
-  await page.getByRole("button", { name: "Select section", exact: true }).click();
+  await page
+    .locator('[data-id="delete-heading"] .bn-inline-content')
+    .first()
+    .click();
+  await page
+    .getByRole("button", { name: "Select section", exact: true })
+    .click();
   await page.keyboard.press("Backspace");
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
   await expect(page.locator('[data-id="delete-body"]')).toHaveCount(0);
-  const remaining = page.locator('[data-id="keep-heading"] .bn-inline-content').first();
+  const remaining = page
+    .locator('[data-id="keep-heading"] .bn-inline-content')
+    .first();
   await remaining.click();
-  await page.getByRole("button", { name: "Select section", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Select section", exact: true })
+    .click();
   await remaining.click();
   await remaining.evaluate((element) => {
     const range = document.createRange();
@@ -686,19 +1037,41 @@ test("rectangle-selects blocks without changing ordinary text content", async ({
   ).toBe(0);
 });
 
-test("Backspace deletes a rectangle selection and leaves an editable empty document", async ({ page }) => {
+test("Backspace deletes a rectangle selection and leaves an editable empty document", async ({
+  page,
+}) => {
   await seed(page, "Delete rectangle", [
-    { id: "rect-delete-a", type: "paragraph", content: [{ type: "text", text: "Alpha", styles: {} }] },
-    { id: "rect-delete-b", type: "paragraph", content: [{ type: "text", text: "Beta", styles: {} }] },
+    {
+      id: "rect-delete-a",
+      type: "paragraph",
+      content: [{ type: "text", text: "Alpha", styles: {} }],
+    },
+    {
+      id: "rect-delete-b",
+      type: "paragraph",
+      content: [{ type: "text", text: "Beta", styles: {} }],
+    },
   ]);
   const gutter = (await page.locator(".selection-gutter").boundingBox())!;
-  const first = (await page.locator('[data-id="rect-delete-a"]').first().boundingBox())!;
-  const second = (await page.locator('[data-id="rect-delete-b"]').first().boundingBox())!;
+  const first = (await page
+    .locator('[data-id="rect-delete-a"]')
+    .first()
+    .boundingBox())!;
+  const second = (await page
+    .locator('[data-id="rect-delete-b"]')
+    .first()
+    .boundingBox())!;
   await page.mouse.move(gutter.x + 5, Math.max(gutter.y + 1, first.y + 2));
   await page.mouse.down();
-  await page.mouse.move(second.x + second.width - 10, second.y + second.height - 2, { steps: 12 });
+  await page.mouse.move(
+    second.x + second.width - 10,
+    second.y + second.height - 2,
+    { steps: 12 },
+  );
   await page.mouse.up();
-  await expect(page.getByRole("toolbar", { name: "Selected blocks" })).toContainText("2 selected");
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toContainText("2 selected");
   await page.keyboard.press("Backspace");
   await expect(page.locator('[data-id="rect-delete-a"]')).toHaveCount(0);
   await expect(page.locator('[data-id="rect-delete-b"]')).toHaveCount(0);
@@ -819,8 +1192,11 @@ async function revealSidebarPage(page: Page, id: string) {
   const tree = page.getByRole("navigation", { name: "Pages" });
   await expect(tree.locator(".page-row").first()).toBeVisible();
   const link = tree.locator(`a[href="#/page/${id}"]`);
-  const more = tree.getByRole("button", { name: "Show more pages", exact: true });
-  while (!(await link.count()) && await more.isVisible()) await more.click();
+  const more = tree.getByRole("button", {
+    name: "Show more pages",
+    exact: true,
+  });
+  while (!(await link.count()) && (await more.isVisible())) await more.click();
   await expect(link).toBeVisible();
 }
 
@@ -1103,7 +1479,10 @@ test("page mentions support at-sign and double-bracket shortcuts plus URL chips"
   await editor.evaluate((element, url) => {
     const data = new DataTransfer();
     data.setData("text/plain", url);
-    const event = new ClipboardEvent("paste", { bubbles: true, cancelable: true });
+    const event = new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+    });
     // Firefox discards clipboardData passed to synthetic ClipboardEvent constructors.
     Object.defineProperty(event, "clipboardData", { value: data });
     element.dispatchEvent(event);

@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.3.1 — 2026-09-15
+
+### Fixed
+
+- Pasting one plain-text line at a cursor inside a checklist now inserts inline without replacing, splitting or adding another checklist block. The same inline behavior applies to callout content.
+- Clicking a checkbox now derives the intended state at pointer-down and commits it once after the browser click sequence, avoiding browser-specific double toggles and preserving the document scroll position.
+
+No document schema migration is needed. This patch changes editor interaction behavior only; existing documents remain compatible. Verification is recorded in [test results](test-results.md).
+
 ## 0.3.0 — 2026-09-15
 
 ### Added

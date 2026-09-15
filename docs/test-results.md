@@ -1,5 +1,9 @@
 # Test results
 
+## 2026-09-15T10:56:21Z — 0.3.1 checklist/callout paste and scroll gate passed
+
+The final `npm run check` exited **0** in **131.96 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **101/101 unit and integration tests**, and **108/108 browser tests** passed across Chromium, Firefox and WebKit with four workers. The new three-browser regression places a single plain-text paste at exact mid-line selections inside an existing checklist and callout, verifies both original block types remain singular after save/reload, and checks that toggling a distant checkbox persists while preserving the `.main-scroll` offset. Existing mouse/keyboard checkbox completion and multi-line checklist paste tests also passed. Large build-chunk warnings remain non-fatal. GitHub CI is pending the release push at this checkpoint.
+
 ## 2026-09-14T22:53:10Z — parallel harness GitHub CI confirmed
 
 Harness commit `48f9c9f` was pushed to `origin/main`. [GitHub Actions run 34905987686](https://github.com/huklee/lotion/actions/runs/34905987686) completed **successfully** on Ubuntu / Node 24 with the complete two-worker `npm run check`. The job took **3 minutes 32 seconds** and its check step took **151 seconds**. The preceding comparable successful run [34903723704](https://github.com/huklee/lotion/actions/runs/34903723704) took 5 minutes 35 seconds with a **278-second** check step. Parallel isolation therefore reduced the CI check step by **127 seconds / 45.7%** (**1.84× speedup**) and the full job by **123 seconds / 36.7%**. This documentation-only follow-up records the remote result.

@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-15T10:56:21Z — 0.3.1 inline paste and checkbox stability prepared
+
+Prepared patch release 0.3.1. A validated one-line clipboard payload now enters as an inline text node at the exact ProseMirror selection, so an existing checklist or callout retains its ID, type, surrounding text and cursor placement without an added block. Multi-line checklist behavior remains on the typed-block path. Checkbox pointer handling records the intended state and scroll offsets at pointer-down, accepts only the matching low-movement pointer-up, reconciles after the browser's full click/change sequence, and restores editor/window scroll. This removes WebKit event-order double toggles and viewport jumps while retaining Ctrl+Enter/⌘Enter.
+
+Registered the user's six requested tasks in `docs/remained_job.md`; only the first is marked complete. `npm run check` passed lint/type/build, 101 unit/integration tests and 108 browser cases across three engines in 131.96 seconds. User data under `data/` remained untouched. Commit, push and remote CI evidence are recorded separately.
+
 ## 2026-09-14T22:53:10Z — parallel harness published and CI verified
 
 Committed and pushed `48f9c9f` (`test: parallelize isolated browser suite`) to `main`. [GitHub verification 34905987686](https://github.com/huklee/lotion/actions/runs/34905987686) passed the complete Ubuntu / Node 24 gate with two workers. Its `npm run check` step took 151 seconds versus 278 seconds in the preceding comparable success, a 45.7% reduction and 1.84× speedup. This documentation-only follow-up records publication evidence; application version remains 0.3.0 and user data remains untouched.

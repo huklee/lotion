@@ -222,32 +222,90 @@ export default function Editor({
   const [dropLine, setDropLine] = useState<number | null>(null);
   const [pasteChoice, setPasteChoice] = useState<string | null>(null);
   const [pasteLoading, setPasteLoading] = useState(false);
-  const [dateSelection, setDateSelection] = useState<{ from: number; to: number } | null>(null);
+  const [dateSelection, setDateSelection] = useState<{
+    from: number;
+    to: number;
+  } | null>(null);
   useEffect(() => {
-    const toggleChecklist = (event: PointerEvent) => {
+    let pending: {
+      id: string;
+      checked: boolean;
+      scroller: HTMLElement | null;
+      scrollLeft: number;
+      scrollTop: number;
+      windowX: number;
+      windowY: number;
+      pointerId: number;
+      pointerX: number;
+      pointerY: number;
+    } | null = null;
+    const checkboxAt = (event: Event) => {
       if (!host.current?.contains(event.target as Node)) return;
       const checkbox = (event.target as HTMLElement).closest<HTMLInputElement>(
         '[data-content-type="checkListItem"] input[type="checkbox"]',
       );
-      const id = checkbox
-        ?.closest<HTMLElement>(".bn-block-outer")
-        ?.dataset.id;
-      if (!checkbox || !id) return;
-      const block = editor.getBlock(id);
-      const checked =
-        block?.type !== "checkListItem" || block.props.checked !== true;
-      // Let the browser finish its pointer/click sequence before replacing
-      // BlockNote's imperative checkbox DOM. This avoids Firefox retrying a
-      // click against a node detached during pointer-down.
-      window.setTimeout(() => {
-        if (editor.getBlock(id)?.type === "checkListItem")
-          editor.updateBlock(id, { props: { checked } });
-      }, 0);
+      const id = checkbox?.closest<HTMLElement>(".bn-block-outer")?.dataset.id;
+      return checkbox && id ? { checkbox, id } : undefined;
     };
-    // BlockNote stops the imperatively-created input event before it reaches
-    // React, so listen above the editor at the window capture boundary.
-    window.addEventListener("pointerup", toggleChecklist, true);
-    return () => window.removeEventListener("pointerup", toggleChecklist, true);
+    const rememberChecklist = (event: PointerEvent) => {
+      const target = checkboxAt(event);
+      if (!target) return;
+      const block = editor.getBlock(target.id);
+      if (block?.type !== "checkListItem") return;
+      const scroller = document.querySelector<HTMLElement>(".main-scroll");
+      pending = {
+        id: target.id,
+        checked: block.props.checked !== true,
+        scroller,
+        scrollLeft: scroller?.scrollLeft ?? 0,
+        scrollTop: scroller?.scrollTop ?? 0,
+        windowX: window.scrollX,
+        windowY: window.scrollY,
+        pointerId: event.pointerId,
+        pointerX: event.clientX,
+        pointerY: event.clientY,
+      };
+    };
+    const finishChecklist = (event: PointerEvent) => {
+      if (
+        !pending ||
+        event.pointerId !== pending.pointerId ||
+        Math.hypot(
+          event.clientX - pending.pointerX,
+          event.clientY - pending.pointerY,
+        ) > 5
+      ) {
+        pending = null;
+        return;
+      }
+      const change = pending;
+      pending = null;
+      const restoreScroll = () => {
+        if (change.scroller) {
+          change.scroller.scrollLeft = change.scrollLeft;
+          change.scroller.scrollTop = change.scrollTop;
+        }
+        window.scrollTo(change.windowX, change.windowY);
+      };
+      // Run after the browser's click/change sequence so every engine lands on
+      // the state captured at pointer-down exactly once.
+      requestAnimationFrame(() => {
+        const block = editor.getBlock(change.id);
+        if (
+          block?.type === "checkListItem" &&
+          block.props.checked !== change.checked
+        )
+          editor.updateBlock(change.id, { props: { checked: change.checked } });
+        restoreScroll();
+        requestAnimationFrame(restoreScroll);
+      });
+    };
+    window.addEventListener("pointerdown", rememberChecklist, true);
+    window.addEventListener("pointerup", finishChecklist, true);
+    return () => {
+      window.removeEventListener("pointerdown", rememberChecklist, true);
+      window.removeEventListener("pointerup", finishChecklist, true);
+    };
   }, [editor]);
   useEffect(() => {
     if (!selected.length) return;
@@ -257,11 +315,16 @@ export default function Editor({
     const removeSelection = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
       if (
-        event.key !== "Backspace" || pasteLoading || event.isComposing ||
-        event.metaKey || event.ctrlKey || event.altKey ||
+        event.key !== "Backspace" ||
+        pasteLoading ||
+        event.isComposing ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
         target.closest("input, textarea, select") ||
         (target !== document.body && !host.current?.contains(target))
-      ) return;
+      )
+        return;
       event.preventDefault();
       event.stopImmediatePropagation();
       const ids: string[] = [];
@@ -678,7 +741,11 @@ export default function Editor({
                   ],
                 },
               });
-              const next = editor.insertBlocks([{ type: "paragraph" }], table, "after")[0];
+              const next = editor.insertBlocks(
+                [{ type: "paragraph" }],
+                table,
+                "after",
+              )[0];
               editor.setTextCursorPosition(next, "start");
               editor.focus();
             },
@@ -691,15 +758,22 @@ export default function Editor({
   );
   const atMentionItems = useCallback(
     async (query: string) => [
-      ...filterSuggestionItems([{
-        title: "Date", subtext: "Choose a date from the calendar",
-        aliases: ["calendar", "today", "날짜", "달력"], group: "Lotion",
-        icon: <BookOpenText size={18} />,
-        onItemClick: () => {
-          const { from, to } = editor._tiptapEditor.state.selection;
-          setDateSelection({ from, to });
-        },
-      }], query),
+      ...filterSuggestionItems(
+        [
+          {
+            title: "Date",
+            subtext: "Choose a date from the calendar",
+            aliases: ["calendar", "today", "날짜", "달력"],
+            group: "Lotion",
+            icon: <BookOpenText size={18} />,
+            onItemClick: () => {
+              const { from, to } = editor._tiptapEditor.state.selection;
+              setDateSelection({ from, to });
+            },
+          },
+        ],
+        query,
+      ),
       ...mentionItems(query),
     ],
     [pages, editor],
@@ -805,8 +879,10 @@ export default function Editor({
       spellCheck="false"
       onPointerDownCapture={(event) => {
         rectangleClick.current = false;
-        if ((event.target as HTMLElement).closest("input, textarea, select"))
-          setSelected([]);
+        const control = (event.target as HTMLElement).closest(
+          "input, textarea, select",
+        );
+        if (control) setSelected([]);
       }}
       onKeyDownCapture={(e) => {
         if (
@@ -844,7 +920,8 @@ export default function Editor({
         }
         if ((event.target as HTMLElement).closest(".bn-inline-content")) {
           if (selected.length) {
-            (event.target as HTMLElement).closest<HTMLElement>('[contenteditable="true"]')
+            (event.target as HTMLElement)
+              .closest<HTMLElement>('[contenteditable="true"]')
               ?.focus({ preventScroll: true });
           }
           setSelected([]);
@@ -873,7 +950,8 @@ export default function Editor({
           (event.target as HTMLElement).closest(
             'textarea, input, [contenteditable="false"]',
           )
-        ) return;
+        )
+          return;
         const raw = event.clipboardData.getData("text/plain");
         const value = raw.trim();
         const code = mermaidFromClipboard(value);
@@ -896,26 +974,51 @@ export default function Editor({
             // Inserting paragraph nodes at an inline checklist selection
             // changes the containing block into a paragraph. Keep checklist
             // semantics for every pasted line instead.
-            const inserted = current.type === "checkListItem"
-              ? blocks.map((block, index) => ({
-                  ...block,
-                  type: "checkListItem" as const,
-                  props: {
-                    checked:
-                      index === 0 ? current.props.checked === true : false,
-                  },
-                }))
-              : blocks;
+            const inserted =
+              current.type === "checkListItem"
+                ? blocks.map((block, index) => ({
+                    ...block,
+                    type: "checkListItem" as const,
+                    props: {
+                      checked:
+                        index === 0 ? current.props.checked === true : false,
+                    },
+                  }))
+                : blocks;
             const checked = contentSchema.safeParse({
-              title: initial.title, blocks: [...editor.document, ...inserted],
+              title: initial.title,
+              blocks: [...editor.document, ...inserted],
             });
-            if (!checked.success) throw new Error("This paste exceeds the document's save limits. Paste a smaller section.");
+            if (!checked.success)
+              throw new Error(
+                "This paste exceeds the document's save limits. Paste a smaller section.",
+              );
             // Insert schema nodes directly: pasteHTML still applies Markdown
             // paste rules such as **bold**, even for otherwise plain paragraphs.
             const tiptap = editor._tiptapEditor;
+            if (blocks.length === 1) {
+              tiptap.commands.insertContentAt(
+                {
+                  from: tiptap.state.selection.from,
+                  to: tiptap.state.selection.to,
+                },
+                { type: "text", text: raw },
+                { applyPasteRules: false, applyInputRules: false },
+              );
+              return;
+            }
             tiptap.commands.insertContentAt(
-              { from: tiptap.state.selection.from, to: tiptap.state.selection.to },
-              inserted.map((block) => blockToNode(block as any, tiptap.schema, editor.schema.styleSchema).toJSON()),
+              {
+                from: tiptap.state.selection.from,
+                to: tiptap.state.selection.to,
+              },
+              inserted.map((block) =>
+                blockToNode(
+                  block as any,
+                  tiptap.schema,
+                  editor.schema.styleSchema,
+                ).toJSON(),
+              ),
               { applyPasteRules: false, applyInputRules: false },
             );
           } catch (error) {
@@ -1056,7 +1159,10 @@ export default function Editor({
       </BlockNoteView>
       {dateSelection && (
         <DatePicker
-          onCancel={() => { setDateSelection(null); editor.focus(); }}
+          onCancel={() => {
+            setDateSelection(null);
+            editor.focus();
+          }}
           onInsert={(date) => {
             editor._tiptapEditor.commands.setTextSelection(dateSelection);
             editor.insertInlineContent(`📅 ${date} `);

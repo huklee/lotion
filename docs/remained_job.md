@@ -1,5 +1,14 @@
 # Remaining jobs
 
+## Requested incremental work — 2026-09-15
+
+- [x] Keep single-line paste inline at a checklist's current cursor without removing/splitting the checkbox; verify the same cursor behavior inside callouts, and stop checkbox clicks from moving the document viewport.
+- [ ] Add a control panel for adjustable application settings.
+- [ ] Add configurable color-style shortcuts in the control panel, show the assigned shortcut when hovering a font color, and support a shortcut for reapplying the most recently used formatting, following Notion's interaction model.
+- [ ] Improve drag-box block selection to match Notion-style selection behavior.
+- [ ] Fix indentation loss in following blocks when deleting a block.
+- [ ] Allow copying a direct link to any document location, following Notion-style block links.
+
 ## 0.3.0 update — 2026-09-15
 
 - [x] Add persistent browser favorites with current page titles and cross-tab synchronization.

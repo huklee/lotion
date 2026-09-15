@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.3.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.3.1**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -49,7 +49,7 @@ Type **@date** (or type **@** and choose **Date**) to open the calendar, choose 
 
 Ordinary clipboard text is checked line by line and pasted as plain paragraphs, preserving literal Markdown/HTML text. Complete Mermaid fences retain diagram conversion; a single HTTP(S) URL retains the link chooser. Oversized pastes show an error rather than silently dropping text. Use Markdown import when you want Markdown formatting interpreted.
 
-Checklist items can be completed by clicking their checkbox or pressing **Ctrl+Enter / ⌘Enter** while editing the item. Multi-line plain-text paste inside a checklist retains checklist blocks. Browser spellcheck is disabled in the document editor to avoid misleading red dictionary underlines on code, product names, and mixed-language text.
+Checklist items can be completed by clicking their checkbox or pressing **Ctrl+Enter / ⌘Enter** while editing the item. A single pasted line stays at the current cursor inside a checklist or callout instead of creating a new block; multi-line plain-text paste inside a checklist retains checklist blocks. Checkbox clicks preserve the document's scroll position. Browser spellcheck is disabled in the document editor to avoid misleading red dictionary underlines on code, product names, and mixed-language text.
 
 ## Favorites and navigation
 

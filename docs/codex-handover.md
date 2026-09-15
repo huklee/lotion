@@ -2,11 +2,11 @@
 
 Updated: 2026-09-15. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Latest published application checkpoint: version 0.3.0 adds browser favorites, native sidebar links, and Back/Forward history, plus checklist completion/paste fixes, blank-line Markdown copying, today-by-Enter calendar input, and editor spellcheck suppression. Browser tests now use isolated per-worker servers/workspaces and full Playwright parallelism. Local four-worker measurement reduced the 105-case suite from 174 to 90.79 seconds; [GitHub CI 34905987686](https://github.com/huklee/lotion/actions/runs/34905987686) passed and reduced the full check step from 278 to 151 seconds. A three-option search plan is ready for review, not implemented.
+Prepared application checkpoint 0.3.1 fixes single-line inline paste in checklists and callouts plus checkbox click scroll stability. The preceding published 0.3.0 release added browser favorites, native sidebar links, Back/Forward history and the other recorded editor fixes. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. A three-option search plan and the requested incremental backlog are ready under `docs/`; later items are not implemented yet.
 
 ## Project identity
 
-- Current published application version: **0.3.0**, release commit `dbce105`, functional-test follow-up `5ad6cce`, and parallel-harness commit `48f9c9f`. [Latest GitHub CI](https://github.com/huklee/lotion/actions/runs/34905987686) passed the complete gate on Ubuntu / Node 24. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.3.1**. Publication commit and CI evidence are recorded after push. The preceding 0.3.0 release commit is `dbce105`; [parallel-harness GitHub CI](https://github.com/huklee/lotion/actions/runs/34905987686) passed the complete gate on Ubuntu / Node 24. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
