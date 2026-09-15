@@ -36,23 +36,36 @@ import { api, ApiError, authHeaders } from "./api";
 import { SaveCoordinator } from "./save-coordinator";
 import Editor from "./Editor";
 import { toMarkdown } from "../../packages/markdown/convert";
+import {
+  readBoolean,
+  readChoice,
+  type EditorTextSize,
+  type PageWidth,
+  type ThemeMode,
+} from "./preferences";
 
-const sessionId =
-  readSetting(sessionStorage, "session") ?? crypto.randomUUID();
+const sessionId = readSetting(sessionStorage, "session") ?? crypto.randomUUID();
 sessionStorage.setItem("lotion-session", sessionId);
 const draftKey = (id: string) => `lotion-draft:${sessionId}:${id}`;
 const favoritesKey = "lotion-favorites";
 function readFavorites(): string[] {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(favoritesKey) ?? "[]");
-    return Array.isArray(value) ? [...new Set(value.filter((id): id is string => typeof id === "string"))] : [];
-  } catch { return []; }
+    const value: unknown = JSON.parse(
+      localStorage.getItem(favoritesKey) ?? "[]",
+    );
+    return Array.isArray(value)
+      ? [...new Set(value.filter((id): id is string => typeof id === "string"))]
+      : [];
+  } catch {
+    return [];
+  }
 }
 export default function App() {
   const [favorites, setFavorites] = useState(readFavorites);
   useEffect(() => {
     const sync = (event: StorageEvent) => {
-      if (event.key === favoritesKey || event.key === null) setFavorites(readFavorites());
+      if (event.key === favoritesKey || event.key === null)
+        setFavorites(readFavorites());
     };
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
@@ -65,8 +78,13 @@ export default function App() {
     [busy, setBusy] = useState(false),
     [auth, setAuth] = useState(false),
     [token, setToken] = useState("");
-  const [themeMode, setThemeMode] = useState(
-      readSetting(localStorage, "theme") ?? "system",
+  const [themeMode, setThemeMode] = useState<ThemeMode>(
+      readChoice<ThemeMode>(
+        localStorage,
+        "theme",
+        ["system", "light", "dark"],
+        "system",
+      ),
     ),
     [systemDark, setSystemDark] = useState(
       matchMedia("(prefers-color-scheme: dark)").matches,
@@ -75,9 +93,30 @@ export default function App() {
     [search, setSearch] = useState(false),
     [trash, setTrash] = useState(false),
     [collapsed, setCollapsed] = useState<Set<string>>(new Set()),
-    [sidebar, setSidebar] = useState(true),
+    [sidebarOnStart, setSidebarOnStart] = useState(() =>
+      readBoolean(localStorage, "sidebar-on-start", true),
+    ),
+    [sidebar, setSidebar] = useState(() =>
+      readBoolean(localStorage, "sidebar-on-start", true),
+    ),
+    [editorTextSize, setEditorTextSize] = useState<EditorTextSize>(() =>
+      readChoice(
+        localStorage,
+        "editor-text-size",
+        ["small", "medium", "large"],
+        "medium",
+      ),
+    ),
+    [pageWidth, setPageWidth] = useState<PageWidth>(() =>
+      readChoice(
+        localStorage,
+        "page-width",
+        ["comfortable", "wide"],
+        "comfortable",
+      ),
+    ),
     [dialog, setDialog] = useState<
-      "import" | "export" | "move" | "help" | null
+      "import" | "export" | "move" | "settings" | "help" | null
     >(null),
     [importMode, setImportMode] = useState<"auto" | "markdown" | "snapshot">(
       "auto",
@@ -167,7 +206,11 @@ export default function App() {
           save?.dispose();
           save = new SaveCoordinator(doc, {
             load: () => api<Document>(`/api/documents/${id}`),
-            archive: (draft) => set(`lotion-recovery:${id}:${new Date().toISOString()}:${crypto.randomUUID()}`, draft),
+            archive: (draft) =>
+              set(
+                `lotion-recovery:${id}:${new Date().toISOString()}:${crypto.randomUUID()}`,
+                draft,
+              ),
             save: (revision, content, mutationId) =>
               api<Document>(`/api/documents/${id}/content`, {
                 method: "PUT",
@@ -253,6 +296,13 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("lotion-theme", themeMode);
   }, [theme, themeMode]);
+  useEffect(() => {
+    document.documentElement.dataset.editorTextSize = editorTextSize;
+    document.documentElement.dataset.pageWidth = pageWidth;
+    localStorage.setItem("lotion-editor-text-size", editorTextSize);
+    localStorage.setItem("lotion-page-width", pageWidth);
+    localStorage.setItem("lotion-sidebar-on-start", String(sidebarOnStart));
+  }, [editorTextSize, pageWidth, sidebarOnStart]);
   useEffect(() => {
     const media = matchMedia("(prefers-color-scheme: dark)");
     const changed = () => setSystemDark(media.matches);
@@ -442,12 +492,16 @@ export default function App() {
           id: "title",
           type: "heading",
           props: { level: 1 },
-          content: [{ type: "text", text: content.title || "Untitled", styles: {} }],
+          content: [
+            { type: "text", text: content.title || "Untitled", styles: {} },
+          ],
         },
         ...content.blocks,
       ]);
       await navigator.clipboard.writeText(output.markdown);
-      setNotice(["Copied this page as Markdown.", ...output.warnings].join(" "));
+      setNotice(
+        ["Copied this page as Markdown.", ...output.warnings].join(" "),
+      );
       setDialog(null);
     } catch (e) {
       handleError(e);
@@ -558,7 +612,9 @@ export default function App() {
   }
   function toggleFavorite(id: string) {
     const current = readFavorites();
-    const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+    const next = current.includes(id)
+      ? current.filter((item) => item !== id)
+      : [...current, id];
     try {
       localStorage.setItem(favoritesKey, JSON.stringify(next));
       setFavorites(next);
@@ -567,16 +623,35 @@ export default function App() {
     }
   }
   function pageLink(node: TreeNode) {
-    return <a className="page-open" href={`#/page/${node.id}`} draggable={false}
-      aria-current={active?.id === node.id && !trash ? "page" : undefined}
-      onClick={(event) => {
-        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        event.preventDefault();
-        void openPage(node.id);
-      }}>
-      <span className="page-tree-icon" aria-hidden="true">{coordinators.current.get(node.id)?.content.icon || node.icon || "📄"}</span>
-      <span>{coordinators.current.get(node.id)?.content.title || node.title || "Untitled"}</span>
-    </a>;
+    return (
+      <a
+        className="page-open"
+        href={`#/page/${node.id}`}
+        draggable={false}
+        aria-current={active?.id === node.id && !trash ? "page" : undefined}
+        onClick={(event) => {
+          if (
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+          )
+            return;
+          event.preventDefault();
+          void openPage(node.id);
+        }}
+      >
+        <span className="page-tree-icon" aria-hidden="true">
+          {coordinators.current.get(node.id)?.content.icon || node.icon || "📄"}
+        </span>
+        <span>
+          {coordinators.current.get(node.id)?.content.title ||
+            node.title ||
+            "Untitled"}
+        </span>
+      </a>
+    );
   }
   function pageRow(node: TreeNode, depth = 0) {
     const children = childrenByParent.get(node.id) ?? [],
@@ -693,7 +768,8 @@ export default function App() {
               setTrash(false);
               setSearch(false);
               setIconPicker(false);
-              if (location.hash !== "#/home") history.pushState(null, "", "#/home");
+              if (location.hash !== "#/home")
+                history.pushState(null, "", "#/home");
             }}
           >
             <Home size={16} />
@@ -702,14 +778,23 @@ export default function App() {
         </div>
         {favorites.some((id) => visible.some((node) => node.id === id)) && (
           <>
-            <div className="section-label"><span>FAVORITES</span></div>
+            <div className="section-label">
+              <span>FAVORITES</span>
+            </div>
             <nav className="favorite-pages" aria-label="Favorites">
               {favorites.map((id) => {
                 const node = visible.find((item) => item.id === id);
-                return node ? <div className="page-row" key={id}>
-                  {pageLink(node)}
-                  <button aria-label={`Remove ${node.title || "Untitled"} from favorites`} onClick={() => toggleFavorite(id)}><Star size={13} fill="currentColor" /></button>
-                </div> : null;
+                return node ? (
+                  <div className="page-row" key={id}>
+                    {pageLink(node)}
+                    <button
+                      aria-label={`Remove ${node.title || "Untitled"} from favorites`}
+                      onClick={() => toggleFavorite(id)}
+                    >
+                      <Star size={13} fill="currentColor" />
+                    </button>
+                  </div>
+                ) : null;
               })}
             </nav>
           </>
@@ -773,6 +858,10 @@ export default function App() {
           >
             {theme === "dark" ? <Moon size={15} /> : <Sun size={15} />}
             Appearance<span className="mode">{themeMode}</span>
+          </button>
+          <button onClick={() => setDialog("settings")}>
+            <Settings2 size={15} />
+            Control panel
           </button>
           <button onClick={() => setDialog("help")}>
             <CircleHelp size={15} />
@@ -839,9 +928,22 @@ export default function App() {
                   <ArrowDownToLine size={14} />
                   Export
                 </button>
-                <button className="icon-button" aria-label={favorites.includes(active.id) ? "Remove from favorites" : "Add to favorites"}
-                  aria-pressed={favorites.includes(active.id)} onClick={() => toggleFavorite(active.id)}>
-                  <Star size={16} fill={favorites.includes(active.id) ? "currentColor" : "none"} />
+                <button
+                  className="icon-button"
+                  aria-label={
+                    favorites.includes(active.id)
+                      ? "Remove from favorites"
+                      : "Add to favorites"
+                  }
+                  aria-pressed={favorites.includes(active.id)}
+                  onClick={() => toggleFavorite(active.id)}
+                >
+                  <Star
+                    size={16}
+                    fill={
+                      favorites.includes(active.id) ? "currentColor" : "none"
+                    }
+                  />
                 </button>
                 <button
                   className="icon-button"
@@ -999,42 +1101,102 @@ export default function App() {
                   <p>{coordinator.error}</p>
                   {status === "Conflict" ? (
                     <>
-                      <p>Your draft is preserved. Changes to different blocks can be merged; overlapping edits need your choice.</p>
-                      <button onClick={() => void coordinator.review().catch(handleError)}>Review latest versions</button>
-                      {coordinator.remote && <div>
-                        <p>Conflicting fields: {coordinator.conflicts.join(", ") || "none"}</p>
-                        <details><summary>Your draft</summary><pre style={{whiteSpace: "pre-wrap"}}>{JSON.stringify(coordinator.content, null, 2)}</pre></details>
-                        <details><summary>Server version (revision {coordinator.remote.revision})</summary><pre style={{whiteSpace: "pre-wrap"}}>{JSON.stringify({title: coordinator.remote.title, blocks: coordinator.remote.blocks}, null, 2)}</pre></details>
-                        <button onClick={() => {
-                          if (confirm("Use your draft for this page? The server revision remains in history. A newer server change will require another review."))
-                            void coordinator.resolve("local").then(refresh).catch(handleError);
-                        }}>Use my draft</button>
-                        <button onClick={() => void coordinator.resolve("server").then(refresh).catch(handleError)}>Use server version (archive draft)</button>
-                        <p>A recovery copy of your draft is kept in this browser.</p>
-                      </div>}
+                      <p>
+                        Your draft is preserved. Changes to different blocks can
+                        be merged; overlapping edits need your choice.
+                      </p>
+                      <button
+                        onClick={() =>
+                          void coordinator.review().catch(handleError)
+                        }
+                      >
+                        Review latest versions
+                      </button>
+                      {coordinator.remote && (
+                        <div>
+                          <p>
+                            Conflicting fields:{" "}
+                            {coordinator.conflicts.join(", ") || "none"}
+                          </p>
+                          <details>
+                            <summary>Your draft</summary>
+                            <pre style={{ whiteSpace: "pre-wrap" }}>
+                              {JSON.stringify(coordinator.content, null, 2)}
+                            </pre>
+                          </details>
+                          <details>
+                            <summary>
+                              Server version (revision{" "}
+                              {coordinator.remote.revision})
+                            </summary>
+                            <pre style={{ whiteSpace: "pre-wrap" }}>
+                              {JSON.stringify(
+                                {
+                                  title: coordinator.remote.title,
+                                  blocks: coordinator.remote.blocks,
+                                },
+                                null,
+                                2,
+                              )}
+                            </pre>
+                          </details>
+                          <button
+                            onClick={() => {
+                              if (
+                                confirm(
+                                  "Use your draft for this page? The server revision remains in history. A newer server change will require another review.",
+                                )
+                              )
+                                void coordinator
+                                  .resolve("local")
+                                  .then(refresh)
+                                  .catch(handleError);
+                            }}
+                          >
+                            Use my draft
+                          </button>
+                          <button
+                            onClick={() =>
+                              void coordinator
+                                .resolve("server")
+                                .then(refresh)
+                                .catch(handleError)
+                            }
+                          >
+                            Use server version (archive draft)
+                          </button>
+                          <p>
+                            A recovery copy of your draft is kept in this
+                            browser.
+                          </p>
+                        </div>
+                      )}
                       <button
                         onClick={async () => {
                           try {
-                          const copy = await api<Document>("/api/documents", {
-                            method: "POST",
-                            body: JSON.stringify({
-                              title: title + " (recovered copy)",
-                              mutationId: crypto.randomUUID(),
-                            }),
-                          });
-                          await api(`/api/documents/${copy.id}/content`, {
-                            method: "PUT",
-                            headers: { "If-Match": "1" },
-                            body: JSON.stringify({
-                              ...coordinator.content,
-                              title: title + " (recovered copy)",
-                              mutationId: crypto.randomUUID(),
-                            }),
-                          });
-                          if (coordinator.remote) await coordinator.resolve("server");
-                          await refresh();
-                          await openPage(copy.id);
-                          } catch (error) { handleError(error); }
+                            const copy = await api<Document>("/api/documents", {
+                              method: "POST",
+                              body: JSON.stringify({
+                                title: title + " (recovered copy)",
+                                mutationId: crypto.randomUUID(),
+                              }),
+                            });
+                            await api(`/api/documents/${copy.id}/content`, {
+                              method: "PUT",
+                              headers: { "If-Match": "1" },
+                              body: JSON.stringify({
+                                ...coordinator.content,
+                                title: title + " (recovered copy)",
+                                mutationId: crypto.randomUUID(),
+                              }),
+                            });
+                            if (coordinator.remote)
+                              await coordinator.resolve("server");
+                            await refresh();
+                            await openPage(copy.id);
+                          } catch (error) {
+                            handleError(error);
+                          }
                         }}
                       >
                         Save draft as a copy
@@ -1193,7 +1355,9 @@ export default function App() {
                 ? "Unlock workspace"
                 : search
                   ? "Find a page"
-                  : (dialog ?? "Dialog")
+                  : dialog === "settings"
+                    ? "Control panel"
+                    : (dialog ?? "Dialog")
             }
           >
             <button
@@ -1262,8 +1426,8 @@ export default function App() {
                 </div>
                 <h2>Bring your ideas along.</h2>
                 <p>
-                  Import Markdown, a whole folder, or a Lotion ZIP. Nested
-                  pages and images stay together.
+                  Import Markdown, a whole folder, or a Lotion ZIP. Nested pages
+                  and images stay together.
                 </p>
                 <div
                   className="folder-drop"
@@ -1380,6 +1544,98 @@ export default function App() {
                       </button>
                     ))}
                 </div>
+              </>
+            ) : dialog === "settings" ? (
+              <>
+                <div className="modal-symbol">
+                  <Settings2 size={24} />
+                </div>
+                <h2>Control panel</h2>
+                <p>
+                  Adjust this browser&apos;s workspace display. These settings
+                  do not change shared document data.
+                </p>
+                <div className="settings-list">
+                  <label className="settings-row">
+                    <span>
+                      Appearance
+                      <small>Follow the system or choose a fixed theme.</small>
+                    </span>
+                    <select
+                      aria-label="Appearance theme"
+                      value={themeMode}
+                      onChange={(event) =>
+                        setThemeMode(event.target.value as ThemeMode)
+                      }
+                    >
+                      <option value="system">System</option>
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                    </select>
+                  </label>
+                  <label className="settings-row">
+                    <span>
+                      Editor text
+                      <small>
+                        Change document text without changing content.
+                      </small>
+                    </span>
+                    <select
+                      aria-label="Editor text size"
+                      value={editorTextSize}
+                      onChange={(event) =>
+                        setEditorTextSize(event.target.value as EditorTextSize)
+                      }
+                    >
+                      <option value="small">Small</option>
+                      <option value="medium">Default</option>
+                      <option value="large">Large</option>
+                    </select>
+                  </label>
+                  <label className="settings-row">
+                    <span>
+                      Page width
+                      <small>Use a focused or expanded writing canvas.</small>
+                    </span>
+                    <select
+                      aria-label="Page width"
+                      value={pageWidth}
+                      onChange={(event) =>
+                        setPageWidth(event.target.value as PageWidth)
+                      }
+                    >
+                      <option value="comfortable">Comfortable</option>
+                      <option value="wide">Wide</option>
+                    </select>
+                  </label>
+                  <label className="settings-row settings-toggle">
+                    <span>
+                      Open sidebar on startup
+                      <small>
+                        The top-bar button can still show or hide it.
+                      </small>
+                    </span>
+                    <input
+                      aria-label="Open sidebar on startup"
+                      type="checkbox"
+                      checked={sidebarOnStart}
+                      onChange={(event) =>
+                        setSidebarOnStart(event.target.checked)
+                      }
+                    />
+                  </label>
+                </div>
+                <button
+                  className="settings-reset"
+                  onClick={() => {
+                    setThemeMode("system");
+                    setEditorTextSize("medium");
+                    setPageWidth("comfortable");
+                    setSidebarOnStart(true);
+                  }}
+                >
+                  Reset display settings
+                </button>
               </>
             ) : (
               <>

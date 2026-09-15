@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-15T11:09:08Z — 0.4.0 browser-local control panel prepared
+
+Prepared backward-compatible minor release 0.4.0 as the second requested incremental item. Added a single sidebar control panel for theme mode, editor text size, page width and sidebar startup visibility, with immediate root-attribute application, canonical local-storage persistence, stale-value validation and a full reset. Preferences do not enter document data, revisions or exports. The existing appearance-cycle button remains available, and the panel is intentionally ready for the separately requested shortcut configuration without implementing that next item in this commit. See [ADR-016](adr/016-control-panel.md).
+
+The focused unit tests and three-browser control-panel test passed. The final `npm run check` passed lint/type/build, 103 unit/integration tests and 111 browser cases in 129.57 seconds. User data under `data/` remained untouched. Commit, push and remote CI evidence are recorded separately.
+
 ## 2026-09-15T10:56:21Z — 0.3.1 inline paste and checkbox stability prepared
 
 Prepared patch release 0.3.1. A validated one-line clipboard payload now enters as an inline text node at the exact ProseMirror selection, so an existing checklist or callout retains its ID, type, surrounding text and cursor placement without an added block. Multi-line checklist behavior remains on the typed-block path. Checkbox pointer handling records the intended state and scroll offsets at pointer-down, accepts only the matching low-movement pointer-up, reconciles after the browser's full click/change sequence, and restores editor/window scroll. This removes WebKit event-order double toggles and viewport jumps while retaining Ctrl+Enter/⌘Enter.

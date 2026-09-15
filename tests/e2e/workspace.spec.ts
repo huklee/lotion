@@ -548,19 +548,17 @@ test("Lotion restores legacy browser settings and drafts after the rename", asyn
       request.onsuccess = () => {
         const db = request.result;
         const transaction = db.transaction("keyval", "readwrite");
-        transaction
-          .objectStore("keyval")
-          .put(
-            {
-              revision: 1,
-              generation: 1,
-              content: {
-                title: "Legacy draft retained",
-                blocks: [{ id: "legacy-body", type: "paragraph", content: [] }],
-              },
+        transaction.objectStore("keyval").put(
+          {
+            revision: 1,
+            generation: 1,
+            content: {
+              title: "Legacy draft retained",
+              blocks: [{ id: "legacy-body", type: "paragraph", content: [] }],
             },
-            `yestion-draft:${session}:${id}`,
-          );
+          },
+          `yestion-draft:${session}:${id}`,
+        );
         transaction.oncomplete = () => {
           db.close();
           resolve();
@@ -757,6 +755,56 @@ test("slash command inserts a heading, theme persists, keyboard search works", a
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+});
+test("control panel applies, persists and resets browser display settings", async ({
+  page,
+}) => {
+  await seed(page, "Control panel page");
+  await page
+    .getByRole("button", { name: "Control panel", exact: true })
+    .click();
+  const panel = page.getByRole("dialog", { name: "Control panel" });
+  await panel.getByLabel("Appearance theme").selectOption("dark");
+  await panel.getByLabel("Editor text size").selectOption("large");
+  await panel.getByLabel("Page width").selectOption("wide");
+  await panel.getByLabel("Open sidebar on startup").uncheck();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-editor-text-size",
+    "large",
+  );
+  await expect(page.locator("html")).toHaveAttribute("data-page-width", "wide");
+  await expect(page.locator(".bn-editor")).toHaveCSS("font-size", "16px");
+  await expect(page.locator(".document")).toHaveCSS("max-width", "1180px");
+  await panel.getByRole("button", { name: "Close dialog" }).click();
+
+  await page.reload();
+  await expect(page.locator(".app")).toHaveClass(/sidebar-hidden/);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-editor-text-size",
+    "large",
+  );
+  await expect(page.locator("html")).toHaveAttribute("data-page-width", "wide");
+
+  await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  await page
+    .getByRole("button", { name: "Control panel", exact: true })
+    .click();
+  const reopened = page.getByRole("dialog", { name: "Control panel" });
+  await expect(reopened.getByLabel("Appearance theme")).toHaveValue("dark");
+  await expect(reopened.getByLabel("Editor text size")).toHaveValue("large");
+  await expect(reopened.getByLabel("Page width")).toHaveValue("wide");
+  await expect(
+    reopened.getByLabel("Open sidebar on startup"),
+  ).not.toBeChecked();
+  await reopened
+    .getByRole("button", { name: "Reset display settings" })
+    .click();
+  await expect(reopened.getByLabel("Appearance theme")).toHaveValue("system");
+  await expect(reopened.getByLabel("Editor text size")).toHaveValue("medium");
+  await expect(reopened.getByLabel("Page width")).toHaveValue("comfortable");
+  await expect(reopened.getByLabel("Open sidebar on startup")).toBeChecked();
 });
 test("trash and restore retain content", async ({ page }) => {
   await seed(page, "Restore me");

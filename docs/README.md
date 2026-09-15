@@ -40,6 +40,7 @@ All project plans, design records, implementation notes, test plans, and test re
 12. [Run and verify the application](running.md): startup, configuration, tests, import/export, and recovery.
 13. [Editor previews and diagrams](adr/011-editor-previews-and-diagrams.md): mention navigation, OpenGraph security, code contrast and Mermaid.
 14. [Parallel browser-test isolation](adr/015-parallel-browser-test-isolation.md): per-worker servers/repositories, worker policy, cleanup and benchmark evidence.
+15. [Browser-local control panel](adr/016-control-panel.md): validated display preferences, persistence boundaries and reset behavior.
 
 ## Current status
 

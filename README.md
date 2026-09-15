@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.3.1**. See the [version history and added features](docs/changelog.md).
+Current version: **0.4.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -54,6 +54,10 @@ Checklist items can be completed by clicking their checkbox or pressing **Ctrl+E
 ## Favorites and navigation
 
 Mark a page with the top-bar star to add it to **Favorites** in the sidebar. Favorites persist in this browser and sync across its tabs; they are not server-side workspace data. Page navigation supports browser Back/Forward. Use ⌘click on macOS or Ctrl+click on Windows/Linux on sidebar links to open another tab (Shift+click follows the browser's new-window behavior).
+
+## Control panel
+
+Open **Control panel** at the bottom of the sidebar to choose a system/light/dark theme, editor text size, comfortable/wide page width, and whether the sidebar opens on startup. These preferences are stored in this browser and do not change document content. **Reset display settings** restores the defaults.
 
 ## Tests
 

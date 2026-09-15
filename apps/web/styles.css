@@ -183,8 +183,14 @@ a {
   font-size: 12px;
   gap: 8px;
 }
-.page-open:hover { background: var(--hover); }
-.favorite-pages { overflow-y: auto; max-height: 25vh; flex-shrink: 0; }
+.page-open:hover {
+  background: var(--hover);
+}
+.favorite-pages {
+  overflow-y: auto;
+  max-height: 25vh;
+  flex-shrink: 0;
+}
 .page-open span {
   overflow: hidden;
   white-space: nowrap;
@@ -511,6 +517,9 @@ h1 span {
   margin: auto;
   position: relative;
 }
+[data-page-width="wide"] .document {
+  max-width: 1180px;
+}
 .page-topline {
   display: flex;
   align-items: center;
@@ -657,6 +666,12 @@ h1 span {
   line-height: 1.8;
   padding: 0 48px !important;
 }
+[data-editor-text-size="small"] .bn-editor {
+  font-size: 13px;
+}
+[data-editor-text-size="large"] .bn-editor {
+  font-size: 16px;
+}
 .bn-block-outer[data-box-selected="true"] > .bn-block {
   background: #91a87830;
   border-radius: 4px;
@@ -710,11 +725,29 @@ h1 span {
   background: var(--bg);
   color: var(--text);
 }
-.date-picker::backdrop { background: #0005; }
-.calendar-header { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; }
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 16px; text-align: center; }
-.calendar-grid button { min-height: 32px; }
-.calendar-grid button[aria-pressed="true"] { background: var(--accent); color: white; }
+.date-picker::backdrop {
+  background: #0005;
+}
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.calendar-grid button {
+  min-height: 32px;
+}
+.calendar-grid button[aria-pressed="true"] {
+  background: var(--accent);
+  color: white;
+}
 .lotion-callout {
   align-items: flex-start;
   background: #f4f1e8;
@@ -1011,6 +1044,48 @@ h1 span {
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
   font-size: 12px;
+}
+.settings-list {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+.settings-row {
+  align-items: center;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  min-height: 68px;
+}
+.settings-row > span {
+  font-size: 12px;
+  font-weight: 600;
+}
+.settings-row small {
+  color: var(--muted);
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+.settings-row select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  min-width: 125px;
+  padding: 8px;
+}
+.settings-toggle input {
+  height: 18px;
+  min-width: 18px;
+  width: 18px;
+}
+.settings-reset {
+  border: 1px solid var(--border);
+  font-size: 11px;
+  padding: 9px 12px;
 }
 kbd {
   font-size: 10px;

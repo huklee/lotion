@@ -1,8 +1,12 @@
 # Test results
 
+## 2026-09-15T11:09:08Z — 0.4.0 control panel gate passed
+
+The final `npm run check` exited **0** in **129.57 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **103/103 unit and integration tests**, and **111/111 browser tests** passed across Chromium, Firefox and WebKit with four workers. New unit coverage verifies supported, invalid and boolean preference values. The three-browser regression verifies immediate theme/text-size/page-width application, computed CSS, persistence after reload, sidebar startup visibility and complete reset behavior. Large build-chunk warnings remain non-fatal. GitHub CI is pending the release push at this checkpoint.
+
 ## 2026-09-15T10:56:21Z — 0.3.1 checklist/callout paste and scroll gate passed
 
-The final `npm run check` exited **0** in **131.96 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **101/101 unit and integration tests**, and **108/108 browser tests** passed across Chromium, Firefox and WebKit with four workers. The new three-browser regression places a single plain-text paste at exact mid-line selections inside an existing checklist and callout, verifies both original block types remain singular after save/reload, and checks that toggling a distant checkbox persists while preserving the `.main-scroll` offset. Existing mouse/keyboard checkbox completion and multi-line checklist paste tests also passed. Large build-chunk warnings remain non-fatal. GitHub CI is pending the release push at this checkpoint.
+The final `npm run check` exited **0** in **131.96 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **101/101 unit and integration tests**, and **108/108 browser tests** passed across Chromium, Firefox and WebKit with four workers. The new three-browser regression places a single plain-text paste at exact mid-line selections inside an existing checklist and callout, verifies both original block types remain singular after save/reload, and checks that toggling a distant checkbox persists while preserving the `.main-scroll` offset. Existing mouse/keyboard checkbox completion and multi-line checklist paste tests also passed. Large build-chunk warnings remain non-fatal. [GitHub CI run 34960911713](https://github.com/huklee/lotion/actions/runs/34960911713) subsequently passed the complete Ubuntu / Node 24 gate for release commit `0bdb9b0`.
 
 ## 2026-09-14T22:53:10Z — parallel harness GitHub CI confirmed
 
