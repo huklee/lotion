@@ -84,7 +84,22 @@ The baseline measured 10,103 TypeScript/TSX lines. The automatic candidates are:
 
 `packages/persistence/repository.ts` (472 lines), `packages/markdown/bundle.ts` (393) and `packages/markdown/convert.ts` (334) are within the healthy range and already have narrow responsibilities. They are not current refactoring targets.
 
-For the first implementation slice, extract recently changed block selection/direct-link lifecycles from `Editor.tsx` and split their browser tests into a dedicated editor-interactions specification. These boundaries have direct isolated test seams, are a recurring source of changes, and can move without redesigning document persistence.
+For the first implementation slice, extract recently changed block selection/direct-link lifecycles from `Editor.tsx`, isolate the formatting toolbar and make legacy code-language normalization directly unit-testable. Begin splitting the browser specification with the direct-link scenario and shared fixture helper. These boundaries have direct test seams, are a recurring source of changes, and can move without redesigning document persistence.
+
+## First-slice result
+
+Completed on 2026-09-16:
+
+| Boundary                  |                                 Before |                                                                                 After | Concrete value                                                                                                                                                                                      |
+| ------------------------- | -------------------------------------: | ------------------------------------------------------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/Editor.tsx`     |                            1,695 lines |                                                                           1,223 lines | Selection and deep-link browser lifecycles no longer compete with paste, upload and editor-composition changes; the formatting toolbar is independently readable.                                   |
+| Selection lifecycle       |                               Embedded |                                                   `use-block-selection.ts`, 286 lines | One hook now owns lasso state, overlays, selected-block drag wiring and hierarchy-preserving Backspace behavior. Existing cross-browser selection regressions exercise its public integration seam. |
+| Direct-link lifecycle     |                               Embedded |                                                  `use-direct-block-link.ts`, 79 lines | Hash lookup, reveal, viewport measurement and listeners have one focused owner; the feature's E2E scenario moved to `block-links.spec.ts`.                                                          |
+| Legacy code normalization |                               Embedded |                                               `normalize-editor-content.ts`, 48 lines | The pure transformation is directly covered by six unit cases without mounting the editor.                                                                                                          |
+| Formatting toolbar        |                               Embedded |                                              `EditorFormattingToolbar.tsx`, 145 lines | Color-menu rendering and shortcut hints can change without editing editor persistence or pointer interaction code.                                                                                  |
+| E2E setup/direct links    | Embedded in a 2,144-line specification | 24-line shared helper and 63-line feature specification; original file is 2,067 lines | New feature specifications can reuse setup without adding more unrelated cases to the congested file.                                                                                               |
+
+This is a material boundary extraction, not completion of every automatic candidate. `Editor.tsx`, `App.tsx` and `workspace.spec.ts` remain above 1,000 lines. Further work must follow a touched responsibility and preserve focused test coverage; no bulk file shuffling is justified solely to reach a number. The application version remains 0.7.0 because this slice preserves user-visible behavior and public data formats.
 
 ## Review questions
 

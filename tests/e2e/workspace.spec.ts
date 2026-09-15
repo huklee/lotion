@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import { seed } from "./helpers";
 
 test("favorites persist, follow titles and sync removal across tabs", async ({
   page,
@@ -113,67 +114,6 @@ test("modified sidebar link clicks open the target in another tab without naviga
     "New tab source",
   );
   await other.close();
-});
-
-test("copies a direct block link and reveals that block on a fresh navigation", async ({
-  page,
-}) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, "clipboard", {
-      configurable: true,
-      value: {
-        writeText: async (value: string) =>
-          localStorage.setItem("direct-block-link", value),
-      },
-    });
-  });
-  const blocks = Array.from({ length: 24 }, (_, index) => ({
-    id: `direct-${index}`,
-    type: "paragraph",
-    content: [{ type: "text", text: `Direct link block ${index}`, styles: {} }],
-  }));
-  const doc = await seed(page, "Direct block link", blocks);
-  await page.locator('[data-id="direct-20"] .bn-inline-content').click();
-  await page
-    .getByRole("button", { name: "Copy block link", exact: true })
-    .click();
-  await expect(page.locator(".message.notice")).toContainText(
-    "Copied a direct link to this block.",
-  );
-  const copied = await page.evaluate(() =>
-    localStorage.getItem("direct-block-link"),
-  );
-  expect(copied).toBe(
-    `${new URL(page.url()).origin}/#/page/${doc.id}#block=direct-20`,
-  );
-
-  await page.goto(copied!);
-  await expect(page).toHaveURL(/#\/page\/[^#]+#block=direct-20$/);
-  const target = page.locator('.bn-block-outer[data-id="direct-20"]');
-  await expect(
-    page.locator('[data-direct-link-target="direct-20"]'),
-  ).toBeVisible();
-  await expect(target).toBeInViewport();
-
-  await target.locator(".bn-inline-content").click();
-  await page.evaluate(() => {
-    navigator.clipboard.writeText = async () => {
-      throw new Error("Clipboard denied");
-    };
-  });
-  await page
-    .getByRole("button", { name: "Copy block link", exact: true })
-    .click();
-  await expect(page.getByRole("alert")).toContainText("Clipboard denied");
-
-  await page.goto(
-    `${new URL(page.url()).origin}/#/page/${doc.id}#block=deleted-block`,
-  );
-  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
-    "Direct block link",
-  );
-  await expect(page).toHaveURL(/#block=deleted-block$/);
-  await expect(page.locator("[data-direct-link-target]")).toHaveCount(0);
 });
 
 test("clipboard lines are saved as plain text without HTML or Markdown formatting", async ({
@@ -745,23 +685,6 @@ test("code tokens remain readable on beige in light and dark themes", async ({
     }
   }
 });
-async function seed(page: Page, title = "Test page", blocks?: any[]) {
-  const created = await page.request.post("/api/documents", {
-    data: { title, mutationId: randomUUID() },
-  });
-  const doc = await created.json();
-  if (blocks) {
-    await page.request.put(`/api/documents/${doc.id}/content`, {
-      headers: { "If-Match": "1" },
-      data: { title, blocks, mutationId: randomUUID() },
-    });
-  }
-  await page.goto(`/#/page/${doc.id}`);
-  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
-    title,
-  );
-  return doc;
-}
 test("create, edit, immediate sidebar title, auto-save and reload", async ({
   page,
 }) => {

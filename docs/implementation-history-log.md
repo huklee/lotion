@@ -1,5 +1,13 @@
 # Implementation history log
 
+## 2026-09-16T07:09:03+09:00 — First TypeScript module-boundary slice completed
+
+Applied the new structure rules to `Editor.tsx` without changing editor behavior or document formats. The 1,695-line component is now 1,223 lines. Block lasso/selection state and browser lifecycles moved to a 286-line hook; direct block-link reveal and measurement moved to a 79-line hook; the shortcut-aware formatting toolbar moved to a 145-line leaf component; and legacy code-language normalization moved to a 48-line pure module. Six direct unit cases now cover normalization without mounting BlockNote. Direct-link browser coverage moved out of the congested workspace specification, and a 24-line shared E2E seed helper provides the seam for subsequent feature splits.
+
+The result improves testability and conflict isolation while keeping the extracted modules in the preferred 0–500-line ranges. `Editor.tsx`, `App.tsx` and `workspace.spec.ts` remain automatic candidates, so they are recorded as incremental follow-ups rather than being mechanically split in this branch. No version increment was made: this is an internal, backward-compatible refactor with no new feature, fix, API or data-format change. User data under `data/` was untouched.
+
+The final `npm run check` passed lint, strict TypeScript and the production build, 120/120 unit and integration tests, and 126/126 browser cases across Chromium, Firefox and WebKit in 141.67 seconds. Focused selection coverage passed 24/24 browser cases before the full run, and the separated direct-link scenario passed 3/3. Build chunk-size warnings remain the previously tracked non-failing issue.
+
 ## 2026-09-16T06:54:18+09:00 — TypeScript structure rules established
 
 Created the mandatory pre-refactoring rules in [TypeScript file and module structure rules](typescript-file-structure.md). The baseline measured 10,103 TypeScript/TSX lines and identified only three automatic candidates: the 2,144-line workspace browser specification, 1,847-line application component and 1,695-line editor component. Recent history also concentrates changes in those files. Persistence and Markdown files in the 200–500-line healthy range are explicitly deferred because they already have cohesive responsibilities.
