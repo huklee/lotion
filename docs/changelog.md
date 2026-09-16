@@ -2,6 +2,16 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.12.1 — 2026-09-17
+
+### Fixed
+
+- Link previews now retain every validated public DNS candidate so Node can select a reachable IPv4 or IPv6 connection instead of pinning only the first answer.
+- Standard and local-use NAT64 destinations are accepted only when their embedded IPv4 destination is public. Private, loopback, link-local, documentation, carrier-grade NAT, and other non-public targets remain blocked.
+- A mixed DNS response no longer rejects an otherwise usable public address, while private candidates are removed before the connection lookup and every redirect is independently resolved and validated.
+
+No document schema migration is needed. Link-preview limits, redirect validation, DNS pinning, accepted MIME types, and locally cached image behavior remain unchanged. Verification is recorded in [test results](test-results.md).
+
 ## 0.12.0 — 2026-09-17
 
 ### Added

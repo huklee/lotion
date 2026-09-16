@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-17T07:33:51+09:00 — 0.12.1 link-preview network verification
+
+The focused link-preview suite passed **27/27** cases. It covers public and non-public IPv4/IPv6 addresses, IPv4-mapped IPv6, RFC 6052 well-known NAT64, RFC 8215 local-use NAT64, mixed DNS candidate filtering, URL restrictions, pre-connection private-address rejection, and inert OpenGraph parsing. Strict TypeScript and ESLint also passed.
+
+A production-mode Lotion server used an isolated temporary workspace for the supplied `https://techblog-history-younghunjo1.tistory.com/207#google_vignette` flow. `POST /api/link-preview` returned HTTP 200 with the live OpenGraph title and a 400-character description, fetched the remote image, stored it as a content-addressed local asset, and served the resulting 53,479-byte JPEG with HTTP 200. The temporary workspace was deleted after verification; user `data/` was untouched.
+
+The final CI-equivalent `CI=1 npm run check` exited **0** in **147.26 seconds**: lint, strict TypeScript, production build, **140/140 unit and integration tests**, and **144/144 Playwright cases** passed with two workers. The production build retained the known non-failing large-chunk warning.
+
 ## 2026-09-17T07:12:23+09:00 — 0.12.0 backend workspace-search focused verification
 
 Search extraction, repository, and API coverage passed **27/27** focused unit/integration cases. It verifies formatted-text boundaries, Unicode normalization, tables, Mermaid source, revision replacement, title ranking, filtering, result limits, restart reconstruction, trash/restore visibility, adapter-failure isolation, API validation, and `no-store` responses.
