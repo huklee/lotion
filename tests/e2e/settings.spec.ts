@@ -61,23 +61,33 @@ test("control panel applies, persists and resets browser display settings", asyn
     .getByRole("button", { name: "Control panel", exact: true })
     .click();
   const panel = page.getByRole("dialog", { name: "Control panel" });
-  await panel.getByLabel("Appearance theme").selectOption("dark");
+  await panel.getByLabel("Color scheme").selectOption("dark");
+  await panel.getByLabel("Workspace font").selectOption("manrope");
   await panel.getByLabel("Editor text size").selectOption("large");
   await panel.getByLabel("Page width").selectOption("wide");
   await panel.getByLabel("Open sidebar on startup").uncheck();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-editor-font",
+    "manrope",
+  );
   await expect(page.locator("html")).toHaveAttribute(
     "data-editor-text-size",
     "large",
   );
   await expect(page.locator("html")).toHaveAttribute("data-page-width", "wide");
   await expect(page.locator(".bn-editor")).toHaveCSS("font-size", "16px");
+  await expect(page.locator(".bn-editor")).toHaveCSS("font-family", /Manrope/);
   await expect(page.locator(".document")).toHaveCSS("max-width", "1180px");
   await panel.getByRole("button", { name: "Close dialog" }).click();
 
   await page.reload();
   await expect(page.locator(".app")).toHaveClass(/sidebar-hidden/);
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-editor-font",
+    "manrope",
+  );
   await expect(page.locator("html")).toHaveAttribute(
     "data-editor-text-size",
     "large",
@@ -89,16 +99,18 @@ test("control panel applies, persists and resets browser display settings", asyn
     .getByRole("button", { name: "Control panel", exact: true })
     .click();
   const reopened = page.getByRole("dialog", { name: "Control panel" });
-  await expect(reopened.getByLabel("Appearance theme")).toHaveValue("dark");
+  await expect(reopened.getByLabel("Color scheme")).toHaveValue("dark");
+  await expect(reopened.getByLabel("Workspace font")).toHaveValue("manrope");
   await expect(reopened.getByLabel("Editor text size")).toHaveValue("large");
   await expect(reopened.getByLabel("Page width")).toHaveValue("wide");
   await expect(
     reopened.getByLabel("Open sidebar on startup"),
   ).not.toBeChecked();
   await reopened
-    .getByRole("button", { name: "Reset display settings" })
+    .getByRole("button", { name: "Reset system and editor settings" })
     .click();
-  await expect(reopened.getByLabel("Appearance theme")).toHaveValue("system");
+  await expect(reopened.getByLabel("Color scheme")).toHaveValue("system");
+  await expect(reopened.getByLabel("Workspace font")).toHaveValue("dm-sans");
   await expect(reopened.getByLabel("Editor text size")).toHaveValue("medium");
   await expect(reopened.getByLabel("Page width")).toHaveValue("comfortable");
   await expect(reopened.getByLabel("Open sidebar on startup")).toBeChecked();
@@ -144,7 +156,7 @@ test("pastel text and background colors stay readable in every scheme", async ({
   const panel = page.getByRole("dialog", { name: "Control panel" });
 
   for (const scheme of ["light", "dark", "black"]) {
-    await panel.getByLabel("Appearance theme").selectOption(scheme);
+    await panel.getByLabel("Color scheme").selectOption(scheme);
     await expect(page.locator("html")).toHaveAttribute("data-theme", scheme);
     const ratios = await page.evaluate(() => {
       const rgb = (value: string) =>

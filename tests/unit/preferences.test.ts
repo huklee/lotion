@@ -1,5 +1,9 @@
 import { expect, it } from "vitest";
-import { readBoolean, readChoice } from "../../apps/web/preferences";
+import {
+  editorFonts,
+  readBoolean,
+  readChoice,
+} from "../../apps/web/preferences";
 
 function memoryStorage(entries: Record<string, string> = {}) {
   const values = new Map(Object.entries(entries));
@@ -43,4 +47,23 @@ it("reads boolean preferences without treating arbitrary strings as true", () =>
       true,
     ),
   ).toBe(true);
+});
+
+it("accepts only supported workspace fonts", () => {
+  expect(
+    readChoice(
+      memoryStorage({ "lotion-editor-font": "serif" }),
+      "editor-font",
+      editorFonts,
+      "dm-sans",
+    ),
+  ).toBe("serif");
+  expect(
+    readChoice(
+      memoryStorage({ "lotion-editor-font": "Comic Sans" }),
+      "editor-font",
+      editorFonts,
+      "dm-sans",
+    ),
+  ).toBe("dm-sans");
 });
