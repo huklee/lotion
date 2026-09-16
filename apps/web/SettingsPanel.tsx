@@ -95,6 +95,7 @@ export function SettingsPanel({
             <option value="system">System</option>
             <option value="light">Light</option>
             <option value="dark">Dark</option>
+            <option value="black">Black</option>
           </select>
         </label>
         <label className="settings-row">

@@ -15,7 +15,7 @@ Each item must be implemented, tested, checked off here, committed, pushed, and 
 
 3. [x] Improve drag-box selection so the visible rectangle and selected block set remain accurate in every drag direction, while scrolling, and across nested blocks. A nested child can now be selected independently because hit testing uses each block's own content row instead of its ancestor's complete subtree.
 4. [x] Synchronize the browser tab favicon with the current page icon, including immediate icon edits and page changes. Pages without an explicit icon use the visible `📄` default; non-page views and initial loading use a stable Lotion fallback.
-5. [ ] Consolidate text and background colors into approximately ten pastel choices with readable contrast in light, dark, and black themes.
+5. [x] Consolidate text and background colors into ten portable choices (default plus nine pastel hues), with centrally validated 4.5:1 contrast in light, dark, and black schemes. Add the persistent black scheme without changing stored document color keys.
 
 ### P1 — System and architecture
 
