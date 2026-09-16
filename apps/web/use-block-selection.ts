@@ -28,6 +28,13 @@ type UseBlockSelectionOptions = {
 const outerBlocks = (host: HTMLElement) =>
   host.querySelectorAll<HTMLElement>(".bn-block-outer[data-id]");
 
+const ownBlockRectangle = (outer: HTMLElement) =>
+  (
+    outer.querySelector<HTMLElement>(
+      ":scope > .bn-block > .bn-block-content",
+    ) ?? outer
+  ).getBoundingClientRect();
+
 export function useBlockSelection({
   editor,
   host,
@@ -185,7 +192,7 @@ export function useBlockSelection({
       );
       const elements = host.current ? [...outerBlocks(host.current)] : [];
       const rawHits = elements.filter((element) => {
-        const rect = element.getBoundingClientRect();
+        const rect = ownBlockRectangle(element);
         return rectanglesIntersect(documentBox, {
           x: rect.x,
           y: rect.y + scrollTop,

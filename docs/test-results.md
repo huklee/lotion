@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-16T22:34:38+09:00 — 0.8.0 nested block-lasso focused verification
+
+The new regression first reproduced the defect: dragging only across a nested child's row selected its parent because the parent's outer rectangle included the complete descendant subtree. Hit testing now uses each block's own content row while selection overlays retain subtree bounds for parent selection.
+
+After the fix, the complete focused lasso group passed **27/27** cases across Chromium, Firefox, and WebKit (three repetitions per scenario and engine). It covers native within-block text dragging, forward and reverse lasso, modifier-assisted extension, independent nested-child selection, edge auto-scroll, and retained off-screen hits.
+
+The final CI-equivalent `CI=1 npm run check` exited **0** in **135.97 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): lint, strict TypeScript, production build, **120/120 unit and integration tests**, and **132/132 Playwright cases** passed with two workers. The production build retained the known non-failing large-chunk warning. User data under `data/` was untouched.
+
 ## 2026-09-16T22:27:15+09:00 — 0.7.2 Mermaid keyboard-isolation verification
 
 The new regression first reproduced the defect in Chromium: Ctrl/Command+Enter inside the Mermaid source field toggled the previously focused checklist because the editor-level capture handler used a stale document cursor. After form controls were excluded from editor capture and bubble shortcuts, character-by-character Mermaid editing, invalid-source recovery, rendering, checklist isolation, block-order stability, save, and reload passed **18/18** focused cases across Chromium, Firefox, and WebKit (three repetitions per scenario and engine).
