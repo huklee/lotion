@@ -4,6 +4,7 @@ import {
   parsePreview,
   previewUrl,
   publicAddress,
+  publicAddresses,
 } from "../../apps/server/link-preview";
 
 it.each([
@@ -20,12 +21,32 @@ it.each([
   "fc00::1",
   "fe80::1",
   "2001:db8::1",
+  "64:ff9b::7f00:1",
+  "64:ff9b::a00:1",
+  "64:ff9b::a9fe:a9fe",
+  "64:ff9b:1:7f00:0:100::",
+  "64:ff9b:1:a00:0:100::",
 ])("rejects non-public address %s", (address) => {
   expect(publicAddress(address)).toBe(false);
 });
 it("allows public IPv4 and IPv6 addresses", () => {
   expect(publicAddress("93.184.216.34")).toBe(true);
   expect(publicAddress("2606:4700:4700::1111")).toBe(true);
+  expect(publicAddress("64:ff9b::5db8:d822")).toBe(true);
+  expect(publicAddress("64:ff9b:1:5db8:d8:2200::")).toBe(true);
+});
+it("retains only safe connection candidates from mixed DNS answers", () => {
+  expect(
+    publicAddresses([
+      { address: "10.0.0.1", family: 4 },
+      { address: "2606:4700:4700::1111", family: 6 },
+      { address: "93.184.216.34", family: 4 },
+      { address: "64:ff9b::7f00:1", family: 6 },
+    ]),
+  ).toEqual([
+    { address: "2606:4700:4700::1111", family: 6 },
+    { address: "93.184.216.34", family: 4 },
+  ]);
 });
 it.each([
   "file:///etc/passwd",

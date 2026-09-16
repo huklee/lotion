@@ -7,10 +7,33 @@ import { AppError } from "../../packages/document-schema/index";
 
 export function publicAddress(address: string) {
   try {
-    return ipaddr.process(address).range() === "unicast";
+    const parsed = ipaddr.parse(address);
+    const processed = ipaddr.process(address);
+    if (parsed.kind() === "ipv4" || processed.kind() === "ipv4")
+      return processed.range() === "unicast";
+
+    const bytes = parsed.toByteArray();
+    const rfc6052 = parsed.range() === "rfc6052";
+    const localTranslationPrefix = [0x00, 0x64, 0xff, 0x9b, 0x00, 0x01].every(
+      (byte, index) => bytes[index] === byte,
+    );
+
+    // Validate embedded IPv4 destinations for both RFC 6052's /96 prefix and
+    // RFC 8215's local-use /48 prefix. This prevents NAT64 from turning an
+    // allowed IPv6 literal into a private-network hop.
+    if (rfc6052) return publicAddress(bytes.slice(12).join("."));
+    if (localTranslationPrefix) {
+      if (bytes[8] !== 0) return false;
+      return publicAddress([bytes[6], bytes[7], bytes[9], bytes[10]].join("."));
+    }
+    return processed.range() === "unicast";
   } catch {
     return false;
   }
+}
+
+export function publicAddresses<T extends { address: string }>(answers: T[]) {
+  return answers.filter(({ address }) => publicAddress(address));
 }
 
 export function previewUrl(raw: string) {
@@ -41,7 +64,7 @@ export async function fetchPublic(
 ) {
   let url = previewUrl(raw);
   for (let redirects = 0; redirects <= 4; redirects++) {
-    const answers = await Promise.race([
+    const resolved = await Promise.race([
       lookup(url.hostname.replace(/^\[|\]$/g, ""), { all: true }),
       new Promise<never>((_, reject) => {
         if (signal.aborted) reject(new AppError(504, "Preview timed out"));
@@ -53,32 +76,31 @@ export async function fetchPublic(
           );
       }),
     ]);
-    if (
-      !answers.length ||
-      answers.some(({ address }) => !publicAddress(address))
-    )
+    const answers = publicAddresses(resolved);
+    if (!answers.length)
       throw new AppError(400, "Private network previews are not allowed");
-    const answer = answers[0];
     const result = await new Promise<{ bytes: Buffer; location?: string }>(
       (resolve, reject) => {
+        const requestOptions = {
+          signal,
+          agent: false,
+          headers: {
+            "User-Agent": "Lotion-LinkPreview/1.0",
+            Accept:
+              kind === "html"
+                ? "text/html"
+                : "image/png,image/jpeg,image/webp,image/gif",
+            "Accept-Encoding": "identity",
+          },
+          lookup: ((_hostname: string, options: any, callback: any) => {
+            if (options.all) callback(null, answers);
+            else callback(null, answers[0].address, answers[0].family);
+          }) as any,
+          autoSelectFamily: answers.length > 1,
+        } as http.RequestOptions & { autoSelectFamily: boolean };
         const request = (url.protocol === "https:" ? https : http).get(
           url,
-          {
-            signal,
-            agent: false,
-            headers: {
-              "User-Agent": "Lotion-LinkPreview/1.0",
-              Accept:
-                kind === "html"
-                  ? "text/html"
-                  : "image/png,image/jpeg,image/webp,image/gif",
-              "Accept-Encoding": "identity",
-            },
-            lookup: ((_hostname: string, options: any, callback: any) => {
-              if (options.all) callback(null, [answer]);
-              else callback(null, answer.address, answer.family);
-            }) as any,
-          },
+          requestOptions,
           (response) => {
             if ([301, 302, 303, 307, 308].includes(response.statusCode ?? 0)) {
               const location = response.headers.location;

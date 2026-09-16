@@ -194,7 +194,7 @@ Whole-folder import/export is mandatory; see [ADR-008](adr/008-folder-portabilit
 
 Provide slash commands, keyboard-accessible block movement, undo/redo, paste handling, route-based selection, tree navigation, quick create/trash/restore, image progress/retry, system/light/dark themes, and accessible focus states. Test IME composition, particularly Korean text, during saves and slash-command interactions.
 
-Serve UI/API on one origin. Bind loopback by default. Remote access requires authentication and TLS. Protect asset routes too. Apply origin/CSRF protection appropriate to the chosen session scheme. Deny traversal and symlink escapes; validate file signatures and serving content types. Imported HTML/MDX never executes. Use an embed provider allowlist and sandboxing. If adding link previews, restrict destinations and redirects to prevent internal-network requests.
+Serve UI/API on one origin. Bind loopback by default. Remote access requires authentication and TLS. Protect asset routes too. Apply origin/CSRF protection appropriate to the chosen session scheme. Deny traversal and symlink escapes; validate file signatures and serving content types. Imported HTML/MDX never executes. Use an embed provider allowlist and sandboxing. Link previews pin a filtered set of public DNS answers for each request and redirect; IPv4-embedded NAT64 destinations must pass the same public-address policy before connecting.
 
 ## Performance and operations
 
