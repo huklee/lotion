@@ -3,7 +3,9 @@ import { fromMarkdown, toMarkdown } from "../../packages/markdown/convert";
 it("imports legacy TOC markers and exports Lotion markers", () => {
   const parsed = fromMarkdown("<!-- yestion:table-of-contents -->");
   expect(parsed.blocks[0].type).toBe("tableOfContents");
-  expect(toMarkdown(parsed.blocks).markdown).toContain("<!-- lotion:table-of-contents -->");
+  expect(toMarkdown(parsed.blocks).markdown).toContain(
+    "<!-- lotion:table-of-contents -->",
+  );
 });
 function semantic(value: any): any {
   if (Array.isArray(value)) return value.map(semantic);
@@ -22,7 +24,7 @@ it.each([
   "- Parent\n  - Child\n- Another\n",
   "- [x] Done\n- [ ] Next\n",
   "```ts\nconst a = 1;\n```\n",
-  "| A | B |\n| - | - |\n| 한글 | 🙂 |\n",
+  "| A | B |\n| - | - |\n| English | 🙂 |\n",
   "![Diagram](assets/test.png)\n",
 ])("round-trips supported Markdown: %s", (source) => {
   const first = fromMarkdown(source);

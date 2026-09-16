@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-09-16T20:32:57+09:00 — Repository English-language cleanup verified
+
+All tracked content and filenames outside the protected `data/` directory were scanned for Hangul characters; none remain. Prettier, `npm run lint`, `npm run typecheck`, 28 focused Markdown/repository tests and 36 related browser cases passed. The browser cases covered calendar suggestions, mentions, imports/exports and saving across Chromium, Firefox and WebKit.
+
+The complete gate built successfully and passed 120/120 unit and integration tests. Its four-worker browser phase passed 125/126 cases; the remaining WebKit folder-import worker stopped responding to Playwright after the imported heading and image had rendered. A two-worker rerun passed that import case and 125/126 cases overall, but reproduced the existing Chromium checklist-paste regression: a paragraph was created after multi-line text was pasted into a checklist. That product failure is the first item in the next requested bug-fix sequence and is intentionally not hidden inside this language-only change. User data under `data/` was untouched.
+
 ## 2026-09-16T20:06:30+09:00 — Complete large-file refactoring gate passed
 
 `npm run check` exited **0** in **153.39 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1). ESLint, strict TypeScript and the production Vite build passed; **120/120 unit and integration tests** passed in 18 files; and **126/126 Playwright cases** passed across Chromium, Firefox and WebKit with four workers. The production build retained the known non-failing large-chunk warning.

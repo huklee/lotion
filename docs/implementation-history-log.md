@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-16T20:32:57+09:00 — Repository text standardized in English
+
+Translated the remaining Korean documentation, test fixtures and date-command aliases into English. The document-search proposal keeps its original three alternatives and recommendation, while README links now describe it in English. Test data still covers Unicode through emoji without retaining Korean words. The folder-import browser assertion now targets its semantic imported heading instead of waiting on the complete editor container. A tracked-file content and filename audit found no remaining Hangul outside the protected `data/` directory.
+
+This cleanup does not add product behavior, change storage formats or require a version increment; version 0.7.0 remains correct. Lint, strict type checking, 28 focused unit/integration tests and 36 related cross-browser cases passed. Full-gate attempts exposed the already requested checklist newline regression and a separate WebKit test-process stall, both recorded in the test results rather than folded into this translation change. User data under `data/` was untouched.
+
 ## 2026-09-16T20:06:30+09:00 — Large TypeScript candidate refactoring completed
 
 Completed the remaining work in the large-file refactoring plan. `App.tsx` fell from 1,847 to 716 lines after extracting workspace presentation, dialogs, preferences, transfer workflows and conflict actions. `Editor.tsx` fell from 1,695 to 799 lines after extracting suggestion, checklist, paste-link and overlay lifecycles. The 2,144-line workspace browser specification was replaced by ten product-area specifications; all 41 original scenarios remain, and the largest resulting specification is 457 lines.

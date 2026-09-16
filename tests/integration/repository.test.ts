@@ -61,7 +61,7 @@ it("fails startup on a newer schema without replacing data", async () => {
   ).toBe(99);
 });
 it("persists Unicode content and hierarchy across restart", async () => {
-  const parent = await create("한글"),
+  const parent = await create("Unicode 🙂"),
     child = await create("Child", parent.id);
   await repo.save(
     child.id,

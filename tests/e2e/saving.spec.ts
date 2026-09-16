@@ -21,7 +21,7 @@ test("create, edit, immediate sidebar title, auto-save and reload", async ({
   ).toBeVisible();
   const editor = page.locator(".tiptap");
   await editor.click();
-  await page.keyboard.insertText("A thought worth keeping. 한글 🙂");
+  await page.keyboard.insertText("A thought worth keeping. English 🙂");
   await expect(page.locator(".save-status")).toHaveText("Saved", {
     timeout: 15000,
   });
@@ -30,7 +30,7 @@ test("create, edit, immediate sidebar title, auto-save and reload", async ({
     title,
   );
   await expect(page.locator(".tiptap")).toContainText(
-    "A thought worth keeping. 한글 🙂",
+    "A thought worth keeping. English 🙂",
   );
   expect(errors).toEqual([]);
 });

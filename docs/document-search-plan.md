@@ -1,53 +1,53 @@
-# 문서 내 검색 기능 계획 — 3가지 안
+# In-document search plan — three approaches
 
-작성일: 2026-09-13. 상태: **검토용 계획, 검색 기능은 아직 구현하지 않음**.
+Written: 2026-09-13. Status: **plan for review; search is not implemented yet**.
 
-현재 `apps/web/App.tsx`의 검색창은 사이드바 문서 제목을 필터링합니다. 현재 문서의 본문 검색, 일치 개수, 이전/다음 이동 기능은 없습니다. 본문은 `apps/web/Editor.tsx`의 BlockNote/ProseMirror 편집기에 있고, 중첩 블록·표·Mermaid 소스처럼 텍스트 위치가 다른 구조를 포함합니다.
+The current search field in `apps/web/App.tsx` filters document titles in the sidebar. It does not search the current document body, count matches, or navigate to the previous or next match. Document content lives in the BlockNote/ProseMirror editor in `apps/web/Editor.tsx` and includes structures with different text locations, such as nested blocks, tables, and Mermaid source.
 
-## 비교
+## Comparison
 
-| 안 | 사용 방식 | 범위 | 장점 | 비용·한계 |
-| --- | --- | --- | --- | --- |
-| 1. 브라우저 찾기 활용 | 사용법 안내와 기존 ⌘F/Ctrl+F 사용 | 현재 화면에 렌더링된 내용 | 구현과 유지보수 부담이 가장 작음 | 사이드바까지 검색될 수 있고 접힌 내용·입력칸·Mermaid 소스 처리가 브라우저마다 다름. 앱에서 검색 결과 제어 불가 |
-| 2. 현재 문서 전용 찾기 패널 **추천** | 문서 메뉴의 ‘문서에서 찾기’ 또는 편집기 안에서 ⌘F/Ctrl+F | 현재 문서 본문 | 현재 문서에 집중, 일치 개수·강조·이전/다음 이동 제공, 서버 변경 불필요 | 편집 중 위치 매핑, 접힌 블록과 표의 결과 이동을 구현해야 함 |
-| 3. 문서·워크스페이스 통합 검색 | 통합 검색에서 ‘현재 문서/모든 문서’ 선택 | 모든 저장 문서와 현재 초안 | 여러 문서를 넘나드는 지식 검색으로 확장 가능 | 서버 텍스트 추출·색인·갱신·권한·백업/복원 재색인·초안과 저장본 구분까지 필요 |
+| Approach                                       | Interaction                                                                  | Scope                                      | Benefits                                                                                          | Cost and limitations                                                                                                                                |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Use browser find                            | Document the existing ⌘F/Ctrl+F behavior                                     | Content rendered on the current screen     | Lowest implementation and maintenance cost                                                        | May search the sidebar too; behavior for collapsed content, inputs, and Mermaid source differs by browser; the application cannot control results   |
+| 2. Current-document find panel **Recommended** | Use **Find in document** in the document menu or ⌘F/Ctrl+F inside the editor | Current document body                      | Focused results with a match count, highlighting, and previous/next navigation; no server changes | Must map positions during editing and navigate results in collapsed blocks and tables                                                               |
+| 3. Document and workspace search               | Choose **Current document** or **All documents** in unified search           | Every saved document and the current draft | Can grow into cross-document knowledge search                                                     | Requires server-side text extraction, indexing, updates, authorization, reindexing after backup restoration, and draft-versus-saved-result handling |
 
-## 1안 — 브라우저 찾기 활용
+## Approach 1 — use browser find
 
-작업은 도움말과 단축키 안내 추가가 중심입니다. 브라우저 검색창을 자바스크립트로 강제로 여는 방식은 사용하지 않습니다. 앱이 해당 단축키를 가로채지 않도록 유지합니다.
+The work mainly adds help and shortcut guidance. The application should not try to open the browser find UI through JavaScript, and it must continue to leave the shortcut available to the browser.
 
-검증: 세 브라우저에서 단축키가 앱 기능과 충돌하지 않는지, 화면에 보이는 문서 본문을 찾을 수 있는지 확인합니다. 접힌 내용이나 렌더링되지 않은 내용까지 검색한다고 약속하지 않습니다. 커스텀 검색 기능으로는 요구를 완전히 충족하지 못하는 임시 대안입니다.
+Verification: confirm in all three browsers that the shortcut does not conflict with application behavior and can find visible document text. Do not promise results for collapsed or unrendered content. This is an interim option that does not fully satisfy the requirement for application-controlled search.
 
-## 2안 — 현재 문서 전용 찾기 패널
+## Approach 2 — current-document find panel
 
-### 사용자 경험
+### User experience
 
-- 문서 우측 상단에 찾기 패널: 검색어, `현재 결과 / 전체 결과`, 이전·다음, 닫기.
-- Enter는 다음, Shift+Enter는 이전, Escape는 닫기. 마지막 결과 이후 처음 결과로 순환.
-- 결과는 모두 강조하고 현재 결과는 별도 색으로 표시. 이동하면 해당 블록을 화면으로 스크롤.
-- 대소문자 구분은 옵션. 첫 단계는 리터럴 문자열 검색으로 한정하고 정규식·치환은 후속 검토.
-- 패널을 닫으면 원래 편집 위치로 돌아가며 문서 내용과 저장 상태는 바뀌지 않아야 함.
+- Place a find panel at the top right of the document with a query field, `current match / total matches`, previous, next, and close controls.
+- Enter moves to the next match, Shift+Enter moves to the previous match, and Escape closes the panel. Navigation wraps after the last or first result.
+- Highlight every result and use a distinct color for the active result. Navigating scrolls its block into view.
+- Case sensitivity is optional. Limit the first release to literal text search and review regular expressions and replacement later.
+- Closing the panel restores the original editing position without changing document content or save state.
 
-### 구현 설계
+### Implementation design
 
-`apps/web/document-search.ts`에 텍스트 추출·검색을, 별도 `DocumentSearch.tsx`에 패널을 분리합니다. 일반 본문·제목·목록·중첩 블록·표 셀의 텍스트와 블록 ID/ProseMirror 위치를 연결합니다. 서식 경계에 걸친 일치도 한 결과로 처리합니다. 문서 제목은 본문과 별도 위치로 다루고, Mermaid는 렌더링 이미지 내부가 아닌 소스 문자열을 대상으로 합니다.
+Put text extraction and matching in `apps/web/document-search.ts`, and keep the panel in a separate `DocumentSearch.tsx`. Associate text from ordinary paragraphs, headings, lists, nested blocks, and table cells with block IDs and ProseMirror positions. Treat a match spanning formatting boundaries as one result. Handle the document title separately from the body. Search Mermaid source text rather than text inside the rendered image.
 
-강조는 ProseMirror decoration을 사용하고 문서 JSON/저장 트랜잭션에 넣지 않습니다. React 밖에서 편집 DOM을 직접 고쳐 강조하지 않습니다. 편집·실행 취소 시 검색 위치를 재계산하거나 트랜잭션 매핑으로 갱신합니다. 날짜는 저장된 ISO 날짜 텍스트로 검색됩니다. 접힌 블록의 결과로 이동할 때 해당 조상을 펼치는 UX를 구현하고 검증합니다.
+Use ProseMirror decorations for highlighting; do not write highlights into document JSON or save transactions. Do not highlight by directly modifying editor DOM outside React. Recalculate result positions after edits and undo, or update them through transaction mapping. Search dates by their stored ISO date text. When navigating to a result inside collapsed content, expand its ancestors and verify the interaction.
 
-초기 성능 예산은 기존 500블록 성능 픽스처에서 입력 후 결과 표시 100ms 이내를 목표로 측정합니다. 이 수치는 아직 측정된 성능이 아닌 수용 기준입니다. 대형 문서는 짧은 디바운스와 결과 표시 상한을 두되 전체 일치 개수 및 잘림 여부를 명시합니다. 한글 IME 조합 중 단축키나 입력을 가로채지 않습니다.
+Use the existing 500-block performance fixture to target results within 100 ms of input. This is an acceptance target, not a measured result. Apply a short debounce and a displayed-result cap for large documents while clearly reporting the total match count and whether displayed results are truncated. Do not intercept shortcuts or input during IME composition.
 
-### 수용 테스트
+### Acceptance tests
 
-한글/영문·빈 검색어·특수문자·중복 단어·일치 없음·서식 경계·표·접힌 자식·코드·Mermaid 소스·문서 전환을 확인합니다. 검색 중 편집/삭제/undo 후 결과 위치가 유효해야 합니다. 검색만으로 autosave가 발생하지 않고 문서 내용이 동일해야 합니다. 키보드 순환, 포커스 복귀, 결과 수 알림과 세 브라우저 테스트를 포함합니다.
+Cover English and composed-text input, empty queries, special characters, repeated words, no-match cases, formatting boundaries, tables, collapsed children, code, Mermaid source, and document switching. Result positions must remain valid after editing, deletion, and undo while search is open. Search alone must not trigger autosave or change document content. Include keyboard wrapping, focus restoration, accessible result-count announcements, and tests in all three browsers.
 
-## 3안 — 통합 본문 검색
+## Approach 3 — unified full-text search
 
-2안의 현재 문서 검색을 기반으로 서버에 본문 검색 API를 추가합니다. `packages/persistence/repository.ts`의 커밋 완료 시점과 연결해 문서 ID·리비전·제목·본문·블록 ID를 색인합니다. 처음에는 규모를 측정한 뒤 단순 텍스트 색인과 별도 검색 저장소 중 하나를 결정합니다. 색인은 원본이 아니라 재생성 가능한 파생 데이터여야 합니다.
+Build a server-side full-text search API on top of the current-document search from Approach 2. Connect indexing to successful commits in `packages/persistence/repository.ts`, storing document ID, revision, title, body text, and block ID. Measure expected scale before choosing between a simple text index and a dedicated search store. The index must be reproducible derived data rather than a source of truth.
 
-API는 인증·검색어 길이·결과 수·페이지네이션을 제한하고, 결과에는 문서 제목·일치 구간·블록 이동 위치를 반환합니다. 삭제/복원/가져오기/이전 리비전 복원 후 색인을 갱신하고, 색인 실패가 원본 문서 저장을 손상시키지 않도록 분리합니다. 현재 편집 중인 미저장 초안은 서버 결과와 구분하여 클라이언트에서 합칩니다. 제목 검색 UI는 기존 방식에서 새 검색으로 전환하되 제목 결과를 우선 표시합니다.
+Limit authentication, query length, result count, and pagination at the API boundary. Return the document title, matching excerpt, and target block location. Update the index after deletion, restoration, import, and revision restoration, while isolating indexing failures so they cannot damage source-document saves. Merge the current unsaved draft on the client and distinguish it from server results. Replace the existing title-search UI with the unified search while ranking title matches first.
 
-검증에는 저장/삭제/복원 후 결과 정합성, 재시작 및 재색인, 권한 누출 방지, 한글 토큰화 또는 부분문자열 검색 규칙, 10,000문서 검색 성능, 결과의 블록 이동을 포함합니다. 2안보다 구현 범위가 크므로 별도 마일스톤으로 추진하는 편이 적절합니다.
+Verification includes result consistency after save, deletion, and restoration; restart and reindex behavior; prevention of authorization leaks; composed-text tokenization or substring rules; performance across 10,000 documents; and navigation to result blocks. This scope is substantially larger than Approach 2 and should be a separate milestone.
 
-## 제안하는 순서
+## Recommended sequence
 
-먼저 **2안**으로 현재 문서 찾기를 제공하고, 실제 사용에서 여러 문서 본문 검색이 필요해지면 **3안**으로 확장합니다. **1안**은 2안이 준비되기 전 사용 안내로 활용할 수 있습니다. 이번 커밋에는 이 계획서만 포함하며, 구현 안 선택 후 검색 작업의 범위와 버전을 결정합니다.
+Implement **Approach 2** first to provide current-document search. Expand to **Approach 3** if real usage shows a need for full workspace search. **Approach 1** can provide interim guidance until Approach 2 is ready. This document contains only the plan; choose an approach before setting the search implementation scope and version.

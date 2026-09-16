@@ -187,7 +187,7 @@ export function useEditorSuggestions({
           {
             title: "Date",
             subtext: "Choose a date from the calendar",
-            aliases: ["calendar", "today", "날짜", "달력"],
+            aliases: ["calendar", "today", "date", "schedule"],
             group: "Lotion",
             icon: <BookOpenText size={18} />,
             onItemClick: () => {
