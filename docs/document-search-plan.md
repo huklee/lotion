@@ -1,8 +1,8 @@
 # In-document search plan — three approaches
 
-Written: 2026-09-13. Status: **plan for review; search is not implemented yet**.
+Written: 2026-09-13. Status: **implemented on 2026-09-17 using an adapted Approach 3**. See [ADR-020](adr/020-backend-workspace-search.md).
 
-The current search field in `apps/web/App.tsx` filters document titles in the sidebar. It does not search the current document body, count matches, or navigate to the previous or next match. Document content lives in the BlockNote/ProseMirror editor in `apps/web/Editor.tsx` and includes structures with different text locations, such as nested blocks, tables, and Mermaid source.
+The original search field filtered document titles only. The implemented unified search now queries a derived backend index for saved workspace content, merges the active unsaved browser draft locally, reports the total, and opens a stable deep link to a matching block. Document text extraction covers nested blocks, tables, attachments, code, and Mermaid source.
 
 ## Comparison
 
@@ -48,6 +48,6 @@ Limit authentication, query length, result count, and pagination at the API boun
 
 Verification includes result consistency after save, deletion, and restoration; restart and reindex behavior; prevention of authorization leaks; composed-text tokenization or substring rules; performance across 10,000 documents; and navigation to result blocks. This scope is substantially larger than Approach 2 and should be a separate milestone.
 
-## Recommended sequence
+## Implemented sequence
 
-Implement **Approach 2** first to provide current-document search. Expand to **Approach 3** if real usage shows a need for full workspace search. **Approach 1** can provide interim guidance until Approach 2 is ready. This document contains only the plan; choose an approach before setting the search implementation scope and version.
+The initial recommendation was Approach 2. The later backend-indexing requirement selected an adapted **Approach 3** directly: a local replaceable backend index instead of a mandatory external search cluster, plus local merging for the active draft. OpenSearch remains a future adapter option if measured needs exceed the built-in implementation.

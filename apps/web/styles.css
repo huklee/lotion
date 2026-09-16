@@ -1080,14 +1080,47 @@ h1 span {
   margin-top: 14px;
 }
 .search-results button {
+  align-items: center;
+  border-radius: 6px;
+  gap: 10px;
   justify-content: flex-start;
   padding: 12px;
   font-size: 12px;
   text-align: left;
 }
-.search-results button svg:last-child:not(:first-child) {
+.search-results button:hover,
+.search-results button:focus-visible {
+  background: var(--hover);
+  outline: 0;
+}
+.search-results button > span {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.search-results button strong,
+.search-results button small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-results button small {
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 3px;
+}
+.search-results button em {
   margin-left: auto;
   color: var(--muted);
+  font-size: 9px;
+  font-style: normal;
+  white-space: nowrap;
+}
+.modal .search-summary {
+  color: var(--muted);
+  font-size: 10px;
+  margin: 8px 0 0;
 }
 .shortcut-row {
   display: flex;

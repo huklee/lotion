@@ -1,5 +1,15 @@
 # Test results
 
+## 2026-09-17T07:12:23+09:00 — 0.12.0 backend workspace-search focused verification
+
+Search extraction, repository, and API coverage passed **27/27** focused unit/integration cases. It verifies formatted-text boundaries, Unicode normalization, tables, Mermaid source, revision replacement, title ranking, filtering, result limits, restart reconstruction, trash/restore visibility, adapter-failure isolation, API validation, and `no-store` responses.
+
+The workspace-search navigation scenario passed across Chromium, Firefox, and WebKit for active unsaved draft merging, saved backend results, counts, source labels, and exact block deep links. Focus restoration initially exposed that HTML `autoFocus` runs before the modal effect can capture the prior editor; capturing focus at the open action and restoring it on the next frame passed **9/9** repeated cases across all three engines.
+
+The 10,000-document performance qualification passed on macOS arm64, Node 25.8.2, Apple M1: import 46,036.09 ms, tree projection 7.06 ms, workspace search **14.22 ms** (100 ms budget), 500-block save 61.04 ms, open 1.26 ms, startup with index reconstruction **2,235.36 ms** (15,000 ms budget), and 73 MB heap.
+
+The final CI-equivalent `CI=1 npm run check` exited **0** in **143.71 seconds**: lint, strict TypeScript, production build, **134/134 unit and integration tests**, and **144/144 Playwright cases** passed with two workers. The production build retained the known non-failing large-chunk warning. User data under `data/` was untouched.
+
 ## 2026-09-16T23:03:58+09:00 — 0.11.0 integrated-settings focused verification
 
 The preference unit group passed **3/3** cases, including supported font restoration and fallback from an unsupported stored font. The integrated display-settings scenario passed **9/9** repeated cases across Chromium, Firefox, and WebKit. It verifies immediate scheme, font, text-size and page-width preview; startup-sidebar behavior; reload persistence; and the combined reset.

@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.12.0 — 2026-09-17
+
+### Added
+
+- Workspace search now covers saved page titles and block content through a backend-derived index, including nested blocks, tables, attachment labels, code, and Mermaid source.
+- The active unsaved browser draft is searched locally and merged with backend results. Results report their source and open stable links to exact matching blocks.
+- Search requests are debounced, obsolete requests are canceled, query/result limits are validated, trash is excluded, and startup reconstructs the disposable index from canonical revisions.
+
+### Architecture
+
+- A `WorkspaceSearchIndex` boundary permits a future OpenSearch adapter. [ADR-020](adr/020-backend-workspace-search.md) records why the measured local implementation remains the default without requiring another production service.
+
+No document schema migration is needed. The index is derived data and is not included in backups or exports. Verification is recorded in [test results](test-results.md).
+
 ## 0.11.0 — 2026-09-16
 
 ### Added
