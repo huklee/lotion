@@ -1,8 +1,8 @@
 # Remaining jobs
 
-Historical completed work lives in the [implementation history](implementation-history-log.md), [test results](test-results.md), and [changelog](changelog.md). The active sequence retains its checked items until all six requested pull requests are complete so progress remains visible.
+Historical completed work lives in the [implementation history](implementation-history-log.md), [test results](test-results.md), and [changelog](changelog.md). The completed sequence remains visible below for review across its six incremental pull requests.
 
-## Active incremental sequence — 2026-09-16
+## Completed incremental sequence — 2026-09-16
 
 Each item must be implemented, tested, checked off here, committed, pushed, and submitted as its own pull request before moving to the next item.
 
@@ -19,7 +19,7 @@ Each item must be implemented, tested, checked off here, committed, pushed, and 
 
 ### P1 — System and architecture
 
-6. [ ] Add an integrated settings area for scheme, font, and related system preferences, with validated persistence, reset behavior, and immediate preview.
+6. [x] Add an integrated settings area for scheme, font, and related system preferences, with validated persistence, reset behavior, and immediate preview. System appearance, editor/startup preferences, and formatting shortcuts now share one control panel; five validated font choices apply to the workspace and document immediately, persist locally, and reset with the other display settings.
 
 ## Existing product backlog
 

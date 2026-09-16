@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-16T23:03:58+09:00 — 0.11.0 integrated system settings prepared
+
+Prepared the sixth and final requested incremental pull request. Reorganized the existing control panel into system appearance, editor/startup, and formatting sections; added five validated workspace-font choices; and applied the selected font immediately to both application chrome and BlockNote's actual theme root. Font state uses the existing browser-local compatibility reader, persists across reloads, and participates in the combined display reset without entering document storage or exports.
+
+Focused preference tests and nine repeated cross-browser settings cases passed. The first browser test correctly identified BlockNote's internal font-variable boundary, which the final implementation now addresses. The final CI-equivalent gate passed lint/type/build, 128 unit/integration tests, and 138 browser cases in 143.37 seconds. Commit, push, pull-request, and remote CI evidence are recorded separately when complete. User data under `data/` was untouched.
+
 ## 2026-09-16T22:50:57+09:00 — 0.10.0 accessible pastel color system prepared
 
 Kept BlockNote's portable `default`, gray, brown, red, orange, yellow, green, blue, purple, and pink keys so existing documents and shortcuts remain valid. Centralized the nine hue pairs for light, dark, and black instead of inheriting different library defaults. The preference lifecycle now applies the palette immediately, and a persistent black scheme uses BlockNote's dark component chrome with a true-black application canvas.
