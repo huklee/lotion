@@ -13,7 +13,7 @@ Each item must be implemented, tested, checked off here, committed, pushed, and 
 
 ### P1 — UI/UX and styling
 
-3. [ ] Improve drag-box selection so the visible rectangle and selected block set remain accurate in every drag direction, while scrolling, and across nested blocks.
+3. [x] Improve drag-box selection so the visible rectangle and selected block set remain accurate in every drag direction, while scrolling, and across nested blocks. A nested child can now be selected independently because hit testing uses each block's own content row instead of its ancestor's complete subtree.
 4. [ ] Synchronize the browser tab favicon with the current page icon, including page changes, icon changes, missing icons, and a stable application fallback.
 5. [ ] Consolidate text and background colors into approximately ten pastel choices with readable contrast in light, dark, and black themes.
 
