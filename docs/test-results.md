@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-09-16T22:27:15+09:00 — 0.7.2 Mermaid keyboard-isolation verification
+
+The new regression first reproduced the defect in Chromium: Ctrl/Command+Enter inside the Mermaid source field toggled the previously focused checklist because the editor-level capture handler used a stale document cursor. After form controls were excluded from editor capture and bubble shortcuts, character-by-character Mermaid editing, invalid-source recovery, rendering, checklist isolation, block-order stability, save, and reload passed **18/18** focused cases across Chromium, Firefox, and WebKit (three repetitions per scenario and engine).
+
+The final CI-equivalent `CI=1 npm run check` exited **0** in **135.36 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): lint, strict TypeScript, production build, **120/120 unit and integration tests**, and **129/129 Playwright cases** passed with two workers. The production build retained the known non-failing large-chunk warning. User data under `data/` was untouched.
+
 ## 2026-09-16T22:21:50+09:00 — 0.7.1 checklist paste gate passed
 
 Lint, strict TypeScript, and the production build passed; 120/120 unit and integration tests passed. The complete two-worker Playwright suite passed **126/126** cases across Chromium, Firefox, and WebKit in **111.01 seconds**. The repaired mid-line multi-line checklist paste case also passed 9/9 focused repetitions across the three engines. It verifies exact prefix/first-line and last-line/suffix joining, no paragraph conversion, save, and reload.
