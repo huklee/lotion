@@ -1,6 +1,6 @@
 import { readSetting } from "./storage-compat";
 
-export type ThemeMode = "system" | "light" | "dark";
+export type ThemeMode = "system" | "light" | "dark" | "black";
 export type EditorTextSize = "small" | "medium" | "large";
 export type PageWidth = "comfortable" | "wide";
 

@@ -283,7 +283,9 @@ export function WorkspaceSidebar({
                 ? "light"
                 : themeMode === "light"
                   ? "dark"
-                  : "system",
+                  : themeMode === "dark"
+                    ? "black"
+                    : "system",
             )
           }
         >

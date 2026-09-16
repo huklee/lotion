@@ -1,17 +1,7 @@
 import { readSetting } from "./storage-compat";
+import { paletteColors } from "./color-palette";
 
-export const textColors = [
-  "default",
-  "gray",
-  "brown",
-  "red",
-  "orange",
-  "yellow",
-  "green",
-  "blue",
-  "purple",
-  "pink",
-] as const;
+export const textColors = ["default", ...paletteColors] as const;
 
 export type TextColor = (typeof textColors)[number];
 export type FormattingShortcutTarget = TextColor | "repeatLast";

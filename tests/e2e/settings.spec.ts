@@ -103,6 +103,99 @@ test("control panel applies, persists and resets browser display settings", asyn
   await expect(reopened.getByLabel("Page width")).toHaveValue("comfortable");
   await expect(reopened.getByLabel("Open sidebar on startup")).toBeChecked();
 });
+
+test("pastel text and background colors stay readable in every scheme", async ({
+  page,
+}) => {
+  const colors = [
+    "gray",
+    "brown",
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "purple",
+    "pink",
+  ];
+  await seed(page, "Pastel palette", [
+    {
+      id: "palette-text",
+      type: "paragraph",
+      content: colors.map((color) => ({
+        type: "text",
+        text: `${color} `,
+        styles: { textColor: color },
+      })),
+    },
+    {
+      id: "palette-background",
+      type: "paragraph",
+      content: colors.map((color) => ({
+        type: "text",
+        text: `${color} `,
+        styles: { backgroundColor: color },
+      })),
+    },
+  ]);
+  await page
+    .getByRole("button", { name: "Control panel", exact: true })
+    .click();
+  const panel = page.getByRole("dialog", { name: "Control panel" });
+
+  for (const scheme of ["light", "dark", "black"]) {
+    await panel.getByLabel("Appearance theme").selectOption(scheme);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", scheme);
+    const ratios = await page.evaluate(() => {
+      const rgb = (value: string) =>
+        value
+          .match(/[\d.]+/g)!
+          .slice(0, 3)
+          .map(Number);
+      const luminance = (value: string) => {
+        const channels = rgb(value)
+          .map((channel) => channel / 255)
+          .map((channel) =>
+            channel <= 0.04045
+              ? channel / 12.92
+              : Math.pow((channel + 0.055) / 1.055, 2.4),
+          );
+        return (
+          channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
+        );
+      };
+      const contrast = (first: string, second: string) => {
+        const [lighter, darker] = [luminance(first), luminance(second)].sort(
+          (a, b) => b - a,
+        );
+        return (lighter + 0.05) / (darker + 0.05);
+      };
+      const canvas = getComputedStyle(document.documentElement).backgroundColor;
+      const textRatios = [
+        ...document.querySelectorAll<HTMLElement>(
+          '[data-id="palette-text"] [data-style-type="textColor"]',
+        ),
+      ].map((element) => contrast(getComputedStyle(element).color, canvas));
+      const backgroundRatios = [
+        ...document.querySelectorAll<HTMLElement>(
+          '[data-id="palette-background"] [data-style-type="backgroundColor"]',
+        ),
+      ].map((element) => {
+        const style = getComputedStyle(element);
+        return contrast(style.color, style.backgroundColor);
+      });
+      return { textRatios, backgroundRatios };
+    });
+    expect(ratios.textRatios).toHaveLength(9);
+    expect(ratios.backgroundRatios).toHaveLength(9);
+    expect(Math.min(...ratios.textRatios)).toBeGreaterThanOrEqual(4.5);
+    expect(Math.min(...ratios.backgroundRatios)).toBeGreaterThanOrEqual(4.5);
+  }
+  await panel.getByRole("button", { name: "Close dialog" }).click();
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "black");
+});
+
 test("configurable text-color shortcuts show on hover and repeat the last color", async ({
   page,
 }) => {

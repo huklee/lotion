@@ -7,13 +7,14 @@ import {
   type EditorTextSize,
 } from "./preferences";
 import { readFormattingShortcuts } from "./format-shortcuts";
+import { applyColorPalette, type ColorScheme } from "./color-palette";
 
 export function useWorkspacePreferences() {
   const [themeMode, setThemeMode] = useState<ThemeMode>(
       readChoice<ThemeMode>(
         localStorage,
         "theme",
-        ["system", "light", "dark"],
+        ["system", "light", "dark", "black"],
         "system",
       ),
     ),
@@ -42,16 +43,14 @@ export function useWorkspacePreferences() {
   const [formattingShortcuts, setFormattingShortcuts] = useState(() =>
     readFormattingShortcuts(localStorage),
   );
-  const theme =
-    themeMode === "system"
-      ? systemDark
-        ? "dark"
-        : "light"
-      : (themeMode as "dark" | "light");
+  const colorScheme: ColorScheme =
+    themeMode === "system" ? (systemDark ? "dark" : "light") : themeMode;
+  const theme: "light" | "dark" = colorScheme === "light" ? "light" : "dark";
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.theme = colorScheme;
+    applyColorPalette(document.documentElement, colorScheme);
     localStorage.setItem("lotion-theme", themeMode);
-  }, [theme, themeMode]);
+  }, [colorScheme, themeMode]);
   useEffect(() => {
     document.documentElement.dataset.editorTextSize = editorTextSize;
     document.documentElement.dataset.pageWidth = pageWidth;
