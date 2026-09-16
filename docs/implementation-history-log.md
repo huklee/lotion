@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-17T07:33:51+09:00 — 0.12.1 IPv4/NAT64 link previews prepared
+
+Replaced single-answer DNS pinning with a filtered set of public answers passed to Node's IPv4/IPv6 family selection. Mixed DNS responses discard non-public candidates instead of rejecting a usable public candidate, while every redirect still performs fresh validation and the socket lookup remains pinned to the approved set. Added explicit decoding for RFC 6052's well-known /96 and RFC 8215's local-use /48 NAT64 forms; their embedded IPv4 destination must satisfy the existing public-address policy, preventing translation to loopback, private, link-local, carrier-grade NAT, documentation, or other special-use ranges.
+
+The focused security suite, strict type checking, and lint passed. A live production-mode server with an isolated temporary workspace fetched the supplied Tistory page, parsed its OpenGraph metadata, cached the remote preview image, and served that local JPEG successfully. The final CI-equivalent gate passed lint/type/build, 140 unit/integration tests, and 144 browser cases in 147.26 seconds. Publication evidence follows. User data under `data/` was untouched.
+
 ## 2026-09-17T07:12:23+09:00 — 0.12.0 backend-indexed workspace search prepared
 
 Selected an adapted unified-search approach after the user requested backend indexing and consideration of OpenSearch. Added a replaceable search-index boundary, an in-process index rebuilt from canonical revisions at startup, commit-time revision replacement, hidden-page filtering, a validated search API, and shared extraction for titles, nested rich text, tables, attachment labels, code, and Mermaid source. The browser debounces/cancels requests, merges the active unsaved draft, reports exact counts, opens matching block deep links, and restores editor focus on close.
