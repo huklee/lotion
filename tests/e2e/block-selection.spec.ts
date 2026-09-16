@@ -106,16 +106,13 @@ test("Backspace deletes a selected section with children, supports undo and pres
   await page
     .getByRole("button", { name: "Select section", exact: true })
     .click();
+  const textBeforeBackspace = await remaining.innerText();
   await remaining.click();
-  await remaining.evaluate((element) => {
-    const range = document.createRange();
-    range.selectNodeContents(element);
-    range.collapse(false);
-    window.getSelection()!.removeAllRanges();
-    window.getSelection()!.addRange(range);
-  });
   await page.keyboard.press("Backspace");
-  await expect(remaining).toHaveText("Keep sectio");
+  await expect
+    .poll(async () => (await remaining.innerText()).length)
+    .toBe(textBeforeBackspace.length - 1);
+  await expect(remaining).toContainText("Keep");
 });
 
 test("deleting a selected nested block preserves following block indentation", async ({

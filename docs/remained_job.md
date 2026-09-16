@@ -1,200 +1,46 @@
 # Remaining jobs
 
-## TypeScript modularization — 2026-09-16
+Historical completed work lives in the [implementation history](implementation-history-log.md), [test results](test-results.md), and [changelog](changelog.md). The active sequence retains its checked items until all six requested pull requests are complete so progress remains visible.
 
-- [x] Establish SRP, size, dependency and value gates before moving production code.
-- [x] Extract editor block-selection and direct-link lifecycles, the formatting toolbar and pure legacy-code normalization; add isolated unit coverage and a first feature-specific E2E specification.
-- [x] Reduce `Editor.tsx` below the automatic 1,000-line threshold by extracting paste links, suggestions, checklist interaction, previews and overlays behind focused hooks/components.
-- [x] Split `tests/e2e/workspace.spec.ts` into ten stable product areas while retaining the shared fixture helper, all 41 original scenarios and full worker isolation.
-- [x] Extract sidebar, top bar, dialogs, preferences, import/export, active-document presentation and conflict behavior from `App.tsx` with explicit props/hooks.
-- [x] Review every remaining 501–1,000-line file. `App.tsx` and `Editor.tsx` are accepted as framework composition roots; no TypeScript/TSX file remains above 1,000 lines.
+## Active incremental sequence — 2026-09-16
 
-See [TypeScript file and module structure rules](typescript-file-structure.md) for the measured baseline, completed first slice and review gates.
+Each item must be implemented, tested, checked off here, committed, pushed, and submitted as its own pull request before moving to the next item.
 
-## Requested incremental work — 2026-09-15
+### P0 — Bug fixes
 
-- [x] Keep single-line paste inline at a checklist's current cursor without removing/splitting the checkbox; verify the same cursor behavior inside callouts, and stop checkbox clicks from moving the document viewport.
-- [x] Add a control panel for adjustable application settings.
-- [x] Add configurable color-style shortcuts in the control panel, show the assigned shortcut when hovering a font color, and support a shortcut for reapplying the most recently used formatting, following Notion's interaction model.
-- [x] Improve drag-box block selection to match Notion-style selection behavior.
-- [x] Fix indentation loss in following blocks when deleting a block.
-- [x] Allow copying a direct link to any document location, following Notion-style block links.
+1. [x] Fix checklist paste so text does not create an unconditional extra line. Multi-line paste at a mid-line caret must keep the first and last fragments attached to checklist items, preserve checklist types, save, and reload correctly.
+2. [ ] Repair the Mermaid editor so its source field can be opened, edited, rendered, saved, and reloaded, including useful invalid-source feedback.
 
-## 0.3.0 update — 2026-09-15
+### P1 — UI/UX and styling
 
-- [x] Add persistent browser favorites with current page titles and cross-tab synchronization.
-- [x] Add browser-history navigation and native modified-click sidebar links.
-- [x] Restore checklist click completion and add Ctrl+Enter/⌘Enter toggling.
-- [x] Preserve checklist types during line-validated plain-text paste.
-- [x] Export whitespace-only blocks as blank Markdown lines rather than `&#x20;`.
-- [x] Make the next Enter in a newly opened `@date` calendar insert today.
-- [x] Disable misleading browser dictionary underlines in document content.
-- [x] Keep newly imported roots visible beyond the sidebar's first 100 pages.
-- [x] Complete the local release check: lint/type/build, 101 unit/integration tests, and 105 browser tests passed.
-- [x] Confirm GitHub CI for the 0.3.0 release and Linux-portable test follow-up: [run 34903723704](https://github.com/huklee/lotion/actions/runs/34903723704) passed.
-- [x] Isolate every browser-test worker's server and temporary repository, enable full Playwright parallelism, and reduce the local 105-case suite from 174 to 90.79 seconds with four stable workers. [GitHub CI 34905987686](https://github.com/huklee/lotion/actions/runs/34905987686) passed with a 45.7% faster check step.
+3. [ ] Improve drag-box selection so the visible rectangle and selected block set remain accurate in every drag direction, while scrolling, and across nested blocks.
+4. [ ] Synchronize the browser tab favicon with the current page icon, including page changes, icon changes, missing icons, and a stable application fallback.
+5. [ ] Consolidate text and background colors into approximately ten pastel choices with readable contrast in light, dark, and black themes.
 
-The document-search implementation remains pending selection from the [three-option plan](document-search-plan.md).
+### P1 — System and architecture
 
-## 0.2.0 update — 2026-09-13T14:39:13Z
+6. [ ] Add an integrated settings area for scheme, font, and related system preferences, with validated persistence, reset behavior, and immediate preview.
 
-- [x] Delete selected blocks/sections with Backspace, with undo and continued editing.
-- [x] Validate ordinary pasted lines and store them as plain text; retain Mermaid and single-URL paste actions.
-- [x] Add `@` calendar-based date entry with persistent portable date text. File mentions and richer editable date chips remain open.
-- [x] Left-align TOC text while preserving heading-level indentation.
-- [x] Record minor version 0.2.0, feature changelog and reusable version-management guide.
-- [x] Provide and README-link a three-option document-search plan. Implementation remains pending selection of an option.
-- [x] Complete full local verification: lint/type/build, 100 unit/integration tests and 90 browser tests passed.
-- [x] Confirm GitHub CI for the release commit after pushing: `cd018bc`, [run 34763348532](https://github.com/huklee/lotion/actions/runs/34763348532), 100 unit/integration and 90 browser tests passed.
+## Existing product backlog
 
-This update supersedes historical local and remote P0 failure evidence below. The complete 0.2.0 local and GitHub gates passed. See the [changelog](changelog.md), [version guide](versioning.md), and [search plan](document-search-plan.md).
+### P1 — Product behavior
 
-## Update — 2026-09-13T09:13:54Z
+- [ ] Choose and implement an in-document search approach from the [three-option plan](document-search-plan.md).
+- [ ] Support legitimate public link-preview destinations in IPv4/NAT64 environments without weakening SSRF protection; verify the supplied Tistory URL through the live application flow.
+- [ ] Refresh external OpenGraph chips with bounded caching, make internal mention icons immediate, and define separate presentation for raw URLs and mention chips.
+- [ ] Add file and date reference types to the mention picker, with persistence, keyboard behavior, navigation, and import/export rules.
+- [ ] Define Notion-like database scope in an ADR, then implement and test the selected typed-property and row/page behavior.
+- [ ] Add a safe diagnostic and reconciliation workflow for missing, malformed, orphaned, cyclic, or externally changed document files.
+- [ ] Verify the existing browser-session conflict draft for page `f63edb5a-4d08-4145-8f55-f41a6bc130df` without silently choosing between overlapping versions.
 
-- [x] Convert a complete fenced Mermaid paste into a diagram, including fence removal in an existing source field.
-- [x] Add Export → Copy page as Markdown for the complete current draft (title and body), with clipboard failure feedback.
-- [x] Verify these changes with `npm run check`: lint/type/build, 98 unit/integration tests, and 75/75 browser cases passed locally.
+### P2 — Documentation and acceptance
 
-The historical P0 failures below passed in this local invocation. The corresponding GitHub CI gate is still unverified; the earlier checklist is retained as historical/open tracking rather than claiming a new remote success. The copied Markdown contains current-page text/source and links, not subpages or image bytes.
+- [ ] Reconcile architecture, roadmap, and ADRs with current editor features, storage paths, APIs, database scope, conflict handling, test counts, and CI status.
+- [ ] Publish a Markdown-versus-exact-bundle fidelity matrix covering callouts, toggles, TOC, icons, previews, Mermaid, databases, and mentions.
+- [ ] Complete native composed-input, keyboard, screen-reader, accessibility-scan, supported-platform, and emoji qualification.
 
-Recorded: **2026-09-10T05:32:53Z**. Audited application revision: `8423b85` in `/Users/huklee/work/lotion`.
+### P3 — Hardening
 
-Update **2026-09-10T13:48:20Z**: the requested Lotion rename and install/run guide have been implemented. Rename verification passed lint/type/build and 96 unit/integration tests; 67/69 browser tests passed, including legacy migration in all three browsers. The existing two WebKit failures remain. The checklist below retains the original audit evidence and is not marked complete by this branding/documentation work.
-
-This checklist records unfinished requirements, failed verification, and remaining qualification work. Unchecked items are not complete. Fixes below have not been implemented as part of this audit.
-
-## Current evidence
-
-- Latest local `npm run check`: lint, type/build and **92 unit/integration tests passed**; **64/66 browser tests passed**.
-- Latest GitHub Actions run: **62/66 browser tests passed**, workflow failed. [Run 34441029972](https://github.com/huklee/lotion/actions/runs/34441029972).
-- Local failures: paste chooser scroll tracking in WebKit; `ResizeObserver loop completed with undelivered notifications` during the WebKit legacy-code/failed-subpage test.
-- CI failures: paste chooser scroll tracking in Chromium, Firefox and WebKit, plus the same WebKit ResizeObserver error.
-- A live metadata fetch for `https://techblog-history-younghunjo1.tistory.com/207#google_vignette` failed with `Private network previews are not allowed`. DNS returned both a public IPv4 address and an IPv6 address classified as `rfc6052` (NAT64). The current guard rejects the entire answer set. This does not establish that the target website itself is private.
-- Both previously reported document API URLs returned HTTP 200. The user's existing browser-session conflict draft has not been inspected or confirmed resolved.
-- All five implementation commits and the publication-log commit were pushed individually and verified. `main` matched `origin/main` at the audit. GitHub authentication is resolved; earlier authentication-blocker notes are historical.
-
-## P0 — Regressions and release verification
-
-### 1. Paste chooser positioning while scrolling
-
-- [ ] Reproduce why the chooser's Y coordinate does not change in the failing scroll test.
-- [ ] Distinguish application positioning defects from test assumptions: verify that the intended scroll container actually moved and measure the chooser against the caret block, including viewport clamping.
-- [ ] Fix any actual positioning defect and make the regression assert the intended behavior without weakening it to mere visibility.
-- [ ] Verify URL insertion, cancellation, delayed preview completion and scrolling in Chromium, Firefox and WebKit.
-
-Relevant files: `apps/web/Editor.tsx`, `tests/e2e/workspace.spec.ts`.
-
-Done when: the chooser follows the insertion block correctly and the regression passes locally and on Linux CI in every browser.
-
-### 2. WebKit ResizeObserver error
-
-- [ ] Trace the observer/layout cycle reported by the legacy-code and failed-`/page` test.
-- [ ] Fix the cause, or establish with evidence whether a dependency/browser notification requires narrowly scoped handling. Do not globally suppress browser errors to make the test pass.
-- [ ] Verify code rendering, failed subpage creation recovery and continued typing without the reported error.
-
-Done when: the failing scenario passes repeatedly and the complete browser suite passes without blanket error suppression.
-
-### 3. Restore a complete green verification gate
-
-- [ ] Run `npm run check` after the fixes: lint, type/build, all unit/integration tests and the complete three-browser suite.
-- [ ] Confirm a successful GitHub Actions run for the resulting application commit.
-- [ ] Record exact commands, results, environment and timestamps in `docs/test-results.md` and `docs/implementation-history-log.md`.
-
-Done when: one full local invocation and the corresponding CI workflow pass. Separate targeted retests alone do not satisfy this gate.
-
-## P1 — Unfinished user-requested behavior
-
-### 4. Real external metadata fetching, including the supplied Tistory URL
-
-- [ ] Support legitimate public destinations in the observed IPv4/NAT64 environment without allowing private/internal addresses through the SSRF guard.
-- [ ] Specify validated address selection and redirect behavior; preserve DNS pinning, deadlines, size limits and MIME validation.
-- [ ] Test translated addresses with public and private embedded IPv4 destinations, mixed DNS answers and redirect targets.
-- [ ] Verify the supplied URL's actual OpenGraph title and image through the application flow. Existing mocked browser metadata does not prove this live path works.
-- [ ] Preserve a usable link and a clear fallback when a website denies access or has no metadata.
-
-Relevant file: `apps/server/link-preview.ts`.
-
-Done when: the supplied URL works in the user's environment, with security regressions passing and no need to disable destination validation.
-
-### 5. Refresh all link-chip titles and keep icons consistent
-
-- [ ] Extend page-open refresh beyond internal workspace titles/icons to external OpenGraph chips, using bounded refresh/caching and retaining existing metadata on failure.
-- [ ] Ensure pasted internal-page mentions receive their page icon immediately.
-- [ ] Ensure failed external metadata lookups still insert the requested default document icon; the current hostname fallback omits it.
-- [ ] Verify whether raw URL links and mention chips need distinct presentation; the current implementation styles ordinary inline links as chips too.
-
-Relevant files: `apps/web/Editor.tsx`, `apps/web/styles.css`.
-
-Done when: newly inserted and reopened chips consistently show the appropriate title/icon, and plain URL versus mention behavior is explicit and tested.
-
-### 6. File and date mentions
-
-- [ ] Implement file and date references in the mention picker described in the original request. Current `@` and `[[` search only workspace pages.
-- [ ] Define persistence, navigation/display, keyboard selection and import/export behavior for these additional mention types.
-- [ ] Add representative tests and document any differences between the page-link shortcut and general mention search.
-
-Done when: page, file and date references have implemented and tested behavior rather than page-only search.
-
-### 7. Database insertion beyond a basic table
-
-- [ ] Close the gap between the requested Notion-like database insertion and the current `/database`, which inserts a simple editable Name/Status table.
-- [ ] Define the intended database feature boundary in an ADR, including typed properties and row/page behavior. Document whether views, sorting/filtering, relations and formulas are included or deferred.
-- [ ] Implement and test the selected database behavior, including persistence and export/import.
-
-Done when: the database scope is explicit and its implemented behavior matches that scope; a plain table must not be presented as full Notion database functionality.
-
-### 8. Filesystem validity and tree reconciliation
-
-- [ ] Add a diagnostic/reconciliation workflow for missing, invalid or orphaned document files and invalid hierarchy links.
-- [ ] Decide safe recovery/quarantine behavior and preserve recoverable data before applying repairs.
-- [ ] Clarify how externally changed files are detected. Current sidebar refresh reads the server's in-memory tree; startup validates committed files and refuses corruption, but does not repair it.
-- [ ] Test missing files, malformed JSON, invalid parents, cycles and stale projections with isolated fixtures.
-
-Done when: the user's “refresh valid files, otherwise sort it out” request has a tested recovery workflow beyond refreshing the existing projection.
-
-### 9. Confirm resolution of the reported browser conflict
-
-- [ ] Verify the existing user-session draft for page `f63edb5a-4d08-4145-8f55-f41a6bc130df` using the new resolution UI.
-- [ ] If changes overlap, obtain the user's version choice rather than silently selecting one.
-- [ ] Confirm the resulting page reaches Saved and remains correct after reload, with a recovery copy retained.
-
-The generic recovery/merge/resolution logic is implemented and tested. This item is confirmation of the specific browser draft, not a claim that the server document is corrupt. An isolated automation browser cannot access that original draft.
-
-## P2 — Documentation and acceptance gaps
-
-### 10. Bring design and status documents up to date
-
-- [ ] Update `docs/architecture.md`: it still describes spikes as pending, a Zustand store that is not used, illustrative storage paths that differ from implementation, and older API/scope assumptions.
-- [ ] Reconcile architecture, roadmap and ADRs with Mermaid, previews, page icons, database scope and conflict merging.
-- [ ] Update roadmap test counts, selection behavior and CI status. Preserve old dated test reports as history but make the current status unambiguous.
-- [ ] Keep the single implementation record at `docs/implementation-history-log.md`; record major work with exact timestamps and rationale in decision Markdown files.
-
-Done when: current documentation describes the implemented system and open work accurately, and local documentation links validate.
-
-### 11. Markdown fidelity and whole-folder acceptance
-
-- [ ] Publish an explicit current fidelity matrix for ordinary Markdown versus exact bundles, including callouts, toggles, TOC, icons, previews, Mermaid and future databases/mentions.
-- [ ] Verify user-facing warnings and full-folder export/import for these custom features.
-- [ ] Avoid promising exact visual restoration from ordinary `.md`: exact bundles retain structured snapshots; portable Markdown loses some custom layout/styling.
-
-Whole-folder/ZIP import/export, hierarchy, assets and exact bundles are implemented and tested. This remaining item closes the gap between that behavior and an unrestricted promise to preserve every layout in plain Markdown.
-
-### 12. Native interaction and platform qualification
-
-- [ ] Perform manual Korean/native IME, keyboard and screen-reader checks; automated text insertion is not native composition testing.
-- [ ] Add accessibility scanning and document supported browser/OS combinations.
-- [ ] Verify native emoji rendering/search on the user's macOS version. The searchable Unicode catalog exists; exact Apple glyph availability depends on the OS.
-
-Done when: the declared acceptance checks have actual results, with any platform limitations documented.
-
-## P3 — Existing roadmap hardening, not missing core editing features
-
-- [ ] Add revision/receipt/asset retention and garbage collection that accounts for active pages, trash, history and in-progress work.
-- [ ] Reduce initial JavaScript payload; the production build still reports large chunks.
-- [ ] Qualify filesystem durability and backup/restore on declared deployment platforms. A passing Linux CI run alone does not prove power-loss durability.
-
-## Already implemented — do not restart these tasks
-
-The application includes block editing without AI, automatic saving and browser draft recovery, a page tree and breadcrumbs, image upload/drop, block rectangle selection and movement, keyboard commands and themes, `/page`, live TOC, toggles, callouts, page mentions and same-tab navigation, searchable page icons, beige/high-contrast syntax-highlighted code for JSON/HTML/Python/Go/C++, `/mermaid`, and whole-folder/ZIP import/export. Architecture templates, roadmap, test plans, ADRs and timestamped history files exist under `docs/`.
-
-The remaining tasks above distinguish implemented features from unresolved defects, missing extensions and unverified acceptance. Complete P0 first, then the live-preview and metadata issues, and continue through P1/P2 with focused tests and small, separately verified commit/push units.
+- [ ] Add revision, receipt, and asset retention/garbage collection that accounts for active pages, trash, history, and in-progress work.
+- [ ] Reduce the initial JavaScript payload; the production build still reports large chunks.
+- [ ] Qualify filesystem durability and backup/restore behavior on every declared deployment platform.
