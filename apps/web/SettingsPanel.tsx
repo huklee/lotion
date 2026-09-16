@@ -4,7 +4,12 @@ import type {
   KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { Settings2 } from "lucide-react";
-import type { ThemeMode, EditorTextSize, PageWidth } from "./preferences";
+import type {
+  EditorFont,
+  ThemeMode,
+  EditorTextSize,
+  PageWidth,
+} from "./preferences";
 import {
   assignFormattingShortcut,
   defaultFormattingShortcuts,
@@ -18,6 +23,8 @@ import {
 type SettingsPanelProps = {
   themeMode: ThemeMode;
   setThemeMode: Dispatch<SetStateAction<ThemeMode>>;
+  editorFont: EditorFont;
+  setEditorFont: Dispatch<SetStateAction<EditorFont>>;
   editorTextSize: EditorTextSize;
   setEditorTextSize: Dispatch<SetStateAction<EditorTextSize>>;
   pageWidth: PageWidth;
@@ -31,6 +38,8 @@ type SettingsPanelProps = {
 export function SettingsPanel({
   themeMode,
   setThemeMode,
+  editorFont,
+  setEditorFont,
   editorTextSize,
   setEditorTextSize,
   pageWidth,
@@ -78,17 +87,21 @@ export function SettingsPanel({
       </div>
       <h2>Control panel</h2>
       <p>
-        Adjust this browser&apos;s workspace display. These settings do not
-        change shared document data.
+        Manage this browser&apos;s system appearance, editor layout, and
+        formatting controls in one place. These settings do not change shared
+        document data.
       </p>
+      <h3 className="settings-heading settings-heading-first">
+        System appearance
+      </h3>
       <div className="settings-list">
         <label className="settings-row">
           <span>
-            Appearance
-            <small>Follow the system or choose a fixed theme.</small>
+            Scheme
+            <small>Follow the operating system or choose a fixed scheme.</small>
           </span>
           <select
-            aria-label="Appearance theme"
+            aria-label="Color scheme"
             value={themeMode}
             onChange={(event) => setThemeMode(event.target.value as ThemeMode)}
           >
@@ -98,6 +111,28 @@ export function SettingsPanel({
             <option value="black">Black</option>
           </select>
         </label>
+        <label className="settings-row">
+          <span>
+            Font
+            <small>Preview the workspace and document font immediately.</small>
+          </span>
+          <select
+            aria-label="Workspace font"
+            value={editorFont}
+            onChange={(event) =>
+              setEditorFont(event.target.value as EditorFont)
+            }
+          >
+            <option value="dm-sans">DM Sans</option>
+            <option value="manrope">Manrope</option>
+            <option value="system">System Sans</option>
+            <option value="serif">Serif</option>
+            <option value="monospace">Monospace</option>
+          </select>
+        </label>
+      </div>
+      <h3 className="settings-heading">Editor and startup</h3>
+      <div className="settings-list">
         <label className="settings-row">
           <span>
             Editor text
@@ -146,12 +181,13 @@ export function SettingsPanel({
         className="settings-reset"
         onClick={() => {
           setThemeMode("system");
+          setEditorFont("dm-sans");
           setEditorTextSize("medium");
           setPageWidth("comfortable");
           setSidebarOnStart(true);
         }}
       >
-        Reset display settings
+        Reset system and editor settings
       </button>
       <h3 className="settings-heading">Formatting shortcuts</h3>
       <p className="settings-description">
