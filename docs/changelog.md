@@ -2,6 +2,24 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.8.0 — 2026-09-16
+
+### Improved
+
+- Drag-box selection now hit-tests each block's own visible content row rather than the bounding box of its complete nested subtree. A nested child can therefore be selected independently without falsely selecting its parent.
+- Parent blocks still select their complete subtree when the drag actually crosses the parent's own row, preserving group movement and deletion behavior.
+
+No document schema migration is needed. This minor release changes transient selection hit testing only; existing documents remain compatible. Verification is recorded in [test results](test-results.md).
+
+## 0.7.2 — 2026-09-16
+
+### Fixed
+
+- Keyboard input in Mermaid source fields no longer triggers editor-level formatting, checklist-toggle, or block-movement shortcuts based on a stale document cursor. The textarea keeps ownership of editing keys while global save behavior remains available.
+- Mermaid regression coverage now uses character-by-character typing and verifies rendering, invalid-source recovery, save/reload, checklist isolation, and block-order stability.
+
+No document schema migration is needed. This patch changes input routing only; existing diagrams remain compatible. Verification is recorded in [test results](test-results.md).
+
 ## 0.7.1 — 2026-09-16
 
 ### Fixed

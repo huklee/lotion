@@ -9,11 +9,11 @@ Each item must be implemented, tested, checked off here, committed, pushed, and 
 ### P0 — Bug fixes
 
 1. [x] Fix checklist paste so text does not create an unconditional extra line. Multi-line paste at a mid-line caret must keep the first and last fragments attached to checklist items, preserve checklist types, save, and reload correctly.
-2. [ ] Repair the Mermaid editor so its source field can be opened, edited, rendered, saved, and reloaded, including useful invalid-source feedback.
+2. [x] Repair the Mermaid editor so its source field owns keyboard input instead of triggering stale checklist and block-movement shortcuts; verify character-by-character editing, rendering, invalid-source recovery, save, and reload.
 
 ### P1 — UI/UX and styling
 
-3. [ ] Improve drag-box selection so the visible rectangle and selected block set remain accurate in every drag direction, while scrolling, and across nested blocks.
+3. [x] Improve drag-box selection so the visible rectangle and selected block set remain accurate in every drag direction, while scrolling, and across nested blocks. A nested child can now be selected independently because hit testing uses each block's own content row instead of its ancestor's complete subtree.
 4. [ ] Synchronize the browser tab favicon with the current page icon, including page changes, icon changes, missing icons, and a stable application fallback.
 5. [ ] Consolidate text and background colors into approximately ten pastel choices with readable contrast in light, dark, and black themes.
 
