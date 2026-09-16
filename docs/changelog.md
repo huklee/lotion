@@ -2,6 +2,16 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.9.0 — 2026-09-16
+
+### Added
+
+- The browser tab favicon now follows the active page icon immediately when a page opens or its icon changes.
+- Pages without a custom icon use the same `📄` fallback shown in the document UI. Home, trash, and initial loading use a stable Lotion `L` favicon.
+- Stored icon text is XML-escaped before it enters the generated SVG favicon.
+
+No document schema migration is needed. This minor release derives browser presentation from existing page metadata and adds no stored fields. Verification is recorded in [test results](test-results.md).
+
 ## 0.8.0 — 2026-09-16
 
 ### Improved
