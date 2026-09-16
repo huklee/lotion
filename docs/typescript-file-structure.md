@@ -99,7 +99,17 @@ Completed on 2026-09-16:
 | Formatting toolbar        |                               Embedded |                                              `EditorFormattingToolbar.tsx`, 145 lines | Color-menu rendering and shortcut hints can change without editing editor persistence or pointer interaction code.                                                                                  |
 | E2E setup/direct links    | Embedded in a 2,144-line specification | 24-line shared helper and 63-line feature specification; original file is 2,067 lines | New feature specifications can reuse setup without adding more unrelated cases to the congested file.                                                                                               |
 
-This is a material boundary extraction, not completion of every automatic candidate. `Editor.tsx`, `App.tsx` and `workspace.spec.ts` remain above 1,000 lines. Further work must follow a touched responsibility and preserve focused test coverage; no bulk file shuffling is justified solely to reach a number. The application version remains 0.7.0 because this slice preserves user-visible behavior and public data formats.
+That first slice left all three automatic candidates open. The completed follow-up is documented in the [large-file refactoring plan](typescript-refactoring-plan.md).
+
+## Completed-candidate result
+
+| File                          | Baseline |   Final | Review decision                                                                                                                                                                                                        |
+| ----------------------------- | -------: | ------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/App.tsx`            |    1,847 |     716 | Accept as the application composition root. Page/tree state and save-coordinator ownership remain together; sidebar, top bar, dialogs, preferences, transfer workflows and document presentation are separate modules. |
+| `apps/web/Editor.tsx`         |    1,695 |     799 | Accept as the BlockNote integration root. Editor creation and native event routing remain together; interaction lifecycles, menus, link paste, normalization, formatting and overlays are separate modules.            |
+| `tests/e2e/workspace.spec.ts` |    2,144 | Removed | Replaced by ten product-area specifications. All 41 original test titles are present exactly once; the largest resulting specification is 457 lines.                                                                   |
+
+No TypeScript or TSX file now exceeds the automatic 1,000-line threshold. `App.tsx` and `Editor.tsx` remain in the 501–1,000 review range. Their current size is acceptable because each is a framework composition boundary with feature logic extracted behind explicit props or hook contracts. Reassess the touched responsibility before adding future feature logic. The application remains at 0.7.0 because the refactoring does not change user-visible behavior, APIs or stored data.
 
 ## Review questions
 

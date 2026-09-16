@@ -1,6 +1,11 @@
+import { useChecklistInteraction } from "./use-checklist-interaction";
+import { useEditorSuggestions } from "./use-editor-suggestions";
+import { usePasteLink } from "./use-paste-link";
+import { PasteLinkChooser } from "./PasteLinkChooser";
+import { LinkPreviewCard } from "./LinkPreviewCard";
+import { EditorInteractionOverlays } from "./EditorInteractionOverlays";
 import {
   FormattingToolbarController,
-  getDefaultReactSlashMenuItems,
   SuggestionMenuController,
   useCreateBlockNote,
 } from "@blocknote/react";
@@ -15,19 +20,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
-  BookOpenText,
-  Database,
-  FilePlus2,
   GripVertical,
   Layers,
   Link,
-  MessageSquareQuote,
   X,
 } from "lucide-react";
 import {
-  filterSuggestionItems,
-  insertOrUpdateBlockForSlashMenu,
   SyntaxHighlightingExtension,
+  insertOrUpdateBlockForSlashMenu,
 } from "@blocknote/core/extensions";
 import type {
   Block,
@@ -52,29 +52,6 @@ import {
   type AppliedColorStyle,
 } from "./EditorFormattingToolbar";
 import { normalizeEditorContent } from "./normalize-editor-content";
-
-function PreviewImage({ url }: { url: string }) {
-  const [source, setSource] = useState("");
-  useEffect(() => {
-    let active = true;
-    let objectUrl: string | undefined;
-    void fetch(url, { headers: authHeaders() })
-      .then(async (response) => {
-        if (!response.ok) return;
-        const blob = await response.blob();
-        if (active) {
-          objectUrl = URL.createObjectURL(blob);
-          setSource(objectUrl);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [url]);
-  return source ? <img src={source} alt="Page preview" /> : null;
-}
 
 function pageIdFromHref(href: string): string | null {
   const direct = pageIdFromHash(href);
@@ -215,8 +192,25 @@ export default function Editor({
   );
   const [failed, setFailed] = useState<{ file: File; id: string }[]>([]);
   const [dropLine, setDropLine] = useState<number | null>(null);
-  const [pasteChoice, setPasteChoice] = useState<string | null>(null);
-  const [pasteLoading, setPasteLoading] = useState(false);
+  const [previewHref, setPreviewHref] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState("");
+  const {
+    cancel: cancelPaste,
+    choice: pasteChoice,
+    insert: insertPastedUrl,
+    loading: pasteLoading,
+    menuRef: pasteMenu,
+    open: openPasteLink,
+    position: pastePosition,
+  } = usePasteLink({
+    editor,
+    pages,
+    mounted,
+    insertLinkChip,
+    onLinkPreview,
+    setPreviewHref,
+    setPreviewError,
+  });
   const {
     rectangle,
     rectangleClick,
@@ -226,124 +220,6 @@ export default function Editor({
     startRectangle,
   } = useBlockSelection({ editor, host, pasteLoading });
   const directLinkBox = useDirectBlockLinkTarget(host);
-  const [dateSelection, setDateSelection] = useState<{
-    from: number;
-    to: number;
-  } | null>(null);
-  useEffect(() => {
-    let pending: {
-      id: string;
-      checked: boolean;
-      scroller: HTMLElement | null;
-      scrollLeft: number;
-      scrollTop: number;
-      windowX: number;
-      windowY: number;
-      pointerId: number;
-      pointerX: number;
-      pointerY: number;
-    } | null = null;
-    const checkboxAt = (event: Event) => {
-      if (!host.current?.contains(event.target as Node)) return;
-      const checkbox = (event.target as HTMLElement).closest<HTMLInputElement>(
-        '[data-content-type="checkListItem"] input[type="checkbox"]',
-      );
-      const id = checkbox?.closest<HTMLElement>(".bn-block-outer")?.dataset.id;
-      return checkbox && id ? { checkbox, id } : undefined;
-    };
-    const rememberChecklist = (event: PointerEvent) => {
-      const target = checkboxAt(event);
-      if (!target) return;
-      const block = editor.getBlock(target.id);
-      if (block?.type !== "checkListItem") return;
-      const scroller = document.querySelector<HTMLElement>(".main-scroll");
-      pending = {
-        id: target.id,
-        checked: block.props.checked !== true,
-        scroller,
-        scrollLeft: scroller?.scrollLeft ?? 0,
-        scrollTop: scroller?.scrollTop ?? 0,
-        windowX: window.scrollX,
-        windowY: window.scrollY,
-        pointerId: event.pointerId,
-        pointerX: event.clientX,
-        pointerY: event.clientY,
-      };
-    };
-    const finishChecklist = (event: PointerEvent) => {
-      if (
-        !pending ||
-        event.pointerId !== pending.pointerId ||
-        Math.hypot(
-          event.clientX - pending.pointerX,
-          event.clientY - pending.pointerY,
-        ) > 5
-      ) {
-        pending = null;
-        return;
-      }
-      const change = pending;
-      pending = null;
-      const restoreScroll = () => {
-        if (change.scroller) {
-          change.scroller.scrollLeft = change.scrollLeft;
-          change.scroller.scrollTop = change.scrollTop;
-        }
-        window.scrollTo(change.windowX, change.windowY);
-      };
-      // Run after the browser's click/change sequence so every engine lands on
-      // the state captured at pointer-down exactly once.
-      requestAnimationFrame(() => {
-        const block = editor.getBlock(change.id);
-        if (
-          block?.type === "checkListItem" &&
-          block.props.checked !== change.checked
-        )
-          editor.updateBlock(change.id, { props: { checked: change.checked } });
-        restoreScroll();
-        requestAnimationFrame(restoreScroll);
-      });
-    };
-    window.addEventListener("pointerdown", rememberChecklist, true);
-    window.addEventListener("pointerup", finishChecklist, true);
-    return () => {
-      window.removeEventListener("pointerdown", rememberChecklist, true);
-      window.removeEventListener("pointerup", finishChecklist, true);
-    };
-  }, [editor]);
-  const pasteAbort = useRef<AbortController | null>(null);
-  const [pastePosition, setPastePosition] = useState({ left: 0, top: 0 });
-  const pasteMenu = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!pasteChoice) return;
-    const position = () => {
-      const selection = pasteSelection.current;
-      if (!selection) return;
-      const coords = editor._tiptapEditor.view.coordsAtPos(selection.from);
-      const width = pasteMenu.current?.offsetWidth ?? 420;
-      const height = pasteMenu.current?.offsetHeight ?? 52;
-      setPastePosition({
-        left: Math.max(8, Math.min(coords.left, window.innerWidth - width - 8)),
-        top: Math.max(
-          8,
-          coords.bottom + height + 16 < window.innerHeight
-            ? coords.bottom + 8
-            : coords.top - height - 8,
-        ),
-      });
-    };
-    position();
-    window.addEventListener("scroll", position, true);
-    window.addEventListener("resize", position);
-    return () => {
-      window.removeEventListener("scroll", position, true);
-      window.removeEventListener("resize", position);
-    };
-  }, [pasteChoice, editor]);
-  const [previewHref, setPreviewHref] = useState<string | null>(null);
-  const [previewError, setPreviewError] = useState("");
-  const creatingSubpage = useRef(false);
-  const pasteSelection = useRef<{ from: number; to: number } | null>(null);
   const refreshedPageTitles = useRef("");
   const migrationSent = useRef(false);
   useEffect(() => {
@@ -364,7 +240,6 @@ export default function Editor({
     mounted.current = true;
     return () => {
       mounted.current = false;
-      pasteAbort.current?.abort();
       objectUrls.current.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
@@ -372,15 +247,12 @@ export default function Editor({
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setSelected([]);
-        pasteAbort.current?.abort();
-        pasteSelection.current = null;
-        setPasteLoading(false);
-        setPasteChoice(null);
+        cancelPaste();
       }
     };
     window.addEventListener("keydown", escape);
     return () => window.removeEventListener("keydown", escape);
-  }, []);
+  }, [cancelPaste]);
   useEffect(() => {
     const undo = (event: KeyboardEvent) => {
       if (
@@ -497,229 +369,21 @@ export default function Editor({
       { updateSelection: true },
     );
   }
-  function insertPageMention(page: TreeNode) {
-    insertLinkChip(`#/page/${page.id}`, `${page.icon ?? "📄"} ${page.title}`);
-  }
-  const mentionItems = (query: string) =>
-    pages
-      .filter((page) =>
-        page.title.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
-      )
-      .slice(0, 20)
-      .map((page) => ({
-        title: page.title,
-        subtext: "Page",
-        icon: <span className="mention-menu-icon">{page.icon ?? "📄"}</span>,
-        onItemClick: () => insertPageMention(page),
-      }));
-  const slashItems = useCallback(
-    async (query: string) =>
-      filterSuggestionItems(
-        [
-          {
-            title: "Page",
-            subtext: "Create a subpage in this page",
-            aliases: ["subpage", "child page"],
-            group: "Lotion",
-            icon: <FilePlus2 size={18} />,
-            onItemClick: async () => {
-              if (creatingSubpage.current) return;
-              creatingSubpage.current = true;
-              const anchorId = editor.getTextCursorPosition().block.id;
-              try {
-                const page = await onCreateSubpage();
-                if (!mounted.current) return;
-                const block = {
-                  type: "paragraph",
-                  content: [
-                    {
-                      type: "link",
-                      href: `#/page/${page.id}`,
-                      content: [
-                        {
-                          type: "text",
-                          text: `${page.icon ?? "📄"} ${page.title}`,
-                          styles: {},
-                        },
-                      ],
-                    },
-                  ],
-                } as const;
-                const anchor = editor.getBlock(anchorId);
-                const pageBlock =
-                  anchor &&
-                  Array.isArray(anchor.content) &&
-                  anchor.content.length === 0
-                    ? editor.updateBlock(anchor, block as any)
-                    : editor.insertBlocks(
-                        [block as any],
-                        anchor ?? editor.document.at(-1)!,
-                        "after",
-                      )[0];
-                const next = editor.insertBlocks(
-                  [{ type: "paragraph" }],
-                  pageBlock,
-                  "after",
-                )[0];
-                editor.setTextCursorPosition(next, "start");
-              } catch (error) {
-                if (mounted.current)
-                  setPreviewError(
-                    `Could not create subpage: ${(error as Error).message}`,
-                  );
-              } finally {
-                creatingSubpage.current = false;
-              }
-            },
-          },
-          {
-            title: "Table of contents",
-            subtext: "Live links to headings in this page",
-            aliases: ["toc", "outline"],
-            group: "Lotion",
-            icon: <BookOpenText size={18} />,
-            onItemClick: () =>
-              insertOrUpdateBlockForSlashMenu(editor, {
-                type: "tableOfContents",
-              }),
-          },
-          {
-            title: "Mermaid",
-            subtext: "Diagram with editable Mermaid source",
-            aliases: ["diagram", "flowchart"],
-            group: "Lotion",
-            icon: <BookOpenText size={18} />,
-            onItemClick: () =>
-              insertOrUpdateBlockForSlashMenu(editor, { type: "mermaid" }),
-          },
-          {
-            title: "Callout",
-            subtext: "Emphasize an important note",
-            aliases: ["notice", "info", "alert"],
-            group: "Lotion",
-            icon: <MessageSquareQuote size={18} />,
-            onItemClick: () =>
-              insertOrUpdateBlockForSlashMenu(editor, {
-                type: "callout",
-                props: { icon: "💡" },
-              }),
-          },
-          {
-            title: "Database",
-            subtext: "Insert an editable table database",
-            aliases: ["data source", "collection"],
-            group: "Lotion",
-            icon: <Database size={18} />,
-            onItemClick: () => {
-              const table = insertOrUpdateBlockForSlashMenu(editor, {
-                type: "table",
-                content: {
-                  type: "tableContent",
-                  headerRows: 1,
-                  rows: [
-                    {
-                      cells: [
-                        [{ type: "text", text: "Name", styles: {} }],
-                        [{ type: "text", text: "Status", styles: {} }],
-                      ],
-                    },
-                    { cells: [[], []] },
-                  ],
-                },
-              });
-              const next = editor.insertBlocks(
-                [{ type: "paragraph" }],
-                table,
-                "after",
-              )[0];
-              editor.setTextCursorPosition(next, "start");
-              editor.focus();
-            },
-          },
-          ...getDefaultReactSlashMenuItems(editor),
-        ],
-        query,
-      ),
-    [editor, onCreateSubpage],
-  );
-  const atMentionItems = useCallback(
-    async (query: string) => [
-      ...filterSuggestionItems(
-        [
-          {
-            title: "Date",
-            subtext: "Choose a date from the calendar",
-            aliases: ["calendar", "today", "날짜", "달력"],
-            group: "Lotion",
-            icon: <BookOpenText size={18} />,
-            onItemClick: () => {
-              const { from, to } = editor._tiptapEditor.state.selection;
-              setDateSelection({ from, to });
-            },
-          },
-        ],
-        query,
-      ),
-      ...mentionItems(query),
-    ],
-    [pages, editor],
-  );
-  const bracketMentionItems = useCallback(
-    async (query: string) => mentionItems(query),
-    [pages],
-  );
-  async function insertPastedUrl(asMention: boolean) {
-    if (!pasteChoice || pasteLoading) return;
-    let label = pasteChoice;
-    const internalId = pageIdFromHref(pasteChoice);
-    if (asMention && internalId) {
-      label = pages.find((page) => page.id === internalId)?.title ?? label;
-    } else if (asMention) {
-      try {
-        label = new URL(pasteChoice).hostname.replace(/^www\./, "");
-      } catch {
-        // The URL was validated before the chooser opened.
-      }
-    }
-    if (asMention && !internalId) {
-      const abort = new AbortController();
-      pasteAbort.current = abort;
-      setPasteLoading(true);
-      setPreviewError("");
-      try {
-        const preview = await api<LinkPreview>("/api/link-preview", {
-          method: "POST",
-          body: JSON.stringify({ url: pasteChoice }),
-          signal: abort.signal,
-        });
-        if (!mounted.current || abort.signal.aborted) return;
-        label = `📄 ${preview.title}`;
-        onLinkPreview(pasteChoice, preview);
-        setPreviewHref(pasteChoice);
-      } catch {
-        if (!mounted.current || abort.signal.aborted) return;
-        setPreviewError(
-          "Preview unavailable. The link was inserted with its hostname.",
-        );
-      } finally {
-        if (mounted.current) setPasteLoading(false);
-      }
-    }
-    const selection = pasteSelection.current;
-    if (selection) {
-      const size = editor._tiptapEditor.state.doc.content.size;
-      editor._tiptapEditor.commands.setTextSelection({
-        from: Math.min(selection.from, size),
-        to: Math.min(selection.to, size),
-      });
-    }
-    insertLinkChip(
-      asMention && internalId ? `#/page/${internalId}` : pasteChoice,
-      label,
-    );
-    pasteSelection.current = null;
-    setPasteChoice(null);
-  }
+  const {
+    slashItems,
+    atMentionItems,
+    bracketMentionItems,
+    dateSelection,
+    setDateSelection,
+  } = useEditorSuggestions({
+    editor,
+    pages,
+    mounted,
+    onCreateSubpage,
+    insertLinkChip,
+    setPreviewError,
+  });
+  useChecklistInteraction(editor, host);
   useEffect(() => {
     const signature = pages
       .map((page) => `${page.id}:${page.icon}:${page.title}`)
@@ -938,11 +602,7 @@ export default function Editor({
         }
         event.preventDefault();
         event.stopPropagation();
-        pasteSelection.current = {
-          from: editor._tiptapEditor.state.selection.from,
-          to: editor._tiptapEditor.state.selection.to,
-        };
-        setPasteChoice(value);
+        openPasteLink(value);
       }}
       onKeyDown={(e) => {
         if (e.key === "Escape") setSelected([]);
@@ -1104,120 +764,36 @@ export default function Editor({
         />
       )}
       {pasteChoice && (
-        <div
-          ref={pasteMenu}
-          style={pastePosition}
-          className="paste-link-chooser"
-          role="dialog"
-          aria-label="Paste link"
-          onMouseDown={(e) => e.preventDefault()}
-        >
-          <span>{pasteChoice}</span>
-          <button
-            disabled={pasteLoading}
-            onClick={() => void insertPastedUrl(true)}
-          >
-            {pasteLoading ? "Loading preview…" : "Paste as mention"}
-          </button>
-          <button
-            disabled={pasteLoading}
-            onClick={() => void insertPastedUrl(false)}
-          >
-            Paste as URL
-          </button>
-          <button
-            aria-label="Cancel paste"
-            onClick={() => {
-              pasteAbort.current?.abort();
-              setPasteLoading(false);
-              pasteSelection.current = null;
-              setPasteChoice(null);
-              editor.focus();
-            }}
-          >
-            <X size={14} />
-          </button>
-        </div>
+        <PasteLinkChooser
+          choice={pasteChoice}
+          loading={pasteLoading}
+          position={pastePosition}
+          menuRef={pasteMenu}
+          onInsert={insertPastedUrl}
+          onCancel={() => {
+            cancelPaste();
+            editor.focus();
+          }}
+        />
       )}
       {previewError && <p role="status">{previewError}</p>}
       {previewHref && initial.linkPreviews?.[previewHref] && (
-        <aside className="link-preview-card" aria-label="Link preview">
-          <button
-            aria-label="Close link preview"
-            onClick={() => setPreviewHref(null)}
-          >
-            ×
-          </button>
-          <strong>{initial.linkPreviews[previewHref].title}</strong>
-          <p>{initial.linkPreviews[previewHref].description}</p>
-          {initial.linkPreviews[previewHref].image && (
-            <PreviewImage url={initial.linkPreviews[previewHref].image!} />
-          )}
-        </aside>
-      )}
-      {rectangle && (
-        <div
-          className="selection-rectangle"
-          style={{
-            left: rectangle.x,
-            top: rectangle.y,
-            width: rectangle.w,
-            height: rectangle.h,
-          }}
+        <LinkPreviewCard
+          preview={initial.linkPreviews[previewHref]}
+          onClose={() => setPreviewHref(null)}
         />
       )}
-      {selectedBoxes.map((box) => (
-        <div
-          className="block-selection-highlight"
-          data-block-id={box.id}
-          key={box.id}
-          style={{
-            left: box.x,
-            top: box.y,
-            width: box.width,
-            height: box.height,
-          }}
-        />
-      ))}
-      {directLinkBox && (
-        <div
-          className="direct-link-highlight"
-          data-direct-link-target={directLinkBox.id}
-          style={{
-            left: directLinkBox.x,
-            top: directLinkBox.y,
-            width: directLinkBox.width,
-            height: directLinkBox.height,
-          }}
-        />
-      )}
-      {dropLine !== null && (
-        <div
-          className="drop-line"
-          style={{
-            top: dropLine,
-            left: host.current?.getBoundingClientRect().left ?? 0,
-            width: host.current?.clientWidth ?? 0,
-          }}
-        />
-      )}
-      {uploadState && (
-        <div className="upload-status">
-          <p role="status">{uploadState}</p>
-          {uploadState.startsWith("Uploading ") && (
-            <button onClick={cancelPendingUploads}>Cancel upload</button>
-          )}
-        </div>
-      )}
-      {failed.map((item) => (
-        <button
-          className="upload-retry"
-          key={item.id}
-          onClick={() => void finishUpload(item.file, item.id)}
-        >
-          Retry {item.file.name}
-        </button>
-      ))}
+      <EditorInteractionOverlays
+        rectangle={rectangle}
+        selectedBoxes={selectedBoxes}
+        directLinkBox={directLinkBox}
+        dropLine={dropLine}
+        host={host}
+        uploadState={uploadState}
+        failed={failed}
+        onCancelUploads={cancelPendingUploads}
+        onRetryUpload={finishUpload}
+      />
     </div>
   );
 }

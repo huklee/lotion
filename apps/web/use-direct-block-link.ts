@@ -1,13 +1,6 @@
 import { useEffect, useState, type RefObject } from "react";
 import { blockIdFromHash } from "./block-links";
-
-export type ViewportBlockBox = {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+import type { ViewportBlockBox } from "./editor-overlays.types";
 
 const outerBlocks = (host: HTMLElement) =>
   host.querySelectorAll<HTMLElement>(".bn-block-outer[data-id]");

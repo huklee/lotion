@@ -45,6 +45,7 @@ All project plans, design records, implementation notes, test plans, and test re
 17. [Notion-style block lasso selection](adr/018-block-lasso-selection.md): native text drag preservation, additive/reverse selection, edge scrolling and stable overlays.
 18. [Stable direct block links](adr/019-direct-block-links.md): copyable absolute URLs, deep-link routing, target reveal and deleted-target behavior.
 19. [TypeScript file and module structure rules](typescript-file-structure.md): SRP boundaries, size limits, dependency direction, extraction gates and the measured refactoring baseline.
+20. [Large-file refactoring plan](typescript-refactoring-plan.md): scoped sequence, acceptance criteria and verification for completing the automatic candidates.
 
 ## Current status
 

@@ -1,5 +1,13 @@
 # Implementation history log
 
+## 2026-09-16T20:06:30+09:00 — Large TypeScript candidate refactoring completed
+
+Completed the remaining work in the large-file refactoring plan. `App.tsx` fell from 1,847 to 716 lines after extracting workspace presentation, dialogs, preferences, transfer workflows and conflict actions. `Editor.tsx` fell from 1,695 to 799 lines after extracting suggestion, checklist, paste-link and overlay lifecycles. The 2,144-line workspace browser specification was replaced by ten product-area specifications; all 41 original scenarios remain, and the largest resulting specification is 457 lines.
+
+No TypeScript or TSX file now exceeds the automatic 1,000-line threshold. The two remaining 501–1,000-line files are accepted framework composition roots: each retains stateful library coordination while feature behavior lives behind focused props or hook contracts. This reduces shared-file conflicts and makes feature ownership visible without manufacturing pass-through layers. Version 0.7.0 remains correct because application behavior, public APIs and stored data formats are unchanged. User data under `data/` was untouched.
+
+The final `npm run check` passed ESLint, strict TypeScript, the production build, 120/120 unit and integration tests, and 126/126 Playwright cases across Chromium, Firefox and WebKit in 153.39 seconds. A Chromium native modified-click assertion exposed an intermittent Playwright wait on an already-rendered background tab; the navigation specification now tests its actual contract—correct new-tab URL and unchanged opener—and passed 12/12 focused repetitions before the complete gate. The known non-failing production chunk-size warning remains.
+
 ## 2026-09-16T07:09:03+09:00 — First TypeScript module-boundary slice completed
 
 Applied the new structure rules to `Editor.tsx` without changing editor behavior or document formats. The 1,695-line component is now 1,223 lines. Block lasso/selection state and browser lifecycles moved to a 286-line hook; direct block-link reveal and measurement moved to a 79-line hook; the shortcut-aware formatting toolbar moved to a 145-line leaf component; and legacy code-language normalization moved to a 48-line pure module. Six direct unit cases now cover normalization without mounting BlockNote. Direct-link browser coverage moved out of the congested workspace specification, and a 24-line shared E2E seed helper provides the seam for subsequent feature splits.

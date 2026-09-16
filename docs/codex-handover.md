@@ -25,6 +25,7 @@ They are copied from the global Codex session store, retained read-only as a his
 ## Current implementation
 
 - React/TypeScript/Vite frontend, Fastify/Node filesystem backend, BlockNote editor, Zod validation, immutable document revisions/assets, Markdown/ZIP portability, IndexedDB drafts, Vitest and Playwright.
+- TypeScript module boundaries follow [the structure rules](typescript-file-structure.md). The application and editor composition roots are below 1,000 lines, and browser scenarios are split by product area with shared isolated fixtures.
 - Core features: block editing, auto-save, document hierarchy/tree/breadcrumbs, block drag/drop and rectangle selection, image drop/upload, Markdown folder import/export, `/page`, `/toc`, `/callout`, `/database` basic table, `/mermaid`, page mentions, link chips, page icons, code highlighting, theme selection, conflict recovery/merge.
 - The current public product name is **Lotion**. New configuration uses `LOTION_DATA_DIR` and `LOTION_TOKEN`; legacy `YESTION_*` values remain compatibility fallbacks. Browser settings, drafts, exact bundles, TOC markers and directory MIME types have legacy readers.
 

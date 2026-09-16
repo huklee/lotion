@@ -14,6 +14,7 @@ import {
   sameSelection,
   type SelectionRectangle,
 } from "./rectangle-selection";
+import type { ViewportBlockBox } from "./editor-overlays.types";
 
 type LotionEditor = typeof editorSchema.BlockNoteEditor;
 type ReplacementBlocks = Parameters<LotionEditor["replaceBlocks"]>[1];
@@ -22,14 +23,6 @@ type UseBlockSelectionOptions = {
   editor: LotionEditor;
   host: RefObject<HTMLDivElement | null>;
   pasteLoading: boolean;
-};
-
-type SelectedBlockBox = {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
 };
 
 const outerBlocks = (host: HTMLElement) =>
@@ -41,7 +34,7 @@ export function useBlockSelection({
   pasteLoading,
 }: UseBlockSelectionOptions) {
   const [selected, setSelected] = useState<string[]>([]);
-  const [selectedBoxes, setSelectedBoxes] = useState<SelectedBlockBox[]>([]);
+  const [selectedBoxes, setSelectedBoxes] = useState<ViewportBlockBox[]>([]);
   const [rectangle, setRectangle] = useState<SelectionRectangle | null>(null);
   const rectangleClick = useRef(false);
 
