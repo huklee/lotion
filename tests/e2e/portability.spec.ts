@@ -33,7 +33,9 @@ test("whole folder import, nested assets, ZIP download", async ({ page }) => {
       .getByRole("button", { name: "Import", exact: true })
       .click();
     await page.locator("input[webkitdirectory]").setInputFiles(dir);
-    await expect(page.locator(".tiptap")).toContainText("Imported folder");
+    await expect(
+      page.getByRole("heading", { name: "Imported folder", level: 1 }),
+    ).toBeVisible();
     await expect(page.locator(".tiptap img")).toBeVisible();
     await expect(
       page.getByRole("navigation").getByText(topic, { exact: true }),
@@ -118,7 +120,7 @@ test("nested quotes, code and tables render after Markdown import", async ({
     name: "Rich Markdown.md",
     mimeType: "text/markdown",
     buffer: Buffer.from(
-      "# Rich content\n\n> A quotation\n>\n> - Nested item\n\n```js\nconst saved = true;\n```\n\n| A | B |\n| - | - |\n| 한글 | 🙂 |\n",
+      "# Rich content\n\n> A quotation\n>\n> - Nested item\n\n```js\nconst saved = true;\n```\n\n| A | B |\n| - | - |\n| English | 🙂 |\n",
     ),
   });
   await expect(page.locator(".tiptap")).toContainText("Nested item");

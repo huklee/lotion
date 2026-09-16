@@ -4,7 +4,7 @@ Current version: **0.7.0**. See the [version history and added features](docs/ch
 
 Release workflow: [version management guide](docs/versioning.md).
 
-검토할 계획: [문서 내 검색 기능 3가지 안](docs/document-search-plan.md).
+Plan for review: [three approaches to in-document search](docs/document-search-plan.md).
 
 ## Install and run
 

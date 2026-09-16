@@ -30,7 +30,7 @@ test("page mentions support at-sign and double-bracket shortcuts plus URL chips"
 
   const external =
     "https://techblog-history-younghunjo1.tistory.com/207#google_vignette";
-  const previewTitle = "[추천시스템] 딥러닝과 추천시스템, Wide & Deep Learning";
+  const previewTitle = "Recommendation systems: Wide & Deep Learning";
   const image = await page.request.post("/api/assets", {
     multipart: {
       file: {
