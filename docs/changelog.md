@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.7.2 — 2026-09-16
+
+### Fixed
+
+- Keyboard input in Mermaid source fields no longer triggers editor-level formatting, checklist-toggle, or block-movement shortcuts based on a stale document cursor. The textarea keeps ownership of editing keys while global save behavior remains available.
+- Mermaid regression coverage now uses character-by-character typing and verifies rendering, invalid-source recovery, save/reload, checklist isolation, and block-order stability.
+
+No document schema migration is needed. This patch changes input routing only; existing diagrams remain compatible. Verification is recorded in [test results](test-results.md).
+
 ## 0.7.1 — 2026-09-16
 
 ### Fixed

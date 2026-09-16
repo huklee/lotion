@@ -2,11 +2,11 @@
 
 Updated: 2026-09-16. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Prepared application checkpoint 0.7.1 fixes multi-line checklist paste so it splits through native checklist behavior without adding an empty paragraph. Release 0.7.0 adds copyable stable block URLs with deep-link loading, centered target reveal and viewport-aligned highlighting. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
+Prepared application checkpoint 0.7.2 isolates Mermaid source keyboard input from document-level shortcuts. Release 0.7.1 fixes multi-line checklist paste so it splits through native checklist behavior without adding an empty paragraph. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.7.1**. Publication commit and CI evidence are recorded after push. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.7.2**. Publication commit and CI evidence are recorded after push. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -31,7 +31,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this prepared bug-fix release is 0.7.1.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this prepared bug-fix release is 0.7.2.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.
@@ -42,7 +42,7 @@ They are copied from the global Codex session store, retained read-only as a his
 ## Current status and open work
 
 - Git remote was verified at `555d7b4` when this handover was created. Check `git status --branch` and `git log` before working; later commits may exist.
-- The complete backlog and acceptance criteria live in `docs/remained_job.md`. The active sequence starts with Mermaid editor repair, then block-selection, favicon, color-system and integrated-settings work; complete each in its own pull request.
+- The complete backlog and acceptance criteria live in `docs/remained_job.md`. The active sequence continues with block-selection, favicon, color-system, and integrated-settings work; complete each in its own pull request.
 - The reported server pages returned HTTP 200. The specific user browser conflict draft cannot be inspected from a separate browser/session; verify it through the UI and retain a recovery copy before choosing a conflicting version.
 
 ## Important implementation decisions
