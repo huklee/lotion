@@ -1,5 +1,17 @@
 # Implementation history log
 
+## 2026-09-16T23:03:58+09:00 — 0.11.0 integrated system settings prepared
+
+Prepared the sixth and final requested incremental pull request. Reorganized the existing control panel into system appearance, editor/startup, and formatting sections; added five validated workspace-font choices; and applied the selected font immediately to both application chrome and BlockNote's actual theme root. Font state uses the existing browser-local compatibility reader, persists across reloads, and participates in the combined display reset without entering document storage or exports.
+
+Focused preference tests and nine repeated cross-browser settings cases passed. The first browser test correctly identified BlockNote's internal font-variable boundary, which the final implementation now addresses. The final CI-equivalent gate passed lint/type/build, 128 unit/integration tests, and 138 browser cases in 143.37 seconds. Commit, push, pull-request, and remote CI evidence are recorded separately when complete. User data under `data/` was untouched.
+
+## 2026-09-16T22:50:57+09:00 — 0.10.0 accessible pastel color system prepared
+
+Kept BlockNote's portable `default`, gray, brown, red, orange, yellow, green, blue, purple, and pink keys so existing documents and shortcuts remain valid. Centralized the nine hue pairs for light, dark, and black instead of inheriting different library defaults. The preference lifecycle now applies the palette immediately, and a persistent black scheme uses BlockNote's dark component chrome with a true-black application canvas.
+
+Unit tests calculate WCAG contrast for every text/canvas and default-text/background pair. A browser regression measures computed DOM colors in all three schemes and verifies black persistence. It initially demonstrated that BlockNote's more-specific dark selector defeated the application override; the production selector now matches that specificity. Focused palette repetitions passed 9/9 across three engines, and the full settings group passed 12/12. An unrelated stale-caret assumption exposed by the first full gate was aligned with adjacent explicit selection synchronization and passed 12/12 Chromium repetitions. The final CI-equivalent gate passed lint/type/build, 127 unit/integration tests, and 138 browser cases in 142.39 seconds. Prepared backward-compatible minor release 0.10.0 with no schema migration or user-data change. Publication evidence is recorded separately.
+
 ## 2026-09-16T22:41:29+09:00 — 0.9.0 page-aware browser favicon prepared
 
 Added a focused favicon module that generates escaped SVG data URLs for existing page-icon metadata and updates one owned `<link rel="icon">` element. The application derives the favicon from the save coordinator's live content, so an icon-picker change appears immediately, while route changes follow the newly active document. Missing page icons use the same `📄` fallback as the editor; non-page routes and the initial HTML use a stable Lotion `L` mark.

@@ -46,6 +46,8 @@ export default function App() {
     theme,
     sidebarOnStart,
     setSidebarOnStart,
+    editorFont,
+    setEditorFont,
     editorTextSize,
     setEditorTextSize,
     pageWidth,
@@ -675,6 +677,8 @@ export default function App() {
         }}
         themeMode={themeMode}
         setThemeMode={setThemeMode}
+        editorFont={editorFont}
+        setEditorFont={setEditorFont}
         editorTextSize={editorTextSize}
         setEditorTextSize={setEditorTextSize}
         pageWidth={pageWidth}

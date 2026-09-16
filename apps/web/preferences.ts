@@ -1,6 +1,14 @@
 import { readSetting } from "./storage-compat";
 
-export type ThemeMode = "system" | "light" | "dark";
+export type ThemeMode = "system" | "light" | "dark" | "black";
+export const editorFonts = [
+  "dm-sans",
+  "manrope",
+  "system",
+  "serif",
+  "monospace",
+] as const;
+export type EditorFont = (typeof editorFonts)[number];
 export type EditorTextSize = "small" | "medium" | "large";
 export type PageWidth = "comfortable" | "wide";
 

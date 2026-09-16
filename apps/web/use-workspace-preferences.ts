@@ -3,62 +3,68 @@ import {
   readBoolean,
   readChoice,
   type ThemeMode,
+  type EditorFont,
   type PageWidth,
   type EditorTextSize,
+  editorFonts,
 } from "./preferences";
 import { readFormattingShortcuts } from "./format-shortcuts";
+import { applyColorPalette, type ColorScheme } from "./color-palette";
 
 export function useWorkspacePreferences() {
   const [themeMode, setThemeMode] = useState<ThemeMode>(
-      readChoice<ThemeMode>(
-        localStorage,
-        "theme",
-        ["system", "light", "dark"],
-        "system",
-      ),
+    readChoice<ThemeMode>(
+      localStorage,
+      "theme",
+      ["system", "light", "dark", "black"],
+      "system",
     ),
-    [systemDark, setSystemDark] = useState(
-      matchMedia("(prefers-color-scheme: dark)").matches,
-    );
+  );
+  const [systemDark, setSystemDark] = useState(
+    matchMedia("(prefers-color-scheme: dark)").matches,
+  );
   const [sidebarOnStart, setSidebarOnStart] = useState(() =>
     readBoolean(localStorage, "sidebar-on-start", true),
   );
+  const [editorFont, setEditorFont] = useState<EditorFont>(() =>
+    readChoice(localStorage, "editor-font", editorFonts, "dm-sans"),
+  );
   const [editorTextSize, setEditorTextSize] = useState<EditorTextSize>(() =>
-      readChoice(
-        localStorage,
-        "editor-text-size",
-        ["small", "medium", "large"],
-        "medium",
-      ),
+    readChoice(
+      localStorage,
+      "editor-text-size",
+      ["small", "medium", "large"],
+      "medium",
     ),
-    [pageWidth, setPageWidth] = useState<PageWidth>(() =>
-      readChoice(
-        localStorage,
-        "page-width",
-        ["comfortable", "wide"],
-        "comfortable",
-      ),
-    );
+  );
+  const [pageWidth, setPageWidth] = useState<PageWidth>(() =>
+    readChoice(
+      localStorage,
+      "page-width",
+      ["comfortable", "wide"],
+      "comfortable",
+    ),
+  );
   const [formattingShortcuts, setFormattingShortcuts] = useState(() =>
     readFormattingShortcuts(localStorage),
   );
-  const theme =
-    themeMode === "system"
-      ? systemDark
-        ? "dark"
-        : "light"
-      : (themeMode as "dark" | "light");
+  const colorScheme: ColorScheme =
+    themeMode === "system" ? (systemDark ? "dark" : "light") : themeMode;
+  const theme: "light" | "dark" = colorScheme === "light" ? "light" : "dark";
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.theme = colorScheme;
+    applyColorPalette(document.documentElement, colorScheme);
     localStorage.setItem("lotion-theme", themeMode);
-  }, [theme, themeMode]);
+  }, [colorScheme, themeMode]);
   useEffect(() => {
+    document.documentElement.dataset.editorFont = editorFont;
     document.documentElement.dataset.editorTextSize = editorTextSize;
     document.documentElement.dataset.pageWidth = pageWidth;
+    localStorage.setItem("lotion-editor-font", editorFont);
     localStorage.setItem("lotion-editor-text-size", editorTextSize);
     localStorage.setItem("lotion-page-width", pageWidth);
     localStorage.setItem("lotion-sidebar-on-start", String(sidebarOnStart));
-  }, [editorTextSize, pageWidth, sidebarOnStart]);
+  }, [editorFont, editorTextSize, pageWidth, sidebarOnStart]);
   useEffect(() => {
     localStorage.setItem(
       "lotion-formatting-shortcuts",
@@ -78,6 +84,8 @@ export function useWorkspacePreferences() {
     theme,
     sidebarOnStart,
     setSidebarOnStart,
+    editorFont,
+    setEditorFont,
     editorTextSize,
     setEditorTextSize,
     pageWidth,

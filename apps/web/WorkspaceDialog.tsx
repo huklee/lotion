@@ -2,7 +2,12 @@ import type { Dispatch, DragEvent, SetStateAction } from "react";
 import { ArrowLeft, FileText, LockKeyhole, Search, X } from "lucide-react";
 import type { TreeNode } from "../../packages/document-schema/index";
 import type { FormattingShortcuts } from "./format-shortcuts";
-import type { EditorTextSize, PageWidth, ThemeMode } from "./preferences";
+import type {
+  EditorFont,
+  EditorTextSize,
+  PageWidth,
+  ThemeMode,
+} from "./preferences";
 import { ExportPanel } from "./ExportPanel";
 import { HelpPanel } from "./HelpPanel";
 import { ImportPanel } from "./ImportPanel";
@@ -35,6 +40,8 @@ type WorkspaceDialogProps = {
   movePage: (parentId: string | null) => void;
   themeMode: ThemeMode;
   setThemeMode: Dispatch<SetStateAction<ThemeMode>>;
+  editorFont: EditorFont;
+  setEditorFont: Dispatch<SetStateAction<EditorFont>>;
   editorTextSize: EditorTextSize;
   setEditorTextSize: Dispatch<SetStateAction<EditorTextSize>>;
   pageWidth: PageWidth;
@@ -149,6 +156,8 @@ export function WorkspaceDialog(props: WorkspaceDialogProps) {
           <SettingsPanel
             themeMode={props.themeMode}
             setThemeMode={props.setThemeMode}
+            editorFont={props.editorFont}
+            setEditorFont={props.setEditorFont}
             editorTextSize={props.editorTextSize}
             setEditorTextSize={props.setEditorTextSize}
             pageWidth={props.pageWidth}

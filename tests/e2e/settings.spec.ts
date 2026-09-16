@@ -61,23 +61,33 @@ test("control panel applies, persists and resets browser display settings", asyn
     .getByRole("button", { name: "Control panel", exact: true })
     .click();
   const panel = page.getByRole("dialog", { name: "Control panel" });
-  await panel.getByLabel("Appearance theme").selectOption("dark");
+  await panel.getByLabel("Color scheme").selectOption("dark");
+  await panel.getByLabel("Workspace font").selectOption("manrope");
   await panel.getByLabel("Editor text size").selectOption("large");
   await panel.getByLabel("Page width").selectOption("wide");
   await panel.getByLabel("Open sidebar on startup").uncheck();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-editor-font",
+    "manrope",
+  );
   await expect(page.locator("html")).toHaveAttribute(
     "data-editor-text-size",
     "large",
   );
   await expect(page.locator("html")).toHaveAttribute("data-page-width", "wide");
   await expect(page.locator(".bn-editor")).toHaveCSS("font-size", "16px");
+  await expect(page.locator(".bn-editor")).toHaveCSS("font-family", /Manrope/);
   await expect(page.locator(".document")).toHaveCSS("max-width", "1180px");
   await panel.getByRole("button", { name: "Close dialog" }).click();
 
   await page.reload();
   await expect(page.locator(".app")).toHaveClass(/sidebar-hidden/);
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-editor-font",
+    "manrope",
+  );
   await expect(page.locator("html")).toHaveAttribute(
     "data-editor-text-size",
     "large",
@@ -89,20 +99,115 @@ test("control panel applies, persists and resets browser display settings", asyn
     .getByRole("button", { name: "Control panel", exact: true })
     .click();
   const reopened = page.getByRole("dialog", { name: "Control panel" });
-  await expect(reopened.getByLabel("Appearance theme")).toHaveValue("dark");
+  await expect(reopened.getByLabel("Color scheme")).toHaveValue("dark");
+  await expect(reopened.getByLabel("Workspace font")).toHaveValue("manrope");
   await expect(reopened.getByLabel("Editor text size")).toHaveValue("large");
   await expect(reopened.getByLabel("Page width")).toHaveValue("wide");
   await expect(
     reopened.getByLabel("Open sidebar on startup"),
   ).not.toBeChecked();
   await reopened
-    .getByRole("button", { name: "Reset display settings" })
+    .getByRole("button", { name: "Reset system and editor settings" })
     .click();
-  await expect(reopened.getByLabel("Appearance theme")).toHaveValue("system");
+  await expect(reopened.getByLabel("Color scheme")).toHaveValue("system");
+  await expect(reopened.getByLabel("Workspace font")).toHaveValue("dm-sans");
   await expect(reopened.getByLabel("Editor text size")).toHaveValue("medium");
   await expect(reopened.getByLabel("Page width")).toHaveValue("comfortable");
   await expect(reopened.getByLabel("Open sidebar on startup")).toBeChecked();
 });
+
+test("pastel text and background colors stay readable in every scheme", async ({
+  page,
+}) => {
+  const colors = [
+    "gray",
+    "brown",
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "purple",
+    "pink",
+  ];
+  await seed(page, "Pastel palette", [
+    {
+      id: "palette-text",
+      type: "paragraph",
+      content: colors.map((color) => ({
+        type: "text",
+        text: `${color} `,
+        styles: { textColor: color },
+      })),
+    },
+    {
+      id: "palette-background",
+      type: "paragraph",
+      content: colors.map((color) => ({
+        type: "text",
+        text: `${color} `,
+        styles: { backgroundColor: color },
+      })),
+    },
+  ]);
+  await page
+    .getByRole("button", { name: "Control panel", exact: true })
+    .click();
+  const panel = page.getByRole("dialog", { name: "Control panel" });
+
+  for (const scheme of ["light", "dark", "black"]) {
+    await panel.getByLabel("Color scheme").selectOption(scheme);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", scheme);
+    const ratios = await page.evaluate(() => {
+      const rgb = (value: string) =>
+        value
+          .match(/[\d.]+/g)!
+          .slice(0, 3)
+          .map(Number);
+      const luminance = (value: string) => {
+        const channels = rgb(value)
+          .map((channel) => channel / 255)
+          .map((channel) =>
+            channel <= 0.04045
+              ? channel / 12.92
+              : Math.pow((channel + 0.055) / 1.055, 2.4),
+          );
+        return (
+          channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
+        );
+      };
+      const contrast = (first: string, second: string) => {
+        const [lighter, darker] = [luminance(first), luminance(second)].sort(
+          (a, b) => b - a,
+        );
+        return (lighter + 0.05) / (darker + 0.05);
+      };
+      const canvas = getComputedStyle(document.documentElement).backgroundColor;
+      const textRatios = [
+        ...document.querySelectorAll<HTMLElement>(
+          '[data-id="palette-text"] [data-style-type="textColor"]',
+        ),
+      ].map((element) => contrast(getComputedStyle(element).color, canvas));
+      const backgroundRatios = [
+        ...document.querySelectorAll<HTMLElement>(
+          '[data-id="palette-background"] [data-style-type="backgroundColor"]',
+        ),
+      ].map((element) => {
+        const style = getComputedStyle(element);
+        return contrast(style.color, style.backgroundColor);
+      });
+      return { textRatios, backgroundRatios };
+    });
+    expect(ratios.textRatios).toHaveLength(9);
+    expect(ratios.backgroundRatios).toHaveLength(9);
+    expect(Math.min(...ratios.textRatios)).toBeGreaterThanOrEqual(4.5);
+    expect(Math.min(...ratios.backgroundRatios)).toBeGreaterThanOrEqual(4.5);
+  }
+  await panel.getByRole("button", { name: "Close dialog" }).click();
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "black");
+});
+
 test("configurable text-color shortcuts show on hover and repeat the last color", async ({
   page,
 }) => {

@@ -2,6 +2,33 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.11.0 — 2026-09-16
+
+### Added
+
+- The control panel now presents system appearance, editor/startup preferences, and formatting shortcuts as one integrated settings area.
+- Workspace font choices include DM Sans, Manrope, system sans, serif, and monospace. Font changes preview immediately in both application chrome and document content, persist in this browser, and reject unsupported stored values.
+
+### Improved
+
+- The combined reset restores the scheme, font, editor text size, page width, and startup sidebar preference together.
+
+No document schema migration is needed. These preferences remain browser-local and do not enter shared document data or exports. Verification is recorded in [test results](test-results.md).
+
+## 0.10.0 — 2026-09-16
+
+### Added
+
+- Appearance settings now include a persistent black scheme in addition to system, light, and dark.
+
+### Improved
+
+- Text and background formatting use one centralized palette of default plus nine pastel hues across light, dark, and black schemes.
+- Every text hue meets at least 4.5:1 contrast against its scheme canvas, and default text meets the same threshold on every pastel background.
+- Existing stored color names, formatting shortcuts, and document content remain compatible.
+
+No document schema migration is needed. This minor release changes presentation values and adds a browser-local appearance choice without changing portable color keys. Verification is recorded in [test results](test-results.md).
+
 ## 0.9.0 — 2026-09-16
 
 ### Added

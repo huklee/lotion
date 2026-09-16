@@ -1,5 +1,6 @@
 :root {
-  font-family: "DM Sans", sans-serif;
+  --workspace-font: "DM Sans", sans-serif;
+  font-family: var(--workspace-font);
   color: #343732;
   background: #fff;
   --bg: #fff;
@@ -12,6 +13,18 @@
   --soft: #edf0e8;
   --card: #fafbf8;
   font-synthesis: none;
+}
+[data-editor-font="manrope"] {
+  --workspace-font: "Manrope", sans-serif;
+}
+[data-editor-font="system"] {
+  --workspace-font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+[data-editor-font="serif"] {
+  --workspace-font: Georgia, "Times New Roman", serif;
+}
+[data-editor-font="monospace"] {
+  --workspace-font: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 * {
   box-sizing: border-box;
@@ -660,12 +673,34 @@ h1 span {
   cursor: crosshair;
   user-select: none;
 }
-.bn-container {
+.bn-root {
+  --bn-font-family: var(--workspace-font);
+  font-family: var(--workspace-font);
+}
+.bn-container.bn-root {
   --bn-colors-editor-background: var(--bg);
   --bn-colors-editor-text: var(--text);
-  font-family: "DM Sans", sans-serif !important;
+  --bn-colors-highlights-gray-text: var(--lotion-gray-text);
+  --bn-colors-highlights-gray-background: var(--lotion-gray-background);
+  --bn-colors-highlights-brown-text: var(--lotion-brown-text);
+  --bn-colors-highlights-brown-background: var(--lotion-brown-background);
+  --bn-colors-highlights-red-text: var(--lotion-red-text);
+  --bn-colors-highlights-red-background: var(--lotion-red-background);
+  --bn-colors-highlights-orange-text: var(--lotion-orange-text);
+  --bn-colors-highlights-orange-background: var(--lotion-orange-background);
+  --bn-colors-highlights-yellow-text: var(--lotion-yellow-text);
+  --bn-colors-highlights-yellow-background: var(--lotion-yellow-background);
+  --bn-colors-highlights-green-text: var(--lotion-green-text);
+  --bn-colors-highlights-green-background: var(--lotion-green-background);
+  --bn-colors-highlights-blue-text: var(--lotion-blue-text);
+  --bn-colors-highlights-blue-background: var(--lotion-blue-background);
+  --bn-colors-highlights-purple-text: var(--lotion-purple-text);
+  --bn-colors-highlights-purple-background: var(--lotion-purple-background);
+  --bn-colors-highlights-pink-text: var(--lotion-pink-text);
+  --bn-colors-highlights-pink-background: var(--lotion-pink-background);
 }
 .bn-editor {
+  font-family: var(--workspace-font);
   font-size: 14px;
   line-height: 1.8;
   padding: 0 48px !important;
@@ -781,7 +816,7 @@ h1 span {
   flex: 1;
   min-width: 2px;
 }
-[data-theme="dark"] .lotion-callout {
+:is([data-theme="dark"], [data-theme="black"]) .lotion-callout {
   background: #342f27;
   border-color: #514839;
 }
@@ -1109,6 +1144,9 @@ h1 span {
     sans-serif;
   margin: 28px 0 4px;
 }
+.settings-heading-first {
+  margin-top: 20px;
+}
 .settings-description {
   margin-top: 0 !important;
 }
@@ -1278,7 +1316,7 @@ kbd {
 .sidebar-hidden .sidebar {
   display: none;
 }
-[data-theme="dark"] {
+:is([data-theme="dark"], [data-theme="black"]) {
   --bg: #20231f;
   --sidebar: #1a1d19;
   --text: #d8ded2;
@@ -1291,18 +1329,29 @@ kbd {
   background: var(--bg);
   color: var(--text);
 }
-[data-theme="dark"] .page-row.active {
+:is([data-theme="dark"], [data-theme="black"]) .page-row.active {
   background: #34412a;
   color: #c1d5af;
 }
-[data-theme="dark"] .error,
-[data-theme="dark"] .conflict-box {
+:is([data-theme="dark"], [data-theme="black"]) .error,
+:is([data-theme="dark"], [data-theme="black"]) .conflict-box {
   background: #402c23;
   color: #ecbaa1;
 }
-[data-theme="dark"] .sidebar-primary button,
-[data-theme="dark"] .sidebar-bottom > button {
+:is([data-theme="dark"], [data-theme="black"]) .sidebar-primary button,
+:is([data-theme="dark"], [data-theme="black"]) .sidebar-bottom > button {
   color: #a8b39e;
+}
+[data-theme="black"] {
+  --bg: #000;
+  --sidebar: #090a09;
+  --text: #e2e5df;
+  --muted: #8d928a;
+  --border: #242724;
+  --hover: #1b1e1b;
+  --accent: #b7c8a7;
+  --soft: #171c15;
+  --card: #0d0f0c;
 }
 @media (min-width: 1450px) {
   .home-content {
