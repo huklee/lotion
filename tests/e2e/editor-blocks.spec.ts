@@ -152,6 +152,42 @@ test("slash page creates a child and table of contents follows headings", async 
   );
 });
 
+test("browser favicon follows the current page icon and resets outside a page", async ({
+  page,
+}) => {
+  await seed(page, "Favicon page");
+  const favicon = page.locator('link[rel="icon"][data-lotion-favicon]');
+  const decodedFavicon = async () =>
+    decodeURIComponent((await favicon.getAttribute("href")) ?? "");
+
+  await expect(favicon).toHaveAttribute("type", "image/svg+xml");
+  await expect.poll(decodedFavicon).toContain("📄");
+
+  await page.getByRole("button", { name: "Change page icon" }).click();
+  await page.getByRole("textbox", { name: "Search emojis" }).fill("compass");
+  await page.getByRole("button", { name: "Use 🧭 compass icon" }).click();
+  await expect.poll(decodedFavicon).toContain("🧭");
+
+  const second = await page.request.post("/api/documents", {
+    data: { title: "No icon page", mutationId: crypto.randomUUID() },
+  });
+  const secondDocument = await second.json();
+  await page.goto(`/#/page/${secondDocument.id}`);
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "No icon page",
+  );
+  await expect.poll(decodedFavicon).toContain("📄");
+
+  await page.goto("/#/home");
+  await expect(
+    page.getByRole("heading", {
+      name: "Make room for what’s on your mind.",
+    }),
+  ).toBeVisible();
+  await expect.poll(decodedFavicon).toContain("#37352f");
+  await expect.poll(decodedFavicon).not.toContain("📄");
+});
+
 test("toggle, callout and database blocks work and code uses beige and red", async ({
   page,
 }) => {

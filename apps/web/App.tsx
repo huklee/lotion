@@ -21,6 +21,7 @@ import {
   pageHash,
   pageIdFromHash,
 } from "./block-links";
+import { applicationFavicon, pageFavicon, setFavicon } from "./favicon";
 
 const sessionId = readSetting(sessionStorage, "session") ?? crypto.randomUUID();
 sessionStorage.setItem("lotion-session", sessionId);
@@ -235,6 +236,10 @@ export default function App() {
   useEffect(() => {
     document.title = title ? `${title} — Lotion` : "Lotion";
   }, [title]);
+  const favicon = active
+    ? pageFavicon(coordinator?.content.icon ?? active.icon)
+    : applicationFavicon;
+  useEffect(() => setFavicon(favicon), [favicon]);
   useEffect(() => {
     if (!dialog && !search && !auth) return;
     const previous = document.activeElement as HTMLElement | null;
