@@ -2,6 +2,14 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.7.1 — 2026-09-16
+
+### Fixed
+
+- Multi-line plain-text paste at any position in a checklist now follows the checklist's normal Enter behavior. The first pasted line joins the text before the caret, the final pasted line joins the suffix, every resulting block remains a checklist item, and no empty paragraph is inserted.
+
+No document schema migration is needed. This patch changes checklist paste interaction only; existing documents remain compatible. Verification is recorded in [test results](test-results.md).
+
 ## 0.7.0 — 2026-09-15
 
 ### Added

@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-16T22:21:50+09:00 — 0.7.1 checklist paste fix prepared
+
+Replaced block-node insertion for multi-line text pasted into a checklist with one chained editor transaction that inserts each line through the checklist's normal Enter behavior. This preserves the current item's prefix, moves its suffix onto the final pasted checklist line, retains checklist types, avoids the synthetic empty paragraph produced by inserting closed block nodes at an inline selection, and keeps the paste as one editor transaction. Single-line checklist and callout paste behavior is unchanged.
+
+Cleaned `docs/remained_job.md` so it contains only active work, registered the six newly requested tasks in order, and marked only this first item complete. Prepared patch version 0.7.1 under the version guide; the document schema and stored user data are unchanged. The complete two-worker browser suite passed 126/126 cases, all 120 unit/integration tests passed, and focused checklist coverage passed repeatedly in every browser. A flaky ordinary-text Backspace test now asserts its actual one-character-edit contract without assuming where an automated click places the caret. User data under `data/` was untouched.
+
 ## 2026-09-16T20:32:57+09:00 — Repository text standardized in English
 
 Translated the remaining Korean documentation, test fixtures and date-command aliases into English. The document-search proposal keeps its original three alternatives and recommendation, while README links now describe it in English. Test data still covers Unicode through emoji without retaining Korean words. The folder-import browser assertion now targets its semantic imported heading instead of waiting on the complete editor container. A tracked-file content and filename audit found no remaining Hangul outside the protected `data/` directory.
