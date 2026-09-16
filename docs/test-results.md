@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-09-16T22:21:50+09:00 — 0.7.1 checklist paste gate passed
+
+Lint, strict TypeScript, and the production build passed; 120/120 unit and integration tests passed. The complete two-worker Playwright suite passed **126/126** cases across Chromium, Firefox, and WebKit in **111.01 seconds**. The repaired mid-line multi-line checklist paste case also passed 9/9 focused repetitions across the three engines. It verifies exact prefix/first-line and last-line/suffix joining, no paragraph conversion, save, and reload.
+
+The first four-worker run passed 125/126 cases but reproduced the known WebKit folder-import process stall after the imported content rendered. The CI-equivalent two-worker run passed that case. A later gate exposed an unrelated test-only caret assumption in the ordinary-text Backspace assertion; the assertion now verifies its actual contract—one character is removed while the block remains—and passed 8/8 Chromium repetitions. The complete WebKit project then passed 42/42 cases. The production build retains the known non-failing large-chunk warning. User data under `data/` was untouched.
+
 ## 2026-09-16T20:32:57+09:00 — Repository English-language cleanup verified
 
 All tracked content and filenames outside the protected `data/` directory were scanned for Hangul characters; none remain. Prettier, `npm run lint`, `npm run typecheck`, 28 focused Markdown/repository tests and 36 related browser cases passed. The browser cases covered calendar suggestions, mentions, imports/exports and saving across Chromium, Firefox and WebKit.

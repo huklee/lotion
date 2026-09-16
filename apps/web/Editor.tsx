@@ -581,6 +581,27 @@ export default function Editor({
               );
               return;
             }
+            if (current.type === "checkListItem") {
+              const lines = raw.replace(/\r\n?/g, "\n").split("\n");
+              let insertion = tiptap.chain().insertContentAt(
+                {
+                  from: tiptap.state.selection.from,
+                  to: tiptap.state.selection.to,
+                },
+                { type: "text", text: lines[0] },
+                { applyPasteRules: false, applyInputRules: false },
+              );
+              for (const line of lines.slice(1)) {
+                insertion = insertion.keyboardShortcut("Enter");
+                if (line)
+                  insertion = insertion.insertContent(
+                    { type: "text", text: line },
+                    { applyPasteRules: false, applyInputRules: false },
+                  );
+              }
+              insertion.run();
+              return;
+            }
             tiptap.commands.insertContentAt(
               {
                 from: tiptap.state.selection.from,
