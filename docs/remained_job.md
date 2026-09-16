@@ -25,7 +25,7 @@ Each item must be implemented, tested, checked off here, committed, pushed, and 
 
 ### P1 — Product behavior
 
-- [ ] Choose and implement an in-document search approach from the [three-option plan](document-search-plan.md).
+- [x] Choose and implement a search approach from the [three-option plan](document-search-plan.md). The unified search uses a derived backend workspace index, merges the active unsaved draft, searches titles and block content (including tables and Mermaid source), reports bounded results, and navigates to stable block links. [ADR-020](adr/020-backend-workspace-search.md) records why OpenSearch remains a replaceable future adapter instead of a required service.
 - [ ] Support legitimate public link-preview destinations in IPv4/NAT64 environments without weakening SSRF protection; verify the supplied Tistory URL through the live application flow.
 - [ ] Refresh external OpenGraph chips with bounded caching, make internal mention icons immediate, and define separate presentation for raw URLs and mention chips.
 - [ ] Add file and date reference types to the mention picker, with persistence, keyboard behavior, navigation, and import/export rules.

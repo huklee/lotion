@@ -90,28 +90,48 @@ export async function createApp(
   };
   const id = (req: any) => idSchema.parse(req.params.id);
   let previewRequests = 0;
-  app.post('/api/link-preview', async (req) => {
+  app.post("/api/link-preview", async (req) => {
     const { url } = z.object({ url: z.string().max(4096) }).parse(req.body);
-    if (previewRequests >= 4) throw new AppError(429, 'Preview service busy; try again');
+    if (previewRequests >= 4)
+      throw new AppError(429, "Preview service busy; try again");
     previewRequests++;
     try {
       const signal = AbortSignal.timeout(10000);
-      const page = await fetchPublic(url, 'html', signal);
-      const metadata = parsePreview(page.bytes.toString('utf8'), page.url);
+      const page = await fetchPublic(url, "html", signal);
+      const metadata = parsePreview(page.bytes.toString("utf8"), page.url);
       let image: string | undefined;
       if (metadata.image) {
         try {
-          const result = await fetchPublic(metadata.image, 'image', signal);
-          const asset = await repo.putAsset(result.bytes, 'preview');
+          const result = await fetchPublic(metadata.image, "image", signal);
+          const asset = await repo.putAsset(result.bytes, "preview");
           if (asset.image) image = asset.url;
-        } catch { /* A missing image must not prevent a usable title. */ }
+        } catch {
+          /* A missing image must not prevent a usable title. */
+        }
       }
-      return { title: metadata.title, description: metadata.description, image };
-    } finally { previewRequests--; }
+      return {
+        title: metadata.title,
+        description: metadata.description,
+        image,
+      };
+    } finally {
+      previewRequests--;
+    }
   });
   app.get("/api/tree", async (_req, reply) => {
     reply.header("ETag", `"${repo.treeTag()}"`);
     return { nodes: repo.tree(), tag: repo.treeTag() };
+  });
+  app.get("/api/search", async (req, reply) => {
+    const input = z
+      .object({
+        q: z.string().trim().min(1).max(200),
+        limit: z.coerce.number().int().min(1).max(50).default(50),
+        exclude: idSchema.optional(),
+      })
+      .parse(req.query);
+    reply.header("Cache-Control", "no-store");
+    return repo.search(input.q, input.limit, input.exclude);
   });
   app.get("/api/documents/:id", async (req, reply) => {
     const doc = repo.get(id(req));
@@ -199,8 +219,10 @@ export async function createApp(
           ),
           bytes,
           directory:
-            ["application/x-lotion-directory", "application/x-yestion-directory"].includes(part.mimetype) &&
-            bytes.length === 0,
+            [
+              "application/x-lotion-directory",
+              "application/x-yestion-directory",
+            ].includes(part.mimetype) && bytes.length === 0,
         });
     }
     return importEntries(repo, entries, query.mutationId, query.mode);

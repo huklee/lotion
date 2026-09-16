@@ -55,7 +55,7 @@ test("slash command inserts a heading, theme persists, keyboard search works", a
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.keyboard.press("ControlOrMeta+k");
   await expect(
-    page.getByRole("textbox", { name: "Search pages" }),
+    page.getByRole("textbox", { name: "Search workspace" }),
   ).toBeVisible();
   await page.keyboard.press("Escape");
   await page.keyboard.press("ControlOrMeta+s");

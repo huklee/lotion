@@ -1,7 +1,7 @@
 # Architecture
 
-Status: implementation baseline; spikes pending.
-Last updated: 2026-09-09.
+Status: implemented baseline; remaining qualification is tracked separately.
+Last updated: 2026-09-17.
 Related records: [decisions](decisions.md), [test plan](test-plan.md), [roadmap](roadmap.md).
 
 ## Scope and assumptions
@@ -16,19 +16,19 @@ Canonical JSON preserves supported rich document state. Portable Markdown preser
 
 ## Stack
 
-| Area | Baseline | Rationale |
-| --- | --- | --- |
-| Web | React, TypeScript, Vite | Client-rendered application, shared language with backend |
-| Editor | BlockNote | Existing block UX, slash commands, image integration |
-| UI | Accessible primitives and CSS theme variables | Consistent navigation, menus, dialogs, and focus behavior |
-| State | Editor-owned blocks; small Zustand application store | Avoid full-document React updates per keystroke |
-| Server | Node.js active LTS, Fastify, TypeScript | Lightweight HTTP and filesystem service |
-| Validation | Zod | Validate inputs, disk data, and imports |
-| Markdown | unified, remark-parse, remark-gfm, remark-stringify | Explicit syntax-tree conversion |
-| Storage | JSON files, immutable hash-addressed assets | Inspectable files; no mandatory database |
-| Draft recovery | IndexedDB | Recover recent browser-side edits |
-| Testing | Vitest, Playwright | Unit/integration and real-browser coverage |
-| Deployment | Single process/container with a persistent local volume | Simple ownership and operations |
+| Area           | Baseline                                                | Rationale                                                 |
+| -------------- | ------------------------------------------------------- | --------------------------------------------------------- |
+| Web            | React, TypeScript, Vite                                 | Client-rendered application, shared language with backend |
+| Editor         | BlockNote                                               | Existing block UX, slash commands, image integration      |
+| UI             | Accessible primitives and CSS theme variables           | Consistent navigation, menus, dialogs, and focus behavior |
+| State          | Editor-owned blocks; small Zustand application store    | Avoid full-document React updates per keystroke           |
+| Server         | Node.js active LTS, Fastify, TypeScript                 | Lightweight HTTP and filesystem service                   |
+| Validation     | Zod                                                     | Validate inputs, disk data, and imports                   |
+| Markdown       | unified, remark-parse, remark-gfm, remark-stringify     | Explicit syntax-tree conversion                           |
+| Storage        | JSON files, immutable hash-addressed assets             | Inspectable files; no mandatory database                  |
+| Draft recovery | IndexedDB                                               | Recover recent browser-side edits                         |
+| Testing        | Vitest, Playwright                                      | Unit/integration and real-browser coverage                |
+| Deployment     | Single process/container with a persistent local volume | Simple ownership and operations                           |
 
 Pin compatible dependency versions and record the runtime when scaffolding. Audit licenses of selected core/extensions before adoption. Tiptap is the fallback if the BlockNote spike exposes unacceptable customization constraints. Go is optional for a Go-oriented team; desktop wrappers are a separate future product decision.
 
@@ -39,6 +39,7 @@ Browser editor / title / sidebar
   -> per-document save coordinator -> HTTP API
   -> IndexedDB draft checkpoint        -> document service
                                         -> filesystem repository
+                                        -> derived workspace search index
                                         -> Markdown/asset services
 ```
 
@@ -48,6 +49,7 @@ Browser editor / title / sidebar
 - Repository owns serialization, atomic replacement, writer ownership, and recovery.
 - Portability service owns parsing, path/link rewriting, manifests, and staged imports.
 - The sidebar index is derived metadata, never an independent source of truth.
+- The workspace search index is disposable derived data rebuilt from validated canonical revisions; the current browser draft is merged client-side.
 - UI code never constructs disk paths. Request bodies cannot choose arbitrary storage paths.
 
 Suggested source layout: `apps/web`, `apps/server`, `packages/document-schema`, `packages/editor-adapter`, `packages/markdown`, `packages/persistence`, and `packages/test-fixtures`. Documentation remains in `docs/`.
@@ -75,7 +77,13 @@ Illustrative envelope; actual block properties must match the pinned editor sche
       "id": "block_01",
       "type": "paragraph",
       "props": {},
-      "content": [{ "type": "text", "text": "Launch checklist", "styles": { "bold": true } }],
+      "content": [
+        {
+          "type": "text",
+          "text": "Launch checklist",
+          "styles": { "bold": true }
+        }
+      ],
       "children": []
     }
   ]
@@ -114,18 +122,19 @@ Workspace backups go to a configurable separate destination; a copy on the same 
 
 ## API contract
 
-| Route | Behavior |
-| --- | --- |
-| `GET /api/tree` | Metadata projection and ETag |
-| `POST /api/documents` | Create; mutation ID prevents retry duplication |
-| `GET /api/documents/:id` | Document and revision ETag |
-| `PUT /api/documents/:id/content` | Save title/blocks using `If-Match` |
-| `POST /api/documents/:id/move` | Validate document revision and tree precondition |
-| `POST /api/documents/:id/trash` | Tombstone with revision precondition |
-| `POST /api/documents/:id/restore` | Restore with revision precondition |
-| `POST /api/assets` | Stream, validate, hash, and persist upload |
-| `POST /api/imports` | Validate/stage/commit import; expose job status |
-| `POST /api/exports` | Snapshot/export selected document or subtree |
+| Route                             | Behavior                                                 |
+| --------------------------------- | -------------------------------------------------------- |
+| `GET /api/tree`                   | Metadata projection and ETag                             |
+| `GET /api/search`                 | Bounded title/body search over the derived backend index |
+| `POST /api/documents`             | Create; mutation ID prevents retry duplication           |
+| `GET /api/documents/:id`          | Document and revision ETag                               |
+| `PUT /api/documents/:id/content`  | Save title/blocks using `If-Match`                       |
+| `POST /api/documents/:id/move`    | Validate document revision and tree precondition         |
+| `POST /api/documents/:id/trash`   | Tombstone with revision precondition                     |
+| `POST /api/documents/:id/restore` | Restore with revision precondition                       |
+| `POST /api/assets`                | Stream, validate, hash, and persist upload               |
+| `POST /api/imports`               | Validate/stage/commit import; expose job status          |
+| `POST /api/exports`               | Snapshot/export selected document or subtree             |
 
 Return explicit validation, not-found, precondition, quota, and I/O errors. Missing required preconditions are rejected. Stale `If-Match` returns 412. Enforce body/upload/depth limits before expensive work. Final route schemas and response examples must be documented with implementation.
 
@@ -161,14 +170,14 @@ History retention is configurable and coalesced to avoid one retained file per d
 
 Convert `Markdown -> remark/mdast -> validated blocks` and `blocks -> mdast -> Markdown`. Use explicit mappings and fixture-based semantic comparisons; avoid regex conversion.
 
-| Feature | Portable representation |
-| --- | --- |
-| Paragraphs/headings/emphasis/links | Standard Markdown |
-| Nested lists/task lists | Markdown/GFM lists |
-| Code | Fenced code with language |
-| Simple tables | GFM tables |
-| Images | Relative asset links and alt text |
-| Embeds/bookmarks | Link fallback |
+| Feature                              | Portable representation            |
+| ------------------------------------ | ---------------------------------- |
+| Paragraphs/headings/emphasis/links   | Standard Markdown                  |
+| Nested lists/task lists              | Markdown/GFM lists                 |
+| Code                                 | Fenced code with language          |
+| Simple tables                        | GFM tables                         |
+| Images                               | Relative asset links and alt text  |
+| Embeds/bookmarks                     | Link fallback                      |
 | Widths/colors/columns/custom layouts | Warning plus exact bundle metadata |
 
 An export bundle contains `manifest.json`, nested title-plus-ID directories with `index.md`, `assets/`, and optional `.app/documents/*.json` snapshots. Store document mapping, sibling order, schema versions, and file hashes in the manifest. Recalculate relative document/asset links for each page. Plain `.md` export cannot itself represent a workspace hierarchy.

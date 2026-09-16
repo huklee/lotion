@@ -2,11 +2,11 @@
 
 Updated: 2026-09-16. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Prepared application checkpoint 0.11.0 integrates scheme, font, editor layout, startup, and formatting controls in one settings area. It follows 0.10.0's centralized pastel palette and persistent black scheme. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
+Prepared application checkpoint 0.12.0 adds backend-indexed workspace search with active-draft merging and exact block navigation. The replaceable local index keeps canonical files authoritative; OpenSearch is an optional future adapter documented in ADR-020. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.11.0**. Publication commit and CI evidence are recorded after push. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.12.0**. Publication commit and CI evidence are recorded after push. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -31,7 +31,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this prepared settings release is 0.11.0.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this prepared search release is 0.12.0.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.
@@ -42,7 +42,7 @@ They are copied from the global Codex session store, retained read-only as a his
 ## Current status and open work
 
 - Git remote was verified at `555d7b4` when this handover was created. Check `git status --branch` and `git log` before working; later commits may exist.
-- The complete backlog and acceptance criteria live in `docs/remained_job.md`. The six-item incremental sequence is complete through the prepared integrated-settings pull request; merge the stacked pull requests in order before starting a new backlog item.
+- The complete backlog and acceptance criteria live in `docs/remained_job.md`. Backend-indexed workspace search is the first completed existing-backlog item after the six-item sequence. Continue the remaining backlog one item per stacked pull request.
 - The reported server pages returned HTTP 200. The specific user browser conflict draft cannot be inspected from a separate browser/session; verify it through the UI and retain a recovery copy before choosing a conflicting version.
 
 ## Important implementation decisions

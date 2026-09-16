@@ -12,6 +12,11 @@ import {
   type Document,
   type TreeNode,
 } from "../document-schema/index";
+import {
+  LocalWorkspaceSearchIndex,
+  type SearchResponse,
+  type WorkspaceSearchIndex,
+} from "../search/index";
 
 type Manifest = {
   schemaVersion: 1;
@@ -22,6 +27,8 @@ export type FaultStage =
   "afterWrite" | "afterSync" | "afterRename" | "beforeManifest";
 export class Repository {
   private docs = new Map<string, Document>();
+  private readonly searchIndex: WorkspaceSearchIndex;
+  private searchAvailable = true;
   private manifest: Manifest = {
     schemaVersion: 1,
     documents: {},
@@ -32,8 +39,10 @@ export class Repository {
   constructor(
     public root: string,
     private fault?: (stage: FaultStage) => void,
+    searchIndex: WorkspaceSearchIndex = new LocalWorkspaceSearchIndex(),
   ) {
     this.root = path.resolve(root);
+    this.searchIndex = searchIndex;
   }
   async init() {
     await fs.mkdir(this.root, { recursive: true });
@@ -92,6 +101,7 @@ export class Repository {
           throw new Error("Corrupt document envelope");
         contentSchema.parse(doc);
         this.docs.set(id, doc);
+        this.indexForSearch(doc);
       }
       for (const doc of this.docs.values()) {
         const seen = new Set([doc.id]);
@@ -186,12 +196,18 @@ export class Repository {
       );
       if (JSON.stringify(visible) === JSON.stringify(next)) {
         this.manifest = next;
-        for (const doc of changes) this.docs.set(doc.id, doc);
+        for (const doc of changes) {
+          this.docs.set(doc.id, doc);
+          this.indexForSearch(doc);
+        }
       }
       throw error;
     }
     this.manifest = next;
-    for (const doc of changes) this.docs.set(doc.id, doc);
+    for (const doc of changes) {
+      this.docs.set(doc.id, doc);
+      this.indexForSearch(doc);
+    }
   }
   private replay(id: string, digest: string): Document[] | undefined {
     const receipt = this.manifest.receipts[id];
@@ -216,6 +232,36 @@ export class Repository {
   }
   treeTag() {
     return digest(this.tree());
+  }
+  private indexForSearch(document: Document) {
+    if (!this.searchAvailable) return;
+    try {
+      this.searchIndex.index(document);
+    } catch {
+      // Search is disposable derived state. A failed adapter must never turn
+      // a durable document commit into an apparent save failure.
+      this.searchAvailable = false;
+    }
+  }
+  search(query: string, limit = 50, excludeId?: string): SearchResponse {
+    if (!this.searchAvailable)
+      throw new AppError(
+        503,
+        "Search index unavailable. Restart Lotion to rebuild it.",
+      );
+    try {
+      return this.searchIndex.search(query, {
+        limit,
+        include: (documentId) =>
+          documentId !== excludeId && !this.hidden(documentId),
+      });
+    } catch {
+      this.searchAvailable = false;
+      throw new AppError(
+        503,
+        "Search index unavailable. Restart Lotion to rebuild it.",
+      );
+    }
   }
   hidden(id: string): boolean {
     let doc = this.docs.get(id);
@@ -359,7 +405,7 @@ export class Repository {
       parentKey: string | null;
       title: string;
       icon?: string;
-      linkPreviews?: Document['linkPreviews'];
+      linkPreviews?: Document["linkPreviews"];
       blocks: Document["blocks"];
       sourcePath?: string;
     }[],
