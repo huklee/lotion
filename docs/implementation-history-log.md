@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-16T22:41:29+09:00 — 0.9.0 page-aware browser favicon prepared
+
+Added a focused favicon module that generates escaped SVG data URLs for existing page-icon metadata and updates one owned `<link rel="icon">` element. The application derives the favicon from the save coordinator's live content, so an icon-picker change appears immediately, while route changes follow the newly active document. Missing page icons use the same `📄` fallback as the editor; non-page routes and the initial HTML use a stable Lotion `L` mark.
+
+Unit tests cover custom/default icons, XML escaping, and the application fallback. A repeated three-browser regression covers immediate edits, page navigation, missing icons, and Home reset. The final CI-equivalent gate passed lint/type/build, 123 unit/integration tests, and 135 browser cases in 140.88 seconds. Prepared backward-compatible minor release 0.9.0 with no schema migration or user-data change. Publication evidence is recorded separately.
+
 ## 2026-09-16T22:34:38+09:00 — 0.8.0 precise nested block-lasso hit testing prepared
 
 Found that every `.bn-block-outer` bounding box includes its descendants. The lasso therefore reported the parent as intersecting when a drag touched only a nested child's visible row, and the existing ancestor de-duplication correctly—but undesirably—removed the child. Selection hit testing now measures the direct block content row instead. The parent remains selected, with its complete subtree overlay and existing group actions, when the drag crosses the parent's own row.

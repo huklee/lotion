@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-16T22:41:29+09:00 — 0.9.0 page-favicon focused verification
+
+Three direct unit cases passed for custom and missing page icons, hostile stored text escaping, and the stable Lotion application fallback. The browser regression passed **9/9** repeated cases across Chromium, Firefox, and WebKit. It verifies the initial page fallback, immediate icon edits, navigation to a different page without an icon, and reset to the application favicon on Home.
+
+Lint, strict TypeScript, and a production build passed before the focused browser run. The initial browser run correctly reached and verified every favicon state but used a nonexistent Home heading in its final readiness assertion; the assertion now targets the actual level-one Home heading.
+
+The final CI-equivalent `CI=1 npm run check` exited **0** in **140.88 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): lint, strict TypeScript, production build, **123/123 unit and integration tests**, and **135/135 Playwright cases** passed with two workers. The production build retained the known non-failing large-chunk warning. User data under `data/` was untouched.
+
 ## 2026-09-16T22:34:38+09:00 — 0.8.0 nested block-lasso focused verification
 
 The new regression first reproduced the defect: dragging only across a nested child's row selected its parent because the parent's outer rectangle included the complete descendant subtree. Hit testing now uses each block's own content row while selection overlays retain subtree bounds for parent selection.
