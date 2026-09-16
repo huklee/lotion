@@ -1,5 +1,21 @@
 # Test results
 
+## 2026-09-16T20:06:30+09:00 — Complete large-file refactoring gate passed
+
+`npm run check` exited **0** in **153.39 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1). ESLint, strict TypeScript and the production Vite build passed; **120/120 unit and integration tests** passed in 18 files; and **126/126 Playwright cases** passed across Chromium, Firefox and WebKit with four workers. The production build retained the known non-failing large-chunk warning.
+
+Before the final gate, the Chromium modified-click scenario passed **12/12** parallel repetitions after its assertion was scoped to the feature contract: the native link opens the requested page URL in another tab while the source tab stays on its current document. The prior locator-value assertion intermittently waited for a Chromium background-tab navigation signal even when the trace and screenshot showed the target document rendered; it was not an application failure. The split preserves all 41 former workspace scenario titles exactly once, and the complete suite still contains 42 scenarios across 11 feature specifications. `git diff --check` and Markdown formatting passed; local-link validation found **32 Markdown files, 124 local links and zero missing targets**. No test or command accessed tracked user data under `data/`.
+
+## 2026-09-16T07:09:03+09:00 — TypeScript module-boundary refactor gate passed
+
+`npm run check` exited **0** in **141.67 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1). ESLint, strict TypeScript and the production Vite build passed; **120/120 unit and integration tests** passed in 18 files; and **126/126 Playwright cases** passed across Chromium, Firefox and WebKit with four workers. The production build retained the known non-failing large-chunk warning.
+
+New direct unit coverage verifies HTML, C++, Go, Python and JSON fallback inference plus nested supported/legacy code blocks. Before the complete gate, 24/24 focused cross-browser selection cases passed for section movement, selected deletion and undo, indentation preservation, lasso direction/addition/auto-scroll, rectangle deletion and selected-group drag. The newly separated direct-block-link specification passed 3/3 across the browser matrix. `git diff --check` and Prettier passed; documentation validation found **31 Markdown files, 118 local links and zero missing targets**. No test or command accessed tracked user data under `data/`.
+
+## 2026-09-16 — TypeScript structure-rule documentation validation
+
+The initial refactoring baseline used `rg --files` with `wc -l` across `apps/`, `packages/` and `tests/`, plus a 30-day Git filename-frequency count. It found 10,103 TypeScript/TSX lines and the three files over the automatic 1,000-line threshold recorded in the structure guide. No production code moved in this documentation checkpoint. Prettier passed for the changed Markdown, and the repository documentation validator found **31 Markdown files, 116 local links and zero missing targets**. Application verification follows the implementation slice.
+
 ## 2026-09-15T14:20:47Z — 0.7.0 direct-block-link gate passed
 
 The final `npm run check` exited **0** in **143.62 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): ESLint, TypeScript/production build, **114/114 unit and integration tests**, and **126/126 browser tests** passed across Chromium, Firefox and WebKit with four workers. New unit coverage verifies canonical page/block hash parsing, malformed identifier rejection and absolute same-application URL creation. The new three-browser regression copies the current cursor block's URL, opens it as a fresh navigation, verifies that the fragment survives initial routing, confirms centered target visibility and highlighting, surfaces denied clipboard writes, and proves that a missing/deleted block leaves its page usable without a false highlight. Large build-chunk warnings remain non-fatal. GitHub CI is pending the release push at this checkpoint.

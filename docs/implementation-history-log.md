@@ -1,5 +1,27 @@
 # Implementation history log
 
+## 2026-09-16T20:06:30+09:00 — Large TypeScript candidate refactoring completed
+
+Completed the remaining work in the large-file refactoring plan. `App.tsx` fell from 1,847 to 716 lines after extracting workspace presentation, dialogs, preferences, transfer workflows and conflict actions. `Editor.tsx` fell from 1,695 to 799 lines after extracting suggestion, checklist, paste-link and overlay lifecycles. The 2,144-line workspace browser specification was replaced by ten product-area specifications; all 41 original scenarios remain, and the largest resulting specification is 457 lines.
+
+No TypeScript or TSX file now exceeds the automatic 1,000-line threshold. The two remaining 501–1,000-line files are accepted framework composition roots: each retains stateful library coordination while feature behavior lives behind focused props or hook contracts. This reduces shared-file conflicts and makes feature ownership visible without manufacturing pass-through layers. Version 0.7.0 remains correct because application behavior, public APIs and stored data formats are unchanged. User data under `data/` was untouched.
+
+The final `npm run check` passed ESLint, strict TypeScript, the production build, 120/120 unit and integration tests, and 126/126 Playwright cases across Chromium, Firefox and WebKit in 153.39 seconds. A Chromium native modified-click assertion exposed an intermittent Playwright wait on an already-rendered background tab; the navigation specification now tests its actual contract—correct new-tab URL and unchanged opener—and passed 12/12 focused repetitions before the complete gate. The known non-failing production chunk-size warning remains.
+
+## 2026-09-16T07:09:03+09:00 — First TypeScript module-boundary slice completed
+
+Applied the new structure rules to `Editor.tsx` without changing editor behavior or document formats. The 1,695-line component is now 1,223 lines. Block lasso/selection state and browser lifecycles moved to a 286-line hook; direct block-link reveal and measurement moved to a 79-line hook; the shortcut-aware formatting toolbar moved to a 145-line leaf component; and legacy code-language normalization moved to a 48-line pure module. Six direct unit cases now cover normalization without mounting BlockNote. Direct-link browser coverage moved out of the congested workspace specification, and a 24-line shared E2E seed helper provides the seam for subsequent feature splits.
+
+The result improves testability and conflict isolation while keeping the extracted modules in the preferred 0–500-line ranges. `Editor.tsx`, `App.tsx` and `workspace.spec.ts` remain automatic candidates, so they are recorded as incremental follow-ups rather than being mechanically split in this branch. No version increment was made: this is an internal, backward-compatible refactor with no new feature, fix, API or data-format change. User data under `data/` was untouched.
+
+The final `npm run check` passed lint, strict TypeScript and the production build, 120/120 unit and integration tests, and 126/126 browser cases across Chromium, Firefox and WebKit in 141.67 seconds. Focused selection coverage passed 24/24 browser cases before the full run, and the separated direct-link scenario passed 3/3. Build chunk-size warnings remain the previously tracked non-failing issue.
+
+## 2026-09-16T06:54:18+09:00 — TypeScript structure rules established
+
+Created the mandatory pre-refactoring rules in [TypeScript file and module structure rules](typescript-file-structure.md). The baseline measured 10,103 TypeScript/TSX lines and identified only three automatic candidates: the 2,144-line workspace browser specification, 1,847-line application component and 1,695-line editor component. Recent history also concentrates changes in those files. Persistence and Markdown files in the 200–500-line healthy range are explicitly deferred because they already have cohesive responsibilities.
+
+The first implementation slice is constrained to editor selection/direct-link lifecycles and their browser-test boundary. It must improve isolated testing and conflict locality without changing document persistence or user data. This entry records the rules before any production code is moved; verification evidence follows after implementation.
+
 ## 2026-09-15T14:20:47Z — 0.7.0 direct block links prepared
 
 Prepared backward-compatible minor release 0.7.0 as the sixth and final requested incremental item. Added a cursor-aware **Copy block link** action that copies an absolute stable-ID URL. Centralized strict page/block hash construction and parsing, retained deep fragments during initial page loading, and allowed internal deep links to use the existing history-aware router. Target blocks are centered and identified by a React-owned fixed overlay that follows scrolling/resizing without mutating BlockNote-owned DOM. Missing targets keep the requested page and URL open without selecting an unrelated fallback. See [ADR-019](adr/019-direct-block-links.md).
