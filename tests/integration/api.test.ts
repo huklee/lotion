@@ -59,6 +59,54 @@ it("creates/saves/loads through HTTP with required preconditions", async () => {
     (await app.inject({ url: `/api/documents/${doc.id}` })).json().title,
   ).toBe("Updated");
 });
+it("searches indexed titles and block content with bounded input", async () => {
+  const create = await app.inject({
+    method: "POST",
+    url: "/api/documents",
+    payload: { title: "Indexed API page", mutationId: crypto.randomUUID() },
+  });
+  const doc = create.json();
+  await app.inject({
+    method: "PUT",
+    url: `/api/documents/${doc.id}/content`,
+    headers: { "if-match": "1" },
+    payload: {
+      title: doc.title,
+      blocks: [
+        {
+          id: "api-search-block",
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Backend content needle", styles: {} },
+          ],
+        },
+      ],
+      mutationId: crypto.randomUUID(),
+    },
+  });
+
+  const response = await app.inject({
+    url: "/api/search?q=content%20needle&limit=10",
+  });
+  expect(response.statusCode).toBe(200);
+  expect(response.headers["cache-control"]).toBe("no-store");
+  expect(response.json().results[0]).toMatchObject({
+    documentId: doc.id,
+    blockId: "api-search-block",
+    field: "content",
+  });
+  expect(
+    (
+      await app.inject({
+        url: `/api/search?q=content%20needle&exclude=${doc.id}`,
+      })
+    ).json().total,
+  ).toBe(0);
+  expect((await app.inject({ url: "/api/search?q=" })).statusCode).toBe(400);
+  expect(
+    (await app.inject({ url: "/api/search?q=x&limit=51" })).statusCode,
+  ).toBe(400);
+});
 it("rejects cross-origin mutations", async () =>
   expect(
     (

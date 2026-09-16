@@ -6,6 +6,7 @@ import {
   Repository,
   type FaultStage,
 } from "../../packages/persistence/repository";
+import type { WorkspaceSearchIndex } from "../../packages/search/index";
 let dir: string, repo: Repository;
 let fail: FaultStage | undefined;
 beforeEach(async () => {
@@ -82,6 +83,52 @@ it("persists Unicode content and hierarchy across restart", async () => {
   repo = await new Repository(dir).init();
   expect(repo.get(child.id).title).toBe("Renamed");
   expect(repo.get(child.id).parentId).toBe(parent.id);
+});
+it("rebuilds and updates the derived search index while excluding trash", async () => {
+  const page = await create("Searchable title");
+  const saved = await repo.save(
+    page.id,
+    1,
+    {
+      title: "Renamed page",
+      blocks: [
+        {
+          id: "search-block",
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Persistent search needle", styles: {} },
+          ],
+        },
+      ],
+    },
+    crypto.randomUUID(),
+  );
+  expect(repo.search("Searchable title").total).toBe(0);
+  expect(repo.search("search needle").results[0]).toMatchObject({
+    documentId: page.id,
+    blockId: "search-block",
+  });
+
+  await repo.close();
+  repo = await new Repository(dir).init();
+  expect(repo.search("persistent").results[0]?.documentId).toBe(page.id);
+  await repo.mutate(page.id, saved.revision, "trash");
+  expect(repo.search("persistent").total).toBe(0);
+  await repo.mutate(page.id, saved.revision + 1, "restore");
+  expect(repo.search("persistent").total).toBe(1);
+});
+it("keeps document commits successful when a search adapter fails", async () => {
+  await repo.close();
+  const brokenIndex: WorkspaceSearchIndex = {
+    index: () => {
+      throw new Error("Search backend unavailable");
+    },
+    search: () => ({ query: "", total: 0, results: [] }),
+  };
+  repo = await new Repository(dir, undefined, brokenIndex).init();
+  const page = await create("Durable despite search failure");
+  expect(repo.get(page.id).title).toBe("Durable despite search failure");
+  expect(() => repo.search("durable")).toThrowError("Search index unavailable");
 });
 it("accepts one concurrent save and rejects the stale one", async () => {
   const d = await create();

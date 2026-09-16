@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-17T07:12:23+09:00 — 0.12.0 backend-indexed workspace search prepared
+
+Selected an adapted unified-search approach after the user requested backend indexing and consideration of OpenSearch. Added a replaceable search-index boundary, an in-process index rebuilt from canonical revisions at startup, commit-time revision replacement, hidden-page filtering, a validated search API, and shared extraction for titles, nested rich text, tables, attachment labels, code, and Mermaid source. The browser debounces/cancels requests, merges the active unsaved draft, reports exact counts, opens matching block deep links, and restores editor focus on close.
+
+OpenSearch remains a future adapter rather than a mandatory service because the current single-workspace 10,000-document fixture searches in 14.22 ms and reconstructs on startup in 2.24 seconds. [ADR-020](adr/020-backend-workspace-search.md) records the operational and consistency tradeoff. Focused unit/integration, three-browser navigation, repeated focus, and performance gates passed. The final CI-equivalent gate passed lint/type/build, 134 unit/integration tests, and 144 browser cases in 143.71 seconds. Publication evidence follows. User data under `data/` was untouched.
+
 ## 2026-09-16T23:03:58+09:00 — 0.11.0 integrated system settings prepared
 
 Prepared the sixth and final requested incremental pull request. Reorganized the existing control panel into system appearance, editor/startup, and formatting sections; added five validated workspace-font choices; and applied the selected font immediately to both application chrome and BlockNote's actual theme root. Font state uses the existing browser-local compatibility reader, persists across reloads, and participates in the combined display reset without entering document storage or exports.
