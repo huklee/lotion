@@ -78,7 +78,9 @@ test("Mermaid slash block renders, handles invalid source and persists edits", a
     "Rendering diagram…",
   );
   await expect(preview).toHaveCount(0);
-  await source.fill("sequenceDiagram\n Alice->>Bob: Hello");
+  await source.click();
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.type("sequenceDiagram\n Alice->>Bob: Hello");
   await expect(preview).toBeVisible();
   await expect(page.locator(".save-status")).toHaveText("Saved", {
     timeout: 15000,
@@ -86,6 +88,48 @@ test("Mermaid slash block renders, handles invalid source and persists edits", a
   await page.reload();
   await expect(source).toHaveValue("sequenceDiagram\n Alice->>Bob: Hello");
   await expect(preview).toBeVisible({ timeout: 15000 });
+});
+
+test("Mermaid source owns keyboard input without triggering block shortcuts", async ({
+  page,
+}) => {
+  await seed(page, "Mermaid keyboard editing", [
+    {
+      id: "keyboard-checklist",
+      type: "checkListItem",
+      props: { checked: false },
+      content: [{ type: "text", text: "Keep unchecked", styles: {} }],
+    },
+    {
+      id: "keyboard-mermaid",
+      type: "mermaid",
+      props: { code: "graph TD\n A --> B" },
+    },
+    {
+      id: "keyboard-tail",
+      type: "paragraph",
+      content: [{ type: "text", text: "Keep after diagram", styles: {} }],
+    },
+  ]);
+  const checklist = page.locator('[data-id="keyboard-checklist"]');
+  const diagram = page.locator('[data-id="keyboard-mermaid"]');
+  await checklist.locator(".bn-inline-content").click();
+  const source = diagram.getByRole("textbox", { name: "Mermaid source" });
+  await source.click();
+  await page.keyboard.press("ControlOrMeta+Enter");
+  await expect(checklist.locator('input[type="checkbox"]')).not.toBeChecked();
+  await page.keyboard.press("Alt+Shift+ArrowDown");
+  const blockOrder = await page
+    .locator(
+      '.bn-block-outer[data-id="keyboard-mermaid"], .bn-block-outer[data-id="keyboard-tail"]',
+    )
+    .evaluateAll((blocks) =>
+      blocks.map((block) => block.getAttribute("data-id")),
+    );
+  expect(blockOrder).toEqual(["keyboard-mermaid", "keyboard-tail"]);
+  await source.press("End");
+  await source.type(";");
+  await expect(source).toHaveValue("graph TD\n A --> B;");
 });
 
 test("code tokens remain readable on beige in light and dark themes", async ({

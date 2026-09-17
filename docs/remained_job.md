@@ -9,7 +9,7 @@ Each item must be implemented, tested, checked off here, committed, pushed, and 
 ### P0 — Bug fixes
 
 1. [x] Fix checklist paste so text does not create an unconditional extra line. Multi-line paste at a mid-line caret must keep the first and last fragments attached to checklist items, preserve checklist types, save, and reload correctly.
-2. [ ] Repair the Mermaid editor so its source field can be opened, edited, rendered, saved, and reloaded, including useful invalid-source feedback.
+2. [x] Repair the Mermaid editor so its source field owns keyboard input instead of triggering stale checklist and block-movement shortcuts; verify character-by-character editing, rendering, invalid-source recovery, save, and reload.
 
 ### P1 — UI/UX and styling
 

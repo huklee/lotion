@@ -4,6 +4,12 @@
 
 Corrected the repository workflow after feature pull requests were stacked on other feature branches, allowing GitHub to mark intermediate PRs merged without integrating their changes into `main`. The root agent instructions and development/version guides now require one branch created from current `origin/main`, one PR whose base is `main`, successful required checks, an actual merge, and ancestry verification before the next backlog item begins. Documentation-only workflow correction; no application version change.
 
+## 2026-09-16T22:27:15+09:00 — 0.7.2 Mermaid editor input isolation prepared
+
+Reproduced the reported Mermaid editor failure as an event-ownership defect. Because a custom Mermaid textarea sits inside the editor shell while the ProseMirror cursor remains on its previous block, Ctrl/Command+Enter could toggle a stale checklist and Alt+Shift+Arrow could move a document block instead of remaining local to source editing. Editor-level capture and bubble shortcuts now ignore native form controls; global application save remains handled separately.
+
+Strengthened the existing Mermaid scenario to type source character by character instead of using an atomic field fill. Added a regression that proves checklist state and surrounding block order remain unchanged while editing Mermaid source. The two scenarios passed 18/18 focused repetitions across the three browser engines, including render, error recovery, persistence, and reload. The final CI-equivalent gate passed lint/type/build, 120 unit/integration tests, and 129 browser cases in 135.36 seconds. Prepared patch version 0.7.2; no document schema or user data changed.
+
 ## 2026-09-16T22:21:50+09:00 — 0.7.1 checklist paste fix prepared
 
 Replaced block-node insertion for multi-line text pasted into a checklist with one chained editor transaction that inserts each line through the checklist's normal Enter behavior. This preserves the current item's prefix, moves its suffix onto the final pasted checklist line, retains checklist types, avoids the synthetic empty paragraph produced by inserting closed block nodes at an inline selection, and keeps the paste as one editor transaction. Single-line checklist and callout paste behavior is unchanged.

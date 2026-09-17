@@ -435,6 +435,8 @@ export default function Editor({
         if (control) setSelected([]);
       }}
       onKeyDownCapture={(e) => {
+        if ((e.target as HTMLElement).closest("input, textarea, select"))
+          return;
         const color = textColors.find((candidate) =>
           matchesFormattingShortcut(
             e.nativeEvent,
@@ -626,6 +628,8 @@ export default function Editor({
         openPasteLink(value);
       }}
       onKeyDown={(e) => {
+        if ((e.target as HTMLElement).closest("input, textarea, select"))
+          return;
         if (e.key === "Escape") setSelected([]);
         if (
           e.altKey &&
