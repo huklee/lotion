@@ -188,7 +188,7 @@ test("browser favicon follows the current page icon and resets outside a page", 
   await expect.poll(decodedFavicon).not.toContain("📄");
 });
 
-test("toggle, callout and database blocks work and code uses beige and red", async ({
+test("typed database rows are child pages and other custom blocks persist", async ({
   page,
 }) => {
   await seed(page, "Block menu", [
@@ -232,10 +232,26 @@ test("toggle, callout and database blocks work and code uses beige and red", asy
   await page.keyboard.type("/database");
   await page
     .getByRole("option")
-    .filter({ hasText: "editable table database" })
+    .filter({ hasText: "Typed properties with child-page rows" })
     .click();
-  await expect(page.locator(".tiptap table")).toContainText("Name");
-  await expect(page.locator(".tiptap table")).toContainText("Status");
+  const database = page.locator(".lotion-database");
+  await expect(database.getByLabel("Status property name")).toHaveValue(
+    "Status",
+  );
+  await database.getByRole("button", { name: "New row page" }).click();
+  const rowLink = database.getByRole("button", { name: /Untitled row/ });
+  await expect(rowLink).toBeVisible();
+  await database
+    .getByLabel("Status for Untitled row")
+    .selectOption("In progress");
+  await database.getByLabel("Done for Untitled row").check();
+  await database.getByLabel("Due for Untitled row").fill("2026-09-30");
+  await database.getByLabel("Estimate for Untitled row").fill("8");
+  await database.getByLabel("Notes for Untitled row").fill("Typed row value");
+  await database.getByLabel("Notes property name").fill("Context");
+  await database.getByLabel("Property type").selectOption("select");
+  await database.getByRole("button", { name: "Add property" }).click();
+  await expect(database.getByLabel("Select 2 property name")).toBeVisible();
   await page.locator(".tiptap .bn-inline-content").last().click();
   await page.keyboard.type("/callout");
   await page.getByRole("option").filter({ hasText: "important note" }).click();
@@ -256,5 +272,34 @@ test("toggle, callout and database blocks work and code uses beige and red", asy
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
   await expect(page.locator(".lotion-callout")).toContainText("Remember this");
-  await expect(page.locator(".tiptap table")).toContainText("Status");
+  await expect(database.getByLabel("Status for Untitled row")).toHaveValue(
+    "In progress",
+  );
+  await expect(database.getByLabel("Done for Untitled row")).toBeChecked();
+  await expect(database.getByLabel("Due for Untitled row")).toHaveValue(
+    "2026-09-30",
+  );
+  await expect(database.getByLabel("Estimate for Untitled row")).toHaveValue(
+    "8",
+  );
+  await expect(database.getByLabel("Context for Untitled row")).toHaveValue(
+    "Typed row value",
+  );
+  await rowLink.click();
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "Untitled row",
+  );
+  await page.getByRole("textbox", { name: "Page title" }).fill("Roadmap row");
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.goBack();
+  await expect(
+    database.getByRole("button", { name: /Roadmap row/ }),
+  ).toBeVisible();
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(
+    database.getByRole("button", { name: /Roadmap row/ }),
+  ).toBeVisible();
 });

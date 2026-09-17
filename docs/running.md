@@ -2,7 +2,7 @@
 
 ## Editor additions
 
-Type `/page` for a subpage, `/toc` for a live heading index, `/callout` for a note, `/database` for an editable table, and `/mermaid` for a diagram with editable source. Mermaid previews are non-interactive, support source up to 20,000 characters, and export/import as fenced `mermaid` Markdown, including whole-folder workflows.
+Type `/page` for a subpage, `/toc` for a live heading index, `/callout` for a note, `/database` for a typed child-page table, and `/mermaid` for a diagram with editable source. Database rows are real child pages; the embedded view supports text, number, select, checkbox, and date properties plus property addition/renaming. Mermaid previews are non-interactive, support source up to 20,000 characters, and export/import as fenced `mermaid` Markdown, including whole-folder workflows.
 
 Use `@` or `[[` to mention workspace pages. Page references are chips whose title and icon follow current workspace metadata. `@date` opens the keyboard-accessible calendar and inserts a validated ISO date atom; `@file` uploads a file up to 20 MB and inserts an authenticated download reference. Pasting a URL offers a chooser beside the cursor block: **Paste as mention** creates an external chip and requests public OpenGraph metadata, while **Paste as URL** keeps the literal address as an underlined link. Saved previews refresh after 15 minutes on hover and retain their prior metadata if refresh fails. The fetcher supports validated IPv4, IPv6, and NAT64 destinations while refusing private-network targets at every redirect. Exact bundles retain all typed references and cached preview metadata; portable Markdown retains page/external/file links and asset bytes, while dates become readable `📅 YYYY-MM-DD` text.
 

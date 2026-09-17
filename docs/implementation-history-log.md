@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-17T23:46:39+09:00 — 0.15.0 typed database row pages prepared
+
+Replaced `/database`'s ordinary table alias with a dedicated validated custom block. One table view supports bounded text, number, select, checkbox, and date properties. Every row is created as a normal child document, opens through application navigation, and derives its visible title/icon from the current tree. The shared database model owns parsing, bounds, typed values, search text, and Markdown formatting; the React block owns only editing and page actions. [ADR-023](adr/023-typed-database-rows.md) records the deliberately excluded view/query/formula scope.
+
+Focused model/schema/Markdown/search/portability coverage passed 47/47 and the create/edit/save/reload/navigate/rename browser flow passed 3/3 across Chromium, Firefox, and WebKit. The new exact-bundle test exposed that internal links inside serialized database props initially bypassed generic URL remapping; the bundle mapper now handles typed row links and the regression passes. The final CI-equivalent gate passed lint/type/build, 164 unit/integration tests, and 150 browser cases in 165.67 seconds. Publication evidence follows. User data under `data/` was untouched.
+
 ## 2026-09-17T23:26:07+09:00 — 0.14.0 file and date references prepared
 
 Extended the existing custom mention node instead of introducing emoji/text heuristics. `@date` now inserts an ISO-validated semantic time atom, and `@file` opens an accessible picker that uploads through the established 20 MB content-addressed asset boundary. File activation performs an authenticated fetch before starting a named browser download; cancelling the picker aborts an in-flight request. The picker, download behavior, and reference renderer remain separate from the editor composition root, which stays below the project's automatic 1,000-line refactoring threshold.
