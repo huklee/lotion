@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-09-18T06:41:50+09:00 — direct-to-main delivery workflow established
+
+Corrected the repository workflow after feature pull requests were stacked on other feature branches, allowing GitHub to mark intermediate PRs merged without integrating their changes into `main`. The root agent instructions and development/version/backlog handover guides now require one branch created from current `origin/main`, one PR whose base is `main`, successful required checks, an actual merge, and ancestry verification before the next backlog item begins. Documentation-only workflow correction; no application version change.
+
 ## 2026-09-18T00:05:09+09:00 — 0.16.0 storage diagnosis and reconciliation prepared
 
 Added an offline workspace doctor because storage corruption can prevent the web application from starting. Its read-only inventory distinguishes committed history from future/unknown orphan snapshots and reports missing files, symlinks, malformed JSON, envelope/schema failures, external semantic changes, missing parents, and hierarchy cycles without logging document bodies. Version-1 manifests now record canonical document hashes after legacy workspaces pass existing validation.

@@ -42,7 +42,7 @@ They are copied from the global Codex session store, retained read-only as a his
 ## Current status and open work
 
 - Git remote was verified at `555d7b4` when this handover was created. Check `git status --branch` and `git log` before working; later commits may exist.
-- The complete backlog and acceptance criteria live in `docs/remained_job.md`. Backend-indexed workspace search is the first completed existing-backlog item after the six-item sequence. Continue the remaining backlog one item per stacked pull request.
+- The complete backlog and acceptance criteria live in `docs/remained_job.md`. Continue one item at a time using a branch created from current `origin/main`; every pull request must target and be merged into `main` before the next item starts. Stacked feature-branch pull requests are prohibited.
 - The reported server pages returned HTTP 200. The specific user browser conflict draft cannot be inspected from a separate browser/session; verify it through the UI and retain a recovery copy before choosing a conflicting version.
 
 ## Important implementation decisions

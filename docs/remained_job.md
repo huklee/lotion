@@ -1,10 +1,10 @@
 # Remaining jobs
 
-Historical completed work lives in the [implementation history](implementation-history-log.md), [test results](test-results.md), and [changelog](changelog.md). The completed sequence remains visible below for review across its six incremental pull requests.
+Historical completed work lives in the [implementation history](implementation-history-log.md), [test results](test-results.md), and [changelog](changelog.md). Every remaining item must use its own branch created from current `origin/main`, a pull request targeting `main`, successful CI, and a completed merge before the next item begins.
 
 ## Completed incremental sequence — 2026-09-16
 
-Each item must be implemented, tested, checked off here, committed, pushed, and submitted as its own pull request before moving to the next item.
+Each item must be implemented, tested, checked off here, committed, pushed, submitted as its own `main` pull request, and merged before moving to the next item. Stacked feature-branch pull requests are not delivery.
 
 ### P0 — Bug fixes
 
