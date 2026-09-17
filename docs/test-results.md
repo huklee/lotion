@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-16T23:03:58+09:00 — 0.11.0 integrated-settings focused verification
+
+The preference unit group passed **3/3** cases, including supported font restoration and fallback from an unsupported stored font. The integrated display-settings scenario passed **9/9** repeated cases across Chromium, Firefox, and WebKit. It verifies immediate scheme, font, text-size and page-width preview; startup-sidebar behavior; reload persistence; and the combined reset.
+
+The first browser run exposed that BlockNote's own `.bn-root` font variable overrode the workspace font. Connecting the preference to that actual theme root fixed the document surface while retaining the shared application font variable. A production build and strict TypeScript check passed before the repeated browser run.
+
+The final CI-equivalent `CI=1 npm run check` exited **0** in **143.37 seconds** on macOS arm64 (Node 25.8.2, npm 11.11.1): lint, strict TypeScript, production build, **128/128 unit and integration tests**, and **138/138 Playwright cases** passed with two workers. The production build retained the known non-failing large-chunk warning. User data under `data/` was untouched.
+
 ## 2026-09-16T22:50:57+09:00 — 0.10.0 pastel color-system focused verification
 
 The centralized palette's unit coverage passed for all 54 contrast combinations: nine text and nine background choices in light, dark, and black. Each combination meets a 4.5:1 minimum. The related preference and shortcut unit group passed **9/9** cases.

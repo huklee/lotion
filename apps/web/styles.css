@@ -1,5 +1,6 @@
 :root {
-  font-family: "DM Sans", sans-serif;
+  --workspace-font: "DM Sans", sans-serif;
+  font-family: var(--workspace-font);
   color: #343732;
   background: #fff;
   --bg: #fff;
@@ -12,6 +13,18 @@
   --soft: #edf0e8;
   --card: #fafbf8;
   font-synthesis: none;
+}
+[data-editor-font="manrope"] {
+  --workspace-font: "Manrope", sans-serif;
+}
+[data-editor-font="system"] {
+  --workspace-font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+[data-editor-font="serif"] {
+  --workspace-font: Georgia, "Times New Roman", serif;
+}
+[data-editor-font="monospace"] {
+  --workspace-font: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 * {
   box-sizing: border-box;
@@ -660,6 +673,10 @@ h1 span {
   cursor: crosshair;
   user-select: none;
 }
+.bn-root {
+  --bn-font-family: var(--workspace-font);
+  font-family: var(--workspace-font);
+}
 .bn-container.bn-root {
   --bn-colors-editor-background: var(--bg);
   --bn-colors-editor-text: var(--text);
@@ -681,9 +698,9 @@ h1 span {
   --bn-colors-highlights-purple-background: var(--lotion-purple-background);
   --bn-colors-highlights-pink-text: var(--lotion-pink-text);
   --bn-colors-highlights-pink-background: var(--lotion-pink-background);
-  font-family: "DM Sans", sans-serif !important;
 }
 .bn-editor {
+  font-family: var(--workspace-font);
   font-size: 14px;
   line-height: 1.8;
   padding: 0 48px !important;
@@ -1126,6 +1143,9 @@ h1 span {
     600 13px "Manrope",
     sans-serif;
   margin: 28px 0 4px;
+}
+.settings-heading-first {
+  margin-top: 20px;
 }
 .settings-description {
   margin-top: 0 !important;
