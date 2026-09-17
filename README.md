@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.15.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.16.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -32,6 +32,8 @@ npm run dev
 Open **http://127.0.0.1:5173**; the development frontend proxies API requests to port 3001.
 
 Optional environment variables: `LOTION_DATA_DIR` (default `data`), `PORT` (default `3001`), `HOST` (default `127.0.0.1`), and `LOTION_TOKEN`. Non-loopback access requires a token and an HTTPS reverse proxy. See the [runbook](docs/running.md) for configuration and backup/restore.
+
+If startup reports a missing, malformed, cyclic, or externally changed document snapshot, stop every backend using that workspace and run `npm run doctor -- --data-dir <workspace>`. The doctor is read-only unless an exact reviewed plan is supplied with `--apply`; see the [diagnosis and reconciliation runbook](docs/running.md#workspace-diagnosis-and-reconciliation).
 
 ## About
 

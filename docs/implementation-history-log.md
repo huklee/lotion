@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-18T00:05:09+09:00 — 0.16.0 storage diagnosis and reconciliation prepared
+
+Added an offline workspace doctor because storage corruption can prevent the web application from starting. Its read-only inventory distinguishes committed history from future/unknown orphan snapshots and reports missing files, symlinks, malformed JSON, envelope/schema failures, external semantic changes, missing parents, and hierarchy cycles without logging document bodies. Version-1 manifests now record canonical document hashes after legacy workspaces pass existing validation.
+
+Reconciliation requires a reviewed plan bound to the exact report token. It rechecks state under the writer lock, copies only named valid sources into revisions greater than every known/manifest revision, validates the full resulting hierarchy, archives the old manifest/report/plan, and atomically publishes without deleting or overwriting snapshots. Focused repository/doctor coverage passed 24/24 after regressions exposed and fixed revision-number reuse when a manifest-referenced latest file was missing and required complete integrity maps after legacy migration. [ADR-024](adr/024-storage-diagnostics-and-reconciliation.md) records why automatic candidate selection and orphan deletion remain forbidden. The final CI-equivalent gate passed lint/type/build, 170 unit/integration tests, and 150 browser cases in 171.25 seconds. Publication evidence follows. User data under `data/` was untouched.
+
 ## 2026-09-17T23:46:39+09:00 — 0.15.0 typed database row pages prepared
 
 Replaced `/database`'s ordinary table alias with a dedicated validated custom block. One table view supports bounded text, number, select, checkbox, and date properties. Every row is created as a normal child document, opens through application navigation, and derives its visible title/icon from the current tree. The shared database model owns parsing, bounds, typed values, search text, and Markdown formatting; the React block owns only editing and page actions. [ADR-023](adr/023-typed-database-rows.md) records the deliberately excluded view/query/formula scope.

@@ -1,12 +1,12 @@
 # Codex handover: Yestion to Lotion
 
-Updated: 2026-09-16. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
+Updated: 2026-09-18. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Prepared application checkpoint 0.15.0 adds a bounded typed database block whose rows are real child pages, with exact-bundle preservation and static-table Markdown degradation. Backend-indexed workspace search remains replaceable by a future OpenSearch adapter as documented in ADR-020. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
+Prepared application checkpoint 0.16.0 adds offline storage diagnosis and exact, reviewed, non-destructive reconciliation plans. Canonical revision hashes detect external edits; malformed manifests still require a known-good backup. Backend-indexed workspace search remains replaceable by a future OpenSearch adapter as documented in ADR-020. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.15.0**. Publication commit and CI evidence are recorded after push. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.16.0**. Publication commit and CI evidence are recorded after push. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -31,7 +31,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this typed database feature release is 0.15.0.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this storage-diagnosis feature release is 0.16.0.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.

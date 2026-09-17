@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-09-18T00:05:09+09:00 — 0.16.0 storage diagnosis focused verification
+
+Strict TypeScript, ESLint, and the repository/doctor integration group passed. The focused group passed **24/24** cases, including read-only detection of missing, malformed, orphaned, externally edited, and cyclic snapshots; exact candidate reporting; complete legacy manifest-hash migration; partial integrity-map rejection; explicit detach recovery; recovery metadata; monotonic new revisions; clean restart; stale-plan rejection; and rejection of a drop that would orphan a child without deleting its snapshot. The first recovery assertion found that a missing latest file could cause its manifest revision number to be reused; target numbering now includes both inventory and manifest state, and the corrected regression passes.
+
+The final `CI=1 npm run check` exited **0** in **171.25 seconds**: lint, strict TypeScript, the production build, **170/170 unit and integration tests**, and **150/150 Playwright cases** passed with two workers. Prettier and `git diff --check` passed; documentation validation found **36 Markdown files, 167 local links, and zero missing targets**. The production build retained the known non-failing large-chunk warning. No command accessed or changed user data under `data/`.
+
 ## 2026-09-17T23:46:39+09:00 — 0.15.0 typed database focused verification
 
 The database model, document schema, Markdown, search, and portability group passed **47/47** cases. Coverage includes every supported property type, invalid select/date/number/checkbox values, column/row bounds, searchable output, static-table Markdown warnings, exact custom-block preservation, and internal row-page ID remapping.

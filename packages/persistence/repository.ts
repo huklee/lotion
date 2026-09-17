@@ -22,6 +22,7 @@ type Manifest = {
   schemaVersion: 1;
   documents: Record<string, number>;
   receipts: Record<string, { digest: string; ids: string[] }>;
+  documentHashes: Record<string, string>;
 };
 export type FaultStage =
   "afterWrite" | "afterSync" | "afterRename" | "beforeManifest";
@@ -33,6 +34,7 @@ export class Repository {
     schemaVersion: 1,
     documents: {},
     receipts: {},
+    documentHashes: {},
   };
   private tail: Promise<unknown> = Promise.resolve();
   private release?: () => Promise<void>;
@@ -81,7 +83,24 @@ export class Repository {
       if (
         this.manifest.schemaVersion !== 1 ||
         !this.manifest.documents ||
-        !this.manifest.receipts
+        !this.manifest.receipts ||
+        (this.manifest.documentHashes !== undefined &&
+          (!this.manifest.documentHashes ||
+            typeof this.manifest.documentHashes !== "object" ||
+            Array.isArray(this.manifest.documentHashes)))
+      )
+        throw new Error("Unsupported or corrupt workspace manifest");
+      const legacyHashes = this.manifest.documentHashes === undefined;
+      this.manifest.documentHashes ??= {};
+      if (
+        !legacyHashes &&
+        (Object.keys(this.manifest.documentHashes).length !==
+          Object.keys(this.manifest.documents).length ||
+          Object.entries(this.manifest.documentHashes).some(
+            ([id, value]) =>
+              this.manifest.documents[id] === undefined ||
+              !/^[a-f0-9]{64}$/.test(value),
+          ))
       )
         throw new Error("Unsupported or corrupt workspace manifest");
       for (const [id, revision] of Object.entries(this.manifest.documents)) {
@@ -100,6 +119,13 @@ export class Repository {
         )
           throw new Error("Corrupt document envelope");
         contentSchema.parse(doc);
+        const expectedHash = this.manifest.documentHashes[id];
+        if (!legacyHashes && !expectedHash)
+          throw new Error("Unsupported or corrupt workspace manifest");
+        if (expectedHash && expectedHash !== digest(doc))
+          throw new Error(
+            "Document changed outside Lotion; stop the server and run npm run doctor",
+          );
         this.docs.set(id, doc);
         this.indexForSearch(doc);
       }
@@ -112,6 +138,15 @@ export class Repository {
           seen.add(parent);
           parent = this.docs.get(parent)!.parentId;
         }
+      }
+      if (legacyHashes) {
+        this.manifest.documentHashes = Object.fromEntries(
+          [...this.docs].map(([id, doc]) => [id, digest(doc)]),
+        );
+        await this.atomic(
+          path.join(this.root, "workspace.json"),
+          JSON.stringify(this.manifest),
+        );
       }
     } catch (error) {
       await this.release();
@@ -177,6 +212,7 @@ export class Repository {
       const failed = results.find((result) => result.status === "rejected");
       if (failed?.status === "rejected") throw failed.reason;
       for (const doc of batch) next.documents[doc.id] = doc.revision;
+      for (const doc of batch) next.documentHashes[doc.id] = digest(doc);
     }
     if (receipt)
       next.receipts[receipt.id] = {
