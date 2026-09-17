@@ -29,7 +29,7 @@ it("imports a whole nested folder, images and internal links", async () => {
     [
       entry(
         "Notes/index.md",
-        "# Hello\n\n[Child](Research/topic.md)\n\n![image](assets/a.png)",
+        "# Hello\n\n[Child](Research/topic.md)\n\n[📎 brief](assets/brief.txt)\n\n![image](assets/a.png)",
       ),
       entry(
         "Notes/Research/topic.md",
@@ -39,6 +39,7 @@ it("imports a whole nested folder, images and internal links", async () => {
         path: "Notes/assets/a.png",
         bytes: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
       },
+      entry("Notes/assets/brief.txt", "portable attachment"),
     ],
     crypto.randomUUID(),
   );
@@ -52,52 +53,91 @@ it("imports a whole nested folder, images and internal links", async () => {
   ).toBe("graph TD\n A --> B");
   expect(JSON.stringify(notes.blocks)).toContain(`#/page/${topic.id}`);
   expect(JSON.stringify(notes.blocks)).toContain("/api/assets/");
-});
-it.each(["lotion", "yestion"])("%s exact bundle restores image bytes and rich layout", async (format) => {
-  const d = await repo.create("Original", null, crypto.randomUUID());
-  const asset = await repo.putAsset(
-    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
-    "x.png",
+  const fileLink = JSON.stringify(notes.blocks).match(
+    /"type":"link","href":"(\/api\/assets\/[a-f0-9]{64}\.bin)"/,
   );
-  const saved = await repo.save(
-    d.id,
-    1,
-    {
-      title: "Original",
-      icon: "🧭",
-      linkPreviews: {
-        "https://example.com": { title: "Preview title", image: asset.url },
+  expect(fileLink?.[1]).toBeTruthy();
+  expect(await repo.asset(fileLink![1].split("/").at(-1)!)).toEqual(
+    Buffer.from("portable attachment"),
+  );
+});
+it.each(["lotion", "yestion"])(
+  "%s exact bundle restores image bytes and rich layout",
+  async (format) => {
+    const d = await repo.create("Original", null, crypto.randomUUID());
+    const asset = await repo.putAsset(
+      Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+      "x.png",
+    );
+    const saved = await repo.save(
+      d.id,
+      1,
+      {
+        title: "Original",
+        icon: "🧭",
+        linkPreviews: {
+          "https://example.com": { title: "Preview title", image: asset.url },
+        },
+        blocks: [
+          {
+            id: "diagram",
+            type: "mermaid",
+            props: { code: "graph TD\n A --> B" },
+            children: [],
+          },
+          {
+            id: "img",
+            type: "image",
+            props: { url: asset.url, previewWidth: 321, caption: "hello" },
+          },
+          {
+            id: "references",
+            type: "paragraph",
+            content: [
+              {
+                type: "mention",
+                props: {
+                  kind: "file",
+                  href: asset.url,
+                  label: "x.png",
+                  icon: "📎",
+                  value: "",
+                },
+              },
+              { type: "text", text: " ", styles: {} },
+              {
+                type: "mention",
+                props: {
+                  kind: "date",
+                  href: "",
+                  label: "2026-09-17",
+                  icon: "📅",
+                  value: "2026-09-17",
+                },
+              },
+            ],
+          },
+        ],
       },
-      blocks: [
-        {
-          id: "diagram",
-          type: "mermaid",
-          props: { code: "graph TD\n A --> B" },
-          children: [],
-        },
-        {
-          id: "img",
-          type: "image",
-          props: { url: asset.url, previewWidth: 321, caption: "hello" },
-        },
-      ],
-    },
-    crypto.randomUUID(),
-  );
-  const bundle = await exportBundle(repo);
-  const entries = await readZip(bundle.bytes);
-  const manifestEntry = entries.find(entry => entry.path.endsWith("manifest.json"))!;
-  const manifest = JSON.parse(manifestEntry.bytes.toString());
-  expect(manifest.format).toBe("lotion");
-  manifest.format = format;
-  manifestEntry.bytes = Buffer.from(JSON.stringify(manifest));
-  const imported = await importEntries(repo, entries, crypto.randomUUID());
-  expect(imported.documents).toHaveLength(1);
-  expect(imported.documents[0].blocks).toEqual(saved.blocks);
-  expect(imported.documents[0].icon).toBe("🧭");
-  expect(imported.documents[0].linkPreviews).toEqual(saved.linkPreviews);
-  expect(imported.documents[0].id).not.toBe(saved.id);
-});
+      crypto.randomUUID(),
+    );
+    const bundle = await exportBundle(repo);
+    const entries = await readZip(bundle.bytes);
+    const manifestEntry = entries.find((entry) =>
+      entry.path.endsWith("manifest.json"),
+    )!;
+    const manifest = JSON.parse(manifestEntry.bytes.toString());
+    expect(manifest.format).toBe("lotion");
+    manifest.format = format;
+    manifestEntry.bytes = Buffer.from(JSON.stringify(manifest));
+    const imported = await importEntries(repo, entries, crypto.randomUUID());
+    expect(imported.documents).toHaveLength(1);
+    expect(imported.documents[0].blocks).toEqual(saved.blocks);
+    expect(imported.documents[0].icon).toBe("🧭");
+    expect(imported.documents[0].linkPreviews).toEqual(saved.linkPreviews);
+    expect(imported.documents[0].id).not.toBe(saved.id);
+  },
+);
 it("detects modified Markdown instead of silently selecting stale snapshots", async () => {
   await repo.create("Page", null, crypto.randomUUID());
   const entries = await readZip((await exportBundle(repo)).bytes);

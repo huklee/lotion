@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.14.0 — 2026-09-17
+
+### Added
+
+- The `@` picker can upload a file up to 20 MB and insert a typed, downloadable file reference backed by the immutable workspace asset store.
+- Calendar insertion now creates a validated ISO date reference rendered as semantic time content instead of emoji-prefixed plain text.
+
+### Improved
+
+- File activation downloads through an authenticated fetch, including in token-protected workspaces. Picker cancellation aborts an active upload without inserting a reference.
+- Exact bundles preserve file and date reference types. Portable Markdown emits files as standard links with bundled asset bytes and dates as readable `📅 YYYY-MM-DD` text; importing portable Markdown intentionally produces ordinary links/text.
+
+No schema-version migration is required. Existing page/external mentions and legacy plain-text dates remain valid; they are not guessed into new types. [ADR-022](adr/022-file-and-date-references.md) records validation, navigation, keyboard, and portability rules. Verification is recorded in [test results](test-results.md).
+
 ## 0.13.0 — 2026-09-17
 
 ### Added

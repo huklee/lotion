@@ -180,6 +180,11 @@ function toInline(content: any): any[] {
     if (item.type === "mention") {
       const label = String(item.props?.label ?? "Untitled");
       const icon = String(item.props?.icon ?? "");
+      if (item.props?.kind === "date")
+        return {
+          type: "text",
+          value: [icon, label].filter(Boolean).join(" "),
+        };
       return {
         type: "link",
         url: String(item.props?.href ?? ""),
