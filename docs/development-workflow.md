@@ -10,6 +10,14 @@ Record every major completed work item in [implementation history log](implement
 
 For each feature: define acceptance criteria -> identify risks/test cases -> implement a small vertical slice -> execute applicable checks -> fix failures -> rerun -> update implementation/results/decision records. Do not hand off known routine failures as completed work.
 
+## Pull-request integration loop
+
+One completed fix or feature maps to one branch, one pull request targeting `main`, and one merge into `main`. Start the branch from current `origin/main`; never start the next item from an unmerged feature branch. A stacked pull request targeting another work branch can make GitHub show “merged” while leaving `main` unchanged, so it is prohibited for this repository.
+
+After local verification, push the branch, open the pull request with `main` as its base, confirm the head commit and diff, wait for every required check, and merge it. Fetch `origin/main` and use `git merge-base --is-ancestor <feature-commit> origin/main` (or equivalent PR metadata for a squash merge) to verify delivery. Only then mark the integration complete and branch for the next backlog item. If a prerequisite is pending, finish and merge its own `main` pull request first rather than changing the next PR base.
+
+Documentation-only workflow corrections use the same direct-to-`main` loop but do not require an application version increment. Never force-push or rewrite `main`, and never combine unrelated backlog items merely to repair branch ancestry.
+
 ## Tracking
 
 Use Backlog -> Ready -> In progress -> Review -> Done. Each task names its milestone, dependencies, observable outcome, acceptance criteria, relevant test IDs, documentation impact, and verification evidence. Mark roadmap checkboxes only when their work is complete. Repository Markdown remains the durable record even if an external issue board is used.
@@ -32,20 +40,32 @@ At each milestone review working behavior, failed cases, measurements, and newly
 
 ```markdown
 # Design: <feature>
+
 Status / owner / date:
 Related milestone, issues, ADRs:
 
 ## Problem and user journeys
+
 ## Goals, non-goals, and assumptions
+
 ## Acceptance criteria
+
 ## Components and ownership
+
 ## Data/schema/API changes
+
 ## Concurrency and failure handling
+
 ## Security and resource limits
+
 ## Migration, rollout, and recovery
+
 ## Test cases and execution plan
+
 ## Performance measurement
+
 ## Alternatives and tradeoffs
+
 ## Open questions
 ```
 
@@ -53,6 +73,7 @@ Related milestone, issues, ADRs:
 
 ```markdown
 ## ADR-NNN: <decision>
+
 Date:
 Status: Proposed / Baseline / Validated / Superseded
 Context:
@@ -67,6 +88,7 @@ Revisit when:
 
 ```markdown
 ## <date> — <change>
+
 Milestone / task:
 Behavior implemented:
 Files/components:
@@ -80,6 +102,7 @@ Remaining work/risks:
 
 ```markdown
 ## <date> — <verification run>
+
 Revision or workspace state:
 Environment and versions:
 Scope and test IDs:
