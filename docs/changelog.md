@@ -2,6 +2,22 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.13.0 — 2026-09-17
+
+### Added
+
+- Page and external references now use a validated mention inline type with distinct chip presentation. Raw pasted URLs remain ordinary underlined links.
+- External OpenGraph metadata records its fetch time and refreshes after 15 minutes on hover while retaining saved metadata during lookup or failure.
+- The backend keeps successful preview results in a process-local 15-minute, 256-entry least-recently-used cache, reducing repeated remote fetches and asset writes.
+
+### Improved
+
+- Internal mention titles and icons follow current page metadata immediately in the active editor.
+- Successful external refreshes update both the preview card and matching chip labels. Mention labels are searchable and contribute to table-of-contents text.
+- Legacy internal links and external preview links migrate to typed mentions on open. Exact bundles preserve the type; portable Markdown emits ordinary visible links.
+
+No schema-version migration is required. Existing links remain readable, and the new preview timestamp is optional. [ADR-021](adr/021-reference-chips-and-preview-cache.md) records the compatibility and cache boundaries. Verification is recorded in [test results](test-results.md).
+
 ## 0.12.1 — 2026-09-17
 
 ### Fixed

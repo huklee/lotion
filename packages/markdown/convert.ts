@@ -51,7 +51,12 @@ export function fromMarkdown(markdown: string): {
     return nodes.flatMap((n): Block[] => {
       switch (n.type) {
         case "html":
-          if (["<!-- lotion:table-of-contents -->", "<!-- yestion:table-of-contents -->"].includes(n.value.trim()))
+          if (
+            [
+              "<!-- lotion:table-of-contents -->",
+              "<!-- yestion:table-of-contents -->",
+            ].includes(n.value.trim())
+          )
             return [
               {
                 id: crypto.randomUUID(),
@@ -172,6 +177,20 @@ function toInline(content: any): any[] {
   return content.map((item: Inline) => {
     if (item.type === "link")
       return { type: "link", url: item.href, children: toInline(item.content) };
+    if (item.type === "mention") {
+      const label = String(item.props?.label ?? "Untitled");
+      const icon = String(item.props?.icon ?? "");
+      return {
+        type: "link",
+        url: String(item.props?.href ?? ""),
+        children: [
+          {
+            type: "text",
+            value: [icon, label].filter(Boolean).join(" "),
+          },
+        ],
+      };
+    }
     let node: any = {
       type: item.styles?.code ? "inlineCode" : "text",
       value: item.text ?? "",

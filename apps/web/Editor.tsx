@@ -52,6 +52,8 @@ import {
   type AppliedColorStyle,
 } from "./EditorFormattingToolbar";
 import { normalizeEditorContent } from "./normalize-editor-content";
+import type { MentionKind } from "./MentionInline";
+import { useLinkPreviewRefresh } from "./use-link-preview-refresh";
 
 function pageIdFromHref(href: string): string | null {
   const direct = pageIdFromHash(href);
@@ -192,8 +194,14 @@ export default function Editor({
   );
   const [failed, setFailed] = useState<{ file: File; id: string }[]>([]);
   const [dropLine, setDropLine] = useState<number | null>(null);
-  const [previewHref, setPreviewHref] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState("");
+  const { previewHref, refreshingPreview, setPreviewHref, showLinkPreview } =
+    useLinkPreviewRefresh({
+      editor,
+      previews: initial.linkPreviews,
+      onLinkPreview,
+      setPreviewError,
+    });
   const {
     cancel: cancelPaste,
     choice: pasteChoice,
@@ -356,14 +364,23 @@ export default function Editor({
     for (let i = 0; i < files.length; i++) await finishUpload(files[i], ids[i]);
     setUploadState("");
   }
-  function insertLinkChip(href: string, label: string) {
+  function insertLinkChip(
+    href: string,
+    label: string,
+    mention?: { kind: MentionKind; icon: string },
+  ) {
     editor.insertInlineContent(
       [
-        {
-          type: "link",
-          href,
-          content: [{ type: "text", text: label, styles: {} }],
-        },
+        mention
+          ? {
+              type: "mention",
+              props: { ...mention, href, label },
+            }
+          : {
+              type: "link",
+              href,
+              content: [{ type: "text", text: label, styles: {} }],
+            },
         { type: "text", text: "\u00a0", styles: {} },
       ] as any,
       { updateSelection: true },
@@ -395,6 +412,25 @@ export default function Editor({
     const update = (value: any): any => {
       if (Array.isArray(value)) return value.map(update);
       if (!value || typeof value !== "object") return value;
+      if (
+        value.type === "mention" &&
+        value.props?.kind === "page" &&
+        typeof value.props.href === "string"
+      ) {
+        const pageId = pageIdFromHref(value.props.href);
+        const target = pageId
+          ? pages.find((page) => page.id === pageId)
+          : undefined;
+        const label = target?.title;
+        const icon = target?.icon ?? "📄";
+        if (
+          target &&
+          (value.props.label !== label || value.props.icon !== icon)
+        ) {
+          changed = true;
+          return { ...value, props: { ...value.props, label, icon } };
+        }
+      }
       if (value.type === "link" && typeof value.href === "string") {
         const pageId = pageIdFromHref(value.href);
         const target = pageId
@@ -518,7 +554,7 @@ export default function Editor({
         const href = (event.target as HTMLElement)
           .closest("a[href]")
           ?.getAttribute("href");
-        if (href && initial.linkPreviews?.[href]) setPreviewHref(href);
+        if (href) showLinkPreview(href);
       }}
       onPasteCapture={(event) => {
         // Custom block inputs own their paste events (including Mermaid source).
@@ -805,6 +841,7 @@ export default function Editor({
       {previewHref && initial.linkPreviews?.[previewHref] && (
         <LinkPreviewCard
           preview={initial.linkPreviews[previewHref]}
+          refreshing={refreshingPreview === previewHref}
           onClose={() => setPreviewHref(null)}
         />
       )}

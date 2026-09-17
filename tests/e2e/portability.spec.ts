@@ -36,7 +36,9 @@ test("whole folder import, nested assets, ZIP download", async ({ page }) => {
     await expect(
       page.getByRole("heading", { name: "Imported folder", level: 1 }),
     ).toBeVisible();
-    await expect(page.locator(".tiptap img")).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: "diagram", exact: true }),
+    ).toBeVisible();
     await expect(
       page.getByRole("navigation").getByText(topic, { exact: true }),
     ).toBeVisible();

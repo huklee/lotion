@@ -196,6 +196,8 @@ Provide slash commands, keyboard-accessible block movement, undo/redo, paste han
 
 Serve UI/API on one origin. Bind loopback by default. Remote access requires authentication and TLS. Protect asset routes too. Apply origin/CSRF protection appropriate to the chosen session scheme. Deny traversal and symlink escapes; validate file signatures and serving content types. Imported HTML/MDX never executes. Use an embed provider allowlist and sandboxing. Link previews pin a filtered set of public DNS answers for each request and redirect; IPv4-embedded NAT64 destinations must pass the same public-address policy before connecting.
 
+Page and external references use a typed BlockNote mention inline node; raw URLs remain ordinary links. Legacy internal links and links backed by saved preview metadata migrate on open. External preview metadata is canonical document state with an optional fetch timestamp, while the 15-minute/256-entry server LRU is disposable process-local state. See [ADR-021](adr/021-reference-chips-and-preview-cache.md).
+
 ## Performance and operations
 
 Initial workload: 10,000 page metadata entries, a 500-block active document, and a documented asset corpus. Establish a named reference environment in Milestone 0, then set numerical budgets for input, open, save (excluding debounce), index rebuild, and memory. Do not claim benchmark performance before measurement.

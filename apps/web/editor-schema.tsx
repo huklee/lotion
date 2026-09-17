@@ -2,10 +2,12 @@ import {
   BlockNoteSchema,
   createCodeBlockSpec,
   defaultBlockSpecs,
+  defaultInlineContentSpecs,
 } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { useEffect, useState } from "react";
 import { MermaidBlock } from "./MermaidBlock";
+import { mentionInline } from "./MentionInline";
 
 type Heading = { id: string; level: number; title: string };
 
@@ -15,6 +17,14 @@ function inlineText(content: unknown): string {
     .map((item) => {
       if (!item || typeof item !== "object") return "";
       if ("text" in item && typeof item.text === "string") return item.text;
+      if (
+        "props" in item &&
+        item.props &&
+        typeof item.props === "object" &&
+        "label" in item.props &&
+        typeof item.props.label === "string"
+      )
+        return item.props.label;
       if ("content" in item) return inlineText(item.content);
       return "";
     })
@@ -109,6 +119,10 @@ const callout = createReactBlockSpec(
 )();
 
 export const editorSchema = BlockNoteSchema.create({
+  inlineContentSpecs: {
+    ...defaultInlineContentSpecs,
+    mention: mentionInline,
+  },
   blockSpecs: {
     ...defaultBlockSpecs,
     codeBlock: createCodeBlockSpec({

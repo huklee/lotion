@@ -27,9 +27,11 @@ function PreviewImage({ url }: { url: string }) {
 
 export function LinkPreviewCard({
   preview,
+  refreshing,
   onClose,
 }: {
   preview: LinkPreview;
+  refreshing?: boolean;
   onClose: () => void;
 }) {
   return (
@@ -38,6 +40,7 @@ export function LinkPreviewCard({
         ×
       </button>
       <strong>{preview.title}</strong>
+      {refreshing && <small role="status">Refreshing preview…</small>}
       <p>{preview.description}</p>
       {preview.image && <PreviewImage url={preview.image} />}
     </aside>
