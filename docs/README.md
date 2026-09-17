@@ -44,8 +44,10 @@ All project plans, design records, implementation notes, test plans, and test re
 16. [Configurable color shortcuts](adr/017-color-shortcuts.md): portable key chords, toolbar hints and last-color reapplication.
 17. [Notion-style block lasso selection](adr/018-block-lasso-selection.md): native text drag preservation, additive/reverse selection, edge scrolling and stable overlays.
 18. [Stable direct block links](adr/019-direct-block-links.md): copyable absolute URLs, deep-link routing, target reveal and deleted-target behavior.
-19. [TypeScript file and module structure rules](typescript-file-structure.md): SRP boundaries, size limits, dependency direction, extraction gates and the measured refactoring baseline.
-20. [Large-file refactoring plan](typescript-refactoring-plan.md): scoped sequence, acceptance criteria and verification for completing the automatic candidates.
+19. [Backend-indexed workspace search](adr/020-backend-workspace-search.md): derived-index consistency, OpenSearch boundary and measured local default.
+20. [Typed mention chips and preview freshness](adr/021-reference-chips-and-preview-cache.md): reference semantics, legacy migration and bounded OpenGraph caching.
+21. [TypeScript file and module structure rules](typescript-file-structure.md): SRP boundaries, size limits, dependency direction, extraction gates and the measured refactoring baseline.
+22. [Large-file refactoring plan](typescript-refactoring-plan.md): scoped sequence, acceptance criteria and verification for completing the automatic candidates.
 
 ## Current status
 

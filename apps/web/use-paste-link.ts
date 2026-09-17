@@ -12,12 +12,17 @@ import type {
 import { api } from "./api";
 import { pageIdFromHash } from "./block-links";
 import type { LotionEditor } from "./editor.types";
+import type { MentionKind } from "./MentionInline";
 
 type UsePasteLinkOptions = {
   editor: LotionEditor;
   pages: TreeNode[];
   mounted: RefObject<boolean>;
-  insertLinkChip: (href: string, label: string) => void;
+  insertLinkChip: (
+    href: string,
+    label: string,
+    mention?: { kind: MentionKind; icon: string },
+  ) => void;
   onLinkPreview: (url: string, preview: LinkPreview) => void;
   setPreviewHref: (href: string | null) => void;
   setPreviewError: (message: string) => void;
@@ -100,8 +105,11 @@ export function usePasteLink({
     if (!choice || loading) return;
     let label = choice;
     const internalId = pageIdFromHref(choice);
+    const internalPage = internalId
+      ? pages.find((page) => page.id === internalId)
+      : undefined;
     if (asMention && internalId) {
-      label = pages.find((page) => page.id === internalId)?.title ?? label;
+      label = internalPage?.title ?? label;
     } else if (asMention) {
       try {
         label = new URL(choice).hostname.replace(/^www\./, "");
@@ -121,7 +129,7 @@ export function usePasteLink({
           signal: abort.signal,
         });
         if (!mounted.current || abort.signal.aborted) return;
-        label = `📄 ${preview.title}`;
+        label = preview.title;
         onLinkPreview(choice, preview);
         setPreviewHref(choice);
       } catch {
@@ -144,6 +152,12 @@ export function usePasteLink({
     insertLinkChip(
       asMention && internalId ? `#/page/${internalId}` : choice,
       label,
+      asMention
+        ? {
+            kind: internalId ? "page" : "external",
+            icon: internalId ? (internalPage?.icon ?? "📄") : "🌐",
+          }
+        : undefined,
     );
     selectionRef.current = null;
     setChoice(null);

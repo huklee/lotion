@@ -16,7 +16,7 @@ test("page mentions support at-sign and double-bracket shortcuts plus URL chips"
     data: { title: bracketName, mutationId: randomUUID() },
   });
   const bracketTarget = await bracketResponse.json();
-  await seed(page, "Mention source");
+  const source = await seed(page, "Mention source");
   const editor = page.locator(".tiptap");
   await editor.click();
   await page.keyboard.type(`Keep this text @${targetName}`);
@@ -27,6 +27,14 @@ test("page mentions support at-sign and double-bracket shortcuts plus URL chips"
   await expect(
     editor.locator(`a[href="#/page/${bracketTarget.id}"]`),
   ).toHaveCount(1);
+  await page.keyboard.type(" @Mention source");
+  await page.getByRole("option").filter({ hasText: "Mention source" }).click();
+  const selfMention = editor.locator(`a[href="#/page/${source.id}"]`);
+  await expect(selfMention).toHaveClass(/lotion-mention/);
+  await page.getByRole("button", { name: "Change page icon" }).click();
+  await page.getByRole("textbox", { name: "Search emojis" }).fill("compass");
+  await page.getByRole("button", { name: "Use 🧭 compass icon" }).click();
+  await expect(selfMention).toHaveText("🧭 Mention source");
 
   const external =
     "https://techblog-history-younghunjo1.tistory.com/207#google_vignette";
@@ -50,6 +58,7 @@ test("page mentions support at-sign and double-bracket shortcuts plus URL chips"
         title: previewTitle,
         description: "Article summary",
         image: asset.url,
+        fetchedAt: new Date().toISOString(),
       },
     }),
   );
@@ -68,7 +77,10 @@ test("page mentions support at-sign and double-bracket shortcuts plus URL chips"
   await expect(chooser).toBeVisible();
   await chooser.getByRole("button", { name: "Paste as mention" }).click();
   await expect(editor.locator(`a[href="${external}"]`)).toHaveText(
-    `📄 ${previewTitle}`,
+    `🌐 ${previewTitle}`,
+  );
+  await expect(editor.locator(`a[href="${external}"]`)).toHaveClass(
+    /lotion-mention/,
   );
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
@@ -79,6 +91,7 @@ test("page mentions support at-sign and double-bracket shortcuts plus URL chips"
     headers: { "If-Match": String(currentTarget.revision) },
     data: {
       title: "Renamed mention target",
+      icon: "⭐",
       blocks: currentTarget.blocks,
       mutationId: randomUUID(),
     },
@@ -90,9 +103,9 @@ test("page mentions support at-sign and double-bracket shortcuts plus URL chips"
   ).toHaveCount(1);
   await expect(
     editor.locator(`a[href="#/page/${target.id}"]`).first(),
-  ).toHaveText("📄 Renamed mention target");
+  ).toHaveText("⭐ Renamed mention target");
   await expect(editor.locator(`a[href="${external}"]`)).toHaveText(
-    `📄 ${previewTitle}`,
+    `🌐 ${previewTitle}`,
   );
   await expect(editor).toContainText("Keep this text");
   await editor.locator(`a[href="${external}"]`).hover();
@@ -183,5 +196,77 @@ test("paste chooser follows the cursor block and supports cancellation and URL i
     "href",
     "https://example.com/article#section",
   );
+  await expect(line.locator("a")).not.toHaveClass(/lotion-mention/);
+  await expect(line.locator("a")).toHaveCSS(
+    "text-decoration-line",
+    "underline",
+  );
   await expect(chooser).toHaveCount(0);
+});
+
+test("stale external mentions refresh metadata once and persist the new title", async ({
+  page,
+}) => {
+  const href = "https://example.com/stale-preview";
+  const created = await page.request.post("/api/documents", {
+    data: { title: "Refresh preview", mutationId: randomUUID() },
+  });
+  const document = await created.json();
+  await page.request.put(`/api/documents/${document.id}/content`, {
+    headers: { "If-Match": "1" },
+    data: {
+      title: "Refresh preview",
+      blocks: [
+        {
+          id: "stale-mention",
+          type: "paragraph",
+          content: [
+            {
+              type: "mention",
+              props: {
+                kind: "external",
+                href,
+                label: "Old preview title",
+                icon: "🌐",
+              },
+            },
+          ],
+        },
+      ],
+      linkPreviews: {
+        [href]: {
+          title: "Old preview title",
+          description: "Old summary",
+          fetchedAt: "2020-01-01T00:00:00.000Z",
+        },
+      },
+      mutationId: randomUUID(),
+    },
+  });
+  let requests = 0;
+  await page.route("**/api/link-preview", (route) => {
+    requests++;
+    return route.fulfill({
+      json: {
+        title: "Fresh preview title",
+        description: "Fresh summary",
+        fetchedAt: new Date().toISOString(),
+      },
+    });
+  });
+  await page.goto(`/#/page/${document.id}`);
+  const mention = page.locator(`a.lotion-mention[href="${href}"]`);
+  await mention.hover();
+  await expect(mention).toHaveText("🌐 Fresh preview title");
+  await expect(page.getByText("Fresh summary")).toBeVisible();
+  expect(requests).toBe(1);
+  await mention.hover();
+  await page.waitForTimeout(100);
+  expect(requests).toBe(1);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(page.locator(`a.lotion-mention[href="${href}"]`)).toHaveText(
+    "🌐 Fresh preview title",
+  );
 });
