@@ -4,7 +4,7 @@
 
 Type `/page` for a subpage, `/toc` for a live heading index, `/callout` for a note, `/database` for an editable table, and `/mermaid` for a diagram with editable source. Mermaid previews are non-interactive, support source up to 20,000 characters, and export/import as fenced `mermaid` Markdown, including whole-folder workflows.
 
-Use `@` or `[[` to mention workspace pages. Pasting a URL offers a chooser beside the cursor block; Paste as mention requests public OpenGraph metadata and caches an available preview image locally. Failed lookups fall back to a hostname. Links navigate in the same tab. Exact bundles retain page icons and cached preview metadata; portable Markdown retains link text but not preview cards.
+Use `@` or `[[` to mention workspace pages. Pasting a URL offers a chooser beside the cursor block; Paste as mention requests public OpenGraph metadata and caches an available preview image locally. The fetcher supports validated IPv4, IPv6, and NAT64 destinations while refusing private-network targets at every redirect. Failed lookups fall back to a hostname. Links navigate in the same tab. Exact bundles retain page icons and cached preview metadata; portable Markdown retains link text but not preview cards.
 
 Code blocks support JSON, HTML, Python, Go and C++ syntax colors on a fixed beige surface in both themes. Reload an already-open browser tab after rebuilding to load updated styles.
 
@@ -31,12 +31,12 @@ Open `http://127.0.0.1:3001`. This single server serves the built web UI and API
 
 ## Configuration
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `LOTION_DATA_DIR` | `data` | Backend-owned workspace directory |
-| `PORT` | `3001` | Backend HTTP port |
-| `HOST` | `127.0.0.1` | Bind address; non-loopback requires token |
-| `LOTION_TOKEN` | unset | Optional local / required remote bearer token |
+| Variable          | Default     | Meaning                                       |
+| ----------------- | ----------- | --------------------------------------------- |
+| `LOTION_DATA_DIR` | `data`      | Backend-owned workspace directory             |
+| `PORT`            | `3001`      | Backend HTTP port                             |
+| `HOST`            | `127.0.0.1` | Bind address; non-loopback requires token     |
+| `LOTION_TOKEN`    | unset       | Optional local / required remote bearer token |
 
 Set configuration in the process environment. Do not commit tokens. For remote access, configure a strong token and HTTPS reverse proxy; keep the proxy's Host/Origin handling consistent. Authenticate in the browser token dialog. All `/api` routes, including assets, require the configured token. Core document editing has no AI or external service dependency.
 
