@@ -1,12 +1,12 @@
 # Codex handover: Yestion to Lotion
 
-Updated: 2026-09-15. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
+Updated: 2026-09-16. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Prepared application checkpoint 0.7.0 adds copyable stable block URLs with deep-link loading, centered target reveal and viewport-aligned highlighting. Release 0.6.1 preserves the hierarchy and indentation of unselected blocks during deletion. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
+Prepared application checkpoint 0.7.1 fixes multi-line checklist paste so it splits through native checklist behavior without adding an empty paragraph. Release 0.7.0 adds copyable stable block URLs with deep-link loading, centered target reveal and viewport-aligned highlighting. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.7.0**. Publication commit and CI evidence are recorded after push. The 0.6.1 release commit is `090baf0`; [its GitHub CI](https://github.com/huklee/lotion/actions/runs/34980141786) passed the complete gate on Ubuntu / Node 24. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.7.1**. Publication commit and CI evidence are recorded after push. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -31,19 +31,18 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this prepared feature release is 0.7.0.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this prepared bug-fix release is 0.7.1.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.
 - Use `apply_patch` for source edits. Preserve existing user changes and data.
 - Commit functional changes in small units, run focused tests first, then broader checks. Push only after the applicable checks and documentation are updated.
-- The standard command is `npm run check`; it runs lint, type/build, Vitest and the Playwright suite. The latest full local run passed; the old failures below are historical.
+- The standard command is `npm run check`; it runs lint, type/build, Vitest and the Playwright suite. Build before browser tests because Playwright serves the production `dist` output.
 
 ## Current status and open work
 
 - Git remote was verified at `555d7b4` when this handover was created. Check `git status --branch` and `git log` before working; later commits may exist.
-- Latest rename verification: 96 unit/integration tests passed; 67/69 browser tests passed. The full suite still fails on WebKit paste-chooser scroll positioning and a WebKit `ResizeObserver` notification in the failed-subpage/legacy-code scenario.
-- The complete backlog and acceptance criteria live in `docs/remained_job.md`. Prioritize P0 verification regressions, then secure live OpenGraph preview support, link-chip refresh semantics, file/date mentions, richer database scope, filesystem reconciliation, and documentation/platform qualification.
+- The complete backlog and acceptance criteria live in `docs/remained_job.md`. The active sequence starts with Mermaid editor repair, then block-selection, favicon, color-system and integrated-settings work; complete each in its own pull request.
 - The reported server pages returned HTTP 200. The specific user browser conflict draft cannot be inspected from a separate browser/session; verify it through the UI and retain a recovery copy before choosing a conflicting version.
 
 ## Important implementation decisions

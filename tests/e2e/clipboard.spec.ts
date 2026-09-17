@@ -39,7 +39,7 @@ test("checklists toggle by click and shortcut, retain their type on paste, and d
       id: "check-paste",
       type: "checkListItem",
       props: { checked: false },
-      content: [{ type: "text", text: "Task ", styles: {} }],
+      content: [{ type: "text", text: "Task tail", styles: {} }],
     },
   ]);
   const item = page.locator('[data-id="check-paste"]');
@@ -53,8 +53,24 @@ test("checklists toggle by click and shortcut, retain their type on paste, and d
   await item.locator(".bn-inline-content").click();
   await page.keyboard.press("ControlOrMeta+Enter");
   await expect(checkbox).not.toBeChecked();
-  await page.keyboard.press("End");
-  await item.locator(".bn-inline-content").evaluate((element) => {
+  const inline = item.locator(".bn-inline-content");
+  await inline.evaluate((element) => {
+    const text = document
+      .createTreeWalker(element, NodeFilter.SHOW_TEXT)
+      .nextNode();
+    if (!text) throw new Error("Checklist text node is missing");
+    const range = document.createRange();
+    range.setStart(text, 5);
+    range.collapse(true);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  });
+  // Move out and back so every engine synchronizes its DOM selection with
+  // ProseMirror before the synthetic clipboard event is dispatched.
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowLeft");
+  await inline.evaluate((element) => {
     const data = new DataTransfer();
     data.setData("text/plain", "first pasted line\nsecond pasted line");
     const event = new ClipboardEvent("paste", {
@@ -65,17 +81,16 @@ test("checklists toggle by click and shortcut, retain their type on paste, and d
     element.dispatchEvent(event);
   });
   const checklistItems = page.locator('[data-content-type="checkListItem"]');
-  // Engines may discard an empty suffix created by splitting at the caret.
-  // The original task and both pasted lines must all remain checklist items.
-  const checklistCount = await checklistItems.count();
-  expect(checklistCount).toBeGreaterThanOrEqual(3);
-  await expect(page.locator(".tiptap")).toContainText("first pasted line");
-  await expect(page.locator(".tiptap")).toContainText("second pasted line");
+  await expect(checklistItems).toHaveCount(2);
+  await expect(checklistItems.nth(0)).toContainText("Task first pasted line");
+  await expect(checklistItems.nth(1)).toContainText("second pasted linetail");
   await expect(page.locator('[data-content-type="paragraph"]')).toHaveCount(0);
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
-  await expect(checklistItems).toHaveCount(checklistCount);
+  await expect(checklistItems).toHaveCount(2);
+  await expect(checklistItems.nth(0)).toContainText("Task first pasted line");
+  await expect(checklistItems.nth(1)).toContainText("second pasted linetail");
 });
 
 test("single-line checklist paste stays inline and checkbox clicks preserve scroll", async ({
