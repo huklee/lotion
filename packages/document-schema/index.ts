@@ -72,6 +72,14 @@ export function safeUrl(value: string): boolean {
     )
   );
 }
+
+function isIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return (
+    !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value
+  );
+}
 export const contentSchema = z
   .object({
     title: z.string().max(500),
@@ -146,17 +154,36 @@ export const contentSchema = z
                 throw new Error("Invalid link");
               inline(item.content, level + 1);
             } else if (item?.type === "mention") {
+              const props = item.props;
               if (
-                !item.props ||
-                !["page", "external"].includes(item.props.kind) ||
-                typeof item.props.href !== "string" ||
-                typeof item.props.label !== "string" ||
-                item.props.label.length > 500 ||
-                typeof item.props.icon !== "string" ||
-                item.props.icon.length > 32 ||
+                !props ||
+                !["page", "external", "file", "date"].includes(props.kind) ||
+                typeof props.href !== "string" ||
+                typeof props.label !== "string" ||
+                props.label.length > 500 ||
+                typeof props.icon !== "string" ||
+                props.icon.length > 32 ||
+                (props.value !== undefined &&
+                  (typeof props.value !== "string" ||
+                    props.value.length > 100)) ||
                 item.content !== undefined
               )
                 throw new Error("Invalid mention");
+              if (
+                (props.kind === "date" &&
+                  (props.href !== "" ||
+                    typeof props.value !== "string" ||
+                    !isIsoDate(props.value) ||
+                    props.label !== props.value)) ||
+                (props.kind === "file" &&
+                  !/^\/api\/assets\/[a-f0-9]{64}\.(png|jpg|gif|webp|bin)$/.test(
+                    props.href,
+                  )) ||
+                (props.kind !== "date" &&
+                  props.value !== undefined &&
+                  props.value !== "")
+              )
+                throw new Error("Invalid mention reference");
             } else throw new Error("Unknown inline content");
           }
         }

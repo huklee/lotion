@@ -21,6 +21,8 @@ The server canonicalizes preview URLs, caches successful results for 15 minutes,
 
 The document format gains a backward-compatible inline type and optional preview timestamp but keeps schema version 1 because existing readers already preserve generic block JSON and legacy links migrate deterministically. Old exact bundles remain readable. New exact bundles require a reader that understands `mention` to render the chip exactly; portable Markdown remains the interoperability path.
 
+[ADR-022](022-file-and-date-references.md) extends this typed node with file and date semantics without changing the page/external preview rules decided here.
+
 The cache bounds memory and remote fetch frequency per server process but is intentionally not shared across replicas or restarts. A remote page can remain stale for at most the configured TTL after a successful fetch. Cached preview images remain immutable content-addressed assets; asset garbage collection is a separate backlog item.
 
 ## Alternatives

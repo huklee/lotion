@@ -878,6 +878,34 @@ h1 span {
 .lotion-mention-icon {
   font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
 }
+.bn-inline-content time.lotion-mention {
+  cursor: default;
+}
+.file-reference-picker {
+  width: min(460px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--panel);
+}
+.file-reference-picker::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+.file-reference-picker form,
+.file-reference-picker label {
+  display: grid;
+  gap: 12px;
+}
+.file-reference-picker input[type="file"] {
+  max-width: 100%;
+}
+.file-reference-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
 .lotion-mermaid {
   width: 100%;
   padding: 16px;

@@ -64,7 +64,8 @@ it("exports whitespace-only editor blocks as blank Markdown without HTML space e
   expect(result.markdown).toBe("Before\n\n\n\nAfter\n");
 });
 
-it("exports page and external mention chips as portable Markdown links", () => {
+it("exports link mentions and degrades date mentions to portable text", () => {
+  const fileHref = `/api/assets/${"a".repeat(64)}.bin`;
   const result = toMarkdown([
     {
       id: "mentions",
@@ -89,6 +90,27 @@ it("exports page and external mention chips as portable Markdown links", () => {
             icon: "🌐",
           },
         },
+        { type: "text", text: " with ", styles: {} },
+        {
+          type: "mention",
+          props: {
+            kind: "file",
+            href: fileHref,
+            label: "brief.txt",
+            icon: "📎",
+          },
+        },
+        { type: "text", text: " on ", styles: {} },
+        {
+          type: "mention",
+          props: {
+            kind: "date",
+            href: "",
+            label: "2026-09-17",
+            icon: "📅",
+            value: "2026-09-17",
+          },
+        },
       ],
     },
   ]);
@@ -97,4 +119,7 @@ it("exports page and external mention chips as portable Markdown links", () => {
   expect(result.markdown).toContain(
     "[🌐 External article](https://example.com/article)",
   );
+  expect(result.markdown).toContain(`[📎 brief.txt](${fileHref})`);
+  expect(result.markdown).toContain("📅 2026-09-17");
+  expect(result.markdown).not.toContain("[]()");
 });

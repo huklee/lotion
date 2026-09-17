@@ -16,6 +16,9 @@ test("at-sign date accepts today with the next Enter key", async ({ page }) => {
     0,
   );
   await expect(page.locator(".tiptap")).toContainText(`📅 ${today}`);
+  await expect(
+    page.locator('time.lotion-mention[data-lotion-mention="date"]'),
+  ).toHaveAttribute("datetime", today);
 });
 
 test("at-sign calendar inserts a chosen date, persists and cancels without insertion", async ({
@@ -41,8 +44,12 @@ test("at-sign calendar inserts a chosen date, persists and cancels without inser
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
   await expect(page.locator(".tiptap")).toContainText("📅 2026-10-20");
+  await expect(
+    page.locator('time.lotion-mention[data-lotion-mention="date"]'),
+  ).toHaveAttribute("datetime", "2026-10-20");
   await page.locator(".bn-inline-content").first().click();
   await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.press("ArrowRight");
   await page.keyboard.type(" @date");
   await page
     .getByRole("option")

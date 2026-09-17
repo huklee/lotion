@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-17T23:26:07+09:00 — 0.14.0 file/date reference focused verification
+
+Strict TypeScript and a production build passed. The document-schema, Markdown, and portability group passed **34/34** cases, including canonical file URLs, real ISO calendar dates, invalid kind-specific values, exact-snapshot reference preservation, portable file-asset remapping, and readable date degradation.
+
+The complete calendar and mention group passed **18/18** across Chromium, Firefox, and WebKit. It covers keyboard selection and acceptance, semantic date values, adjacent typing after leaving a date atom, cancellation without insertion, arbitrary-file upload, named download, persistence, reload, existing page/external navigation, raw-link presentation, and stale preview refresh. The first Chromium run used an older production bundle because focused type checking did not rebuild `dist`; rebuilding exposed no product failure. One existing cancellation step then needed ArrowRight to leave the new atomic date node before adjacent input, which now explicitly verifies the intended keyboard boundary.
+
+The final `CI=1 npm run check` exited **0** in **149.52 seconds**: lint, strict TypeScript, the production build, **154/154 unit and integration tests**, and **150/150 Playwright cases** passed with two workers. Prettier passed for every changed file, `git diff --check` passed, and documentation validation found **34 Markdown files, 148 local links, and zero missing targets**. The production build retained the known non-failing large-chunk warning. User data under `data/` was untouched.
+
 ## 2026-09-17T07:53:11+09:00 — 0.13.0 typed mentions and preview-cache focused verification
 
 The focused schema, legacy normalization, Markdown, search, link-network, and preview-service suites passed **57/57** cases. Coverage includes valid and invalid mention shapes, unsafe URLs and bounds, legacy page/external migration without changing raw links, portable Markdown output, mention search text, cache hits/expiry/LRU eviction, optional-image failure, public-address filtering, and OpenGraph parsing. Strict TypeScript, ESLint, and the production build passed.
