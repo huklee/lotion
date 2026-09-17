@@ -67,4 +67,47 @@ For a full backup including trash and history, stop the backend and copy the ent
 
 Restore into an empty directory, set `LOTION_DATA_DIR` to that path, and start one backend. Do not restore over a live workspace. The server validates committed references and fails startup on corrupt/unsupported data rather than replacing it with an empty workspace. After a disk-full or permission failure, correct the environment and retry the retained browser draft.
 
-No schema upgrade beyond version 1 is currently defined. Never edit the canonical files while the backend runs. For future migrations, stop, back up, run a versioned migration, and test rollback against a copy before upgrading real data.
+### Workspace diagnosis and reconciliation
+
+Stop every Lotion backend using the workspace and make an independent full backup before recovery. Diagnosis is read-only:
+
+```sh
+npm run doctor -- --data-dir /absolute/path/to/workspace
+npm run doctor -- --data-dir /absolute/path/to/workspace --json
+```
+
+The report distinguishes blockers from orphan warnings and lists valid candidate revision numbers without printing document bodies. A healthy report exits 0; blockers exit 2. Historical snapshots older than the committed revision are expected and are not warnings. Never run a second backend to work around a writer-lock error.
+
+To prepare an exact, state-bound plan:
+
+```sh
+npm run doctor -- --data-dir /absolute/path/to/workspace --write-plan /safe/path/reconciliation.json
+```
+
+Edit the plan only after inspecting the backup and named revision files. A recovery action copies one valid source revision into a new immutable revision. Supplying `parentId: null` explicitly detaches a cyclic/orphaned page to the root. Omitting `parentId` retains the source parent.
+
+```json
+{
+  "reportToken": "the-64-character-token-from-doctor",
+  "actions": [
+    {
+      "type": "recover",
+      "documentId": "page-id",
+      "sourceRevision": 4,
+      "parentId": null
+    }
+  ]
+}
+```
+
+If no valid content exists, `{"type":"drop-reference","documentId":"page-id"}` can remove only the manifest reference. It never deletes a file. Children must be recovered to an existing parent or dropped in the same plan. Apply the reviewed plan once:
+
+```sh
+npm run doctor -- --data-dir /absolute/path/to/workspace --apply /safe/path/reconciliation.json
+```
+
+Application acquires the normal workspace lock, rejects any token if files changed after diagnosis, validates the complete resulting hierarchy before publication, and records the prior manifest, report, and plan under `recovery/`. It does not overwrite or delete existing snapshots. Run diagnosis again, then start Lotion and verify the recovered tree. Restore the recorded manifest while stopped if the reviewed result is not acceptable; leave the newly created unreferenced revision files in place until a qualified retention tool exists.
+
+The doctor cannot safely reconstruct a missing/malformed `workspace.json` or select among competing revisions. Restore a known-good full backup or have an operator construct and review a manifest from independent records. Do not paste guessed IDs or revisions into a real workspace.
+
+No schema upgrade beyond version 1 is currently defined. Never edit canonical files while the backend runs. For future migrations, stop, back up, run a versioned migration, and test rollback against a copy before upgrading real data.

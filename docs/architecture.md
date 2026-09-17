@@ -114,7 +114,7 @@ workspace/
   cache/tree-index.json
 ```
 
-`workspace.json` maps each document ID to its visible committed revision and stores retry receipts. Revision files are immutable; one atomic manifest replacement publishes a single-page mutation or an entire staged import. See [ADR-010](adr/010-implementation-foundations.md).
+`workspace.json` maps each document ID to its visible committed revision, semantic document hash, and retry receipts. Revision files are immutable; one atomic manifest replacement publishes a single-page mutation or an entire staged import. The offline doctor audits this boundary and publishes only reviewed, state-bound recovery plans. See [ADR-010](adr/010-implementation-foundations.md) and [ADR-024](adr/024-storage-diagnostics-and-reconciliation.md).
 
 Logical hierarchy does not require nested canonical directories. Renames and moves leave file and asset identities unchanged. Asset bytes are immutable and hash-addressed. Finish and durably commit uploads before inserting persistent references. Interrupted/unreferenced uploads can be cleaned after a grace period. Garbage collection accounts for active documents, trash, retained history, and in-progress imports.
 
@@ -158,7 +158,7 @@ Display Unsaved, Saving, Saved, Offline draft, Conflict, or Save failed accurate
 
 ## Race prevention and durability
 
-Use one workspace mutation queue initially. Validate preconditions and hierarchy inside that queue. Enforce exclusive process ownership of the workspace; refuse a second writer. Direct external file editing while running is unsupported until an explicit reconciliation mechanism exists.
+Use one workspace mutation queue initially. Validate preconditions and hierarchy inside that queue. Enforce exclusive process ownership of the workspace; refuse a second writer. Direct external file editing remains unsupported. Canonical snapshot hashes detect it, and the offline doctor provides explicit accept/recover/detach/drop actions without silently adopting changed bytes; see [ADR-024](adr/024-storage-diagnostics-and-reconciliation.md).
 
 For each canonical replacement: validate -> create unique same-directory temporary file -> write -> flush and close -> rename over destination -> flush parent directory where supported -> update derived index -> acknowledge. Preserve the old canonical file until replacement is ready. Never acknowledge before the durability boundary.
 

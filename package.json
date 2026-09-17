@@ -1,12 +1,13 @@
 {
   "name": "lotion",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "private": true,
   "type": "module",
   "engines": {
     "node": ">=22.12"
   },
   "scripts": {
+    "doctor": "tsx apps/server/workspace-doctor.ts",
     "test:performance": "tsx tests/performance/benchmark.ts",
     "format": "prettier --write apps packages tests *.ts *.js package.json tsconfig.json",
     "dev": "concurrently -k \"npm:dev:server\" \"npm:dev:web\"",
