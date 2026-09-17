@@ -322,6 +322,50 @@ test("block lasso preserves text dragging, supports reverse selection and extend
   ).toHaveCount(1);
 });
 
+test("block lasso can select a nested child without selecting its parent", async ({
+  page,
+}) => {
+  await seed(page, "Nested lasso", [
+    {
+      id: "nested-parent",
+      type: "paragraph",
+      content: [{ type: "text", text: "Parent block", styles: {} }],
+      children: [
+        {
+          id: "nested-child",
+          type: "paragraph",
+          content: [{ type: "text", text: "Nested child", styles: {} }],
+        },
+      ],
+    },
+    {
+      id: "nested-following",
+      type: "paragraph",
+      content: [{ type: "text", text: "Following block", styles: {} }],
+    },
+  ]);
+  const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+  const child = (await page
+    .locator('[data-id="nested-child"] .bn-block-content')
+    .first()
+    .boundingBox())!;
+  await page.mouse.move(gutter.x + 5, child.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(child.x + child.width - 8, child.y + child.height - 2, {
+    steps: 10,
+  });
+  await page.mouse.up();
+  await expect(
+    page.locator('.block-selection-highlight[data-block-id="nested-child"]'),
+  ).toHaveCount(1);
+  await expect(
+    page.locator('.block-selection-highlight[data-block-id="nested-parent"]'),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toContainText("1 selected");
+});
+
 test("block lasso auto-scrolls and retains offscreen hits", async ({
   page,
 }) => {

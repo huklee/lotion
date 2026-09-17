@@ -4,6 +4,12 @@
 
 Corrected the repository workflow after feature pull requests were stacked on other feature branches, allowing GitHub to mark intermediate PRs merged without integrating their changes into `main`. The root agent instructions and development/version guides now require one branch created from current `origin/main`, one PR whose base is `main`, successful required checks, an actual merge, and ancestry verification before the next backlog item begins. Documentation-only workflow correction; no application version change.
 
+## 2026-09-16T22:34:38+09:00 — 0.8.0 precise nested block-lasso hit testing prepared
+
+Found that every `.bn-block-outer` bounding box includes its descendants. The lasso therefore reported the parent as intersecting when a drag touched only a nested child's visible row, and the existing ancestor de-duplication correctly—but undesirably—removed the child. Selection hit testing now measures the direct block content row instead. The parent remains selected, with its complete subtree overlay and existing group actions, when the drag crosses the parent's own row.
+
+Added a direct browser regression that selects only a nested child and proves its parent is absent from both selection state and overlays. The broader lasso group passed 27/27 repeated cases across Chromium, Firefox, and WebKit. The final CI-equivalent gate passed lint/type/build, 120 unit/integration tests, and 132 browser cases in 135.97 seconds. Prepared backward-compatible minor release 0.8.0; no stored document format or user data changed. Publication evidence is recorded separately.
+
 ## 2026-09-16T22:27:15+09:00 — 0.7.2 Mermaid editor input isolation prepared
 
 Reproduced the reported Mermaid editor failure as an event-ownership defect. Because a custom Mermaid textarea sits inside the editor shell while the ProseMirror cursor remains on its previous block, Ctrl/Command+Enter could toggle a stale checklist and Alt+Shift+Arrow could move a document block instead of remaining local to source editing. Editor-level capture and bubble shortcuts now ignore native form controls; global application save remains handled separately.
