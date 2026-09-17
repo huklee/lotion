@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-17T23:26:07+09:00 — 0.14.0 file and date references prepared
+
+Extended the existing custom mention node instead of introducing emoji/text heuristics. `@date` now inserts an ISO-validated semantic time atom, and `@file` opens an accessible picker that uploads through the established 20 MB content-addressed asset boundary. File activation performs an authenticated fetch before starting a named browser download; cancelling the picker aborts an in-flight request. The picker, download behavior, and reference renderer remain separate from the editor composition root, which stays below the project's automatic 1,000-line refactoring threshold.
+
+[ADR-022](adr/022-file-and-date-references.md) defines persistence, keyboard, navigation, and portability behavior. Exact bundles preserve both types. Portable Markdown emits a bundled standard file link and readable date text, and importing that portable form deliberately yields ordinary link/text nodes. Schema/Markdown/portability coverage passed 34/34, and the complete date/mention group passed 18/18 across Chromium, Firefox, and WebKit. The final CI-equivalent gate passed lint/type/build, 154 unit/integration tests, and 150 browser cases in 149.52 seconds. Publication evidence follows. User data under `data/` was untouched.
+
 ## 2026-09-17T07:53:11+09:00 — 0.13.0 typed mentions and bounded preview freshness prepared
 
 Replaced text-shape inference with a validated BlockNote `mention` inline type for page and external references. Raw pasted URLs retain native link semantics and underlined presentation, while mention chips render their icon and label separately. Page-tree updates immediately reconcile internal mention titles/icons. Existing internal links and links with saved preview metadata migrate on open; exact bundles preserve the new type, portable Markdown emits visible links, and search/TOC extraction includes mention labels.

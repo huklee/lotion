@@ -204,6 +204,43 @@ test("paste chooser follows the cursor block and supports cancellation and URL i
   await expect(chooser).toHaveCount(0);
 });
 
+test("at-sign file references upload, download, save and reload", async ({
+  page,
+}) => {
+  await seed(page, "File references");
+  const editor = page.locator(".tiptap");
+  await editor.click();
+  await page.keyboard.type("@file");
+  await page.keyboard.press("Enter");
+  const dialog = page.getByRole("dialog", { name: "Insert file reference" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("File", { exact: true }).setInputFiles({
+    name: "keyboard-reference.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("downloadable reference"),
+  });
+  await dialog.getByRole("button", { name: "Insert file" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(dialog).toHaveCount(0);
+  const mention = editor.locator(
+    'a.lotion-mention[data-lotion-mention="file"]',
+  );
+  await expect(mention).toHaveText("📎 keyboard-reference.txt");
+  await expect(mention).toHaveAttribute(
+    "href",
+    /\/api\/assets\/[a-f0-9]{64}\.bin/,
+  );
+  const download = page.waitForEvent("download");
+  await mention.click();
+  expect((await download).suggestedFilename()).toBe("keyboard-reference.txt");
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(
+    editor.locator('a.lotion-mention[data-lotion-mention="file"]'),
+  ).toHaveText("📎 keyboard-reference.txt");
+});
+
 test("stale external mentions refresh metadata once and persist the new title", async ({
   page,
 }) => {

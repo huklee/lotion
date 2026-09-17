@@ -12,7 +12,7 @@ import type {
 import { api } from "./api";
 import { pageIdFromHash } from "./block-links";
 import type { LotionEditor } from "./editor.types";
-import type { MentionKind } from "./MentionInline";
+import type { MentionProperties } from "./MentionInline";
 
 type UsePasteLinkOptions = {
   editor: LotionEditor;
@@ -21,7 +21,7 @@ type UsePasteLinkOptions = {
   insertLinkChip: (
     href: string,
     label: string,
-    mention?: { kind: MentionKind; icon: string },
+    mention?: MentionProperties,
   ) => void;
   onLinkPreview: (url: string, preview: LinkPreview) => void;
   setPreviewHref: (href: string | null) => void;
