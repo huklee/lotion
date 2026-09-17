@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-17T23:46:39+09:00 — 0.15.0 typed database focused verification
+
+The database model, document schema, Markdown, search, and portability group passed **47/47** cases. Coverage includes every supported property type, invalid select/date/number/checkbox values, column/row bounds, searchable output, static-table Markdown warnings, exact custom-block preservation, and internal row-page ID remapping.
+
+The complete database row workflow passed **3/3** across Chromium, Firefox, and WebKit. It creates a database through the slash menu, creates a real child-page row, edits all five default typed values, renames/adds a property, saves and reloads, opens the child page, renames it, uses browser history to return, and observes the current row title. The first Chromium assertion incorrectly expected an input value in element `textContent`; the corrected accessible-name/value assertion passed. A focused exact-bundle test then found and drove the serialized row-link remapping fix.
+
+The final `CI=1 npm run check` exited **0** in **165.67 seconds**: lint, strict TypeScript, the production build, **164/164 unit and integration tests**, and **150/150 Playwright cases** passed with two workers. Prettier and `git diff --check` passed; documentation validation found **35 Markdown files, 157 local links, and zero missing targets**. The production build retained the known non-failing large-chunk warning. User data under `data/` was untouched.
+
 ## 2026-09-17T23:26:07+09:00 — 0.14.0 file/date reference focused verification
 
 Strict TypeScript and a production build passed. The document-schema, Markdown, and portability group passed **34/34** cases, including canonical file URLs, real ISO calendar dates, invalid kind-specific values, exact-snapshot reference preservation, portable file-asset remapping, and readable date degradation.

@@ -8,7 +8,7 @@ Related records: [decisions](decisions.md), [test plan](test-plan.md), [roadmap]
 
 Deliver a clean, Notion-like web application with block editing, slash commands, block reordering, image drag-and-drop, rectangular multi-block selection, section movement, links, automatic saving, immediate sidebar title updates, a hierarchical sidebar, keyboard shortcuts, themes, document creation/trash/restore, and whole-folder Markdown import/export with assets.
 
-Initial deployment: one user, one workspace, one backend writer process. Multiple tabs and devices are supported through revision conflicts, not concurrent collaborative merging. AI, databases-as-pages, comments, multiplayer editing, and granular workspace permissions are out of scope.
+Initial deployment: one user, one workspace, one backend writer process. Multiple tabs and devices are supported through revision conflicts, not concurrent collaborative merging. AI, advanced database views/formulas/relations, comments, multiplayer editing, and granular workspace permissions are out of scope.
 
 Local storage means the filesystem of the machine running the backend. A remote server does not have direct access to the browser user's disk. Browser downloads/uploads handle portability.
 
@@ -197,6 +197,8 @@ Provide slash commands, keyboard-accessible block movement, undo/redo, paste han
 Serve UI/API on one origin. Bind loopback by default. Remote access requires authentication and TLS. Protect asset routes too. Apply origin/CSRF protection appropriate to the chosen session scheme. Deny traversal and symlink escapes; validate file signatures and serving content types. Imported HTML/MDX never executes. Use an embed provider allowlist and sandboxing. Link previews pin a filtered set of public DNS answers for each request and redirect; IPv4-embedded NAT64 destinations must pass the same public-address policy before connecting.
 
 Page, external, file, and date references use a typed BlockNote mention inline node; raw URLs remain ordinary links. Legacy internal links and links backed by saved preview metadata migrate on open. File references resolve only to immutable workspace assets and download through authenticated fetches. Date references carry validated ISO values without pretending to be navigable links. External preview metadata is canonical document state with an optional fetch timestamp, while the 15-minute/256-entry server LRU is disposable process-local state. See [ADR-021](adr/021-reference-chips-and-preview-cache.md) and [ADR-022](adr/022-file-and-date-references.md).
+
+An embedded database is a bounded custom block with one table view, up to 20 typed properties and 500 row references. Each row points to a real child document and follows ordinary page navigation/lifecycle; database cell values remain in the containing document revision. Exact bundles retain behavior, while portable Markdown produces a static linked table. See [ADR-023](adr/023-typed-database-rows.md).
 
 ## Performance and operations
 

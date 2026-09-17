@@ -123,3 +123,34 @@ it("exports link mentions and degrades date mentions to portable text", () => {
   expect(result.markdown).toContain("📅 2026-09-17");
   expect(result.markdown).not.toContain("[]()");
 });
+
+it("exports a typed database as a static portable table with row links", () => {
+  const result = toMarkdown([
+    {
+      id: "database",
+      type: "database",
+      props: {
+        columns: JSON.stringify([
+          { id: "status", name: "Status", type: "select", options: ["Open"] },
+          { id: "done", name: "Done", type: "checkbox" },
+          { id: "estimate", name: "Estimate", type: "number" },
+        ]),
+        rows: JSON.stringify([
+          {
+            id: "row-1",
+            href: "#/page/row-page",
+            title: "Release row",
+            values: { status: "Open", done: true, estimate: 5 },
+          },
+        ]),
+      },
+    },
+  ]);
+  expect(result.markdown).toContain("| Page");
+  expect(result.markdown).toContain("[Release row](#/page/row-page)");
+  expect(result.markdown).toContain("Open");
+  expect(result.markdown).toContain("Yes");
+  expect(result.warnings).toContain(
+    "Portable Markdown renders a database as a static table; exact bundles preserve typed properties and row-page behavior.",
+  );
+});

@@ -1,5 +1,9 @@
 import { expect, it } from "vitest";
 import { contentSchema } from "../../packages/document-schema/index";
+import {
+  DEFAULT_DATABASE_COLUMNS_JSON,
+  DEFAULT_DATABASE_ROWS_JSON,
+} from "../../packages/database/model";
 
 const content = (mention: unknown) => ({
   title: "Mentions",
@@ -90,5 +94,27 @@ it.each([
 ])("rejects invalid mention properties", (props) => {
   expect(
     contentSchema.safeParse(content({ type: "mention", props })).success,
+  ).toBe(false);
+});
+
+it("accepts a bounded database and rejects malformed database properties", () => {
+  const database = (columns: string, rows = DEFAULT_DATABASE_ROWS_JSON) => ({
+    title: "Database",
+    blocks: [
+      {
+        id: "database-block",
+        type: "database",
+        props: { columns, rows },
+      },
+    ],
+  });
+  expect(
+    contentSchema.safeParse(database(DEFAULT_DATABASE_COLUMNS_JSON)).success,
+  ).toBe(true);
+  expect(contentSchema.safeParse(database("not json")).success).toBe(false);
+  expect(
+    contentSchema.safeParse(
+      database(JSON.stringify([{ id: "bad", name: "Bad", type: "formula" }])),
+    ).success,
   ).toBe(false);
 });
