@@ -1,6 +1,7 @@
 import type { Dispatch, DragEvent, SetStateAction } from "react";
-import { ArrowLeft, FileText, LockKeyhole, Search, X } from "lucide-react";
-import type { TreeNode } from "../../packages/document-schema/index";
+import { LockKeyhole, X } from "lucide-react";
+import type { Content, TreeNode } from "../../packages/document-schema/index";
+import type { SearchResult } from "../../packages/search/index";
 import type { FormattingShortcuts } from "./format-shortcuts";
 import type {
   EditorFont,
@@ -13,6 +14,7 @@ import { HelpPanel } from "./HelpPanel";
 import { ImportPanel } from "./ImportPanel";
 import { MovePagePanel } from "./MovePagePanel";
 import { SettingsPanel } from "./SettingsPanel";
+import { WorkspaceSearchPanel } from "./WorkspaceSearchPanel";
 import type { ImportMode, WorkspaceDialogKind } from "./workspace.types";
 
 type WorkspaceDialogProps = {
@@ -25,7 +27,6 @@ type WorkspaceDialogProps = {
   query: string;
   setQuery: (query: string) => void;
   visible: TreeNode[];
-  openPage: (id: string) => Promise<void>;
   close: () => void;
   busy: boolean;
   dropFolder: (event: DragEvent) => Promise<void>;
@@ -34,6 +35,8 @@ type WorkspaceDialogProps = {
   importMode: ImportMode;
   setImportMode: (mode: ImportMode) => void;
   activeId: string | undefined;
+  activeContent?: Content;
+  openSearchResult: (result: SearchResult) => void;
   title: string;
   copyPageMarkdown: () => Promise<void>;
   exportWorkspace: (rootId?: string, portable?: boolean) => Promise<void>;
@@ -70,7 +73,7 @@ export function WorkspaceDialog(props: WorkspaceDialogProps) {
           auth
             ? "Unlock workspace"
             : search
-              ? "Find a page"
+              ? "Search workspace"
               : dialog === "settings"
                 ? "Control panel"
                 : (dialog ?? "Dialog")
@@ -100,34 +103,13 @@ export function WorkspaceDialog(props: WorkspaceDialogProps) {
             </button>
           </>
         ) : search ? (
-          <>
-            <div className="search-input">
-              <Search size={20} />
-              <input
-                autoFocus
-                aria-label="Search pages"
-                placeholder="Find a page…"
-                value={props.query}
-                onChange={(event) => props.setQuery(event.target.value)}
-              />
-            </div>
-            <div className="search-results">
-              {props.visible
-                .filter((node) =>
-                  node.title.toLowerCase().includes(props.query.toLowerCase()),
-                )
-                .map((node) => (
-                  <button
-                    key={node.id}
-                    onClick={() => void props.openPage(node.id)}
-                  >
-                    <FileText size={17} />
-                    {node.title || "Untitled"}
-                    <ArrowLeft size={14} />
-                  </button>
-                ))}
-            </div>
-          </>
+          <WorkspaceSearchPanel
+            query={props.query}
+            setQuery={props.setQuery}
+            activeId={props.activeId}
+            activeContent={props.activeContent}
+            openResult={props.openSearchResult}
+          />
         ) : dialog === "import" ? (
           <ImportPanel
             busy={props.busy}

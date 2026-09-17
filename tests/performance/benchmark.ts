@@ -28,6 +28,7 @@ try {
     repo.importDocuments(input, crypto.randomUUID()),
   );
   const tree = await measure(() => repo.tree());
+  const search = await measure(() => repo.search("Benchmark page 9999"));
   const d = imported.result[0];
   const blocks = Array.from({ length: 500 }, (_, i) => ({
     id: `active-${i}`,
@@ -64,12 +65,14 @@ try {
     activeBlocks: opened.result.blocks.length,
     importMs: imported.ms,
     treeProjectionMs: tree.ms,
+    workspaceSearchMs: search.ms,
     save500BlocksMs: saved.ms,
     open500BlocksMs: opened.ms,
     startupMs: startup.ms,
     heapMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
     budgets: {
       treeProjectionMs: 200,
+      workspaceSearchMs: 100,
       save500BlocksMs: 500,
       open500BlocksMs: 50,
       startupMs: 15000,
@@ -78,6 +81,7 @@ try {
   console.log(JSON.stringify(result, null, 2));
   if (
     result.treeProjectionMs > 200 ||
+    result.workspaceSearchMs > 100 ||
     result.save500BlocksMs > 500 ||
     result.open500BlocksMs > 50 ||
     result.startupMs > 15000

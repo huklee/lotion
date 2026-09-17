@@ -22,6 +22,7 @@ import {
   pageIdFromHash,
 } from "./block-links";
 import { applicationFavicon, pageFavicon, setFavicon } from "./favicon";
+import type { SearchResult } from "../../packages/search/index";
 
 const sessionId = readSetting(sessionStorage, "session") ?? crypto.randomUUID();
 sessionStorage.setItem("lotion-session", sessionId);
@@ -89,6 +90,7 @@ export default function App() {
     folderInput = useRef<HTMLInputElement>(null),
     titleInput = useRef<HTMLInputElement>(null),
     iconPickerRef = useRef<HTMLDivElement>(null),
+    searchReturnFocus = useRef<HTMLElement | null>(null),
     newId = useRef<string | null>(null);
   const coordinator = active ? coordinators.current.get(active.id) : undefined;
   const visible = useMemo(() => tree.filter((d) => !d.hidden), [tree]);
@@ -244,7 +246,9 @@ export default function App() {
   useEffect(() => setFavicon(favicon), [favicon]);
   useEffect(() => {
     if (!dialog && !search && !auth) return;
-    const previous = document.activeElement as HTMLElement | null;
+    const previous = search
+      ? searchReturnFocus.current
+      : (document.activeElement as HTMLElement | null);
     const modal = document.querySelector<HTMLElement>(".modal");
     const focusable = () =>
       [
@@ -269,7 +273,9 @@ export default function App() {
     document.addEventListener("keydown", trap);
     return () => {
       document.removeEventListener("keydown", trap);
-      previous?.focus();
+      requestAnimationFrame(() => {
+        if (previous?.isConnected) previous.focus();
+      });
     };
   }, [dialog, search, auth]);
   useEffect(() => {
@@ -351,7 +357,12 @@ export default function App() {
     const key = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setSearch((v) => !v);
+        setSearch((open) => {
+          if (!open)
+            searchReturnFocus.current =
+              document.activeElement as HTMLElement | null;
+          return !open;
+        });
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
@@ -490,7 +501,12 @@ export default function App() {
         create={create}
         mutate={mutate}
         toggleFavorite={toggleFavorite}
-        setSearch={setSearch}
+        setSearch={(open) => {
+          if (open)
+            searchReturnFocus.current =
+              document.activeElement as HTMLElement | null;
+          setSearch(open);
+        }}
         setDialog={setDialog}
         onHome={() => {
           ++loadNumber.current;
@@ -657,7 +673,6 @@ export default function App() {
         query={query}
         setQuery={setQuery}
         visible={visible}
-        openPage={openPage}
         close={() => {
           setDialog(null);
           setSearch(false);
@@ -669,6 +684,13 @@ export default function App() {
         importMode={importMode}
         setImportMode={setImportMode}
         activeId={active?.id}
+        activeContent={coordinator?.content}
+        openSearchResult={(result: SearchResult) => {
+          location.hash = pageHash(
+            result.documentId,
+            result.blockId ?? undefined,
+          );
+        }}
         title={title}
         copyPageMarkdown={copyPageMarkdown}
         exportWorkspace={exportWorkspace}
