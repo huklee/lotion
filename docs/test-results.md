@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-17T07:53:11+09:00 — 0.13.0 typed mentions and preview-cache focused verification
+
+The focused schema, legacy normalization, Markdown, search, link-network, and preview-service suites passed **57/57** cases. Coverage includes valid and invalid mention shapes, unsafe URLs and bounds, legacy page/external migration without changing raw links, portable Markdown output, mention search text, cache hits/expiry/LRU eviction, optional-image failure, public-address filtering, and OpenGraph parsing. Strict TypeScript, ESLint, and the production build passed.
+
+The three mention scenarios passed **9/9** across Chromium, Firefox, and WebKit. They verify page and external chip insertion, immediate current-page icon updates, later target title/icon reconciliation, external persistence and hover cards, raw URL semantics and underlined presentation, stale metadata refresh de-duplication, refreshed chip/card content, save, and reload. The first Chromium run exposed the missing server validation branch for the new inline type; bounded `mention` validation and direct negative cases fixed the rejected save.
+
+The first full gate passed all 149 unit/integration cases and 145/147 browser cases. The two failures were strict-locator errors in the existing folder-import test: custom atom support makes ProseMirror add a hidden cursor-separator image, so `.tiptap img` matched both that internal node and the correctly rendered imported image. The assertion now targets the imported image's accessible `diagram` name and passed **3/3** across browser engines. After extracting the preview-refresh lifecycle from the editor, the final `CI=1 npm run check` exited **0** in **173.64 seconds** with **149/149 unit and integration tests** and **147/147 Playwright cases**. Prettier passed for every changed file, `git diff --check` passed, and documentation validation found **33 Markdown files, 140 local links, and zero missing targets**. The production build retained the known non-failing large-chunk warning; user `data/` was untouched.
+
 ## 2026-09-17T07:33:51+09:00 — 0.12.1 link-preview network verification
 
 The focused link-preview suite passed **27/27** cases. It covers public and non-public IPv4/IPv6 addresses, IPv4-mapped IPv6, RFC 6052 well-known NAT64, RFC 8215 local-use NAT64, mixed DNS candidate filtering, URL restrictions, pre-connection private-address rejection, and inert OpenGraph parsing. Strict TypeScript and ESLint also passed.

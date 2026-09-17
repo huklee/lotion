@@ -4,6 +4,7 @@
   - **Baseline**: selected for planning.
   - **Validated**: supported by implementation and recorded test evidence.
 - Dedicated implementation decisions:
+  - [ADR-021: Typed mention chips and bounded preview freshness](adr/021-reference-chips-and-preview-cache.md)
   - [ADR-020: Derived backend index for workspace search](adr/020-backend-workspace-search.md)
   - [ADR-019: Stable direct links to document blocks](adr/019-direct-block-links.md)
   - [ADR-018: Notion-style block lasso selection](adr/018-block-lasso-selection.md)

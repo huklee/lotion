@@ -121,7 +121,7 @@ export async function exportBundle(
   const assets = new Set<string>();
   for (const doc of docs) {
     for (const preview of Object.values(doc.linkPreviews ?? {})) {
-      if (preview.image) assets.add(preview.image.split('/').at(-1)!);
+      if (preview.image) assets.add(preview.image.split("/").at(-1)!);
     }
     const file = paths.get(doc.id)!;
     const blocks = mapStrings(doc.blocks, (url) => {

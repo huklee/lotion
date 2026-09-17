@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
-import { fetchPublic, parsePreview } from "./link-preview";
+import { LinkPreviewService } from "./link-preview-service";
 import { Repository } from "../../packages/persistence/repository";
 import {
   AppError,
@@ -90,30 +90,14 @@ export async function createApp(
   };
   const id = (req: any) => idSchema.parse(req.params.id);
   let previewRequests = 0;
+  const linkPreviews = new LinkPreviewService(repo);
   app.post("/api/link-preview", async (req) => {
     const { url } = z.object({ url: z.string().max(4096) }).parse(req.body);
     if (previewRequests >= 4)
       throw new AppError(429, "Preview service busy; try again");
     previewRequests++;
     try {
-      const signal = AbortSignal.timeout(10000);
-      const page = await fetchPublic(url, "html", signal);
-      const metadata = parsePreview(page.bytes.toString("utf8"), page.url);
-      let image: string | undefined;
-      if (metadata.image) {
-        try {
-          const result = await fetchPublic(metadata.image, "image", signal);
-          const asset = await repo.putAsset(result.bytes, "preview");
-          if (asset.image) image = asset.url;
-        } catch {
-          /* A missing image must not prevent a usable title. */
-        }
-      }
-      return {
-        title: metadata.title,
-        description: metadata.description,
-        image,
-      };
+      return await linkPreviews.get(url, AbortSignal.timeout(10000));
     } finally {
       previewRequests--;
     }
