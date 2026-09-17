@@ -6,13 +6,15 @@ import {
 } from "@blocknote/core/extensions";
 import {
   BookOpenText,
+  CalendarDays,
   Database,
   FilePlus2,
   MessageSquareQuote,
+  Paperclip,
 } from "lucide-react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
 import type { LotionEditor } from "./editor.types";
-import type { MentionKind } from "./MentionInline";
+import type { MentionProperties } from "./MentionInline";
 
 type EditorSuggestionsOptions = {
   editor: LotionEditor;
@@ -22,7 +24,7 @@ type EditorSuggestionsOptions = {
   insertLinkChip: (
     href: string,
     label: string,
-    mention?: { kind: MentionKind; icon: string },
+    mention?: MentionProperties,
   ) => void;
   setPreviewError: (message: string) => void;
 };
@@ -37,6 +39,10 @@ export function useEditorSuggestions({
 }: EditorSuggestionsOptions) {
   const creatingSubpage = useRef(false);
   const [dateSelection, setDateSelection] = useState<{
+    from: number;
+    to: number;
+  } | null>(null);
+  const [fileSelection, setFileSelection] = useState<{
     from: number;
     to: number;
   } | null>(null);
@@ -197,10 +203,21 @@ export function useEditorSuggestions({
             subtext: "Choose a date from the calendar",
             aliases: ["calendar", "today", "date", "schedule"],
             group: "Lotion",
-            icon: <BookOpenText size={18} />,
+            icon: <CalendarDays size={18} />,
             onItemClick: () => {
               const { from, to } = editor._tiptapEditor.state.selection;
               setDateSelection({ from, to });
+            },
+          },
+          {
+            title: "File",
+            subtext: "Upload a downloadable file reference",
+            aliases: ["attachment", "upload", "document", "file"],
+            group: "Lotion",
+            icon: <Paperclip size={18} />,
+            onItemClick: () => {
+              const { from, to } = editor._tiptapEditor.state.selection;
+              setFileSelection({ from, to });
             },
           },
         ],
@@ -220,5 +237,7 @@ export function useEditorSuggestions({
     bracketMentionItems,
     dateSelection,
     setDateSelection,
+    fileSelection,
+    setFileSelection,
   };
 }

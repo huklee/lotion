@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.13.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.14.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -39,7 +39,7 @@ Lotion is a self-hosted document editor without AI. It supports block editing, a
 
 Press **⌘K / Ctrl+K** to search page titles and document content across the workspace. Search includes the active unsaved browser draft, tables, code, attachment labels, and Mermaid source. Selecting a content result opens and highlights its exact block.
 
-Page and external mentions render as compact reference chips, while a URL pasted with **Paste as URL** remains a conventional underlined link. Internal mention titles and icons follow current page metadata immediately. Saved external OpenGraph metadata refreshes after 15 minutes on hover, with bounded server caching and the previous preview retained if refresh fails.
+Page, external, file, and date mentions render as compact typed reference chips, while a URL pasted with **Paste as URL** remains a conventional underlined link. Internal mention titles and icons follow current page metadata immediately. Saved external OpenGraph metadata refreshes after 15 minutes on hover, with bounded server caching and the previous preview retained if refresh fails. Type **@file** to upload a downloadable file reference up to 20 MB.
 
 ## Paste diagrams and copy Markdown
 
@@ -51,7 +51,7 @@ Select blocks by dragging a selection rectangle in any direction or choosing **S
 
 Place the cursor in any block and choose **Copy block link** to copy a direct URL to that exact location. Opening the URL loads the page, scrolls the referenced block into view, and highlights it. If the block was later deleted, the page still opens without forcing a fallback block.
 
-Type **@date** (or type **@** and choose **Date**) to open the calendar, choose a day and insert it. Press Enter once more immediately after opening to insert today. Dates are stored as portable `📅 YYYY-MM-DD` text.
+Type **@date** (or type **@** and choose **Date**) to open the calendar, choose a day and insert it. Press Enter once more immediately after opening to insert today. Dates are stored as validated ISO date references and exported to portable Markdown as readable `📅 YYYY-MM-DD` text.
 
 Ordinary clipboard text is checked line by line and pasted as plain paragraphs, preserving literal Markdown/HTML text. Complete Mermaid fences retain diagram conversion; a single HTTP(S) URL retains the link chooser. Oversized pastes show an error rather than silently dropping text. Use Markdown import when you want Markdown formatting interpreted.
 

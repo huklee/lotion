@@ -14,6 +14,7 @@ import { readableCodeColor } from "./code-colors";
 import { mermaidFromClipboard } from "./mermaid-paste";
 import { clipboardLines } from "./clipboard-lines";
 import { DatePicker } from "./DatePicker";
+import { FileReferencePicker } from "./FileReferencePicker";
 import { blockToNode } from "@blocknote/core";
 import { contentSchema } from "../../packages/document-schema/index";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -52,8 +53,9 @@ import {
   type AppliedColorStyle,
 } from "./EditorFormattingToolbar";
 import { normalizeEditorContent } from "./normalize-editor-content";
-import type { MentionKind } from "./MentionInline";
+import type { MentionProperties } from "./MentionInline";
 import { useLinkPreviewRefresh } from "./use-link-preview-refresh";
+import { downloadFileReference } from "./file-reference";
 
 function pageIdFromHref(href: string): string | null {
   const direct = pageIdFromHash(href);
@@ -94,12 +96,13 @@ export default function Editor({
     () => normalizeEditorContent(initial),
     [initial],
   );
-  const upload = async (file: File) => {
+  const uploadAsset = async (file: File, signal?: AbortSignal) => {
     const body = new FormData();
     body.append("file", file);
     const asset = await api<{ url: string; image: boolean }>("/api/assets", {
       method: "POST",
       body,
+      signal,
     });
     if (file.type.startsWith("image/") && !asset.image)
       throw new Error(
@@ -107,6 +110,7 @@ export default function Editor({
       );
     return asset.url;
   };
+  const upload = (file: File, _blockId?: string) => uploadAsset(file);
   const editor = useCreateBlockNote({
     schema: editorSchema,
     links: {
@@ -367,7 +371,7 @@ export default function Editor({
   function insertLinkChip(
     href: string,
     label: string,
-    mention?: { kind: MentionKind; icon: string },
+    mention?: MentionProperties,
   ) {
     editor.insertInlineContent(
       [
@@ -392,6 +396,8 @@ export default function Editor({
     bracketMentionItems,
     dateSelection,
     setDateSelection,
+    fileSelection,
+    setFileSelection,
   } = useEditorSuggestions({
     editor,
     pages,
@@ -541,6 +547,16 @@ export default function Editor({
         const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>(
           ".bn-inline-content a[href]",
         );
+        if (anchor?.dataset.lotionMention === "file") {
+          event.preventDefault();
+          event.stopPropagation();
+          event.nativeEvent.stopImmediatePropagation();
+          void downloadFileReference(
+            anchor.getAttribute("href") ?? "",
+            anchor.dataset.lotionMentionLabel ?? "attachment",
+          ).catch((error) => setPreviewError((error as Error).message));
+          return;
+        }
         const id = anchor
           ? pageIdFromHref(anchor.getAttribute("href") ?? "")
           : null;
@@ -818,8 +834,35 @@ export default function Editor({
           }}
           onInsert={(date) => {
             editor._tiptapEditor.commands.setTextSelection(dateSelection);
-            editor.insertInlineContent(`📅 ${date} `);
+            insertLinkChip("", date, {
+              kind: "date",
+              icon: "📅",
+              value: date,
+            });
             setDateSelection(null);
+            editor.focus();
+          }}
+        />
+      )}
+      {fileSelection && (
+        <FileReferencePicker
+          onCancel={() => {
+            setFileSelection(null);
+            editor.focus();
+          }}
+          onInsert={async (file, signal) => {
+            const href = await uploadAsset(file, signal);
+            if (signal.aborted || !mounted.current) return;
+            const size = editor._tiptapEditor.state.doc.content.size;
+            editor._tiptapEditor.commands.setTextSelection({
+              from: Math.min(fileSelection.from, size),
+              to: Math.min(fileSelection.to, size),
+            });
+            insertLinkChip(href, file.name, {
+              kind: "file",
+              icon: "📎",
+            });
+            setFileSelection(null);
             editor.focus();
           }}
         />
