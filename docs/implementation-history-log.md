@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-09-18T06:41:50+09:00 — direct-to-main delivery workflow established
+
+Corrected the repository workflow after feature pull requests were stacked on other feature branches, allowing GitHub to mark intermediate PRs merged without integrating their changes into `main`. The root agent instructions and development/version guides now require one branch created from current `origin/main`, one PR whose base is `main`, successful required checks, an actual merge, and ancestry verification before the next backlog item begins. Documentation-only workflow correction; no application version change.
+
 ## 2026-09-16T20:32:57+09:00 — Repository text standardized in English
 
 Translated the remaining Korean documentation, test fixtures and date-command aliases into English. The document-search proposal keeps its original three alternatives and recommendation, while README links now describe it in English. Test data still covers Unicode through emoji without retaining Korean words. The folder-import browser assertion now targets its semantic imported heading instead of waiting on the complete editor container. A tracked-file content and filename audit found no remaining Hangul outside the protected `data/` directory.
