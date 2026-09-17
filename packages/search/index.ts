@@ -42,6 +42,14 @@ function inlineText(value: unknown): string {
     .map((item) => {
       if (!item || typeof item !== "object") return "";
       if ("text" in item && typeof item.text === "string") return item.text;
+      if (
+        "props" in item &&
+        item.props &&
+        typeof item.props === "object" &&
+        "label" in item.props &&
+        typeof item.props.label === "string"
+      )
+        return item.props.label;
       if ("content" in item) return inlineText(item.content);
       return "";
     })

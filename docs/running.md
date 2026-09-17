@@ -4,7 +4,7 @@
 
 Type `/page` for a subpage, `/toc` for a live heading index, `/callout` for a note, `/database` for an editable table, and `/mermaid` for a diagram with editable source. Mermaid previews are non-interactive, support source up to 20,000 characters, and export/import as fenced `mermaid` Markdown, including whole-folder workflows.
 
-Use `@` or `[[` to mention workspace pages. Pasting a URL offers a chooser beside the cursor block; Paste as mention requests public OpenGraph metadata and caches an available preview image locally. The fetcher supports validated IPv4, IPv6, and NAT64 destinations while refusing private-network targets at every redirect. Failed lookups fall back to a hostname. Links navigate in the same tab. Exact bundles retain page icons and cached preview metadata; portable Markdown retains link text but not preview cards.
+Use `@` or `[[` to mention workspace pages. Page references are chips whose title and icon follow current workspace metadata. Pasting a URL offers a chooser beside the cursor block: **Paste as mention** creates an external chip and requests public OpenGraph metadata, while **Paste as URL** keeps the literal address as an underlined link. Saved previews refresh after 15 minutes on hover and retain their prior metadata if refresh fails. The fetcher supports validated IPv4, IPv6, and NAT64 destinations while refusing private-network targets at every redirect. Exact bundles retain typed mentions and cached preview metadata; portable Markdown retains visible links but not preview cards.
 
 Code blocks support JSON, HTML, Python, Go and C++ syntax colors on a fixed beige surface in both themes. Reload an already-open browser tab after rebuilding to load updated styles.
 

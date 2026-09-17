@@ -5,6 +5,7 @@ export type Inline = {
   text?: string;
   styles?: Record<string, string | boolean>;
   href?: string;
+  props?: Record<string, string | boolean | number>;
   content?: Inline[];
 };
 export type Block = {
@@ -18,6 +19,7 @@ export type LinkPreview = {
   title: string;
   description?: string;
   image?: string;
+  fetchedAt?: string;
 };
 export type Content = {
   title: string;
@@ -84,6 +86,7 @@ export const contentSchema = z
             .string()
             .regex(/^\/api\/assets\/[a-f0-9]{64}\.(png|jpg|gif|webp)$/)
             .optional(),
+          fetchedAt: z.string().datetime().optional(),
         }),
       )
       .optional(),
@@ -142,6 +145,18 @@ export const contentSchema = z
               if (typeof item.href !== "string")
                 throw new Error("Invalid link");
               inline(item.content, level + 1);
+            } else if (item?.type === "mention") {
+              if (
+                !item.props ||
+                !["page", "external"].includes(item.props.kind) ||
+                typeof item.props.href !== "string" ||
+                typeof item.props.label !== "string" ||
+                item.props.label.length > 500 ||
+                typeof item.props.icon !== "string" ||
+                item.props.icon.length > 32 ||
+                item.content !== undefined
+              )
+                throw new Error("Invalid mention");
             } else throw new Error("Unknown inline content");
           }
         }

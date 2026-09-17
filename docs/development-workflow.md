@@ -32,20 +32,32 @@ At each milestone review working behavior, failed cases, measurements, and newly
 
 ```markdown
 # Design: <feature>
+
 Status / owner / date:
 Related milestone, issues, ADRs:
 
 ## Problem and user journeys
+
 ## Goals, non-goals, and assumptions
+
 ## Acceptance criteria
+
 ## Components and ownership
+
 ## Data/schema/API changes
+
 ## Concurrency and failure handling
+
 ## Security and resource limits
+
 ## Migration, rollout, and recovery
+
 ## Test cases and execution plan
+
 ## Performance measurement
+
 ## Alternatives and tradeoffs
+
 ## Open questions
 ```
 
@@ -53,6 +65,7 @@ Related milestone, issues, ADRs:
 
 ```markdown
 ## ADR-NNN: <decision>
+
 Date:
 Status: Proposed / Baseline / Validated / Superseded
 Context:
@@ -67,6 +80,7 @@ Revisit when:
 
 ```markdown
 ## <date> — <change>
+
 Milestone / task:
 Behavior implemented:
 Files/components:
@@ -80,6 +94,7 @@ Remaining work/risks:
 
 ```markdown
 ## <date> — <verification run>
+
 Revision or workspace state:
 Environment and versions:
 Scope and test IDs:

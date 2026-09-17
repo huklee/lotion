@@ -643,6 +643,12 @@ h1 span {
 .link-preview-card p {
   font-size: 12px;
 }
+.link-preview-card small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 4px;
+}
 .editor-tools {
   display: flex;
   align-items: center;
@@ -845,17 +851,32 @@ h1 span {
   color: var(--shiki-light, #b4232d) !important;
 }
 .bn-inline-content a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.bn-inline-content a:hover {
+  text-decoration-thickness: 2px;
+}
+.bn-inline-content .lotion-mention {
+  align-items: center;
   background: var(--soft);
   border: 1px solid var(--border);
   border-radius: 5px;
   color: var(--text);
-  display: inline;
+  display: inline-flex;
+  gap: 4px;
   padding: 1px 5px;
   text-decoration: none;
 }
-.bn-inline-content a:hover {
+.bn-inline-content .lotion-mention:hover {
   background: var(--hover);
   text-decoration: underline;
+  text-decoration-thickness: 1px;
+}
+.lotion-mention-icon {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
 }
 .lotion-mermaid {
   width: 100%;

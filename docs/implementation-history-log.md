@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-17T07:53:11+09:00 — 0.13.0 typed mentions and bounded preview freshness prepared
+
+Replaced text-shape inference with a validated BlockNote `mention` inline type for page and external references. Raw pasted URLs retain native link semantics and underlined presentation, while mention chips render their icon and label separately. Page-tree updates immediately reconcile internal mention titles/icons. Existing internal links and links with saved preview metadata migrate on open; exact bundles preserve the new type, portable Markdown emits visible links, and search/TOC extraction includes mention labels.
+
+Added optional preview fetch timestamps, stale-on-hover refresh with per-URL client de-duplication, and refreshed external chip labels. The refresh lifecycle is isolated in a dedicated hook instead of expanding the editor component. The backend canonicalizes URLs and keeps only successful results in a process-local 15-minute, 256-entry LRU without bypassing existing concurrency, DNS, redirect, MIME, size, or SSRF controls. [ADR-021](adr/021-reference-chips-and-preview-cache.md) records the boundaries. Focused tests passed 57/57 and the three-browser interaction group passed 9/9. After narrowing an existing image assertion away from ProseMirror's hidden cursor separator, the final CI-equivalent gate passed lint/type/build, 149 unit/integration tests, and 147 browser cases in 173.64 seconds. Publication evidence follows. User data under `data/` was untouched.
+
 ## 2026-09-17T07:33:51+09:00 — 0.12.1 IPv4/NAT64 link previews prepared
 
 Replaced single-answer DNS pinning with a filtered set of public answers passed to Node's IPv4/IPv6 family selection. Mixed DNS responses discard non-public candidates instead of rejecting a usable public candidate, while every redirect still performs fresh validation and the socket lookup remains pinned to the approved set. Added explicit decoding for RFC 6052's well-known /96 and RFC 8215's local-use /48 NAT64 forms; their embedded IPv4 destination must satisfy the existing public-address policy, preventing translation to loopback, private, link-local, carrier-grade NAT, documentation, or other special-use ranges.

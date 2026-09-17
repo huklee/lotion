@@ -42,6 +42,21 @@ const document = (id: string, title: string): Document => ({
       type: "mermaid",
       props: { code: "graph TD\n  IndexedNode --> Result" },
     },
+    {
+      id: `${id}-mention`,
+      type: "paragraph",
+      content: [
+        {
+          type: "mention",
+          props: {
+            kind: "external",
+            href: "https://example.com",
+            label: "Reference needle",
+            icon: "🌐",
+          },
+        },
+      ],
+    },
   ],
 });
 
@@ -60,6 +75,9 @@ describe("workspace search index", () => {
       blockId: "one-mermaid",
       field: "mermaid",
     });
+    expect(index.search("reference needle").results[0]?.blockId).toBe(
+      "one-mention",
+    );
     expect(index.search("ＲÉSUMÉ").results[0]?.field).toBe("title");
   });
 

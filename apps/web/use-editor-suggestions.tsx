@@ -12,13 +12,18 @@ import {
 } from "lucide-react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
 import type { LotionEditor } from "./editor.types";
+import type { MentionKind } from "./MentionInline";
 
 type EditorSuggestionsOptions = {
   editor: LotionEditor;
   pages: TreeNode[];
   mounted: RefObject<boolean>;
   onCreateSubpage: () => Promise<Document>;
-  insertLinkChip: (href: string, label: string) => void;
+  insertLinkChip: (
+    href: string,
+    label: string,
+    mention?: { kind: MentionKind; icon: string },
+  ) => void;
   setPreviewError: (message: string) => void;
 };
 
@@ -36,7 +41,10 @@ export function useEditorSuggestions({
     to: number;
   } | null>(null);
   function insertPageMention(page: TreeNode) {
-    insertLinkChip(`#/page/${page.id}`, `${page.icon ?? "📄"} ${page.title}`);
+    insertLinkChip(`#/page/${page.id}`, page.title, {
+      kind: "page",
+      icon: page.icon ?? "📄",
+    });
   }
   const mentionItems = (query: string) =>
     pages

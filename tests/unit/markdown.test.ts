@@ -63,3 +63,38 @@ it("exports whitespace-only editor blocks as blank Markdown without HTML space e
   expect(result.markdown).not.toContain("&#x20;");
   expect(result.markdown).toBe("Before\n\n\n\nAfter\n");
 });
+
+it("exports page and external mention chips as portable Markdown links", () => {
+  const result = toMarkdown([
+    {
+      id: "mentions",
+      type: "paragraph",
+      content: [
+        {
+          type: "mention",
+          props: {
+            kind: "page",
+            href: "#/page/target",
+            label: "Target page",
+            icon: "🧭",
+          },
+        },
+        { type: "text", text: " and ", styles: {} },
+        {
+          type: "mention",
+          props: {
+            kind: "external",
+            href: "https://example.com/article",
+            label: "External article",
+            icon: "🌐",
+          },
+        },
+      ],
+    },
+  ]);
+
+  expect(result.markdown).toContain("[🧭 Target page](#/page/target)");
+  expect(result.markdown).toContain(
+    "[🌐 External article](https://example.com/article)",
+  );
+});

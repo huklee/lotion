@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.12.1**. See the [version history and added features](docs/changelog.md).
+Current version: **0.13.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -38,6 +38,8 @@ Optional environment variables: `LOTION_DATA_DIR` (default `data`), `PORT` (defa
 Lotion is a self-hosted document editor without AI. It supports block editing, automatic saving, page hierarchy, image drops, mentions, Markdown folder import/export, and Mermaid diagrams.
 
 Press **⌘K / Ctrl+K** to search page titles and document content across the workspace. Search includes the active unsaved browser draft, tables, code, attachment labels, and Mermaid source. Selecting a content result opens and highlights its exact block.
+
+Page and external mentions render as compact reference chips, while a URL pasted with **Paste as URL** remains a conventional underlined link. Internal mention titles and icons follow current page metadata immediately. Saved external OpenGraph metadata refreshes after 15 minutes on hover, with bounded server caching and the previous preview retained if refresh fails.
 
 ## Paste diagrams and copy Markdown
 
