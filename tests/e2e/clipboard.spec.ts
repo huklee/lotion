@@ -65,11 +65,8 @@ test("checklists toggle by click and shortcut, retain their type on paste, and d
     const selection = window.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(range);
+    document.dispatchEvent(new Event("selectionchange"));
   });
-  // Move out and back so every engine synchronizes its DOM selection with
-  // ProseMirror before the synthetic clipboard event is dispatched.
-  await page.keyboard.press("ArrowRight");
-  await page.keyboard.press("ArrowLeft");
   await inline.evaluate((element) => {
     const data = new DataTransfer();
     data.setData("text/plain", "first pasted line\nsecond pasted line");
