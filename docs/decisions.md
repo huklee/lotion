@@ -4,6 +4,7 @@
   - **Baseline**: selected for planning.
   - **Validated**: supported by implementation and recorded test evidence.
 - Dedicated implementation decisions:
+  - [ADR-023: Typed database properties and child-page rows](adr/023-typed-database-rows.md)
   - [ADR-022: File and date reference semantics](adr/022-file-and-date-references.md)
   - [ADR-021: Typed mention chips and bounded preview freshness](adr/021-reference-chips-and-preview-cache.md)
   - [ADR-020: Derived backend index for workspace search](adr/020-backend-workspace-search.md)

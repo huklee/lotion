@@ -2,11 +2,11 @@
 
 Updated: 2026-09-16. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Prepared application checkpoint 0.14.0 extends typed mentions with file and ISO date references, authenticated file downloads, and explicit exact-bundle versus portable-Markdown rules. Backend-indexed workspace search remains replaceable by a future OpenSearch adapter as documented in ADR-020. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
+Prepared application checkpoint 0.15.0 adds a bounded typed database block whose rows are real child pages, with exact-bundle preservation and static-table Markdown degradation. Backend-indexed workspace search remains replaceable by a future OpenSearch adapter as documented in ADR-020. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.14.0**. Publication commit and CI evidence are recorded after push. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.15.0**. Publication commit and CI evidence are recorded after push. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -26,12 +26,12 @@ They are copied from the global Codex session store, retained read-only as a his
 
 - React/TypeScript/Vite frontend, Fastify/Node filesystem backend, BlockNote editor, Zod validation, immutable document revisions/assets, Markdown/ZIP portability, IndexedDB drafts, Vitest and Playwright.
 - TypeScript module boundaries follow [the structure rules](typescript-file-structure.md). The application and editor composition roots are below 1,000 lines, and browser scenarios are split by product area with shared isolated fixtures.
-- Core features: block editing, auto-save, document hierarchy/tree/breadcrumbs, block drag/drop and rectangle selection, image drop/upload, Markdown folder import/export, `/page`, `/toc`, `/callout`, `/database` basic table, `/mermaid`, page/external/file/date mentions, link chips, page icons, code highlighting, theme selection, conflict recovery/merge.
+- Core features: block editing, auto-save, document hierarchy/tree/breadcrumbs, block drag/drop and rectangle selection, image drop/upload, Markdown folder import/export, `/page`, `/toc`, `/callout`, `/database` typed child-page table, `/mermaid`, page/external/file/date mentions, link chips, page icons, code highlighting, theme selection, conflict recovery/merge.
 - The current public product name is **Lotion**. New configuration uses `LOTION_DATA_DIR` and `LOTION_TOKEN`; legacy `YESTION_*` values remain compatibility fallbacks. Browser settings, drafts, exact bundles, TOC markers and directory MIME types have legacy readers.
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this file/date reference feature release is 0.14.0.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; this typed database feature release is 0.15.0.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.

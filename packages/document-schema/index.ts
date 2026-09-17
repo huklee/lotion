@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { readDatabaseState } from "../database/model";
 
 export type Inline = {
   type: string;
@@ -61,6 +62,7 @@ const allowedBlocks = new Set([
   "tableOfContents",
   "callout",
   "mermaid",
+  "database",
 ]);
 export function safeUrl(value: string): boolean {
   return (
@@ -201,6 +203,10 @@ export const contentSchema = z
             for (const cell of row.cells)
               inline(Array.isArray(cell) ? cell : cell?.content);
           }
+        } else if (block.type === "database") {
+          if (block.content !== undefined)
+            throw new Error("Database cannot contain inline content");
+          readDatabaseState(block.props?.columns, block.props?.rows);
         } else if (block.type === "mermaid") {
           if (
             block.content !== undefined ||

@@ -8,6 +8,11 @@ import { createReactBlockSpec } from "@blocknote/react";
 import { useEffect, useState } from "react";
 import { MermaidBlock } from "./MermaidBlock";
 import { mentionInline } from "./MentionInline";
+import { DatabaseBlock } from "./DatabaseBlock";
+import {
+  DEFAULT_DATABASE_COLUMNS_JSON,
+  DEFAULT_DATABASE_ROWS_JSON,
+} from "../../packages/database/model";
 
 type Heading = { id: string; level: number; title: string };
 
@@ -137,6 +142,21 @@ export const editorSchema = BlockNoteSchema.create({
     }),
     tableOfContents,
     callout,
+    database: createReactBlockSpec(
+      {
+        type: "database",
+        content: "none",
+        propSchema: {
+          columns: { default: DEFAULT_DATABASE_COLUMNS_JSON },
+          rows: { default: DEFAULT_DATABASE_ROWS_JSON },
+        },
+      },
+      {
+        render: ({ block, editor }) => (
+          <DatabaseBlock block={block} editor={editor} />
+        ),
+      },
+    )(),
     mermaid: createReactBlockSpec(
       {
         type: "mermaid",

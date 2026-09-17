@@ -331,12 +331,12 @@ export default function App() {
       handleError(e);
     }
   }
-  async function createSubpage(parentId: string) {
+  async function createSubpage(parentId: string, title = "Untitled") {
     try {
       const doc = await api<Document>("/api/documents", {
         method: "POST",
         body: JSON.stringify({
-          title: "Untitled",
+          title,
           parentId,
           mutationId: crypto.randomUUID(),
         }),
@@ -604,7 +604,7 @@ export default function App() {
               refresh={refresh}
               openPage={openPage}
               handleError={handleError}
-              createSubpage={() => createSubpage(active.id)}
+              createSubpage={(rowTitle) => createSubpage(active.id, rowTitle)}
               copyBlockLink={copyBlockLink}
               onLinkPreview={(url, preview) =>
                 coordinator.edit({

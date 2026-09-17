@@ -20,7 +20,7 @@ type EditorSuggestionsOptions = {
   editor: LotionEditor;
   pages: TreeNode[];
   mounted: RefObject<boolean>;
-  onCreateSubpage: () => Promise<Document>;
+  onCreateSubpage: (title?: string) => Promise<Document>;
   insertLinkChip: (
     href: string,
     label: string,
@@ -158,26 +158,13 @@ export function useEditorSuggestions({
           },
           {
             title: "Database",
-            subtext: "Insert an editable table database",
+            subtext: "Typed properties with child-page rows",
             aliases: ["data source", "collection"],
             group: "Lotion",
             icon: <Database size={18} />,
             onItemClick: () => {
               const table = insertOrUpdateBlockForSlashMenu(editor, {
-                type: "table",
-                content: {
-                  type: "tableContent",
-                  headerRows: 1,
-                  rows: [
-                    {
-                      cells: [
-                        [{ type: "text", text: "Name", styles: {} }],
-                        [{ type: "text", text: "Status", styles: {} }],
-                      ],
-                    },
-                    { cells: [[], []] },
-                  ],
-                },
+                type: "database",
               });
               const next = editor.insertBlocks(
                 [{ type: "paragraph" }],
