@@ -69,7 +69,7 @@ test("checklists toggle by click and shortcut, retain their type on paste, and d
   });
   await inline.evaluate((element) => {
     const data = new DataTransfer();
-    data.setData("text/plain", "first pasted line\nsecond pasted line");
+    data.setData("text/plain", "first pasted line\nsecond pasted line\n");
     const event = new ClipboardEvent("paste", {
       bubbles: true,
       cancelable: true,
@@ -132,7 +132,7 @@ test("single-line checklist paste stays inline and checkbox clicks preserve scro
   });
   await inline.evaluate((element) => {
     const data = new DataTransfer();
-    data.setData("text/plain", "pasted text");
+    data.setData("text/plain", "pasted text\n");
     const event = new ClipboardEvent("paste", {
       bubbles: true,
       cancelable: true,

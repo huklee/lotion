@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T01:07:54+09:00 — 0.19.1 checklist terminal-newline fix prepared
+
+Reproduced the remaining paste defect with both a single visible line and multiple visible lines whose clipboard payload ended in a line delimiter. The existing checklist transaction interpreted the delimiter's final empty split element as another requested checklist item, which separated the current suffix and produced an unwanted blank row.
+
+Centralized clipboard line normalization and added an inline-checklist option that removes exactly one terminal delimiter. Internal blank lines and ordinary paragraph paste semantics remain unchanged. Regression coverage first failed with three items instead of two and a displaced suffix, then passed 6/6 across Chromium, Firefox, and WebKit after the fix; direct unit coverage includes CRLF and intentional internal/trailing blanks. The complete gate is recorded in [test results](test-results.md). User data under `data/` was untouched.
+
 ## 2026-09-19T00:43:55+09:00 — 0.19.0 combined color presets prepared
 
 Replaced the formatting toolbar's independent text/background menus with exactly ten coordinated presets. A preset applies the same stable portable color key to both inline style dimensions, so existing document serialization remains valid while the menu, configurable shortcuts, and repeat-last action have one consistent meaning. Browser-local shortcut settings migrate from the former `textColors` shape, and either kind of legacy session style migrates to its combined preset.

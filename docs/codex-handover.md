@@ -2,11 +2,11 @@
 
 Updated: 2026-09-19. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Prepared application checkpoint 0.19.0 replaces separate text/background choices with ten coordinated, accessible color presets. Dark and black schemes use restrained pastel fills; preset shortcuts and session memory migrate from the prior storage shapes. Dynamic ASCII-to-symbol arrow substitution and the earlier storage/search/database capabilities remain available. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
+Prepared application checkpoint 0.19.1 prevents a terminal clipboard newline from creating an extra checklist item while retaining internal blank lines and mid-line suffixes. The 0.19.0 coordinated color presets, dynamic ASCII-to-symbol arrow substitution, and earlier storage/search/database capabilities remain available. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.19.0**. Local verification is recorded before its direct-to-main pull request; do not claim publication until its remote gates pass and it is merged. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.19.1**. Local verification is recorded before its direct-to-main pull request; do not claim publication until its remote gates pass and it is merged. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -31,7 +31,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; the combined color-preset release is 0.19.0.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; the checklist terminal-newline fix is 0.19.1.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.
