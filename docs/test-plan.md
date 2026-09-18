@@ -83,6 +83,7 @@ Use a repository fault-injection interface for deterministic errors and a child 
 | IO-08 | Restart during migration                                         | Recoverable original; retry/rollback documented and tested                                       |
 | IO-09 | Backup during pending edits, restore fresh                       | Consistent committed snapshot and all referenced assets; unsaved drafts not misrepresented       |
 | IO-10 | Retry a create request after lost acknowledgment                 | No duplicate page from identical mutation                                                        |
+| IO-11 | Damaged/orphaned/external snapshots                              | Exact read-only report; stale plans fail; reviewed recovery retains originals                    |
 
 ## Hierarchy, assets, and portability scenarios
 

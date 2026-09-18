@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.16.0 — 2026-09-18
+
+### Added
+
+- `npm run doctor` performs an offline, read-only inventory of committed and unreferenced document revisions and reports missing, unsafe, malformed, externally changed, orphaned, missing-parent, and cyclic storage states without printing document content.
+- Reviewed JSON reconciliation plans can promote an exact valid source revision, explicitly detach a page, or drop an irrecoverable manifest reference. Application is bound to the diagnostic state, records recovery metadata, creates only new immutable revisions, and never deletes old snapshots.
+
+### Improved
+
+- Version-1 manifests now carry semantic hashes for committed document snapshots. Existing valid workspaces establish their baseline compatibly; later external content changes refuse startup and point to the doctor workflow.
+- Recovery validates the complete resulting hierarchy before one atomic manifest publication and rejects stale plans or a concurrently running backend.
+
+No document/content schema migration is required. Direct external editing remains unsupported, malformed manifests still require a known-good backup, and orphan retention is deliberately separate. See [ADR-024](adr/024-storage-diagnostics-and-reconciliation.md) and the [recovery runbook](running.md#workspace-diagnosis-and-reconciliation).
+
 ## 0.15.0 — 2026-09-17
 
 ### Added

@@ -48,8 +48,9 @@ All project plans, design records, implementation notes, test plans, and test re
 20. [Typed mention chips and preview freshness](adr/021-reference-chips-and-preview-cache.md): reference semantics, legacy migration and bounded OpenGraph caching.
 21. [File and date reference semantics](adr/022-file-and-date-references.md): typed values, authenticated downloads, keyboard behavior and portability loss rules.
 22. [Typed database rows](adr/023-typed-database-rows.md): bounded property types, real child-page rows, navigation and portability scope.
-23. [TypeScript file and module structure rules](typescript-file-structure.md): SRP boundaries, size limits, dependency direction, extraction gates and the measured refactoring baseline.
-24. [Large-file refactoring plan](typescript-refactoring-plan.md): scoped sequence, acceptance criteria and verification for completing the automatic candidates.
+23. [Storage diagnosis and reconciliation](adr/024-storage-diagnostics-and-reconciliation.md): offline integrity checks, reviewed recovery plans and non-destructive publication.
+24. [TypeScript file and module structure rules](typescript-file-structure.md): SRP boundaries, size limits, dependency direction, extraction gates and the measured refactoring baseline.
+25. [Large-file refactoring plan](typescript-refactoring-plan.md): scoped sequence, acceptance criteria and verification for completing the automatic candidates.
 
 ## Current status
 
