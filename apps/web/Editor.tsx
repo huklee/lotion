@@ -12,7 +12,7 @@ import {
 import { BlockNoteView } from "@blocknote/mantine";
 import { readableCodeColor } from "./code-colors";
 import { mermaidFromClipboard } from "./mermaid-paste";
-import { clipboardLines } from "./clipboard-lines";
+import { clipboardLines, clipboardTextLines } from "./clipboard-lines";
 import { DatePicker } from "./DatePicker";
 import { FileReferencePicker } from "./FileReferencePicker";
 import { blockToNode } from "@blocknote/core";
@@ -623,22 +623,23 @@ export default function Editor({
           event.preventDefault();
           event.stopPropagation();
           try {
-            const blocks = clipboardLines(raw);
             const current = editor.getTextCursorPosition().block;
+            const checklistPaste = current.type === "checkListItem";
+            const lineOptions = { omitTerminalDelimiter: checklistPaste };
+            const blocks = clipboardLines(raw, lineOptions);
             // Inserting paragraph nodes at an inline checklist selection
             // changes the containing block into a paragraph. Keep checklist
             // semantics for every pasted line instead.
-            const inserted =
-              current.type === "checkListItem"
-                ? blocks.map((block, index) => ({
-                    ...block,
-                    type: "checkListItem" as const,
-                    props: {
-                      checked:
-                        index === 0 ? current.props.checked === true : false,
-                    },
-                  }))
-                : blocks;
+            const inserted = checklistPaste
+              ? blocks.map((block, index) => ({
+                  ...block,
+                  type: "checkListItem" as const,
+                  props: {
+                    checked:
+                      index === 0 ? current.props.checked === true : false,
+                  },
+                }))
+              : blocks;
             const checked = contentSchema.safeParse({
               title: initial.title,
               blocks: [...editor.document, ...inserted],
@@ -651,18 +652,22 @@ export default function Editor({
             // paste rules such as **bold**, even for otherwise plain paragraphs.
             const tiptap = editor._tiptapEditor;
             if (blocks.length === 1) {
+              const text = checklistPaste
+                ? clipboardTextLines(raw, lineOptions)[0]
+                : raw;
+              if (!text) return;
               tiptap.commands.insertContentAt(
                 {
                   from: tiptap.state.selection.from,
                   to: tiptap.state.selection.to,
                 },
-                { type: "text", text: raw },
+                { type: "text", text },
                 { applyPasteRules: false, applyInputRules: false },
               );
               return;
             }
-            if (current.type === "checkListItem") {
-              const lines = raw.replace(/\r\n?/g, "\n").split("\n");
+            if (checklistPaste) {
+              const lines = clipboardTextLines(raw, lineOptions);
               let insertion = tiptap.chain().insertContentAt(
                 {
                   from: tiptap.state.selection.from,

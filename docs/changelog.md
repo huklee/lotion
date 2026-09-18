@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.19.1 — 2026-09-19
+
+### Fixed
+
+- Pasting clipboard text that ends with a conventional newline into the middle of a checklist item no longer creates an extra empty checklist item or moves the existing suffix to that item.
+- Single-line and multi-line checklist paste now discard exactly one terminal clipboard delimiter while preserving intentional internal blank lines, checklist types, checked-state rules, and mid-line prefix/suffix placement.
+
+Ordinary paragraph paste continues preserving terminal blank lines under the existing line-by-line plain-text rules. No document schema or stored content migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.19.0 — 2026-09-19
 
 ### Improved

@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-09-19T01:07:54+09:00 — 0.19.1 checklist terminal-newline fix
+
+The new Chromium regression first failed both checklist scenarios: multi-line paste produced three checklist items instead of two, and a single visible line moved the existing suffix into an unwanted next item. After terminal-delimiter normalization, the clipboard-line unit file passed **3/3** and the production-build checklist scenarios passed **6/6** across Chromium, Firefox, and WebKit, including mid-line prefix/suffix placement, checklist type/count, checked state, scroll stability, save, and reload.
+
+The final `CI=1 npm run check` exited **0**: ESLint, strict TypeScript, production build, **177/177 unit and integration tests**, and **156/156 Playwright cases** passed with two workers. The browser phase completed in 2.2 minutes. The known large-chunk warning remains non-failing. User data under `data/` was untouched.
+
 ## 2026-09-19T00:43:55+09:00 — 0.19.0 combined color presets
 
 Strict TypeScript and the production build passed. The focused unit run passed **131/131 unit cases**, including all palette, shortcut migration/uniqueness, session migration, malformed storage, unavailable storage, 4.5:1 combined-preset contrast, and restrained dark/black background checks. After rebuilding the production bundle, the complete settings specification passed **12/15** initial cases; the three failures revealed that the contrast test measured the transparent outer text-style wrapper instead of the nested background-style wrapper. The corrected computed-style assertion passed **3/3** across Chromium, Firefox, and WebKit.

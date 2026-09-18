@@ -1,5 +1,8 @@
 import { expect, it } from "vitest";
-import { clipboardLines } from "../../apps/web/clipboard-lines";
+import {
+  clipboardLines,
+  clipboardTextLines,
+} from "../../apps/web/clipboard-lines";
 import { contentSchema } from "../../packages/document-schema/index";
 
 it("validates each line as plain text, preserving blanks and unsafe-looking strings", () => {
@@ -22,4 +25,16 @@ it("validates each line as plain text, preserving blanks and unsafe-looking stri
 
 it("rejects an oversized paste instead of silently dropping lines", () => {
   expect(() => clipboardLines("x\n".repeat(10000))).toThrow("10,000 lines");
+});
+
+it("drops one clipboard terminal delimiter for inline checklist paste", () => {
+  expect(
+    clipboardTextLines("first\r\nsecond\r\n", {
+      omitTerminalDelimiter: true,
+    }),
+  ).toEqual(["first", "second"]);
+  expect(
+    clipboardTextLines("first\n\n", { omitTerminalDelimiter: true }),
+  ).toEqual(["first", ""]);
+  expect(clipboardTextLines("first\nsecond")).toEqual(["first", "second"]);
 });
