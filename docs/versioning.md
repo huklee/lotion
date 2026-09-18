@@ -1,6 +1,6 @@
 # Version management guide
 
-Established 2026-09-13 from the user's versioning instructions. Read this guide before changing a version or preparing a release. Current release: **0.18.0**, incremented from **0.17.0**.
+Established 2026-09-13 from the user's versioning instructions. Read this guide before changing a version or preparing a release. Current release: **0.19.0**, incremented from **0.18.0**.
 
 ## Choose the increment
 

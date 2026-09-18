@@ -42,7 +42,7 @@ import { api, authHeaders } from "./api";
 import { editorSchema } from "./editor-schema";
 import {
   matchesFormattingShortcut,
-  textColors,
+  colorPresets,
   type FormattingShortcuts,
 } from "./format-shortcuts";
 import { blockIdFromHash, pageIdFromHash } from "./block-links";
@@ -58,7 +58,7 @@ import { ArrowSubstitutionExtension } from "./arrow-substitution";
 import {
   readLastColorStyle,
   writeLastColorStyle,
-  type AppliedColorStyle,
+  type AppliedColorPreset,
 } from "./last-color-style";
 
 function pageIdFromHref(href: string): string | null {
@@ -188,21 +188,28 @@ export default function Editor({
     },
   });
   const objectUrls = useRef<string[]>([]);
-  const lastColorStyle = useRef<AppliedColorStyle | null>(
+  const lastColorStyle = useRef<AppliedColorPreset | null>(
     readLastColorStyle(sessionStorage),
   );
   const mounted = useRef(true);
   const host = useRef<HTMLDivElement>(null);
   const [uploadState, setUploadState] = useState("");
-  const rememberColorStyle = useCallback((style: AppliedColorStyle) => {
+  const rememberColorStyle = useCallback((style: AppliedColorPreset) => {
     lastColorStyle.current = style;
     writeLastColorStyle(sessionStorage, style);
   }, []);
   const applyColorStyle = useCallback(
-    (style: AppliedColorStyle) => {
+    (style: AppliedColorPreset) => {
       if (style.color === "default")
-        editor.removeStyles({ [style.kind]: style.color });
-      else editor.addStyles({ [style.kind]: style.color });
+        editor.removeStyles({
+          textColor: style.color,
+          backgroundColor: style.color,
+        });
+      else
+        editor.addStyles({
+          textColor: style.color,
+          backgroundColor: style.color,
+        });
       rememberColorStyle(style);
     },
     [editor, rememberColorStyle],
@@ -498,16 +505,16 @@ export default function Editor({
       onKeyDownCapture={(e) => {
         if ((e.target as HTMLElement).closest("input, textarea, select"))
           return;
-        const color = textColors.find((candidate) =>
+        const color = colorPresets.find((candidate) =>
           matchesFormattingShortcut(
             e.nativeEvent,
-            formattingShortcuts.textColors[candidate],
+            formattingShortcuts.colorPresets[candidate],
           ),
         );
         if (color) {
           e.preventDefault();
           e.stopPropagation();
-          applyColorStyle({ kind: "textColor", color });
+          applyColorStyle({ color });
           return;
         }
         if (

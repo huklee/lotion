@@ -15,7 +15,7 @@ import {
   defaultFormattingShortcuts,
   displayShortcut,
   shortcutFromKeyboardEvent,
-  textColors,
+  colorPresets,
   type FormattingShortcutTarget,
   type FormattingShortcuts,
 } from "./format-shortcuts";
@@ -50,13 +50,13 @@ export function SettingsPanel({
   setFormattingShortcuts,
 }: SettingsPanelProps) {
   const colorLabels = Object.fromEntries(
-    textColors.map((color) => [
+    colorPresets.map((color) => [
       color,
       color === "default"
-        ? "Default text"
-        : `${color[0].toUpperCase()}${color.slice(1)} text`,
+        ? "Default colors"
+        : `${color[0].toUpperCase()}${color.slice(1)} preset`,
     ]),
-  ) as Record<(typeof textColors)[number], string>;
+  ) as Record<(typeof colorPresets)[number], string>;
   function captureFormattingShortcut(
     event: ReactKeyboardEvent<HTMLInputElement>,
     target: FormattingShortcutTarget,
@@ -195,10 +195,14 @@ export function SettingsPanel({
         Assigning a shortcut moves it from any previous action.
       </p>
       <div className="shortcut-settings">
-        {textColors.map((color) => (
+        {colorPresets.map((color) => (
           <label className="shortcut-setting" key={color}>
             <span>
-              <i className="text-color-swatch" data-text-color={color}>
+              <i
+                className="text-color-swatch"
+                data-text-color={color}
+                data-background-color={color}
+              >
                 A
               </i>
               {colorLabels[color]}
@@ -207,7 +211,7 @@ export function SettingsPanel({
               aria-label={`${colorLabels[color]} shortcut`}
               placeholder="Unassigned"
               readOnly
-              value={displayShortcut(formattingShortcuts.textColors[color])}
+              value={displayShortcut(formattingShortcuts.colorPresets[color])}
               onKeyDown={(event) => captureFormattingShortcut(event, color)}
             />
           </label>
@@ -215,7 +219,7 @@ export function SettingsPanel({
         <label className="shortcut-setting shortcut-repeat">
           <span>
             Repeat last color
-            <small>Reapply the last text or background color.</small>
+            <small>Reapply the last combined color preset.</small>
           </span>
           <input
             aria-label="Repeat last color shortcut"

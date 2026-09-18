@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T00:43:55+09:00 — 0.19.0 combined color presets prepared
+
+Replaced the formatting toolbar's independent text/background menus with exactly ten coordinated presets. A preset applies the same stable portable color key to both inline style dimensions, so existing document serialization remains valid while the menu, configurable shortcuts, and repeat-last action have one consistent meaning. Browser-local shortcut settings migrate from the former `textColors` shape, and either kind of legacy session style migrates to its combined preset.
+
+Adjusted dark and black background values toward their neutral canvases to create softer, low-chroma pastel fills. Direct unit checks enforce a maximum RGB chroma spread of 24 for those backgrounds and 4.5:1 text/background contrast for every named preset in all three schemes. Production-build browser checks exercise the actual computed colors and the full toolbar, shortcut, session, persistence, and reload paths in Chromium, Firefox, and WebKit. The complete local gate is recorded in [test results](test-results.md). User data under `data/` was untouched.
+
 ## 2026-09-19T00:27:30+09:00 — 0.18.0 session-wide last color style prepared
 
 Moved the last-applied text/background color from an editor-instance-only ref to a small validated session-storage boundary. Both toolbar application and direct color shortcuts record the same session value; the repeat-last shortcut reads it after page navigation or a reload. Malformed/unknown values are ignored, and storage write failures do not block immediate formatting. The value remains tab-session-local rather than entering document content, workspace storage, or exports.

@@ -14,13 +14,20 @@ function memoryStorage(initial: Record<string, string> = {}) {
 }
 
 describe("session-wide last color style", () => {
-  it("round-trips text and background styles", () => {
+  it("round-trips a combined color preset", () => {
     const storage = memoryStorage();
-    writeLastColorStyle(storage, { kind: "backgroundColor", color: "yellow" });
-    expect(readLastColorStyle(storage)).toEqual({
-      kind: "backgroundColor",
-      color: "yellow",
+    writeLastColorStyle(storage, { color: "yellow" });
+    expect(readLastColorStyle(storage)).toEqual({ color: "yellow" });
+  });
+
+  it("migrates a legacy single-style value to its combined preset", () => {
+    const storage = memoryStorage({
+      [LAST_COLOR_STYLE_KEY]: JSON.stringify({
+        kind: "backgroundColor",
+        color: "yellow",
+      }),
     });
+    expect(readLastColorStyle(storage)).toEqual({ color: "yellow" });
   });
 
   it("rejects malformed, unknown-kind, and unknown-color values", () => {
@@ -42,7 +49,7 @@ describe("session-wide last color style", () => {
             throw new Error("storage unavailable");
           },
         },
-        { kind: "textColor", color: "blue" },
+        { color: "blue" },
       ),
     ).not.toThrow();
   });

@@ -27,7 +27,7 @@ Each item is implemented from current `main`, tested, submitted as a pull reques
 
 1. [x] Convert `<-` and `->` dynamically to `←` and `→` during ordinary editor typing without changing paste, code, Mermaid, or IME composition input. An undoable Tiptap input rule owns the conversion; its composition/code guards and Lotion's explicit paste boundary preserve literal input elsewhere.
 2. [x] Preserve the most recently applied font-color style as one shared value for the browser session, including navigation between pages. The validated session value covers both text and background choices, survives editor remount/reload, and degrades safely when storage is unavailable.
-3. [ ] Replace independent font-color/background choices with ten combined Notion-style presets whose contrast remains readable in every supported scheme. Dark and black schemes must use restrained pastel backgrounds instead of the current intense fills.
+3. [x] Replace independent font-color/background choices with ten combined Notion-style presets whose contrast remains readable in every supported scheme. Each preset now applies both portable style keys, shortcut/session state migrates compatibly, and dark/black fills use tested low-chroma pastel values.
 4. [ ] Fix the remaining checklist-area paste path that unconditionally creates an unwanted newline, including mid-line prefix/suffix behavior and save/reload.
 5. [ ] Extend drag-box block selection so the left movement handle supports dragging, copying, and cutting the selected block group.
 6. [ ] Clear a custom block selection whenever the user selects another editor or application area, without breaking selection-owned controls.

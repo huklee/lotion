@@ -48,6 +48,9 @@ test("last color style is shared across page navigation and reloads in one sessi
   await expect(
     source.locator('[data-style-type="textColor"][data-value="blue"]'),
   ).toContainText("Source");
+  await expect(
+    source.locator('[data-style-type="backgroundColor"][data-value="blue"]'),
+  ).toContainText("Source");
 
   const created = await page.request.post("/api/documents", {
     data: { title: "Color destination", mutationId: randomUUID() },
@@ -78,6 +81,11 @@ test("last color style is shared across page navigation and reloads in one sessi
       .locator('[data-style-type="textColor"][data-value="blue"]')
       .filter({ hasText: "Target" }),
   ).toContainText("Target");
+  await expect(
+    target
+      .locator('[data-style-type="backgroundColor"][data-value="blue"]')
+      .filter({ hasText: "Target" }),
+  ).toContainText("Target");
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
 
@@ -87,6 +95,11 @@ test("last color style is shared across page navigation and reloads in one sessi
   await expect(
     target
       .locator('[data-style-type="textColor"][data-value="blue"]')
+      .filter({ hasText: "Another" }),
+  ).toContainText("Another");
+  await expect(
+    target
+      .locator('[data-style-type="backgroundColor"][data-value="blue"]')
       .filter({ hasText: "Another" }),
   ).toContainText("Another");
 });
@@ -222,21 +235,12 @@ test("pastel text and background colors stay readable in every scheme", async ({
   ];
   await seed(page, "Pastel palette", [
     {
-      id: "palette-text",
+      id: "palette-combined",
       type: "paragraph",
       content: colors.map((color) => ({
         type: "text",
         text: `${color} `,
-        styles: { textColor: color },
-      })),
-    },
-    {
-      id: "palette-background",
-      type: "paragraph",
-      content: colors.map((color) => ({
-        type: "text",
-        text: `${color} `,
-        styles: { backgroundColor: color },
+        styles: { textColor: color, backgroundColor: color },
       })),
     },
   ]);
@@ -272,33 +276,25 @@ test("pastel text and background colors stay readable in every scheme", async ({
         );
         return (lighter + 0.05) / (darker + 0.05);
       };
-      const canvas = getComputedStyle(document.documentElement).backgroundColor;
-      const textRatios = [
+      const combinedRatios = [
         ...document.querySelectorAll<HTMLElement>(
-          '[data-id="palette-text"] [data-style-type="textColor"]',
-        ),
-      ].map((element) => contrast(getComputedStyle(element).color, canvas));
-      const backgroundRatios = [
-        ...document.querySelectorAll<HTMLElement>(
-          '[data-id="palette-background"] [data-style-type="backgroundColor"]',
+          '[data-id="palette-combined"] [data-style-type="backgroundColor"]',
         ),
       ].map((element) => {
         const style = getComputedStyle(element);
         return contrast(style.color, style.backgroundColor);
       });
-      return { textRatios, backgroundRatios };
+      return { combinedRatios };
     });
-    expect(ratios.textRatios).toHaveLength(9);
-    expect(ratios.backgroundRatios).toHaveLength(9);
-    expect(Math.min(...ratios.textRatios)).toBeGreaterThanOrEqual(4.5);
-    expect(Math.min(...ratios.backgroundRatios)).toBeGreaterThanOrEqual(4.5);
+    expect(ratios.combinedRatios).toHaveLength(9);
+    expect(Math.min(...ratios.combinedRatios)).toBeGreaterThanOrEqual(4.5);
   }
   await panel.getByRole("button", { name: "Close dialog" }).click();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "black");
 });
 
-test("configurable text-color shortcuts show on hover and repeat the last color", async ({
+test("ten combined color presets support shortcuts and repeat the last preset", async ({
   page,
 }) => {
   await seed(page, "Formatting shortcut page", [
@@ -314,7 +310,7 @@ test("configurable text-color shortcuts show on hover and repeat the last color"
     .getByRole("button", { name: "Control panel", exact: true })
     .click();
   const panel = page.getByRole("dialog", { name: "Control panel" });
-  const redShortcut = panel.getByLabel("Red text shortcut");
+  const redShortcut = panel.getByLabel("Red preset shortcut");
   await redShortcut.focus();
   await page.keyboard.press("ControlOrMeta+Alt+R");
   await expect(redShortcut).toHaveValue(/R/);
@@ -327,9 +323,16 @@ test("configurable text-color shortcuts show on hover and repeat the last color"
   await expect(
     inline.locator('[data-style-type="textColor"][data-value="red"]'),
   ).toContainText("First");
+  await expect(
+    inline.locator('[data-style-type="backgroundColor"][data-value="red"]'),
+  ).toContainText("First");
 
   await selectInlineWord(inline, "Second");
   await page.getByRole("button", { name: "Colors", exact: true }).click();
+  await expect(page.locator(".lotion-color-option")).toHaveCount(10);
+  await expect(page.getByText("Background color", { exact: true })).toHaveCount(
+    0,
+  );
   const redOption = page.locator(".lotion-color-option").filter({
     hasText: "Red",
   });
@@ -346,6 +349,9 @@ test("configurable text-color shortcuts show on hover and repeat the last color"
   await expect(
     inline.locator('[data-style-type="textColor"][data-value="blue"]'),
   ).toContainText("Second");
+  await expect(
+    inline.locator('[data-style-type="backgroundColor"][data-value="blue"]'),
+  ).toContainText("Second");
 
   await selectInlineWord(inline, "Third");
   await page.keyboard.press("ControlOrMeta+Shift+H");
@@ -354,23 +360,16 @@ test("configurable text-color shortcuts show on hover and repeat the last color"
       .locator('[data-style-type="textColor"][data-value="blue"]')
       .filter({ hasText: "Third" }),
   ).toContainText("Third");
-
-  await selectInlineWord(inline, "First");
-  await page.getByRole("button", { name: "Colors", exact: true }).click();
-  await page
-    .locator(".lotion-background-option")
-    .filter({ hasText: "Yellow" })
-    .click();
+  await expect(
+    inline
+      .locator('[data-style-type="backgroundColor"][data-value="blue"]')
+      .filter({ hasText: "Third" }),
+  ).toContainText("Third");
   await selectInlineWord(inline, "Fourth");
   await page.keyboard.press("ControlOrMeta+Shift+H");
   await expect(
     inline
-      .locator('[data-style-type="backgroundColor"][data-value="yellow"]')
-      .filter({ hasText: "First" }),
-  ).toContainText("First");
-  await expect(
-    inline
-      .locator('[data-style-type="backgroundColor"][data-value="yellow"]')
+      .locator('[data-style-type="textColor"][data-value="blue"]')
       .filter({ hasText: "Fourth" }),
   ).toContainText("Fourth");
   await page.keyboard.press("ControlOrMeta+s");
@@ -390,6 +389,6 @@ test("configurable text-color shortcuts show on hover and repeat the last color"
       .filter({ hasText: "Third" }),
   ).toContainText("Third");
   await expect(
-    inline.locator('[data-style-type="backgroundColor"][data-value="yellow"]'),
-  ).toHaveCount(2);
+    inline.locator('[data-style-type="backgroundColor"][data-value="blue"]'),
+  ).toHaveCount(3);
 });

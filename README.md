@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.18.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.19.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -71,7 +71,7 @@ Mark a page with the top-bar star to add it to **Favorites** in the sidebar. Fav
 
 Open **Control panel** at the bottom of the sidebar to choose a system/light/dark theme, editor text size, comfortable/wide page width, and whether the sidebar opens on startup. These preferences are stored in this browser and do not change document content. **Reset display settings** restores the defaults.
 
-The same panel lets you record a modifier-key shortcut for every text color. Focus a shortcut field and press the desired combination; Backspace/Delete clears it, and assigning a duplicate moves that combination to the new action. Assigned shortcuts appear when hovering or keyboard-focusing their colors in the editor toolbar. **⌘ShiftH / Ctrl+Shift+H** reapplies the most recently chosen text or background color by default and can also be reassigned. The most recent color style is shared across page navigation and reloads for the lifetime of the current browser tab/session.
+The editor color menu contains ten combined, Notion-style presets: default plus nine portable hues. Each preset applies a coordinated text and background color together. Dark and black schemes use restrained, low-chroma pastel fills, and every combination maintains at least 4.5:1 text contrast. The control panel lets you assign one modifier-key shortcut to each preset; assigned shortcuts appear on hover or keyboard focus. **⌘ShiftH / Ctrl+Shift+H** reapplies the most recently chosen preset by default. That preset is shared across page navigation and reloads for the lifetime of the current browser tab/session.
 
 ## Tests
 

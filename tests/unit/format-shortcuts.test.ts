@@ -37,8 +37,8 @@ it("validates stored settings and falls back for malformed values", () => {
       }),
     ),
   );
-  expect(settings.textColors.red).toBe("Mod+Shift+R");
-  expect(settings.textColors.blue).toBe("");
+  expect(settings.colorPresets.red).toBe("Mod+Shift+R");
+  expect(settings.colorPresets.blue).toBe("");
   expect(settings.repeatLast).toBe("Mod+Shift+H");
   expect(readFormattingShortcuts(memoryStorage("{"))).toEqual(
     expect.objectContaining({ repeatLast: "Mod+Shift+H" }),
@@ -48,9 +48,9 @@ it("validates stored settings and falls back for malformed values", () => {
 it("keeps each shortcut unique when an assignment changes", () => {
   const settings = readFormattingShortcuts(memoryStorage());
   const red = assignFormattingShortcut(settings, "red", "Mod+Shift+H");
-  expect(red.textColors.red).toBe("Mod+Shift+H");
+  expect(red.colorPresets.red).toBe("Mod+Shift+H");
   expect(red.repeatLast).toBe("");
   const repeated = assignFormattingShortcut(red, "repeatLast", "Mod+Shift+H");
-  expect(repeated.textColors.red).toBe("");
+  expect(repeated.colorPresets.red).toBe("");
   expect(repeated.repeatLast).toBe("Mod+Shift+H");
 });

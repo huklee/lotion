@@ -19,6 +19,14 @@ const contrast = (first: string, second: string) => {
   return (lighter + 0.05) / (darker + 0.05);
 };
 
+const chroma = (hex: string) => {
+  const channels = hex
+    .slice(1)
+    .match(/.{2}/g)!
+    .map((value) => parseInt(value, 16));
+  return Math.max(...channels) - Math.min(...channels);
+};
+
 describe("pastel editor color palettes", () => {
   it("keeps the established nine portable colors plus the default choice", () => {
     expect(paletteColors).toHaveLength(9);
@@ -33,9 +41,23 @@ describe("pastel editor color palettes", () => {
           `${color} text on ${scheme}`,
         ).toBeGreaterThanOrEqual(4.5);
         expect(
-          contrast(palette.defaultText, palette.colors[color].background),
-          `${color} background on ${scheme}`,
+          contrast(
+            palette.colors[color].text,
+            palette.colors[color].background,
+          ),
+          `${color} combined preset on ${scheme}`,
         ).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+  }
+
+  for (const scheme of ["dark", "black"] as const) {
+    it(`${scheme} uses restrained low-chroma pastel backgrounds`, () => {
+      for (const color of paletteColors) {
+        expect(
+          chroma(pastelPalettes[scheme].colors[color].background),
+          `${color} background on ${scheme}`,
+        ).toBeLessThanOrEqual(24);
       }
     });
   }
