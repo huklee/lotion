@@ -1,6 +1,6 @@
 # ADR-010: Implementation foundations and atomic workspace commits
 
-Status: Implemented; integration/browser validation ongoing.
+Status: Implemented and covered by integration/browser/CI verification; platform durability qualification remains open.
 Recorded: 2026-09-08T18:52:54.560Z.
 
 ## Storage commit protocol
@@ -27,7 +27,9 @@ Tests use synthetic content and isolated OS temporary directories. Failure injec
 
 ## Local hosting and authentication
 
-Loopback-only default with optional bearer token. Non-loopback binding requires `LOTION_TOKEN`; TLS is supplied by the operator's reverse proxy. The frontend stores the token in tab session storage and authenticates document, import/export, and asset requests. Cross-origin browser requests are rejected. No remote link-preview fetcher is implemented, avoiding an unnecessary server-fetch surface.
+Loopback-only default with optional bearer token. Non-loopback binding requires `LOTION_TOKEN`; TLS is supplied by the operator's reverse proxy. The frontend stores the token in tab session storage and authenticates document, import/export, preview, and asset requests. Cross-origin browser requests are rejected.
+
+The implemented link-preview service accepts only HTTP(S), rejects credentials and non-public destinations, resolves and pins validated public IPv4/IPv6 candidates for every redirect, bounds redirects/time/body/MIME/concurrency, parses inert metadata, and stores accepted preview images as local assets. NAT64 addresses are accepted only when their embedded IPv4 destination is public. Successful results use a 15-minute, 256-entry process-local LRU; see [ADR-021](021-reference-chips-and-preview-cache.md).
 
 Fonts are bundled with the application so core UI rendering does not depend on an external font CDN. External images/links remain explicit user content.
 

@@ -38,7 +38,7 @@ Mermaid renders in the browser, not a worker. Size/edge limits reduce expensive 
 
 ## Evidence and reference
 
-Regression cases are in tests/e2e/workspace.spec.ts, tests/unit/markdown.test.ts and tests/unit/link-preview.test.ts. Executed results belong in [test results](../test-results.md).
+Regression cases are split across `tests/e2e/diagrams.spec.ts`, `tests/e2e/clipboard.spec.ts`, `tests/e2e/mentions.spec.ts`, `tests/unit/markdown.test.ts`, `tests/unit/mermaid-paste.test.ts`, `tests/unit/link-preview.test.ts`, and `tests/unit/link-preview-service.test.ts`. Executed results belong in [test results](../test-results.md).
 
 Mermaid configuration follows its [official usage and security documentation](https://mermaid.js.org/config/usage.html). BlockNote's installed SyntaxHighlighting/shiki.ts and editor/Block.css establish the dual-color-variable contract and default dark-token behavior.
 

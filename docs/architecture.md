@@ -1,12 +1,12 @@
 # Architecture
 
-Status: implemented baseline; remaining qualification is tracked separately.
-Last updated: 2026-09-17.
+Status: implemented self-hosted application at version 0.16.0; remaining qualification is tracked separately.
+Last updated: 2026-09-19.
 Related records: [decisions](decisions.md), [test plan](test-plan.md), [roadmap](roadmap.md).
 
 ## Scope and assumptions
 
-Deliver a clean, Notion-like web application with block editing, slash commands, block reordering, image drag-and-drop, rectangular multi-block selection, section movement, links, automatic saving, immediate sidebar title updates, a hierarchical sidebar, keyboard shortcuts, themes, document creation/trash/restore, and whole-folder Markdown import/export with assets.
+Lotion is a Notion-like web application with block editing, slash commands, block reordering, image and file uploads, rectangular multi-block selection, section movement, direct block links, automatic saving, typed mentions, Mermaid, bounded typed databases, workspace search, immediate sidebar title updates, a hierarchical sidebar, keyboard shortcuts, browser-local appearance settings, document creation/trash/restore, and whole-folder Markdown import/export with assets.
 
 Initial deployment: one user, one workspace, one backend writer process. Multiple tabs and devices are supported through revision conflicts, not concurrent collaborative merging. AI, advanced database views/formulas/relations, comments, multiplayer editing, and granular workspace permissions are out of scope.
 
@@ -30,7 +30,7 @@ Canonical JSON preserves supported rich document state. Portable Markdown preser
 | Testing        | Vitest, Playwright                                      | Unit/integration and real-browser coverage                |
 | Deployment     | Single process/container with a persistent local volume | Simple ownership and operations                           |
 
-Pin compatible dependency versions and record the runtime when scaffolding. Audit licenses of selected core/extensions before adoption. Tiptap is the fallback if the BlockNote spike exposes unacceptable customization constraints. Go is optional for a Go-oriented team; desktop wrappers are a separate future product decision.
+Dependency versions are pinned in `package-lock.json`. Node 24 LTS is the documented deployment and CI runtime; the package accepts Node 22.12 or newer. BlockNote remains behind application-owned schema, interaction, and portability boundaries. A backend/editor replacement or desktop wrapper is a separate future product decision, not part of the current architecture.
 
 ## Components and data ownership
 
@@ -50,9 +50,11 @@ Browser editor / title / sidebar
 - Portability service owns parsing, path/link rewriting, manifests, and staged imports.
 - The sidebar index is derived metadata, never an independent source of truth.
 - The workspace search index is disposable derived data rebuilt from validated canonical revisions; the current browser draft is merged client-side.
+- Browser-local IndexedDB owns draft checkpoints and conflict archives. Local storage owns favorites, appearance, font, layout, and formatting-shortcut preferences; none are workspace backup data.
+- Typed database cells live in the containing document while each row points to an ordinary child document with its own revision and lifecycle.
 - UI code never constructs disk paths. Request bodies cannot choose arbitrary storage paths.
 
-Suggested source layout: `apps/web`, `apps/server`, `packages/document-schema`, `packages/editor-adapter`, `packages/markdown`, `packages/persistence`, and `packages/test-fixtures`. Documentation remains in `docs/`.
+Implemented source layout: `apps/web`, `apps/server`, `packages/document-schema`, `packages/database`, `packages/markdown`, `packages/persistence`, `packages/search`, and `packages/test-fixtures`. Documentation remains in `docs/`.
 
 ## Document model
 
@@ -109,9 +111,11 @@ workspace/
   workspace.json
   documents/doc_01.17.json
   documents/doc_02.4.json
-  assets/sha256/ab/abcd...1234.png
-  history/doc_01/000016.json
-  cache/tree-index.json
+  assets/abcd...1234.png
+  assets/cdef...5678.bin
+  recovery/<timestamp>-<token>/workspace.json
+  recovery/<timestamp>-<token>/diagnostic-report.json
+  recovery/<timestamp>-<token>/reconciliation-plan.json
 ```
 
 `workspace.json` maps each document ID to its visible committed revision, semantic document hash, and retry receipts. Revision files are immutable; one atomic manifest replacement publishes a single-page mutation or an entire staged import. The offline doctor audits this boundary and publishes only reviewed, state-bound recovery plans. See [ADR-010](adr/010-implementation-foundations.md) and [ADR-024](adr/024-storage-diagnostics-and-reconciliation.md).
@@ -126,6 +130,7 @@ Workspace backups go to a configurable separate destination; a copy on the same 
 | --------------------------------- | -------------------------------------------------------- |
 | `GET /api/tree`                   | Metadata projection and ETag                             |
 | `GET /api/search`                 | Bounded title/body search over the derived backend index |
+| `POST /api/link-preview`          | Validated public OpenGraph lookup with bounded caching   |
 | `POST /api/documents`             | Create; mutation ID prevents retry duplication           |
 | `GET /api/documents/:id`          | Document and revision ETag                               |
 | `PUT /api/documents/:id/content`  | Save title/blocks using `If-Match`                       |
@@ -133,8 +138,9 @@ Workspace backups go to a configurable separate destination; a copy on the same 
 | `POST /api/documents/:id/trash`   | Tombstone with revision precondition                     |
 | `POST /api/documents/:id/restore` | Restore with revision precondition                       |
 | `POST /api/assets`                | Stream, validate, hash, and persist upload               |
-| `POST /api/imports`               | Validate/stage/commit import; expose job status          |
-| `POST /api/exports`               | Snapshot/export selected document or subtree             |
+| `GET /api/assets/:id`             | Serve an authenticated immutable asset or download       |
+| `POST /api/imports`               | Validate and atomically publish Markdown/ZIP input       |
+| `POST /api/exports`               | Return a ZIP for the workspace or selected subtree       |
 
 Return explicit validation, not-found, precondition, quota, and I/O errors. Missing required preconditions are rejected. Stale `If-Match` returns 412. Enforce body/upload/depth limits before expensive work. Final route schemas and response examples must be documented with implementation.
 
@@ -162,9 +168,9 @@ Use one workspace mutation queue initially. Validate preconditions and hierarchy
 
 For each canonical replacement: validate -> create unique same-directory temporary file -> write -> flush and close -> rename over destination -> flush parent directory where supported -> update derived index -> acknowledge. Preserve the old canonical file until replacement is ready. Never acknowledge before the durability boundary.
 
-Validate this protocol on Linux/local filesystems first. Other operating systems, network shares, and synchronized folders require explicit qualification. Startup discards uncommitted temporary files, validates canonical data, recovers committed jobs, rebuilds indexes, and exposes corruption instead of silently overwriting it.
+The protocol is covered by local failure-injection tests and the full Ubuntu CI suite. Windows, network shares, synchronized folders, and actual power-loss behavior still require explicit qualification. Startup ignores uncommitted revision files, validates canonical data and hashes, rebuilds the search index, and exposes corruption instead of silently overwriting it. The offline doctor reports unreferenced snapshots and applies only an exact reviewed recovery plan.
 
-History retention is configurable and coalesced to avoid one retained file per debounce indefinitely. Record recovery point and disk-space implications. Multi-file imports and any future bulk mutation use persistent transaction state with a defined commit point and idempotent startup recovery.
+Revision files, mutation receipts, recovery records, and unreferenced snapshots are currently retained without automated garbage collection. Multi-document imports write validated snapshots before one manifest publication, so incomplete pre-manifest writes remain invisible and diagnosable. Retention tooling must account for active pages, trash, history, recovery state, and in-progress work before deleting anything.
 
 ## Markdown portability
 
@@ -182,7 +188,7 @@ Convert `Markdown -> remark/mdast -> validated blocks` and `blocks -> mdast -> M
 
 An export bundle contains `manifest.json`, nested title-plus-ID directories with `index.md`, `assets/`, and optional `.app/documents/*.json` snapshots. Store document mapping, sibling order, schema versions, and file hashes in the manifest. Recalculate relative document/asset links for each page. Plain `.md` export cannot itself represent a workspace hierarchy.
 
-On import: validate archive/paths/limits -> parse/report losses -> allocate IDs -> map links -> commit assets -> validate staged documents -> commit job -> expose documents. Interrupted imports remain hidden until committed. Recovery finishes committed jobs and cleans incomplete ones idempotently. Parse frontmatter only as constrained data.
+On import: validate archive/paths/limits -> parse/report losses -> allocate IDs -> map links -> commit assets -> validate staged documents -> write immutable revisions -> publish one manifest. Interrupted pre-manifest document writes remain hidden; content-addressed assets and unreferenced revisions remain for later retention handling. Parse frontmatter only as constrained data.
 
 If exported Markdown was edited, detect its hash mismatch and ask which representation to import; do not silently restore stale JSON. Preserve unsupported source in a safe fallback where feasible. Missing/remote assets produce visible warnings. Remote fetching is an explicit behavior, never an arbitrary server fetch by default.
 
@@ -202,7 +208,7 @@ An embedded database is a bounded custom block with one table view, up to 20 typ
 
 ## Performance and operations
 
-Initial workload: 10,000 page metadata entries, a 500-block active document, and a documented asset corpus. Establish a named reference environment in Milestone 0, then set numerical budgets for input, open, save (excluding debounce), index rebuild, and memory. Do not claim benchmark performance before measurement.
+The reference workload is 10,000 pages and a 500-block active document on the documented Apple M1 environment. The latest search qualification measured a 14.22 ms workspace query, 2,235.36 ms startup/index reconstruction, 61.04 ms 500-block save, 1.26 ms open, and 73 MB heap. These are development benchmarks, not cross-platform guarantees; see [test results](test-results.md).
 
 Log request/mutation IDs, revisions, durations, and error categories, not document bodies. Operational documentation must cover setup, persistent volume permissions, backup, restore, migration, rollback, corruption recovery, and disk-full recovery before release.
 

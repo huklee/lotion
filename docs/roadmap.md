@@ -1,6 +1,6 @@
 # Implementation roadmap
 
-Status: usable self-hosted MVP implemented and locally verified on 2026-09-09. Remaining hardening is listed below; CI has been configured but has not yet run on a remote Linux runner.
+Status: version 0.16.0 is implemented and verified locally and in GitHub Actions on Ubuntu / Node 24. Remaining manual qualification and hardening are listed below.
 
 Every milestone includes implementation, applicable executed tests, failure fixes, and updates to [implementation history log](implementation-history-log.md), [test results](test-results.md), and [decisions](decisions.md). Unexecuted gates remain unchecked.
 
@@ -76,12 +76,26 @@ Gate: semantic Markdown round-trips pass; exact bundles restore supported docume
 - [x] Add documented deployment, authentication, and remote-access protections.
 - [x] Document revision history, stopped-workspace backup/restore, and future migration/rollback workflows.
 - [x] Run a fresh-directory backup restore drill and newer-schema refusal test.
-- [x] Run lint, type/build, 63 unit/integration tests, 42 browser tests, and the PERF benchmark.
+- [x] Run the release gate and performance benchmark. The current 0.16.0 gate passes lint, type/build, 170 unit/integration tests, and 150 browser cases.
 - [x] Resolve observed release-blocking automated-test defects and record remaining limitations.
 - [x] Complete the initial operator runbook and publish verification in Markdown.
-- [ ] Run the configured CI workflow on Linux and qualify Linux filesystem durability.
+- [x] Run the configured complete CI workflow on Ubuntu / Node 24.
+- [ ] Qualify filesystem durability beyond ordinary CI behavior on Linux, Windows, network shares, and synchronized folders.
 - [ ] Add automated accessibility scanning and perform manual keyboard/screen-reader review.
 - [ ] Add revision/receipt/asset retention and garbage-collection tooling before long-term heavy use.
-- [ ] Reduce the initial JavaScript bundle (currently approximately 1.15 MB minified / 345 KB gzip).
+- [ ] Reduce the initial JavaScript payload; the production build still emits a large-chunk warning.
 
 Gate: fresh deployment, editing, restart, export/import, and restore all pass on supported environments.
+
+## M7 — Product capabilities delivered after the MVP
+
+- [x] Add favorites, native browser history, modified-click navigation, stable direct block links, and page-aware favicons.
+- [x] Add browser-local system/light/dark/black schemes, font and layout controls, accessible pastel colors, and configurable color shortcuts.
+- [x] Add Mermaid editing/paste, callouts, TOC, robust checklist/plain-text paste, calendar insertion, and Markdown clipboard export.
+- [x] Add backend-indexed workspace search with active-draft merging and an adapter boundary for a future OpenSearch deployment.
+- [x] Add typed page/external/file/date mentions, authenticated file downloads, and bounded SSRF-safe OpenGraph preview refresh.
+- [x] Add a bounded typed database block whose rows are ordinary child pages; preserve it exactly in bundles and degrade it explicitly in portable Markdown.
+- [x] Add canonical snapshot hashes plus read-only offline diagnosis and reviewed, non-destructive reconciliation plans.
+- [x] Keep full-suite browser isolation and parallel execution; current CI runs 150 cases across Chromium, Firefox, and WebKit with two workers.
+
+Gate: every listed capability is represented in the changelog, an ADR where a durable design decision was required, focused tests, and the current complete release gate.

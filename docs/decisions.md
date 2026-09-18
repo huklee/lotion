@@ -15,6 +15,7 @@
   - [ADR-016: Browser-local control panel](adr/016-control-panel.md)
   - [ADR-015: Parallel browser-test isolation](adr/015-parallel-browser-test-isolation.md)
   - [ADR-014: Favorites and browser navigation](adr/014-favorites-and-navigation.md)
+  - [ADR-013: Lotion naming and upgrade compatibility](adr/013-lotion-naming-and-compatibility.md)
   - [ADR-007: Editor interactions](adr/007-editor-interactions.md)
   - [ADR-008: Whole-folder portability](adr/008-folder-portability.md)
   - [ADR-009: Engineering decision ownership](adr/009-decision-ownership.md)

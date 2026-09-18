@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T00:02:11+09:00 — 0.16.0 architecture documentation reconciled
+
+Audited the architecture, roadmap, ADR index and foundational interaction/portability records against the version 0.16.0 implementation. Documentation now names the implemented source modules, flat immutable asset/revision paths, recovery archive files, synchronous import/export routes, authenticated asset retrieval, SSRF-bounded link previews, browser-local ownership boundaries, typed database scope, conservative conflict handling, derived search index, current performance measurements, and retention limitations. Removed obsolete proposed cache/history paths and claims that link previews or remote Linux CI were still pending.
+
+The roadmap now separates successful Ubuntu / Node 24 GitHub Actions coverage from filesystem durability that CI does not establish, records the current 170 unit/integration and 150 browser-case release gate, and summarizes post-MVP capabilities. Missing ADR-012 through ADR-014 index entries were restored; ADR-007, ADR-008, ADR-010 and ADR-011 statuses/evidence now point to the implemented suites. This documentation-only correction retains version 0.16.0 and does not change application behavior, storage, or user data. ESLint, strict TypeScript, Prettier, `git diff --check`, and local-link validation passed; remote CI evidence follows after publication.
+
 ## 2026-09-18T06:41:50+09:00 — direct-to-main delivery workflow established
 
 Corrected the repository workflow after feature pull requests were stacked on other feature branches, allowing GitHub to mark intermediate PRs merged without integrating their changes into `main`. The root agent instructions and development/version guides now require one branch created from current `origin/main`, one PR whose base is `main`, successful required checks, an actual merge, and ancestry verification before the next backlog item begins. Documentation-only workflow correction; no application version change.
