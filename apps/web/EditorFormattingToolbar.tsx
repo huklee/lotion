@@ -12,11 +12,7 @@ import {
   type FormattingShortcuts,
   type TextColor,
 } from "./format-shortcuts";
-
-export type AppliedColorStyle = {
-  kind: "textColor" | "backgroundColor";
-  color: string;
-};
+import type { AppliedColorStyle } from "./last-color-style";
 
 const colorLabels = Object.fromEntries(
   textColors.map((color) => [
@@ -60,7 +56,10 @@ function ShortcutColorStyleButton({
       ),
     }),
   });
-  const apply = (kind: AppliedColorStyle["kind"], color: string) => {
+  const apply = (
+    kind: AppliedColorStyle["kind"],
+    color: AppliedColorStyle["color"],
+  ) => {
     if (color === "default") editor.removeStyles({ [kind]: color });
     else editor.addStyles({ [kind]: color });
     onApplied({ kind, color });

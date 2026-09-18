@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T00:27:30+09:00 — 0.18.0 session-wide last color style prepared
+
+Moved the last-applied text/background color from an editor-instance-only ref to a small validated session-storage boundary. Both toolbar application and direct color shortcuts record the same session value; the repeat-last shortcut reads it after page navigation or a reload. Malformed/unknown values are ignored, and storage write failures do not block immediate formatting. The value remains tab-session-local rather than entering document content, workspace storage, or exports.
+
+Unit coverage passed 6/6 for shortcut interaction plus session round-trip, invalid data, and unavailable storage. The new navigation/reload scenario passed 3/3 across Chromium, Firefox, and WebKit. The final release gate passed lint, strict TypeScript/build, 173/173 unit/integration tests, and 156/156 Playwright cases in a 2.4-minute browser phase. Version 0.18.0 is a backward-compatible minor release with no document-schema or user-data migration. Publication evidence follows.
+
 ## 2026-09-19T00:16:48+09:00 — 0.17.0 typed arrow substitution prepared
 
 Added one focused Tiptap input-rule extension that converts `<-` and `->` to `←` and `→` as the second character is typed in ordinary rich-text blocks. The rule is undoable and inherits Tiptap's composition and code-node guards. It does not run through Lotion's plain-text paste path, custom Mermaid textarea, or native form controls, so literal technical input is preserved. Tiptap Core is now an explicit dependency rather than an undeclared transitive import.

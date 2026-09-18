@@ -48,16 +48,18 @@ import {
 import { blockIdFromHash, pageIdFromHash } from "./block-links";
 import { useBlockSelection } from "./use-block-selection";
 import { useDirectBlockLinkTarget } from "./use-direct-block-link";
-import {
-  EditorFormattingToolbar,
-  type AppliedColorStyle,
-} from "./EditorFormattingToolbar";
+import { EditorFormattingToolbar } from "./EditorFormattingToolbar";
 import { normalizeEditorContent } from "./normalize-editor-content";
 import type { MentionProperties } from "./MentionInline";
 import { useLinkPreviewRefresh } from "./use-link-preview-refresh";
 import { downloadFileReference } from "./file-reference";
 import { DatabaseActionsContext } from "./DatabaseBlock";
 import { ArrowSubstitutionExtension } from "./arrow-substitution";
+import {
+  readLastColorStyle,
+  writeLastColorStyle,
+  type AppliedColorStyle,
+} from "./last-color-style";
 
 function pageIdFromHref(href: string): string | null {
   const direct = pageIdFromHash(href);
@@ -186,18 +188,24 @@ export default function Editor({
     },
   });
   const objectUrls = useRef<string[]>([]);
-  const lastColorStyle = useRef<AppliedColorStyle | null>(null);
+  const lastColorStyle = useRef<AppliedColorStyle | null>(
+    readLastColorStyle(sessionStorage),
+  );
   const mounted = useRef(true);
   const host = useRef<HTMLDivElement>(null);
   const [uploadState, setUploadState] = useState("");
+  const rememberColorStyle = useCallback((style: AppliedColorStyle) => {
+    lastColorStyle.current = style;
+    writeLastColorStyle(sessionStorage, style);
+  }, []);
   const applyColorStyle = useCallback(
     (style: AppliedColorStyle) => {
       if (style.color === "default")
         editor.removeStyles({ [style.kind]: style.color });
       else editor.addStyles({ [style.kind]: style.color });
-      lastColorStyle.current = style;
+      rememberColorStyle(style);
     },
-    [editor],
+    [editor, rememberColorStyle],
   );
   const [failed, setFailed] = useState<{ file: File; id: string }[]>([]);
   const [dropLine, setDropLine] = useState<number | null>(null);
@@ -816,9 +824,7 @@ export default function Editor({
             formattingToolbar={() => (
               <EditorFormattingToolbar
                 shortcuts={formattingShortcuts}
-                onApplied={(style) => {
-                  lastColorStyle.current = style;
-                }}
+                onApplied={rememberColorStyle}
               />
             )}
           />
