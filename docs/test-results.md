@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-09-19T00:27:30+09:00 — 0.18.0 session-wide last color style
+
+The focused shortcut/session unit group passed **6/6** cases, covering valid text/background round-trips, malformed/unknown values, duplicate shortcut behavior, and unavailable storage. The production-build browser scenario passed **3/3** across Chromium, Firefox, and WebKit; it applies blue through the toolbar, navigates to a different page, repeats the style, reloads, and repeats it again.
+
+The final `CI=1 npm run check` exited **0**: ESLint, strict TypeScript, production build, **173/173 unit and integration tests**, and **156/156 Playwright cases** passed with two workers. The browser phase completed in 2.4 minutes. The known large-chunk warning remains non-failing. User data under `data/` was untouched.
+
 ## 2026-09-19T00:16:48+09:00 — 0.17.0 typed arrow substitution
 
 The focused production-build Playwright scenario passed **3/3** across Chromium, Firefox, and WebKit. It types both ASCII sequences into an ordinary paragraph, verifies immediate `←`/`→` substitution, proves identical pasted text and typed code remain ASCII, saves, reloads, and verifies every result. The first attempt completed the paragraph/paste assertions but timed out on a hidden Shiki mirror element; the corrected test positions the caret in the actual editable code node.

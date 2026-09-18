@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.17.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.18.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -71,7 +71,7 @@ Mark a page with the top-bar star to add it to **Favorites** in the sidebar. Fav
 
 Open **Control panel** at the bottom of the sidebar to choose a system/light/dark theme, editor text size, comfortable/wide page width, and whether the sidebar opens on startup. These preferences are stored in this browser and do not change document content. **Reset display settings** restores the defaults.
 
-The same panel lets you record a modifier-key shortcut for every text color. Focus a shortcut field and press the desired combination; Backspace/Delete clears it, and assigning a duplicate moves that combination to the new action. Assigned shortcuts appear when hovering or keyboard-focusing their colors in the editor toolbar. **⌘ShiftH / Ctrl+Shift+H** reapplies the most recently chosen text or background color by default and can also be reassigned.
+The same panel lets you record a modifier-key shortcut for every text color. Focus a shortcut field and press the desired combination; Backspace/Delete clears it, and assigning a duplicate moves that combination to the new action. Assigned shortcuts appear when hovering or keyboard-focusing their colors in the editor toolbar. **⌘ShiftH / Ctrl+Shift+H** reapplies the most recently chosen text or background color by default and can also be reassigned. The most recent color style is shared across page navigation and reloads for the lifetime of the current browser tab/session.
 
 ## Tests
 

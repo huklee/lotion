@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.18.0 — 2026-09-19
+
+### Improved
+
+- The most recently applied text or background color style is now shared by every page editor in the current browser tab session. The repeat-last-style shortcut continues working after page navigation and reload.
+- Session values are schema-validated before use. Missing, malformed, unknown, blocked, or full browser storage falls back safely without preventing immediate formatting.
+
+This browser-local state is not document content, is not included in exports, and ends when the tab session ends. No document-schema migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.17.0 — 2026-09-19
 
 ### Added

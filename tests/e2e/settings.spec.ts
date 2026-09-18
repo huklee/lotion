@@ -1,5 +1,95 @@
 import { test, expect } from "./fixtures";
+import { randomUUID } from "node:crypto";
 import { seed } from "./helpers";
+
+async function selectInlineWord(
+  inline: import("@playwright/test").Locator,
+  word: string,
+) {
+  await inline.click();
+  await inline.evaluate((element, selectedWord) => {
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    let node: Node | null;
+    while ((node = walker.nextNode())) {
+      const start = node.textContent?.indexOf(selectedWord) ?? -1;
+      if (start < 0) continue;
+      const range = document.createRange();
+      range.setStart(node, start);
+      range.setEnd(node, start + selectedWord.length);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      document.dispatchEvent(new Event("selectionchange"));
+      return;
+    }
+    throw new Error(`Could not select ${selectedWord}`);
+  }, word);
+}
+
+test("last color style is shared across page navigation and reloads in one session", async ({
+  page,
+}) => {
+  await seed(page, "Color source", [
+    {
+      id: "session-color-source",
+      type: "paragraph",
+      content: [{ type: "text", text: "Source", styles: {} }],
+    },
+  ]);
+  const source = page.locator(
+    '[data-id="session-color-source"] .bn-inline-content',
+  );
+  await selectInlineWord(source, "Source");
+  await page.getByRole("button", { name: "Colors", exact: true }).click();
+  await page
+    .locator(".lotion-color-option")
+    .filter({ hasText: "Blue" })
+    .click();
+  await expect(
+    source.locator('[data-style-type="textColor"][data-value="blue"]'),
+  ).toContainText("Source");
+
+  const created = await page.request.post("/api/documents", {
+    data: { title: "Color destination", mutationId: randomUUID() },
+  });
+  const destination = await created.json();
+  await page.request.put(`/api/documents/${destination.id}/content`, {
+    headers: { "If-Match": "1" },
+    data: {
+      title: "Color destination",
+      mutationId: randomUUID(),
+      blocks: [
+        {
+          id: "session-color-destination",
+          type: "paragraph",
+          content: [{ type: "text", text: "Target Another", styles: {} }],
+        },
+      ],
+    },
+  });
+  await page.goto(`/#/page/${destination.id}`);
+  const target = page.locator(
+    '[data-id="session-color-destination"] .bn-inline-content',
+  );
+  await selectInlineWord(target, "Target");
+  await page.keyboard.press("ControlOrMeta+Shift+H");
+  await expect(
+    target
+      .locator('[data-style-type="textColor"][data-value="blue"]')
+      .filter({ hasText: "Target" }),
+  ).toContainText("Target");
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+
+  await page.reload();
+  await selectInlineWord(target, "Another");
+  await page.keyboard.press("ControlOrMeta+Shift+H");
+  await expect(
+    target
+      .locator('[data-style-type="textColor"][data-value="blue"]')
+      .filter({ hasText: "Another" }),
+  ).toContainText("Another");
+});
 
 test("Lotion restores legacy browser settings and drafts after the rename", async ({
   page,
@@ -232,34 +322,13 @@ test("configurable text-color shortcuts show on hover and repeat the last color"
   await page.reload();
 
   const inline = page.locator('[data-id="shortcut-text"] .bn-inline-content');
-  const selectWord = async (word: string) => {
-    await inline.click();
-    await inline.evaluate((element, word) => {
-      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-      let node: Node | null;
-      while ((node = walker.nextNode())) {
-        const start = node.textContent?.indexOf(word) ?? -1;
-        if (start < 0) continue;
-        const range = document.createRange();
-        range.setStart(node, start);
-        range.setEnd(node, start + word.length);
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-        document.dispatchEvent(new Event("selectionchange"));
-        return;
-      }
-      throw new Error(`Could not select ${word}`);
-    }, word);
-  };
-
-  await selectWord("First");
+  await selectInlineWord(inline, "First");
   await page.keyboard.press("ControlOrMeta+Alt+R");
   await expect(
     inline.locator('[data-style-type="textColor"][data-value="red"]'),
   ).toContainText("First");
 
-  await selectWord("Second");
+  await selectInlineWord(inline, "Second");
   await page.getByRole("button", { name: "Colors", exact: true }).click();
   const redOption = page.locator(".lotion-color-option").filter({
     hasText: "Red",
@@ -278,7 +347,7 @@ test("configurable text-color shortcuts show on hover and repeat the last color"
     inline.locator('[data-style-type="textColor"][data-value="blue"]'),
   ).toContainText("Second");
 
-  await selectWord("Third");
+  await selectInlineWord(inline, "Third");
   await page.keyboard.press("ControlOrMeta+Shift+H");
   await expect(
     inline
@@ -286,13 +355,13 @@ test("configurable text-color shortcuts show on hover and repeat the last color"
       .filter({ hasText: "Third" }),
   ).toContainText("Third");
 
-  await selectWord("First");
+  await selectInlineWord(inline, "First");
   await page.getByRole("button", { name: "Colors", exact: true }).click();
   await page
     .locator(".lotion-background-option")
     .filter({ hasText: "Yellow" })
     .click();
-  await selectWord("Fourth");
+  await selectInlineWord(inline, "Fourth");
   await page.keyboard.press("ControlOrMeta+Shift+H");
   await expect(
     inline
