@@ -1,19 +1,19 @@
 import { readSetting } from "./storage-compat";
 import { paletteColors } from "./color-palette";
 
-export const textColors = ["default", ...paletteColors] as const;
+export const colorPresets = ["default", ...paletteColors] as const;
 
-export type TextColor = (typeof textColors)[number];
-export type FormattingShortcutTarget = TextColor | "repeatLast";
+export type ColorPreset = (typeof colorPresets)[number];
+export type FormattingShortcutTarget = ColorPreset | "repeatLast";
 export type FormattingShortcuts = {
-  textColors: Record<TextColor, string>;
+  colorPresets: Record<ColorPreset, string>;
   repeatLast: string;
 };
 
 export const defaultFormattingShortcuts: FormattingShortcuts = {
-  textColors: Object.fromEntries(
-    textColors.map((color) => [color, ""]),
-  ) as Record<TextColor, string>,
+  colorPresets: Object.fromEntries(
+    colorPresets.map((color) => [color, ""]),
+  ) as Record<ColorPreset, string>,
   repeatLast: "Mod+Shift+H",
 };
 
@@ -35,20 +35,25 @@ export function readFormattingShortcuts(
       saved && typeof saved === "object"
         ? (saved as Partial<FormattingShortcuts>)
         : {};
+    const legacySource = source as Partial<FormattingShortcuts> & {
+      textColors?: Partial<Record<ColorPreset, unknown>>;
+    };
     const savedColors =
-      source.textColors && typeof source.textColors === "object"
-        ? source.textColors
-        : ({} as Partial<Record<TextColor, unknown>>);
+      source.colorPresets && typeof source.colorPresets === "object"
+        ? source.colorPresets
+        : legacySource.textColors && typeof legacySource.textColors === "object"
+          ? legacySource.textColors
+          : ({} as Partial<Record<ColorPreset, unknown>>);
     return {
-      textColors: Object.fromEntries(
-        textColors.map((color) => {
+      colorPresets: Object.fromEntries(
+        colorPresets.map((color) => {
           const value = savedColors[color];
           return [
             color,
             value === "" || isFormattingShortcut(value) ? value : "",
           ];
         }),
-      ) as Record<TextColor, string>,
+      ) as Record<ColorPreset, string>,
       repeatLast: isFormattingShortcut(source.repeatLast)
         ? source.repeatLast
         : defaultFormattingShortcuts.repeatLast,
@@ -94,12 +99,12 @@ export function assignFormattingShortcut(
 ): FormattingShortcuts {
   const next = structuredClone(settings);
   if (shortcut) {
-    for (const color of textColors)
-      if (next.textColors[color] === shortcut) next.textColors[color] = "";
+    for (const color of colorPresets)
+      if (next.colorPresets[color] === shortcut) next.colorPresets[color] = "";
     if (next.repeatLast === shortcut) next.repeatLast = "";
   }
   if (target === "repeatLast") next.repeatLast = shortcut;
-  else next.textColors[target] = shortcut;
+  else next.colorPresets[target] = shortcut;
   return next;
 }
 

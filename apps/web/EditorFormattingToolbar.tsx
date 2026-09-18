@@ -8,20 +8,20 @@ import {
 } from "@blocknote/react";
 import {
   displayShortcut,
-  textColors,
+  colorPresets,
   type FormattingShortcuts,
-  type TextColor,
+  type ColorPreset,
 } from "./format-shortcuts";
-import type { AppliedColorStyle } from "./last-color-style";
+import type { AppliedColorPreset } from "./last-color-style";
 
 const colorLabels = Object.fromEntries(
-  textColors.map((color) => [
+  colorPresets.map((color) => [
     color,
     color === "default"
       ? "Default"
       : `${color[0].toUpperCase()}${color.slice(1)}`,
   ]),
-) as Record<TextColor, string>;
+) as Record<ColorPreset, string>;
 
 function ColorLetter({
   textColor,
@@ -43,7 +43,7 @@ function ShortcutColorStyleButton({
   onApplied,
 }: {
   shortcuts: FormattingShortcuts;
-  onApplied: (style: AppliedColorStyle) => void;
+  onApplied: (style: AppliedColorPreset) => void;
 }) {
   const editor = useBlockNoteEditor();
   const Components = useComponentsContext()!;
@@ -56,13 +56,11 @@ function ShortcutColorStyleButton({
       ),
     }),
   });
-  const apply = (
-    kind: AppliedColorStyle["kind"],
-    color: AppliedColorStyle["color"],
-  ) => {
-    if (color === "default") editor.removeStyles({ [kind]: color });
-    else editor.addStyles({ [kind]: color });
-    onApplied({ kind, color });
+  const apply = (color: ColorPreset) => {
+    if (color === "default")
+      editor.removeStyles({ textColor: color, backgroundColor: color });
+    else editor.addStyles({ textColor: color, backgroundColor: color });
+    onApplied({ color });
     setTimeout(() => editor.focus());
   };
   return (
@@ -82,36 +80,24 @@ function ShortcutColorStyleButton({
       </Components.Generic.Menu.Trigger>
       <Components.Generic.Menu.Dropdown className="bn-menu-dropdown bn-color-picker-dropdown">
         <Components.Generic.Menu.Label>
-          Text color
+          Color presets
         </Components.Generic.Menu.Label>
-        {textColors.map((color) => (
+        {colorPresets.map((color) => (
           <Components.Generic.Menu.Item
             className="lotion-color-option"
-            icon={<ColorLetter textColor={color} />}
-            checked={active.textColor === color}
-            key={`text-${color}`}
-            onClick={() => apply("textColor", color)}
+            icon={<ColorLetter textColor={color} backgroundColor={color} />}
+            checked={
+              active.textColor === color && active.backgroundColor === color
+            }
+            key={color}
+            onClick={() => apply(color)}
           >
             <span>{colorLabels[color]}</span>
-            {!!shortcuts.textColors[color] && (
+            {!!shortcuts.colorPresets[color] && (
               <kbd className="color-shortcut-hint">
-                {displayShortcut(shortcuts.textColors[color])}
+                {displayShortcut(shortcuts.colorPresets[color])}
               </kbd>
             )}
-          </Components.Generic.Menu.Item>
-        ))}
-        <Components.Generic.Menu.Label>
-          Background color
-        </Components.Generic.Menu.Label>
-        {textColors.map((color) => (
-          <Components.Generic.Menu.Item
-            className="lotion-background-option"
-            icon={<ColorLetter backgroundColor={color} />}
-            checked={active.backgroundColor === color}
-            key={`background-${color}`}
-            onClick={() => apply("backgroundColor", color)}
-          >
-            {colorLabels[color]}
           </Components.Generic.Menu.Item>
         ))}
       </Components.Generic.Menu.Dropdown>
@@ -124,7 +110,7 @@ export function EditorFormattingToolbar({
   onApplied,
 }: {
   shortcuts: FormattingShortcuts;
-  onApplied: (style: AppliedColorStyle) => void;
+  onApplied: (style: AppliedColorPreset) => void;
 }) {
   return (
     <FormattingToolbar>

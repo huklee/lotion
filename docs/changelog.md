@@ -2,6 +2,16 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.19.0 — 2026-09-19
+
+### Improved
+
+- The formatting toolbar and control panel now expose exactly ten coordinated color presets—default plus nine portable hues—instead of separate text and background menus. Choosing a preset or invoking its shortcut applies both values together.
+- Dark and black schemes use quieter, low-chroma pastel fills while every preset keeps at least 4.5:1 text-to-background contrast.
+- Repeat-last-color now reapplies the complete preset across page navigation and reload. Existing session values and the former `textColors` shortcut settings migrate to the corresponding combined preset.
+
+Stored document color keys and schema version 1 remain unchanged, so existing documents continue to render and export without migration. This backward-compatible interaction improvement is a minor release. Verification is recorded in [test results](test-results.md).
+
 ## 0.18.0 — 2026-09-19
 
 ### Improved
