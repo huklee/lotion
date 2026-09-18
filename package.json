@@ -1,6 +1,6 @@
 {
   "name": "lotion",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -34,6 +34,7 @@
     "@mantine/core": "9.6.0",
     "@mantine/hooks": "9.6.0",
     "@shikijs/themes": "4.4.3",
+    "@tiptap/core": "3.31.3",
     "cheerio": "1.1.2",
     "emojibase-data": "17.0.0",
     "fastify": "5.12.3",

@@ -21,6 +21,18 @@ Each item must be implemented, tested, checked off here, committed, pushed, and 
 
 6. [x] Add an integrated settings area for scheme, font, and related system preferences, with validated persistence, reset behavior, and immediate preview. System appearance, editor/startup preferences, and formatting shortcuts now share one control panel; five validated font choices apply to the workspace and document immediately, persist locally, and reset with the other display settings.
 
+## Incremental editor improvements — 2026-09-19
+
+Each item is implemented from current `main`, tested, submitted as a pull request whose base is `main`, merged after CI passes, and ancestry-verified before the next item begins.
+
+1. [x] Convert `<-` and `->` dynamically to `←` and `→` during ordinary editor typing without changing paste, code, Mermaid, or IME composition input. An undoable Tiptap input rule owns the conversion; its composition/code guards and Lotion's explicit paste boundary preserve literal input elsewhere.
+2. [ ] Preserve the most recently applied font-color style as one shared value for the browser session, including navigation between pages.
+3. [ ] Replace independent font-color/background choices with ten combined Notion-style presets whose contrast remains readable in every supported scheme.
+4. [ ] Fix the remaining checklist-area paste path that unconditionally creates an unwanted newline, including mid-line prefix/suffix behavior and save/reload.
+5. [ ] Extend drag-box block selection so the left movement handle supports dragging, copying, and cutting the selected block group.
+6. [ ] Clear a custom block selection whenever the user selects another editor or application area, without breaking selection-owned controls.
+7. [ ] Reconstruct enhanced blocks such as bullets, checklists, and headings when structured raw text is copied and pasted as blocks.
+
 ## Existing product backlog
 
 ### P1 — Product behavior
