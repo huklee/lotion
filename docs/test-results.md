@@ -1,5 +1,9 @@
 # Test results
 
+## 2026-09-19T00:02:11+09:00 — architecture documentation reconciliation
+
+Documentation was compared with the implemented Fastify routes, repository filesystem mapping, reconciliation archive names, browser/local ownership boundaries, current ADR set, GitHub workflow, and the latest release evidence. `npm run lint` and `npm run typecheck` exited **0**. Prettier passed for every changed Markdown file, `git diff --check` passed, and a read-only documentation validator checked **37 Markdown files and 178 local links with zero missing targets**. No production code, package version, schema, or user data changed. The complete Ubuntu gate will run on the pull request before merge.
+
 ## 2026-09-18T00:05:09+09:00 — 0.16.0 storage diagnosis focused verification
 
 Strict TypeScript, ESLint, and the repository/doctor integration group passed. The focused group passed **24/24** cases, including read-only detection of missing, malformed, orphaned, externally edited, and cyclic snapshots; exact candidate reporting; complete legacy manifest-hash migration; partial integrity-map rejection; explicit detach recovery; recovery metadata; monotonic new revisions; clean restart; stale-plan rejection; and rejection of a drop that would orphan a child without deleting its snapshot. The first recovery assertion found that a missing latest file could cause its manifest revision number to be reused; target numbering now includes both inventory and manifest state, and the corrected regression passes.

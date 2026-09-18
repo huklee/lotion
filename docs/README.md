@@ -39,24 +39,27 @@ All project plans, design records, implementation notes, test plans, and test re
 11. [Implementation foundations](adr/010-implementation-foundations.md): concrete storage and runtime decisions.
 12. [Run and verify the application](running.md): startup, configuration, tests, import/export, and recovery.
 13. [Editor previews and diagrams](adr/011-editor-previews-and-diagrams.md): mention navigation, OpenGraph security, code contrast and Mermaid.
-14. [Parallel browser-test isolation](adr/015-parallel-browser-test-isolation.md): per-worker servers/repositories, worker policy, cleanup and benchmark evidence.
-15. [Browser-local control panel](adr/016-control-panel.md): validated display preferences, persistence boundaries and reset behavior.
-16. [Configurable color shortcuts](adr/017-color-shortcuts.md): portable key chords, toolbar hints and last-color reapplication.
-17. [Notion-style block lasso selection](adr/018-block-lasso-selection.md): native text drag preservation, additive/reverse selection, edge scrolling and stable overlays.
-18. [Stable direct block links](adr/019-direct-block-links.md): copyable absolute URLs, deep-link routing, target reveal and deleted-target behavior.
-19. [Backend-indexed workspace search](adr/020-backend-workspace-search.md): derived-index consistency, OpenSearch boundary and measured local default.
-20. [Typed mention chips and preview freshness](adr/021-reference-chips-and-preview-cache.md): reference semantics, legacy migration and bounded OpenGraph caching.
-21. [File and date reference semantics](adr/022-file-and-date-references.md): typed values, authenticated downloads, keyboard behavior and portability loss rules.
-22. [Typed database rows](adr/023-typed-database-rows.md): bounded property types, real child-page rows, navigation and portability scope.
-23. [Storage diagnosis and reconciliation](adr/024-storage-diagnostics-and-reconciliation.md): offline integrity checks, reviewed recovery plans and non-destructive publication.
-24. [TypeScript file and module structure rules](typescript-file-structure.md): SRP boundaries, size limits, dependency direction, extraction gates and the measured refactoring baseline.
-25. [Large-file refactoring plan](typescript-refactoring-plan.md): scoped sequence, acceptance criteria and verification for completing the automatic candidates.
+14. [Draft-preserving conflict resolution](adr/012-conflict-resolution.md): conservative three-way merge, explicit overlap review and local recovery archives.
+15. [Lotion naming and compatibility](adr/013-lotion-naming-and-compatibility.md): current names and retained legacy readers.
+16. [Favorites and browser navigation](adr/014-favorites-and-navigation.md): browser-local favorites, native modified clicks and history semantics.
+17. [Parallel browser-test isolation](adr/015-parallel-browser-test-isolation.md): per-worker servers/repositories, worker policy, cleanup and benchmark evidence.
+18. [Browser-local control panel](adr/016-control-panel.md): validated display preferences, persistence boundaries and reset behavior.
+19. [Configurable color shortcuts](adr/017-color-shortcuts.md): portable key chords, toolbar hints and last-color reapplication.
+20. [Notion-style block lasso selection](adr/018-block-lasso-selection.md): native text drag preservation, additive/reverse selection, edge scrolling and stable overlays.
+21. [Stable direct block links](adr/019-direct-block-links.md): copyable absolute URLs, deep-link routing, target reveal and deleted-target behavior.
+22. [Backend-indexed workspace search](adr/020-backend-workspace-search.md): derived-index consistency, OpenSearch boundary and measured local default.
+23. [Typed mention chips and preview freshness](adr/021-reference-chips-and-preview-cache.md): reference semantics, legacy migration and bounded OpenGraph caching.
+24. [File and date reference semantics](adr/022-file-and-date-references.md): typed values, authenticated downloads, keyboard behavior and portability loss rules.
+25. [Typed database rows](adr/023-typed-database-rows.md): bounded property types, real child-page rows, navigation and portability scope.
+26. [Storage diagnosis and reconciliation](adr/024-storage-diagnostics-and-reconciliation.md): offline integrity checks, reviewed recovery plans and non-destructive publication.
+27. [TypeScript file and module structure rules](typescript-file-structure.md): SRP boundaries, size limits, dependency direction, extraction gates and the measured refactoring baseline.
+28. [Large-file refactoring plan](typescript-refactoring-plan.md): scoped sequence, acceptance criteria and verification for completing the automatic candidates.
 
 ## Current status
 
-- Documentation baseline established on 2026-09-09.
-- Application code, a pinned dependency manifest, and executable test harnesses now exist; verification is in progress.
-- The self-hosted MVP is implemented and passes the recorded local automated test suite.
+- Documentation baseline established on 2026-09-09 and reconciled with version 0.16.0 on 2026-09-19.
+- The self-hosted application, pinned dependency manifest, offline storage doctor, and executable test harnesses are implemented.
+- The current release gate passes locally and in GitHub Actions on Ubuntu / Node 24. Manual accessibility/input and cross-platform filesystem qualification remain open.
 - See the timestamped implementation log and test results for actual execution. Documentation checks alone are not evidence that product behavior works.
 
 ## Project-wide requirements

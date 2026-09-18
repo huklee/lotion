@@ -1,6 +1,6 @@
 # ADR-008: Whole-folder import and hierarchical export
 
-Status: Baseline; capability verification and implementation pending.
+Status: Implemented with ZIP, picker/drop intake, exact bundles, and three-browser portability coverage.
 Date: 2026-09-09.
 
 ## Context
@@ -23,4 +23,4 @@ Single `.md` upload cannot express the full hierarchy. Browser filesystem APIs a
 
 ## Evidence and revisit condition
 
-Required tests: MD-08 through MD-11, MD-02/03/06, IO-07, SEC-01/02. Verify browser capabilities against current official documentation during M0. Revisit container mapping if real import fixtures reveal ambiguity; preserve the original path map so migration remains possible.
+Coverage includes MD-08 through MD-11, MD-02/03/06, IO-07, SEC-01/02, exact-bundle restoration, link/asset remapping, empty directories, changed-Markdown selection, traversal rejection, and browser fallback paths. The primary suites are `tests/e2e/portability.spec.ts` and `tests/integration/portability.test.ts`. Revisit container mapping if real import fixtures reveal ambiguity; preserve the original path map so migration remains possible.

@@ -1,12 +1,12 @@
 # Codex handover: Yestion to Lotion
 
-Updated: 2026-09-18. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
+Updated: 2026-09-19. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
 Prepared application checkpoint 0.16.0 adds offline storage diagnosis and exact, reviewed, non-destructive reconciliation plans. Canonical revision hashes detect external edits; malformed manifests still require a known-good backup. Backend-indexed workspace search remains replaceable by a future OpenSearch adapter as documented in ADR-020. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.16.0**. Publication commit and CI evidence are recorded after push. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current application version on `main`: **0.16.0**. PR #27 and both push/pull-request GitHub Actions gates passed before merge. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -42,7 +42,7 @@ They are copied from the global Codex session store, retained read-only as a his
 ## Current status and open work
 
 - Git remote was verified at `555d7b4` when this handover was created. Check `git status --branch` and `git log` before working; later commits may exist.
-- The complete backlog and acceptance criteria live in `docs/remained_job.md`. Backend-indexed workspace search is the first completed existing-backlog item after the six-item sequence. Continue the remaining backlog one item per stacked pull request.
+- The complete backlog and acceptance criteria live in `docs/remained_job.md`. Continue one item at a time from current `origin/main`, using one pull request whose base is `main`; merge and verify ancestry before starting the next item. Stacked feature pull requests are prohibited.
 - The reported server pages returned HTTP 200. The specific user browser conflict draft cannot be inspected from a separate browser/session; verify it through the UI and retain a recovery copy before choosing a conflicting version.
 
 ## Important implementation decisions

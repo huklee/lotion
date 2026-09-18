@@ -35,7 +35,7 @@ Each item must be implemented, tested, checked off here, committed, pushed, and 
 
 ### P2 — Documentation and acceptance
 
-- [ ] Reconcile architecture, roadmap, and ADRs with current editor features, storage paths, APIs, database scope, conflict handling, test counts, and CI status.
+- [x] Reconcile architecture, roadmap, and ADRs with current editor features, storage paths, APIs, database scope, conflict handling, test counts, and CI status. The current-state audit removed proposed paths and API behavior that were never implemented, restored missing ADR links, and distinguishes automated Ubuntu CI from unqualified platform durability.
 - [ ] Publish a Markdown-versus-exact-bundle fidelity matrix covering callouts, toggles, TOC, icons, previews, Mermaid, databases, and mentions.
 - [ ] Complete native composed-input, keyboard, screen-reader, accessibility-scan, supported-platform, and emoji qualification.
 

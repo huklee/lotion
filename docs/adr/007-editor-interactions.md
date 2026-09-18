@@ -1,6 +1,6 @@
 # ADR-007: Image drop, block selection, and section movement
 
-Status: Baseline; editor/browser spike pending.
+Status: Implemented and covered by unit and three-browser regression tests; manual native input/accessibility qualification remains open.
 Date: 2026-09-09.
 
 ## Context
@@ -27,4 +27,4 @@ Native text selection alone does not satisfy block rectangle selection. Moving o
 
 ## Evidence and revisit condition
 
-Required tests: EDIT-07 through EDIT-10, ASSET-05/06, SAVE navigation/late-response regressions. Revisit editor choice if the M0 spike cannot implement these behaviors without unstable editor internals.
+Implemented coverage includes EDIT-07 through EDIT-10, ASSET-05/06, checklist paste/completion, hierarchy-preserving deletion, and SAVE navigation/late-response regressions. The relevant suites are `tests/e2e/block-selection.spec.ts`, `tests/e2e/clipboard.spec.ts`, `tests/unit/movement.test.ts`, and `tests/unit/rectangle-selection.test.ts`. Revisit the editor choice if upgrades make these application-owned interaction boundaries unstable.
