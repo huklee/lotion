@@ -1,6 +1,61 @@
 import { test, expect } from "./fixtures";
 import { seed } from "./helpers";
 
+test("typed ASCII arrows become symbols without rewriting paste or code", async ({
+  page,
+}) => {
+  await seed(page, "Arrow substitution", [
+    { id: "arrow-typed", type: "paragraph", content: [] },
+    { id: "arrow-pasted", type: "paragraph", content: [] },
+    {
+      id: "arrow-code",
+      type: "codeBlock",
+      props: { language: "json" },
+      content: [{ type: "text", text: "code ", styles: {} }],
+    },
+  ]);
+
+  const typed = page.locator('[data-id="arrow-typed"] .bn-inline-content');
+  await typed.click();
+  await page.keyboard.type("left <- and right ->");
+  await expect(typed).toHaveText("left ← and right →");
+
+  const pasted = page.locator('[data-id="arrow-pasted"] .bn-inline-content');
+  await pasted.click();
+  await pasted.evaluate((element) => {
+    const data = new DataTransfer();
+    data.setData("text/plain", "pasted <- and ->");
+    const event = new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, "clipboardData", { value: data });
+    element.dispatchEvent(event);
+  });
+  await expect(pasted).toHaveText("pasted <- and ->");
+
+  const code = page.locator('[data-id="arrow-code"] .bn-inline-content');
+  await code.evaluate((element) => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    range.collapse(false);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    (element as HTMLElement).focus();
+    document.dispatchEvent(new Event("selectionchange"));
+  });
+  await page.keyboard.type("<- and ->");
+  await expect(code).toContainText("code <- and ->");
+
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(typed).toHaveText("left ← and right →");
+  await expect(pasted).toHaveText("pasted <- and ->");
+  await expect(code).toContainText("code <- and ->");
+});
+
 test("table of contents labels align left while preserving heading indentation", async ({
   page,
 }) => {

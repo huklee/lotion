@@ -2,6 +2,19 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.17.0 — 2026-09-19
+
+### Added
+
+- Typing `<-` or `->` in ordinary rich-text blocks dynamically replaces the two ASCII characters with `←` or `→`.
+
+### Compatibility
+
+- The conversion uses an undoable editor input rule and does not rewrite clipboard paste, code blocks, Mermaid source fields, native form controls, or active IME composition. Existing saved content and document schema version 1 are unchanged.
+- Tiptap Core is now an explicit application dependency because Lotion owns this inline input rule instead of relying on BlockNote's block-type shortcut rules.
+
+This backward-compatible editor feature is a minor release. Verification is recorded in [test results](test-results.md).
+
 ## 0.16.0 — 2026-09-18
 
 ### Added

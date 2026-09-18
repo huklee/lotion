@@ -57,6 +57,7 @@ import type { MentionProperties } from "./MentionInline";
 import { useLinkPreviewRefresh } from "./use-link-preview-refresh";
 import { downloadFileReference } from "./file-reference";
 import { DatabaseActionsContext } from "./DatabaseBlock";
+import { ArrowSubstitutionExtension } from "./arrow-substitution";
 
 function pageIdFromHref(href: string): string | null {
   const direct = pageIdFromHash(href);
@@ -137,6 +138,7 @@ export default function Editor({
       },
     },
     extensions: [
+      ArrowSubstitutionExtension,
       SyntaxHighlightingExtension({
         createHighlighter: async () => {
           const { createHighlighter } = await import("shiki");

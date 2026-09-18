@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T00:16:48+09:00 — 0.17.0 typed arrow substitution prepared
+
+Added one focused Tiptap input-rule extension that converts `<-` and `->` to `←` and `→` as the second character is typed in ordinary rich-text blocks. The rule is undoable and inherits Tiptap's composition and code-node guards. It does not run through Lotion's plain-text paste path, custom Mermaid textarea, or native form controls, so literal technical input is preserved. Tiptap Core is now an explicit dependency rather than an undeclared transitive import.
+
+The requested seven-item editor sequence is recorded in `docs/remained_job.md`; only this first item is complete. A three-browser regression verifies both conversions, literal paste/code behavior, save, and reload. The first focused attempt reached all feature assertions but timed out by clicking Shiki's hidden mirror element; positioning a real selection in the editable code node corrected the test boundary. The focused rerun passed 3/3, and the final release gate passed lint, strict TypeScript/build, 170 unit/integration tests, and 153/153 Playwright cases. Version 0.17.0 is a backward-compatible minor release with no document-schema or user-data migration. Publication evidence follows.
+
 ## 2026-09-19T00:02:11+09:00 — 0.16.0 architecture documentation reconciled
 
 Audited the architecture, roadmap, ADR index and foundational interaction/portability records against the version 0.16.0 implementation. Documentation now names the implemented source modules, flat immutable asset/revision paths, recovery archive files, synchronous import/export routes, authenticated asset retrieval, SSRF-bounded link previews, browser-local ownership boundaries, typed database scope, conservative conflict handling, derived search index, current performance measurements, and retention limitations. Removed obsolete proposed cache/history paths and claims that link previews or remote Linux CI were still pending.

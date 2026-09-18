@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-09-19T00:16:48+09:00 — 0.17.0 typed arrow substitution
+
+The focused production-build Playwright scenario passed **3/3** across Chromium, Firefox, and WebKit. It types both ASCII sequences into an ordinary paragraph, verifies immediate `←`/`→` substitution, proves identical pasted text and typed code remain ASCII, saves, reloads, and verifies every result. The first attempt completed the paragraph/paste assertions but timed out on a hidden Shiki mirror element; the corrected test positions the caret in the actual editable code node.
+
+The final `CI=1 npm run check` exited **0**: ESLint, strict TypeScript, production build, **170/170 unit and integration tests**, and **153/153 Playwright cases** passed with two workers. The browser phase completed in 2.7 minutes. The known large-chunk warning remains non-failing. User data under `data/` was untouched.
+
 ## 2026-09-19T00:02:11+09:00 — architecture documentation reconciliation
 
 Documentation was compared with the implemented Fastify routes, repository filesystem mapping, reconciliation archive names, browser/local ownership boundaries, current ADR set, GitHub workflow, and the latest release evidence. `npm run lint` and `npm run typecheck` exited **0**. Prettier passed for every changed Markdown file, `git diff --check` passed, and a read-only documentation validator checked **37 Markdown files and 178 local links with zero missing targets**. No production code, package version, schema, or user data changed. The complete Ubuntu gate will run on the pull request before merge.
