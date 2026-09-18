@@ -3,6 +3,7 @@ import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import remarkStringify from "remark-stringify";
 import { type Block, type Inline, emptyBlock } from "../document-schema/index";
+import { readDatabaseState } from "../database/model";
 const processor = unified()
   .use(remarkParse)
   .use(remarkGfm)
@@ -334,7 +335,71 @@ export function toMarkdown(blocks: Block[]): {
             })),
           })),
         });
-      else {
+      else if (b.type === "database") {
+        try {
+          const database = readDatabaseState(props.columns, props.rows);
+          output.push({
+            type: "table",
+            children: [
+              {
+                type: "tableRow",
+                children: [
+                  "Page",
+                  ...database.columns.map((column) => column.name),
+                ].map((value) => ({
+                  type: "tableCell",
+                  children: [{ type: "text", value }],
+                })),
+              },
+              ...database.rows.map((row) => ({
+                type: "tableRow",
+                children: [
+                  {
+                    type: "tableCell",
+                    children: [
+                      {
+                        type: "link",
+                        url: row.href,
+                        children: [
+                          {
+                            type: "text",
+                            value: row.title || "Untitled row",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ...database.columns.map((column) => {
+                    const value = row.values[column.id];
+                    return {
+                      type: "tableCell",
+                      children: [
+                        {
+                          type: "text",
+                          value:
+                            column.type === "checkbox"
+                              ? value
+                                ? "Yes"
+                                : "No"
+                              : value === null || value === undefined
+                                ? ""
+                                : String(value),
+                        },
+                      ],
+                    };
+                  }),
+                ],
+              })),
+            ],
+          });
+          warnings.push(
+            "Portable Markdown renders a database as a static table; exact bundles preserve typed properties and row-page behavior.",
+          );
+        } catch {
+          output.push({ type: "paragraph", children: [] });
+          warnings.push("Invalid database content was omitted from Markdown.");
+        }
+      } else {
         output.push({ type: "paragraph", children: portableContent });
         if (b.type !== "paragraph")
           warnings.push(`Portable Markdown flattens ${b.type}`);

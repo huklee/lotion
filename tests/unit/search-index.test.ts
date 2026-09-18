@@ -57,6 +57,28 @@ const document = (id: string, title: string): Document => ({
         },
       ],
     },
+    {
+      id: `${id}-database`,
+      type: "database",
+      props: {
+        columns: JSON.stringify([
+          {
+            id: "status",
+            name: "Workflow state",
+            type: "select",
+            options: ["Ready"],
+          },
+        ]),
+        rows: JSON.stringify([
+          {
+            id: "database-row",
+            href: "#/page/row-page",
+            title: "Database needle",
+            values: { status: "Ready" },
+          },
+        ]),
+      },
+    },
   ],
 });
 
@@ -77,6 +99,9 @@ describe("workspace search index", () => {
     });
     expect(index.search("reference needle").results[0]?.blockId).toBe(
       "one-mention",
+    );
+    expect(index.search("database needle").results[0]?.blockId).toBe(
+      "one-database",
     );
     expect(index.search("ＲÉSUMÉ").results[0]?.field).toBe("title");
   });

@@ -138,6 +138,51 @@ it.each(["lotion", "yestion"])(
     expect(imported.documents[0].id).not.toBe(saved.id);
   },
 );
+it("exact bundles preserve typed databases and remap row-page references", async () => {
+  const source = await repo.create(
+    "Database source",
+    null,
+    crypto.randomUUID(),
+  );
+  await repo.save(
+    source.id,
+    1,
+    {
+      title: source.title,
+      blocks: [
+        {
+          id: "database",
+          type: "database",
+          props: {
+            columns: JSON.stringify([
+              { id: "done", name: "Done", type: "checkbox" },
+            ]),
+            rows: JSON.stringify([
+              {
+                id: "row",
+                href: `#/page/${source.id}`,
+                title: source.title,
+                values: { done: true },
+              },
+            ]),
+          },
+        },
+      ],
+    },
+    crypto.randomUUID(),
+  );
+  const imported = await importEntries(
+    repo,
+    await readZip((await exportBundle(repo, source.id)).bytes),
+    crypto.randomUUID(),
+  );
+  const database = imported.documents[0].blocks[0];
+  expect(database.type).toBe("database");
+  expect(JSON.parse(String(database.props?.rows))[0]).toMatchObject({
+    href: `#/page/${imported.documents[0].id}`,
+    values: { done: true },
+  });
+});
 it("detects modified Markdown instead of silently selecting stale snapshots", async () => {
   await repo.create("Page", null, crypto.randomUUID());
   const entries = await readZip((await exportBundle(repo)).bytes);

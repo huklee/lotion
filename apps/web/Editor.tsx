@@ -56,6 +56,7 @@ import { normalizeEditorContent } from "./normalize-editor-content";
 import type { MentionProperties } from "./MentionInline";
 import { useLinkPreviewRefresh } from "./use-link-preview-refresh";
 import { downloadFileReference } from "./file-reference";
+import { DatabaseActionsContext } from "./DatabaseBlock";
 
 function pageIdFromHref(href: string): string | null {
   const direct = pageIdFromHash(href);
@@ -84,7 +85,7 @@ export default function Editor({
   initial: Content;
   onChange: (blocks: Block[]) => void;
   onBackgroundImage: (id: string, url: string, name: string) => void;
-  onCreateSubpage: () => Promise<Document>;
+  onCreateSubpage: (title?: string) => Promise<Document>;
   onCopyBlockLink: (blockId: string) => Promise<void>;
   onOpenPage: (id: string) => void;
   onLinkPreview: (url: string, preview: LinkPreview) => void;
@@ -232,6 +233,14 @@ export default function Editor({
     startRectangle,
   } = useBlockSelection({ editor, host, pasteLoading });
   const directLinkBox = useDirectBlockLinkTarget(host);
+  const databaseActions = useMemo(
+    () => ({
+      pages,
+      createRowPage: onCreateSubpage,
+      openPage: onOpenPage,
+    }),
+    [onCreateSubpage, onOpenPage, pages],
+  );
   const refreshedPageTitles = useRef("");
   const migrationSent = useRef(false);
   useEffect(() => {
@@ -792,40 +801,42 @@ export default function Editor({
           </button>
         </div>
       )}
-      <BlockNoteView
-        editor={editor}
-        editable={!pasteLoading}
-        theme={theme}
-        formattingToolbar={false}
-        slashMenu={false}
-        onChange={() => onChange(editor.document as unknown as Block[])}
-      >
-        <FormattingToolbarController
-          formattingToolbar={() => (
-            <EditorFormattingToolbar
-              shortcuts={formattingShortcuts}
-              onApplied={(style) => {
-                lastColorStyle.current = style;
-              }}
-            />
-          )}
-        />
-        <SuggestionMenuController
-          triggerCharacter="/"
-          getItems={slashItems}
-          // A fading, closing menu keeps Floating UI's resize observer alive
-          // while the failed-command status changes layout in WebKit.
-          floatingUIOptions={{ useTransitionStylesProps: { duration: 0 } }}
-        />
-        <SuggestionMenuController
-          triggerCharacter="@"
-          getItems={atMentionItems}
-        />
-        <SuggestionMenuController
-          triggerCharacter="[["
-          getItems={bracketMentionItems}
-        />
-      </BlockNoteView>
+      <DatabaseActionsContext.Provider value={databaseActions}>
+        <BlockNoteView
+          editor={editor}
+          editable={!pasteLoading}
+          theme={theme}
+          formattingToolbar={false}
+          slashMenu={false}
+          onChange={() => onChange(editor.document as unknown as Block[])}
+        >
+          <FormattingToolbarController
+            formattingToolbar={() => (
+              <EditorFormattingToolbar
+                shortcuts={formattingShortcuts}
+                onApplied={(style) => {
+                  lastColorStyle.current = style;
+                }}
+              />
+            )}
+          />
+          <SuggestionMenuController
+            triggerCharacter="/"
+            getItems={slashItems}
+            // A fading, closing menu keeps Floating UI's resize observer alive
+            // while the failed-command status changes layout in WebKit.
+            floatingUIOptions={{ useTransitionStylesProps: { duration: 0 } }}
+          />
+          <SuggestionMenuController
+            triggerCharacter="@"
+            getItems={atMentionItems}
+          />
+          <SuggestionMenuController
+            triggerCharacter="[["
+            getItems={bracketMentionItems}
+          />
+        </BlockNoteView>
+      </DatabaseActionsContext.Provider>
       {dateSelection && (
         <DatePicker
           onCancel={() => {

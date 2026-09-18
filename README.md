@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.14.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.15.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -36,6 +36,8 @@ Optional environment variables: `LOTION_DATA_DIR` (default `data`), `PORT` (defa
 ## About
 
 Lotion is a self-hosted document editor without AI. It supports block editing, automatic saving, page hierarchy, image drops, mentions, Markdown folder import/export, and Mermaid diagrams.
+
+Type **/database** to add a single table view whose rows are real child pages. Text, number, select, checkbox, and date properties are validated and saved with the containing document; opening the first cell navigates to the row page. Exact bundles preserve the database, while portable Markdown exports a static table with page links.
 
 Press **⌘K / Ctrl+K** to search page titles and document content across the workspace. Search includes the active unsaved browser draft, tables, code, attachment labels, and Mermaid source. Selecting a content result opens and highlights its exact block.
 

@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.15.0 — 2026-09-17
+
+### Added
+
+- `/database` now creates a bounded typed database block instead of an ordinary table. It supports text, number, select, checkbox, and date properties, property addition/renaming, and up to 500 rows.
+- Each database row is a real child page created through the normal document API. The title cell opens that page and follows current page title/icon metadata.
+
+### Improved
+
+- Database property names, typed values, row links, counts, and serialized size are validated on save and import. Property names and row values participate in workspace search.
+- Exact bundles preserve database behavior and remap row-page IDs on import. Portable Markdown explicitly degrades a database to a static linked GFM table.
+
+No schema-version migration is required. Existing ordinary tables remain ordinary tables; they are not guessed into databases. [ADR-023](adr/023-typed-database-rows.md) records the selected scope and excluded advanced features. Verification is recorded in [test results](test-results.md).
+
 ## 0.14.0 — 2026-09-17
 
 ### Added

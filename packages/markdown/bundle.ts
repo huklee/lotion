@@ -11,6 +11,7 @@ import {
 } from "../document-schema/index";
 import { Repository } from "../persistence/repository";
 import { fromMarkdown, toMarkdown } from "./convert";
+import { readDatabaseState } from "../database/model";
 const MAX_TOTAL = 100 * 1024 * 1024;
 export type Entry = { path: string; bytes: Buffer; directory?: boolean };
 function hash(bytes: Buffer | string) {
@@ -74,9 +75,23 @@ function mapStrings(value: any, fn: (s: string) => string): any {
     return Object.fromEntries(
       Object.entries(value).map(([key, v]) => [
         key,
-        (key === "href" || key === "url") && typeof v === "string"
-          ? fn(v)
-          : mapStrings(v, fn),
+        key === "props" &&
+        value.type === "database" &&
+        v &&
+        typeof v === "object"
+          ? (() => {
+              const props = v as Record<string, unknown>;
+              const state = readDatabaseState(props.columns, props.rows);
+              return {
+                ...props,
+                rows: JSON.stringify(
+                  state.rows.map((row) => ({ ...row, href: fn(row.href) })),
+                ),
+              };
+            })()
+          : (key === "href" || key === "url") && typeof v === "string"
+            ? fn(v)
+            : mapStrings(v, fn),
       ]),
     );
   return value;

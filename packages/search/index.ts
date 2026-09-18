@@ -1,4 +1,5 @@
 import type { Block, Content, Document } from "../document-schema/index";
+import { databaseText, readDatabaseState } from "../database/model";
 
 export type SearchField = "title" | "content" | "mermaid";
 
@@ -57,6 +58,18 @@ function inlineText(value: unknown): string {
 }
 
 function blockText(block: Block): { text: string; field: SearchField } | null {
+  if (block.type === "database") {
+    try {
+      return {
+        text: databaseText(
+          readDatabaseState(block.props?.columns, block.props?.rows),
+        ),
+        field: "content",
+      };
+    } catch {
+      return null;
+    }
+  }
   if (block.type === "mermaid") {
     const code = block.props?.code;
     return typeof code === "string" && code

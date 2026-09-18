@@ -826,6 +826,63 @@ h1 span {
   background: #342f27;
   border-color: #514839;
 }
+.lotion-database {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  overflow: hidden;
+}
+.lotion-database-scroll {
+  overflow-x: auto;
+}
+.lotion-database table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+}
+.lotion-database th,
+.lotion-database td {
+  min-width: 135px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 6px;
+  text-align: left;
+}
+.lotion-database th:first-child {
+  min-width: 180px;
+}
+.lotion-database th input,
+.lotion-database td input:not([type="checkbox"]),
+.lotion-database td select {
+  width: 100%;
+}
+.lotion-database th small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.lotion-database th button {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lotion-database-actions {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+}
+.lotion-database-actions label {
+  display: grid;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
 .bn-block-content[data-content-type="codeBlock"] {
   background: #efe7d5 !important;
   color: #b4232d !important;
