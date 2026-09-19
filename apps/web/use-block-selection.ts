@@ -79,7 +79,14 @@ export function useBlockSelection({
   useEffect(() => {
     if (!selected.length) return;
     const outside = (event: PointerEvent) => {
-      if (!host.current?.contains(event.target as Node)) setSelected([]);
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest("[data-block-selection-controls]")) return;
+      if (
+        !target ||
+        !host.current?.contains(target) ||
+        target.closest("button, a, input, select, textarea")
+      )
+        setSelected([]);
     };
     const removeSelection = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
@@ -282,6 +289,7 @@ export function useBlockSelection({
     };
     const end = (pointerEvent: PointerEvent) => {
       if (pointerEvent.pointerId !== pointerId) return;
+      if (!active && !additive) setSelected([]);
       setRectangle(null);
       cancelAnimationFrame(autoScrollFrame);
       window.removeEventListener("pointermove", move);

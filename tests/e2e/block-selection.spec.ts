@@ -242,6 +242,62 @@ test("rectangle-selects blocks without changing ordinary text content", async ({
   ).toBe(0);
 });
 
+test("clears a block selection when another editor or application area is selected", async ({
+  page,
+}) => {
+  await seed(page, "Clear block selection", [
+    {
+      id: "clear-a",
+      type: "paragraph",
+      content: [{ type: "text", text: "Selected alpha", styles: {} }],
+    },
+    {
+      id: "clear-b",
+      type: "paragraph",
+      content: [{ type: "text", text: "Selected beta", styles: {} }],
+    },
+    {
+      id: "clear-c",
+      type: "paragraph",
+      content: [{ type: "text", text: "Other editor block", styles: {} }],
+    },
+  ]);
+  const selectFirstTwo = async () => {
+    const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+    const first = (await page
+      .locator('[data-id="clear-a"]')
+      .first()
+      .boundingBox())!;
+    const second = (await page
+      .locator('[data-id="clear-b"]')
+      .first()
+      .boundingBox())!;
+    await page.mouse.move(gutter.x + 5, first.y + 2);
+    await page.mouse.down();
+    await page.mouse.move(
+      second.x + second.width - 8,
+      second.y + second.height - 2,
+      { steps: 10 },
+    );
+    await page.mouse.up();
+    await expect(
+      page.getByRole("toolbar", { name: "Selected blocks" }),
+    ).toContainText("2 selected");
+  };
+
+  await selectFirstTwo();
+  await page.locator('[data-id="clear-c"] .bn-inline-content').first().click();
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toHaveCount(0);
+
+  await selectFirstTwo();
+  await page.getByRole("textbox", { name: "Page title" }).click();
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toHaveCount(0);
+});
+
 test("block lasso preserves text dragging, supports reverse selection and extends with Shift", async ({
   page,
 }) => {

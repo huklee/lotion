@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-09-19T09:45:36+09:00 — 0.20.1 selected-block dismissal focused verification
+
+Strict TypeScript and the production build passed. The focused block-selection matrix passed **9/9** across Chromium, Firefox, and WebKit. It verifies dismissal after selecting another editor block and the page-title application control, retained modifier-assisted lasso extension, and retained copy/cut toolbar behavior including clipboard-denial safety.
+
+The final `CI=1 npm run check` exited **0**: ESLint, strict TypeScript, production build, **178/178 unit and integration tests**, and **162/162 Playwright cases** passed with two workers. The browser phase completed in 2.4 minutes. Prettier and `git diff --check` passed, and documentation validation found **36 Markdown files, 183 local links, and zero missing targets**. The known non-failing large-chunk warning remains, and user data under `data/` was untouched.
+
 ## 2026-09-19T01:28:05+09:00 — 0.20.0 selected-block group actions focused verification
 
 Strict TypeScript, the production build, and the movement unit suite passed; the unit suite reported **14/14** cases and includes selected-subtree document ordering plus parent/child de-duplication. The focused production-build Playwright matrix passed **6/6** across Chromium, Firefox, and WebKit. It verifies rectangle selection, movement through the toolbar's left grip, undo, structured Markdown copy of a heading and checked task, retained selection after copy, hierarchy-preserving cut, save, and reload.

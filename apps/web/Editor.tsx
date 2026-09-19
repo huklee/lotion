@@ -825,6 +825,7 @@ export default function Editor({
           className="selection-toolbar"
           role="toolbar"
           aria-label="Selected blocks"
+          data-block-selection-controls
         >
           <button
             aria-label="Drag selected blocks"

@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T09:45:36+09:00 — 0.20.1 selected-block dismissal fix prepared
+
+Closed the missing dismissal path inside the editor host. The window-level pointer guard continues clearing selection for outside/application controls, ordinary editor clicks and completed text selections now clear it locally, and modifier-assisted rectangle extension keeps its previous selection base. The selected-block toolbar carries an explicit ownership marker so its drag, clipboard, movement, and clear controls are not dismissed during pointer capture.
+
+The focused production-build matrix covers selecting two blocks, clicking another editor block, clicking the page-title control, lasso extension, and selected-group clipboard controls. It passed 9/9 across Chromium, Firefox, and WebKit. The complete gate is recorded in [test results](test-results.md). User data under `data/` was untouched.
+
 ## 2026-09-19T01:28:05+09:00 — 0.20.0 selected-block group actions prepared
 
 Extended the existing rectangle-selection toolbar instead of creating a second block-action surface. Its left grip now owns the selected-group drag payload, while dedicated copy and cut controls serialize the selected topmost subtrees as structured Markdown in document order. If both an ancestor and descendant are selected, the ancestor's subtree is emitted only once. Cut calls the same hierarchy-preserving deletion path as Backspace, but only after the asynchronous clipboard write succeeds.

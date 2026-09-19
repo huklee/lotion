@@ -30,7 +30,7 @@ Each item is implemented from current `main`, tested, submitted as a pull reques
 3. [x] Replace independent font-color/background choices with ten combined Notion-style presets whose contrast remains readable in every supported scheme. Each preset now applies both portable style keys, shortcut/session state migrates compatibly, and dark/black fills use tested low-chroma pastel values.
 4. [x] Fix the remaining checklist-area paste path that unconditionally creates an unwanted newline. Checklist paste now drops one conventional terminal delimiter while preserving internal blanks, mid-line prefix/suffix behavior, checklist types, checked-state rules, save, and reload.
 5. [x] Extend drag-box block selection so the left movement handle supports dragging, copying, and cutting the selected block group. The grip now starts a group move, while explicit copy/cut controls serialize the selected top-level subtrees to structured Markdown in document order; cut removes content only after a successful clipboard write.
-6. [ ] Clear a custom block selection whenever the user selects another editor or application area, without breaking selection-owned controls.
+6. [x] Clear a custom block selection whenever the user selects another editor or application area, without breaking selection-owned controls. Ordinary editor clicks/text selection and other application controls now clear the block selection; the selected-block toolbar is an explicit ownership boundary so its drag, copy, cut, move, and clear actions remain usable.
 7. [ ] Reconstruct enhanced blocks such as bullets, checklists, and headings when structured raw text is copied and pasted as blocks.
 
 ## Existing product backlog
