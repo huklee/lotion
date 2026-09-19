@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-09-19T10:32:24+09:00 — 0.21.1 exact selected-block paste focused verification
+
+Strict TypeScript and the production build passed. The selected-block clipboard and related Markdown unit group passed **23/23**, including exact mixed-block/style recovery, fresh IDs, nested state, unrelated-text rejection, and malformed-session rejection. The new production-build browser regression passed **3/3** across Chromium, Firefox, and WebKit. It copies a mixed heading, styled paragraph, and checked task through the selected-block toolbar, pastes into an empty block, verifies exact types and combined color styling, saves, reloads, and verifies the reconstructed copy again.
+
+The final `CI=1 npm run check` exited **0**: ESLint, strict TypeScript, production build, **187/187 unit and integration tests**, and **168/168 Playwright cases** passed with two workers. The browser phase completed in 2.3 minutes. Prettier and `git diff --check` passed, and documentation validation found **36 Markdown files, 187 local links, and zero missing targets**. The known non-failing large-chunk build warning remains, and user data under `data/` was untouched.
+
 ## 2026-09-19T10:05:00+09:00 — 0.21.0 structured block reconstruction focused verification
 
 Strict TypeScript and the production build passed. The structured recognizer unit suite passed **7/7** cases, including selected-block export compatibility, heading/list/checklist types, checked state, nested hierarchy, a single structural block, mixed-prose rejection, and rich/unsafe inline rejection. The complete clipboard browser specification passed **15/15**; a final structured-versus-literal rerun passed **6/6** across Chromium, Firefox, and WebKit. Browser coverage verifies enhanced block rendering, save/reload, and unchanged literal handling for mixed Markdown/HTML clipboard text.

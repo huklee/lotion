@@ -660,3 +660,120 @@ test("selected block controls copy and cut the group as structured Markdown", as
     page.locator('[data-id="group-copy-keep"]').first(),
   ).toContainText("Keep this block");
 });
+
+test("selected block copy and paste restores exact block structure and styles", async ({
+  page,
+}) => {
+  await seed(page, "Paste selected blocks", [
+    {
+      id: "paste-copy-heading",
+      type: "heading",
+      props: { level: 2 },
+      content: [{ type: "text", text: "Copied heading", styles: {} }],
+    },
+    {
+      id: "paste-copy-paragraph",
+      type: "paragraph",
+      content: [
+        {
+          type: "text",
+          text: "Styled paragraph",
+          styles: {
+            bold: true,
+            textColor: "blue",
+            backgroundColor: "blue",
+          },
+        },
+      ],
+    },
+    {
+      id: "paste-copy-task",
+      type: "checkListItem",
+      props: { checked: true },
+      content: [{ type: "text", text: "Completed task", styles: {} }],
+    },
+    { id: "paste-copy-target", type: "paragraph", content: [] },
+  ]);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          (
+            window as typeof window & { selectedBlockClipboard?: string }
+          ).selectedBlockClipboard = text;
+        },
+      },
+    });
+  });
+  const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+  const first = (await page
+    .locator('[data-id="paste-copy-heading"]')
+    .first()
+    .boundingBox())!;
+  const last = (await page
+    .locator('[data-id="paste-copy-task"]')
+    .first()
+    .boundingBox())!;
+  await page.mouse.move(gutter.x + 5, first.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(last.x + last.width - 8, last.y + last.height - 2, {
+    steps: 10,
+  });
+  await page.mouse.up();
+  const toolbar = page.getByRole("toolbar", { name: "Selected blocks" });
+  await expect(toolbar).toContainText("3 selected");
+  await toolbar.getByRole("button", { name: "Copy selected blocks" }).click();
+
+  const target = page.locator(
+    '[data-id="paste-copy-target"] .bn-inline-content',
+  );
+  await target.click();
+  await target.evaluate((element) => {
+    const data = new DataTransfer();
+    data.setData(
+      "text/plain",
+      (window as typeof window & { selectedBlockClipboard?: string })
+        .selectedBlockClipboard ?? "",
+    );
+    const event = new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, "clipboardData", { value: data });
+    element.dispatchEvent(event);
+  });
+
+  await expect(
+    page.getByRole("heading", { name: "Copied heading" }),
+  ).toHaveCount(2);
+  const styled = page
+    .locator('[data-content-type="paragraph"]')
+    .filter({ hasText: "Styled paragraph" });
+  await expect(styled).toHaveCount(2);
+  await expect(
+    styled.nth(1).locator('[data-style-type="textColor"][data-value="blue"]'),
+  ).toBeVisible();
+  await expect(
+    styled
+      .nth(1)
+      .locator('[data-style-type="backgroundColor"][data-value="blue"]'),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-content-type="checkListItem"] input:checked'),
+  ).toHaveCount(2);
+  await expect(page.locator('[data-id="paste-copy-target"]')).toHaveCount(0);
+
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Copied heading" }),
+  ).toHaveCount(2);
+  await expect(page.getByText("Styled paragraph", { exact: true })).toHaveCount(
+    2,
+  );
+  await expect(
+    page.locator('[data-content-type="checkListItem"] input:checked'),
+  ).toHaveCount(2);
+});
