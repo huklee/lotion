@@ -2,11 +2,11 @@
 
 Updated: 2026-09-19. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Prepared application checkpoint 0.21.2 connects the standard `⌘/Ctrl+C` and `⌘/Ctrl+X` shortcuts to selected-block copy and safe cut. Exact block types, hierarchy, checklist state, and inline styles are restored when that selection is pasted in the same browser session, including after an in-tab reload. External mixed prose and rich Markdown remain literal. Selected-group drag, selection dismissal, and earlier storage/search/database capabilities remain available. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
+Prepared application checkpoint 0.22.0 keeps sidebar hierarchy visible inside parent documents. Sidebar child creation, nesting moves, and page duplication atomically maintain stable child-page link blocks in the applicable parent without changing user-authored links; `/page` retains its existing single-link behavior. Earlier clipboard, storage, search, and database capabilities remain available. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.21.2**. Local verification is recorded before its direct-to-main pull request; do not claim publication until its remote gates pass and it is merged. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.22.0**. Local verification is recorded before its direct-to-main pull request; do not claim publication until its remote gates pass and it is merged. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -31,7 +31,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; selected-block keyboard copy/paste is fixed in 0.21.2.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; parent-page hierarchy links and sidebar duplication are added in 0.22.0.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.
@@ -41,7 +41,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Current status and open work
 
-- This release branch started from `origin/main` at `c633c04`. Check `git status --branch` and `git log` before working; later commits may exist.
+- This release branch started from `origin/main` at `8e96cbc`. Check `git status --branch` and `git log` before working; later commits may exist.
 - The complete backlog and acceptance criteria live in `docs/remained_job.md`. Continue one item at a time from current `origin/main`, using one pull request whose base is `main`; merge and verify ancestry before starting the next item. Stacked feature pull requests are prohibited.
 - The reported server pages returned HTTP 200. The specific user browser conflict draft cannot be inspected from a separate browser/session; verify it through the UI and retain a recovery copy before choosing a conflicting version.
 

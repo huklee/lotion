@@ -118,7 +118,7 @@ workspace/
   recovery/<timestamp>-<token>/reconciliation-plan.json
 ```
 
-`workspace.json` maps each document ID to its visible committed revision, semantic document hash, and retry receipts. Revision files are immutable; one atomic manifest replacement publishes a single-page mutation or an entire staged import. The offline doctor audits this boundary and publishes only reviewed, state-bound recovery plans. See [ADR-010](adr/010-implementation-foundations.md) and [ADR-024](adr/024-storage-diagnostics-and-reconciliation.md).
+`workspace.json` maps each document ID to its visible committed revision, semantic document hash, and retry receipts. Revision files are immutable; one atomic manifest replacement publishes a single-page mutation, a page plus its managed parent-link updates, or an entire staged import. The offline doctor audits this boundary and publishes only reviewed, state-bound recovery plans. See [ADR-010](adr/010-implementation-foundations.md) and [ADR-024](adr/024-storage-diagnostics-and-reconciliation.md).
 
 Logical hierarchy does not require nested canonical directories. Renames and moves leave file and asset identities unchanged. Asset bytes are immutable and hash-addressed. Finish and durably commit uploads before inserting persistent references. Interrupted/unreferenced uploads can be cleaned after a grace period. Garbage collection accounts for active documents, trash, retained history, and in-progress imports.
 
@@ -131,9 +131,10 @@ Workspace backups go to a configurable separate destination; a copy on the same 
 | `GET /api/tree`                   | Metadata projection and ETag                             |
 | `GET /api/search`                 | Bounded title/body search over the derived backend index |
 | `POST /api/link-preview`          | Validated public OpenGraph lookup with bounded caching   |
-| `POST /api/documents`             | Create; mutation ID prevents retry duplication           |
+| `POST /api/documents`             | Create; optionally link it from its parent atomically    |
 | `GET /api/documents/:id`          | Document and revision ETag                               |
 | `PUT /api/documents/:id/content`  | Save title/blocks using `If-Match`                       |
+| `POST /api/documents/:id/copy`    | Copy one page beside its source using `If-Match`         |
 | `POST /api/documents/:id/move`    | Validate document revision and tree precondition         |
 | `POST /api/documents/:id/trash`   | Tombstone with revision precondition                     |
 | `POST /api/documents/:id/restore` | Restore with revision precondition                       |

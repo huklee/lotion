@@ -128,10 +128,21 @@ export async function createApp(
         title: z.string().max(500).default("Untitled"),
         parentId: idSchema.nullable().default(null),
         mutationId: mutationSchema,
+        linkParent: z.boolean().default(false),
       })
       .parse(req.body);
     reply.code(201);
-    return repo.create(input.title, input.parentId, input.mutationId);
+    return repo.create(
+      input.title,
+      input.parentId,
+      input.mutationId,
+      input.linkParent,
+    );
+  });
+  app.post("/api/documents/:id/copy", async (req, reply) => {
+    const input = z.object({ mutationId: mutationSchema }).parse(req.body);
+    reply.code(201);
+    return repo.copy(id(req), revision(req), input.mutationId);
   });
   app.put("/api/documents/:id/content", async (req) => {
     const input = z

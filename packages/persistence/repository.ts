@@ -17,6 +17,10 @@ import {
   type SearchResponse,
   type WorkspaceSearchIndex,
 } from "../search/index";
+import {
+  ensureParentLink,
+  removeParentLink,
+} from "../document-hierarchy/parent-links";
 
 type Manifest = {
   schemaVersion: 1;
@@ -332,9 +336,35 @@ export class Repository {
       siblings[index]?.position ?? null,
     );
   }
-  create(title: string, parentId: string | null, mutationId: string) {
+  private parentWithBlocks(
+    parent: Document,
+    blocks: Document["blocks"],
+    now: string,
+  ): Document | undefined {
+    if (blocks === parent.blocks) return;
+    const next = {
+      ...parent,
+      blocks: blocks.length ? blocks : [emptyBlock()],
+      revision: parent.revision + 1,
+      updatedAt: now,
+    };
+    delete next.lastMutationId;
+    delete next.lastMutationDigest;
+    contentSchema.parse(next);
+    return next;
+  }
+  create(
+    title: string,
+    parentId: string | null,
+    mutationId: string,
+    linkParent = false,
+  ) {
     return this.queue(async () => {
-      const hash = digest({ title, parentId });
+      const hash = digest(
+        linkParent
+          ? { title, parentId, linkParent: true }
+          : { title, parentId },
+      );
       const existing = this.replay(mutationId, hash);
       if (existing) return existing[0];
       this.parent(parentId);
@@ -353,8 +383,53 @@ export class Repository {
         deletedAt: null,
       };
       contentSchema.parse(doc);
-      await this.commit([doc], { id: mutationId, digest: hash });
+      const changes = [doc];
+      if (parentId && linkParent) {
+        const parent = this.get(parentId);
+        const linked = this.parentWithBlocks(
+          parent,
+          ensureParentLink(parent.blocks, doc),
+          now,
+        );
+        if (linked) changes.push(linked);
+      }
+      await this.commit(changes, { id: mutationId, digest: hash });
       return structuredClone(doc);
+    });
+  }
+  copy(id: string, revision: number, mutationId: string) {
+    return this.queue(async () => {
+      const current = this.get(id);
+      const hash = digest({ id, revision });
+      const existing = this.replay(mutationId, hash);
+      if (existing) return existing[0];
+      if (current.revision !== revision)
+        throw new AppError(412, "Page changed. Refresh and try again.");
+      const now = new Date().toISOString();
+      const copy: Document = {
+        ...structuredClone(current),
+        id: randomUUID(),
+        title: `${current.title || "Untitled"} (copy)`,
+        position: this.rank(current.parentId),
+        revision: 1,
+        createdAt: now,
+        updatedAt: now,
+      };
+      delete copy.lastMutationId;
+      delete copy.lastMutationDigest;
+      contentSchema.parse(copy);
+      const changes: Document[] = [copy];
+      if (copy.parentId) {
+        const parent = this.get(copy.parentId);
+        const linked = this.parentWithBlocks(
+          parent,
+          ensureParentLink(parent.blocks, copy),
+          now,
+        );
+        if (linked) changes.push(linked);
+      }
+      await this.commit(changes, { id: mutationId, digest: hash });
+      return structuredClone(copy);
     });
   }
   save(id: string, revision: number, content: Content, mutationId: string) {
@@ -431,7 +506,30 @@ export class Repository {
       // Content replay identities apply only to the revision that accepted them.
       delete next.lastMutationId;
       delete next.lastMutationDigest;
-      await this.commit([next]);
+      const changes: Document[] = [next];
+      if (action === "move") {
+        const oldParentId = current.parentId;
+        const newParentId = next.parentId;
+        if (oldParentId && oldParentId !== newParentId) {
+          const oldParent = this.get(oldParentId);
+          const unlinked = this.parentWithBlocks(
+            oldParent,
+            removeParentLink(oldParent.blocks, id),
+            next.updatedAt,
+          );
+          if (unlinked) changes.push(unlinked);
+        }
+        if (newParentId) {
+          const parent = this.get(newParentId);
+          const linked = this.parentWithBlocks(
+            parent,
+            ensureParentLink(parent.blocks, next),
+            next.updatedAt,
+          );
+          if (linked) changes.push(linked);
+        }
+      }
+      await this.commit(changes);
       return structuredClone(next);
     });
   }

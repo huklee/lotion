@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.21.2**. See the [version history and added features](docs/changelog.md).
+Current version: **0.22.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -38,6 +38,8 @@ If startup reports a missing, malformed, cyclic, or externally changed document 
 ## About
 
 Lotion is a self-hosted document editor without AI. It supports block editing, automatic saving, page hierarchy, image drops, mentions, Markdown folder import/export, and Mermaid diagrams.
+
+Creating a child from the sidebar, dragging a page under another page, or using the sidebar's duplicate action creates a navigable child-page link in the parent document. Moving the child to a different parent moves that managed link as well, while ordinary links you add yourself remain untouched.
 
 Typing `<-` or `->` in ordinary document text immediately produces `←` or `→`. Pasted text, code blocks, Mermaid source, and active IME composition remain literal.
 

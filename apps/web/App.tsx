@@ -316,12 +316,19 @@ export default function App() {
     ++loadNumber.current;
     setActive(null);
     try {
+      const parentCoordinator = parentId
+        ? coordinators.current.get(parentId)
+        : undefined;
+      await parentCoordinator?.flush();
+      if (parentCoordinator && parentCoordinator.status !== "Saved")
+        throw new Error("Resolve the parent page draft before adding a child.");
       const doc = await api<Document>("/api/documents", {
         method: "POST",
         body: JSON.stringify({
           title: "Untitled",
           parentId,
           mutationId: crypto.randomUUID(),
+          linkParent: parentId !== null,
         }),
       });
       await refresh();
@@ -329,6 +336,41 @@ export default function App() {
       await openPage(doc.id);
     } catch (e) {
       handleError(e);
+    }
+  }
+  async function duplicate(id: string) {
+    try {
+      const nodes = await refresh();
+      const node = nodes.find((item) => item.id === id);
+      if (!node) throw new Error("Page not found");
+      const relevant = [id, node.parentId].filter(
+        (item): item is string => !!item,
+      );
+      for (const pageId of relevant)
+        await coordinators.current.get(pageId)?.flush();
+      if (
+        relevant.some((pageId) => {
+          const coordinator = coordinators.current.get(pageId);
+          return coordinator !== undefined && coordinator.status !== "Saved";
+        })
+      )
+        throw new Error("Resolve pending page drafts before duplicating.");
+      const copy = await api<Document>(`/api/documents/${id}/copy`, {
+        method: "POST",
+        headers: { "If-Match": String(node.revision) },
+        body: JSON.stringify({ mutationId: crypto.randomUUID() }),
+      });
+      await refresh();
+      if (copy.parentId)
+        setCollapsed((current) => {
+          const next = new Set(current);
+          next.delete(copy.parentId!);
+          return next;
+        });
+      newId.current = copy.id;
+      await openPage(copy.id);
+    } catch (error) {
+      handleError(error);
     }
   }
   async function createSubpage(parentId: string, title = "Untitled") {
@@ -396,10 +438,24 @@ export default function App() {
     options: Record<string, unknown> = {},
   ) {
     try {
-      const c = coordinators.current.get(id);
-      await c?.flush();
-      if (c && c.status !== "Saved")
+      const initialNode = tree.find((node) => node.id === id);
+      const destination =
+        action === "move" && typeof options.parentId === "string"
+          ? options.parentId
+          : undefined;
+      const relevant = [id, initialNode?.parentId, destination].filter(
+        (item): item is string => !!item,
+      );
+      for (const pageId of relevant)
+        await coordinators.current.get(pageId)?.flush();
+      if (
+        relevant.some((pageId) => {
+          const coordinator = coordinators.current.get(pageId);
+          return coordinator !== undefined && coordinator.status !== "Saved";
+        })
+      )
         throw new Error("Resolve the unsaved draft before changing this page.");
+      const c = coordinators.current.get(id);
       const nodes = await refresh();
       const node = nodes.find((n) => n.id === id)!;
       const fresh = await api<{ tag: string }>("/api/tree");
@@ -409,9 +465,21 @@ export default function App() {
         body: JSON.stringify({ ...options, treeTag: fresh.tag }),
       });
       await refresh();
+      const affectedParents =
+        action === "move"
+          ? [initialNode?.parentId, changed.parentId].filter(
+              (item): item is string => !!item,
+            )
+          : [];
+      for (const parentId of new Set(affectedParents)) {
+        coordinators.current.get(parentId)?.dispose();
+        coordinators.current.delete(parentId);
+      }
       if (action === "trash" && active?.id === id) {
         setActive(null);
         history.replaceState(null, "", "#/home");
+      } else if (active && affectedParents.includes(active.id)) {
+        await openPage(active.id, "none");
       } else if (active?.id === id || action === "restore") {
         c?.dispose();
         coordinators.current.delete(id);
@@ -499,6 +567,7 @@ export default function App() {
         draftFor={(id) => coordinators.current.get(id)?.content}
         openPage={openPage}
         create={create}
+        duplicate={duplicate}
         mutate={mutate}
         toggleFavorite={toggleFavorite}
         setSearch={(open) => {

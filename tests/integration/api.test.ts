@@ -59,6 +59,45 @@ it("creates/saves/loads through HTTP with required preconditions", async () => {
     (await app.inject({ url: `/api/documents/${doc.id}` })).json().title,
   ).toBe("Updated");
 });
+it("creates parent links and copies child pages through HTTP", async () => {
+  const parent = (
+    await app.inject({
+      method: "POST",
+      url: "/api/documents",
+      payload: { title: "Parent", mutationId: crypto.randomUUID() },
+    })
+  ).json();
+  const child = (
+    await app.inject({
+      method: "POST",
+      url: "/api/documents",
+      payload: {
+        title: "Child",
+        parentId: parent.id,
+        linkParent: true,
+        mutationId: crypto.randomUUID(),
+      },
+    })
+  ).json();
+  const copied = await app.inject({
+    method: "POST",
+    url: `/api/documents/${child.id}/copy`,
+    headers: { "if-match": "1" },
+    payload: { mutationId: crypto.randomUUID() },
+  });
+  expect(copied.statusCode).toBe(201);
+  expect(copied.json()).toMatchObject({
+    title: "Child (copy)",
+    parentId: parent.id,
+  });
+  const updatedParent = (
+    await app.inject({ url: `/api/documents/${parent.id}` })
+  ).json();
+  expect(JSON.stringify(updatedParent.blocks)).toContain(`#/page/${child.id}`);
+  expect(JSON.stringify(updatedParent.blocks)).toContain(
+    `#/page/${copied.json().id}`,
+  );
+});
 it("searches indexed titles and block content with bounded input", async () => {
   const create = await app.inject({
     method: "POST",
