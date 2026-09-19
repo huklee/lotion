@@ -153,6 +153,58 @@ test("sidebar drop nests a page", async ({ page }) => {
         .then((x) => x.parentId),
     )
     .toBe(parent.id);
+  const updatedParent = await (
+    await page.request.get(`/api/documents/${parent.id}`)
+  ).json();
+  expect(JSON.stringify(updatedParent.blocks)).toContain(`#/page/${d.id}`);
+  await expect(page.locator(`.tiptap a[href="#/page/${d.id}"]`)).toHaveCount(1);
+});
+
+test("sidebar child creation and duplication add links to the parent page", async ({
+  page,
+}) => {
+  test.setTimeout(45_000);
+  const parent = await seed(page, `Linked parent ${randomUUID().slice(0, 5)}`);
+  await revealSidebarPage(page, parent.id);
+  const row = page.locator(".page-row").filter({
+    has: page.getByRole("link", { name: parent.title, exact: true }),
+  });
+  await row
+    .getByRole("button", { name: `Add child to ${parent.title}` })
+    .click();
+  await expect
+    .poll(() => page.url(), { timeout: 15_000 })
+    .not.toContain(parent.id);
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "Untitled",
+  );
+  const childId = new URL(page.url()).hash.split("/").at(-1)!;
+
+  await revealSidebarPage(page, childId);
+  const childRow = page.locator(".page-row").filter({
+    has: page.locator(`a[href="#/page/${childId}"]`),
+  });
+  await childRow
+    .getByRole("button", { name: "Duplicate Untitled", exact: true })
+    .click();
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "Untitled (copy)",
+  );
+  const copyId = new URL(page.url()).hash.split("/").at(-1)!;
+  const updatedParent = await (
+    await page.request.get(`/api/documents/${parent.id}`)
+  ).json();
+  const serialized = JSON.stringify(updatedParent.blocks);
+  expect(serialized).toContain(`#/page/${childId}`);
+  expect(serialized).toContain(`#/page/${copyId}`);
+
+  await page.goto(`/#/page/${parent.id}`);
+  await expect(page.locator(`.tiptap a[href="#/page/${childId}"]`)).toHaveCount(
+    1,
+  );
+  await expect(page.locator(`.tiptap a[href="#/page/${copyId}"]`)).toHaveCount(
+    1,
+  );
 });
 
 test("sidebar drop reorders siblings at the indicated edge", async ({

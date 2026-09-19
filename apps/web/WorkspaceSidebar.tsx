@@ -13,6 +13,7 @@ import {
   CircleHelp,
   ChevronRight,
   ChevronDown,
+  Copy,
 } from "lucide-react";
 import type { TreeNode, Content } from "../../packages/document-schema/index";
 import type { ThemeMode } from "./preferences";
@@ -33,6 +34,7 @@ type WorkspaceSidebarProps = {
   draftFor: (id: string) => Pick<Content, "title" | "icon"> | undefined;
   openPage: (id: string) => Promise<void>;
   create: (parentId?: string | null) => Promise<void>;
+  duplicate: (id: string) => Promise<void>;
   mutate: (
     id: string,
     action: "move",
@@ -61,6 +63,7 @@ export function WorkspaceSidebar({
   draftFor,
   openPage,
   create,
+  duplicate,
   mutate,
   toggleFavorite,
   setSearch,
@@ -170,9 +173,36 @@ export function WorkspaceSidebar({
           </button>
           {pageLink(node)}
           <button
-            className="row-add"
+            className="row-action"
+            aria-label={`Duplicate ${node.title || "Untitled"}`}
+            draggable={false}
+            onPointerDown={(event) => event.stopPropagation()}
+            onPointerUp={(event) => {
+              if (event.button !== 0) return;
+              event.preventDefault();
+              event.stopPropagation();
+              void duplicate(node.id);
+            }}
+            onClick={(event) => {
+              if (event.detail === 0) void duplicate(node.id);
+            }}
+          >
+            <Copy size={13} />
+          </button>
+          <button
+            className="row-action"
             aria-label={`Add child to ${node.title || "Untitled"}`}
-            onClick={() => void create(node.id)}
+            draggable={false}
+            onPointerDown={(event) => event.stopPropagation()}
+            onPointerUp={(event) => {
+              if (event.button !== 0) return;
+              event.preventDefault();
+              event.stopPropagation();
+              void create(node.id);
+            }}
+            onClick={(event) => {
+              if (event.detail === 0) void create(node.id);
+            }}
           >
             <Plus size={13} />
           </button>

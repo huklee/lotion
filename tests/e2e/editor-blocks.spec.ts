@@ -145,6 +145,9 @@ test("slash page creates a child and table of contents follows headings", async 
   await expect(
     page.locator('.bn-inline-content a[href^="#/page/"]'),
   ).toContainText("Untitled");
+  await expect(
+    page.locator('.bn-inline-content a[href^="#/page/"]'),
+  ).toHaveCount(1);
   const tree = await (await page.request.get("/api/tree")).json();
   const child = tree.nodes.find(
     (node: any) => node.parentId === parent.id && node.title === "Untitled",

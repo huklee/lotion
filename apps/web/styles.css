@@ -222,12 +222,12 @@ a {
 .no-children {
   visibility: hidden;
 }
-.row-add {
+.row-action {
   opacity: 0;
   padding: 4px;
 }
-.page-row:hover .row-add,
-.page-row:focus-within .row-add {
+.page-row:hover .row-action,
+.page-row:focus-within .row-action {
   opacity: 1;
 }
 .add-page {

@@ -22,6 +22,82 @@ afterEach(async () => {
 });
 const create = (title = "Page", parent: string | null = null) =>
   repo.create(title, parent, crypto.randomUUID());
+const pageLinkIds = (document: { blocks: any[] }) => {
+  const ids: string[] = [];
+  const visit = (blocks: any[]) => {
+    for (const block of blocks) {
+      for (const inline of Array.isArray(block.content) ? block.content : [])
+        if (inline.type === "link" && inline.href?.startsWith("#/page/"))
+          ids.push(inline.href.slice("#/page/".length));
+      visit(block.children ?? []);
+    }
+  };
+  visit(document.blocks);
+  return ids;
+};
+
+it("atomically maintains parent-page links for sidebar create, move and copy", async () => {
+  const firstParent = await create("First parent");
+  const secondParent = await create("Second parent");
+  const child = await repo.create(
+    "Child",
+    firstParent.id,
+    crypto.randomUUID(),
+    true,
+  );
+
+  expect(pageLinkIds(repo.get(firstParent.id))).toEqual([child.id]);
+  const parentAfterCreate = repo.get(firstParent.id);
+  const moved = await repo.mutate(child.id, child.revision, "move", {
+    parentId: secondParent.id,
+    treeTag: repo.treeTag(),
+  });
+  expect(pageLinkIds(repo.get(firstParent.id))).toEqual([]);
+  expect(pageLinkIds(repo.get(secondParent.id))).toEqual([child.id]);
+
+  const copied = await repo.copy(moved.id, moved.revision, crypto.randomUUID());
+  expect(copied).toMatchObject({
+    title: "Child (copy)",
+    parentId: secondParent.id,
+    blocks: child.blocks,
+  });
+  expect(pageLinkIds(repo.get(secondParent.id))).toEqual([child.id, copied.id]);
+  expect(repo.get(firstParent.id).revision).toBe(
+    parentAfterCreate.revision + 1,
+  );
+
+  await repo.mutate(moved.id, moved.revision, "move", {
+    parentId: null,
+    treeTag: repo.treeTag(),
+  });
+  expect(pageLinkIds(repo.get(secondParent.id))).toEqual([copied.id]);
+});
+
+it("does not duplicate slash-command links or managed links on retries and reorders", async () => {
+  const parent = await create("Parent");
+  const mutationId = crypto.randomUUID();
+  const slashChild = await repo.create(
+    "Slash child",
+    parent.id,
+    crypto.randomUUID(),
+  );
+  expect(pageLinkIds(repo.get(parent.id))).toEqual([]);
+
+  const child = await repo.create("Sidebar child", parent.id, mutationId, true);
+  const retried = await repo.create(
+    "Sidebar child",
+    parent.id,
+    mutationId,
+    true,
+  );
+  expect(retried.id).toBe(child.id);
+  await repo.mutate(child.id, child.revision, "move", {
+    parentId: parent.id,
+    treeTag: repo.treeTag(),
+  });
+  expect(pageLinkIds(repo.get(parent.id))).toEqual([child.id]);
+  expect(pageLinkIds(repo.get(parent.id))).not.toContain(slashChild.id);
+});
 it("restores a stopped full workspace backup including trash and asset bytes", async () => {
   const d = await create("Backed up"),
     asset = await repo.putAsset(Buffer.from("attachment"), "note.txt");

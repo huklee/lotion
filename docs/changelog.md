@@ -2,6 +2,16 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.22.0 — 2026-09-19
+
+### Added
+
+- Sidebar child creation now appends a navigable child-page link to the parent document.
+- Dragging a page into another parent atomically removes its managed link from the former parent and adds it to the destination. Moving it to the workspace root removes the former parent link.
+- Each sidebar page row has a **Duplicate** action. It copies the page content beside the original and adds a link for the copy to their parent.
+
+Managed hierarchy links use stable identities, so retries and same-parent reordering do not create duplicates. User-authored links are never removed. The existing `/page` command continues to insert its own single link without a backend duplicate. Parent-link and hierarchy changes share the repository's atomic manifest boundary; no stored-document schema migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.21.2 — 2026-09-19
 
 ### Fixed

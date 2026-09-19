@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T15:39:26+09:00 — 0.22.0 parent-page hierarchy links prepared
+
+Added a repository-level managed-link boundary for sidebar hierarchy operations. Child creation can explicitly request a parent link, page moves remove that stable managed block from the former parent and ensure it in the destination, and the new sidebar duplicate action copies one page beside its source and links the copy from their parent. Each multi-document change is exposed through the existing atomic manifest commit, uses retry receipts where applicable, and leaves ordinary user-created links untouched. The `/page` command deliberately keeps its current editor-owned link insertion to prevent duplicates.
+
+The client flushes any loaded source/destination drafts before hierarchy mutations, distinguishes an unloaded page from an unsaved editor, and reloads an affected parent that is currently open so its new revision and link appear immediately. Regression coverage spans repository, HTTP, and all three browser engines, including movement to the root, retries, immediate parent rendering, and `/page` coexistence. Version 0.22.0 is a backward-compatible feature release with no document schema migration. Detailed execution evidence is in [test results](test-results.md); user data under `data/` was untouched.
+
 ## 2026-09-19T10:50:57+09:00 — 0.21.2 selected-block keyboard clipboard fix prepared
 
 Reproduced the reported failure with the normal user shortcut: a rectangle-selected mixed group followed by `⌘C / Ctrl+C` never entered the selected-block copy function, leaving only the editor's native plain-text behavior. A capture-phase keyboard boundary now routes unmodified copy and cut shortcuts to the same validated asynchronous operation used by the toolbar; inputs and custom controls retain their native clipboard behavior, and cut still waits for a successful write.
