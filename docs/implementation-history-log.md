@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T01:28:05+09:00 — 0.20.0 selected-block group actions prepared
+
+Extended the existing rectangle-selection toolbar instead of creating a second block-action surface. Its left grip now owns the selected-group drag payload, while dedicated copy and cut controls serialize the selected topmost subtrees as structured Markdown in document order. If both an ancestor and descendant are selected, the ancestor's subtree is emitted only once. Cut calls the same hierarchy-preserving deletion path as Backspace, but only after the asynchronous clipboard write succeeds.
+
+Direct unit coverage verifies subtree order and ancestor de-duplication. Production-build browser coverage exercises group drag plus heading/checklist Markdown copy, cut, save, and reload in Chromium, Firefox, and WebKit. The focused matrix passed 6/6 after correcting a strict test locator that matched BlockNote's outer and inner wrappers; this was a test-only failure after the feature assertions had succeeded. The complete gate is recorded in [test results](test-results.md). User data under `data/` was untouched.
+
 ## 2026-09-19T01:07:54+09:00 — 0.19.1 checklist terminal-newline fix prepared
 
 Reproduced the remaining paste defect with both a single visible line and multiple visible lines whose clipboard payload ended in a line delimiter. The existing checklist transaction interpreted the delimiter's final empty split element as another requested checklist item, which separated the current suffix and produced an unwanted blank row.

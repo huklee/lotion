@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import {
   moveBlocks,
   removeBlocksPreservingHierarchy,
+  selectedBlockSubtrees,
   sectionIds,
 } from "../../packages/editor-adapter/movement";
 import {
@@ -69,6 +70,14 @@ it("removes only selected subtrees without changing following indentation", () =
 it("removes a selected parent and its complete subtree", () => {
   const result = removeBlocksPreservingHierarchy(blocks, ["b", "nested"]);
   expect(result.map((block) => block.id)).toEqual(["a", "c", "d", "e"]);
+});
+it("collects selected subtrees once in document order", () => {
+  expect(
+    selectedBlockSubtrees(blocks, ["nested", "e"]).map((b) => b.id),
+  ).toEqual(["nested", "e"]);
+  expect(
+    selectedBlockSubtrees(blocks, ["b", "nested"]).map((b) => b.id),
+  ).toEqual(["b"]);
 });
 it("rejects duplicate block IDs", () =>
   expect(() =>

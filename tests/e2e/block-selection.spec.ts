@@ -496,3 +496,111 @@ test("drags a rectangle-selected block group to a new insertion point", async ({
     .poll(() => page.locator(".tiptap").innerText())
     .toMatch(/^Move alpha\s+Move beta\s+Keep gamma/);
 });
+
+test("selected block controls copy and cut the group as structured Markdown", async ({
+  page,
+}) => {
+  await seed(page, "Copy and cut selected blocks", [
+    {
+      id: "group-copy-heading",
+      type: "heading",
+      props: { level: 2 },
+      content: [{ type: "text", text: "Copied heading", styles: {} }],
+    },
+    {
+      id: "group-copy-check",
+      type: "checkListItem",
+      props: { checked: true },
+      content: [{ type: "text", text: "Copied task", styles: {} }],
+    },
+    {
+      id: "group-copy-keep",
+      type: "paragraph",
+      content: [{ type: "text", text: "Keep this block", styles: {} }],
+    },
+  ]);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          const testWindow = window as typeof window & {
+            rejectSelectedBlockClipboard?: boolean;
+            selectedBlockClipboard?: string;
+          };
+          if (testWindow.rejectSelectedBlockClipboard)
+            throw new Error("Clipboard blocked");
+          testWindow.selectedBlockClipboard = text;
+        },
+      },
+    });
+  });
+  const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+  const first = (await page
+    .locator('[data-id="group-copy-heading"]')
+    .first()
+    .boundingBox())!;
+  const second = (await page
+    .locator('[data-id="group-copy-check"]')
+    .first()
+    .boundingBox())!;
+  await page.mouse.move(gutter.x + 5, first.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    second.x + second.width - 8,
+    second.y + second.height - 2,
+    { steps: 10 },
+  );
+  await page.mouse.up();
+  const toolbar = page.getByRole("toolbar", { name: "Selected blocks" });
+  await expect(toolbar).toContainText("2 selected");
+
+  await page.evaluate(() => {
+    (
+      window as typeof window & { rejectSelectedBlockClipboard?: boolean }
+    ).rejectSelectedBlockClipboard = true;
+  });
+  await toolbar.getByRole("button", { name: "Cut selected blocks" }).click();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "Could not cut selected blocks: Clipboard blocked" }),
+  ).toBeVisible();
+  await expect(page.locator('[data-id="group-copy-heading"]')).not.toHaveCount(
+    0,
+  );
+  await expect(page.locator('[data-id="group-copy-check"]')).not.toHaveCount(0);
+  await expect(toolbar).toContainText("2 selected");
+  await page.evaluate(() => {
+    (
+      window as typeof window & { rejectSelectedBlockClipboard?: boolean }
+    ).rejectSelectedBlockClipboard = false;
+  });
+
+  await toolbar.getByRole("button", { name: "Copy selected blocks" }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & { selectedBlockClipboard?: string })
+            .selectedBlockClipboard,
+      ),
+    )
+    .toMatch(/^## Copied heading\s+- \[x\] Copied task/);
+  await expect(toolbar).toContainText("2 selected");
+
+  await toolbar.getByRole("button", { name: "Cut selected blocks" }).click();
+  await expect(page.locator('[data-id="group-copy-heading"]')).toHaveCount(0);
+  await expect(page.locator('[data-id="group-copy-check"]')).toHaveCount(0);
+  await expect(
+    page.locator('[data-id="group-copy-keep"]').first(),
+  ).toContainText("Keep this block");
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(page.locator('[data-id="group-copy-heading"]')).toHaveCount(0);
+  await expect(page.locator('[data-id="group-copy-check"]')).toHaveCount(0);
+  await expect(
+    page.locator('[data-id="group-copy-keep"]').first(),
+  ).toContainText("Keep this block");
+});

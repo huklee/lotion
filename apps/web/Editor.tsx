@@ -21,9 +21,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
+  Copy,
   GripVertical,
   Layers,
   Link,
+  Scissors,
   X,
 } from "lucide-react";
 import {
@@ -37,7 +39,12 @@ import type {
   TreeNode,
   LinkPreview,
 } from "../../packages/document-schema/index";
-import { moveBlocks, sectionIds } from "../../packages/editor-adapter/movement";
+import {
+  moveBlocks,
+  sectionIds,
+  selectedBlockSubtrees,
+} from "../../packages/editor-adapter/movement";
+import { toMarkdown } from "../../packages/markdown/convert";
 import { api, authHeaders } from "./api";
 import { editorSchema } from "./editor-schema";
 import {
@@ -242,11 +249,15 @@ export default function Editor({
     setPreviewError,
   });
   const {
+    deleteSelected,
+    endSelectionDrag,
     rectangle,
     rectangleClick,
     selected,
     selectedBoxes,
+    selectionDragActive,
     setSelected,
+    startSelectionDrag,
     startRectangle,
   } = useBlockSelection({ editor, host, pasteLoading });
   const directLinkBox = useDirectBlockLinkTarget(host);
@@ -326,6 +337,23 @@ export default function Editor({
         ? blocks[Math.min(...indices) - 1]
         : blocks[Math.max(...indices) + 1];
     if (target) applyMove(target.id, direction === "up" ? "before" : "after");
+  }
+  async function copySelectedBlocks(cut: boolean) {
+    const blocks = selectedBlockSubtrees(
+      editor.document as unknown as Block[],
+      selected,
+    );
+    if (!blocks.length) return;
+    try {
+      await navigator.clipboard.writeText(toMarkdown(blocks).markdown);
+      if (cut) deleteSelected();
+    } catch (error) {
+      setPreviewError(
+        `Could not ${cut ? "cut" : "copy"} selected blocks: ${
+          (error as Error).message
+        }`,
+      );
+    }
   }
   const targetAt = (event: { clientX: number; clientY: number }) => {
     const el = document
@@ -726,6 +754,7 @@ export default function Editor({
       onDragOverCapture={(e) => {
         if (
           e.dataTransfer.types.includes("Files") ||
+          selectionDragActive.current ||
           e.dataTransfer.types.includes("application/lotion-blocks")
         ) {
           e.preventDefault();
@@ -746,15 +775,22 @@ export default function Editor({
         }
       }}
       onDropCapture={(e) => {
-        if (e.dataTransfer.types.includes("application/lotion-blocks")) {
+        if (
+          selectionDragActive.current ||
+          e.dataTransfer.types.includes("application/lotion-blocks")
+        ) {
           e.preventDefault();
           e.stopPropagation();
           const target = targetAt(e);
           if (target) applyMove(target.id, target.side);
+          endSelectionDrag();
           setDropLine(null);
         } else void dropImages(e);
       }}
-      onDragEnd={() => setDropLine(null)}
+      onDragEnd={() => {
+        endSelectionDrag();
+        setDropLine(null);
+      }}
       onPointerDown={startRectangle}
     >
       <div className="selection-gutter" aria-label="Drag to select blocks" />
@@ -791,17 +827,27 @@ export default function Editor({
           aria-label="Selected blocks"
         >
           <button
+            aria-label="Drag selected blocks"
             draggable
-            onDragStart={(e) =>
-              e.dataTransfer.setData(
-                "application/lotion-blocks",
-                JSON.stringify(selected),
-              )
-            }
+            onDragStart={(e) => startSelectionDrag(e.dataTransfer)}
             title="Drag selected blocks"
           >
             <GripVertical size={16} />
             {selected.length} selected
+          </button>
+          <button
+            onClick={() => void copySelectedBlocks(false)}
+            aria-label="Copy selected blocks"
+            title="Copy selected blocks as Markdown"
+          >
+            <Copy size={16} />
+          </button>
+          <button
+            onClick={() => void copySelectedBlocks(true)}
+            aria-label="Cut selected blocks"
+            title="Cut selected blocks as Markdown"
+          >
+            <Scissors size={16} />
           </button>
           <button
             onClick={() => directionalMove("up")}

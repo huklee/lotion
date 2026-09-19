@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.20.0 — 2026-09-19
+
+### Added
+
+- A rectangle-selected block group now has explicit Markdown copy and cut controls, and the toolbar's left grip is the accessible drag handle for moving the group.
+- Selected blocks are copied in document order with their structured Markdown forms, including headings, checklist state, and complete nested subtrees. Selecting both an ancestor and its descendant does not duplicate the descendant.
+
+Cut waits for a successful clipboard write before deleting content, so a denied or failed clipboard operation leaves the document intact. Existing document data and schema version 1 are unchanged. Verification is recorded in [test results](test-results.md).
+
 ## 0.19.1 — 2026-09-19
 
 ### Fixed
