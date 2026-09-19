@@ -25,6 +25,18 @@ export function removeBlocksPreservingHierarchy(
   return remove(blocks);
 }
 
+export function selectedBlockSubtrees(
+  blocks: Block[],
+  selected: readonly string[],
+): Block[] {
+  const ids = new Set(selected);
+  const collect = (items: Block[]): Block[] =>
+    items.flatMap((block) =>
+      ids.has(block.id) ? [block] : collect(block.children ?? []),
+    );
+  return collect(blocks);
+}
+
 export function sectionIds(blocks: Block[], id: string): string[] {
   const index = blocks.findIndex((b) => b.id === id);
   if (index < 0) {

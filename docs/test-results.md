@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-19T01:28:05+09:00 — 0.20.0 selected-block group actions focused verification
+
+Strict TypeScript, the production build, and the movement unit suite passed; the unit suite reported **14/14** cases and includes selected-subtree document ordering plus parent/child de-duplication. The focused production-build Playwright matrix passed **6/6** across Chromium, Firefox, and WebKit. It verifies rectangle selection, movement through the toolbar's left grip, undo, structured Markdown copy of a heading and checked task, retained selection after copy, hierarchy-preserving cut, save, and reload.
+
+The first focused browser run passed all drag, clipboard, and deletion behavior but reported 3/6 because a final test locator matched both BlockNote's outer and inner wrappers for the retained block. Scoping that assertion to the first wrapper produced the passing 6/6 run; no product change was needed for that test-only failure.
+
+The final `CI=1 npm run check` exited **0**: ESLint, strict TypeScript, production build, **178/178 unit and integration tests**, and **159/159 Playwright cases** passed with two workers. The browser phase completed in 2.2 minutes. An added clipboard-denial assertion then passed **3/3** across the browser matrix, proving that failed cut leaves both blocks and the active selection intact; ESLint and strict TypeScript passed again afterward. Prettier and `git diff --check` passed, and documentation validation found **36 Markdown files, 181 local links, and zero missing targets**. The known large-chunk warning remains non-failing. User data under `data/` was untouched.
+
 ## 2026-09-19T01:07:54+09:00 — 0.19.1 checklist terminal-newline fix
 
 The new Chromium regression first failed both checklist scenarios: multi-line paste produced three checklist items instead of two, and a single visible line moved the existing suffix into an unwanted next item. After terminal-delimiter normalization, the clipboard-line unit file passed **3/3** and the production-build checklist scenarios passed **6/6** across Chromium, Firefox, and WebKit, including mid-line prefix/suffix placement, checklist type/count, checked state, scroll stability, save, and reload.

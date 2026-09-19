@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -44,6 +45,36 @@ export function useBlockSelection({
   const [selectedBoxes, setSelectedBoxes] = useState<ViewportBlockBox[]>([]);
   const [rectangle, setRectangle] = useState<SelectionRectangle | null>(null);
   const rectangleClick = useRef(false);
+  const selectionDragActive = useRef(false);
+
+  const deleteSelected = useCallback(() => {
+    const current = editor.document as unknown as Block[];
+    const next = removeBlocksPreservingHierarchy(current, selected);
+    if (next !== current) {
+      const replacement = (next.length
+        ? next
+        : [{ type: "paragraph" }]) as unknown as ReplacementBlocks;
+      editor.replaceBlocks(editor.document, replacement);
+    }
+    setSelected([]);
+    editor.focus();
+  }, [editor, selected]);
+
+  const startSelectionDrag = useCallback(
+    (dataTransfer: DataTransfer) => {
+      selectionDragActive.current = true;
+      dataTransfer.setData(
+        "application/lotion-blocks",
+        JSON.stringify(selected),
+      );
+      dataTransfer.effectAllowed = "move";
+    },
+    [selected],
+  );
+
+  const endSelectionDrag = useCallback(() => {
+    selectionDragActive.current = false;
+  }, []);
 
   useEffect(() => {
     if (!selected.length) return;
@@ -65,16 +96,7 @@ export function useBlockSelection({
         return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      const current = editor.document as unknown as Block[];
-      const next = removeBlocksPreservingHierarchy(current, selected);
-      if (next !== current) {
-        const replacement = (next.length
-          ? next
-          : [{ type: "paragraph" }]) as unknown as ReplacementBlocks;
-        editor.replaceBlocks(editor.document, replacement);
-      }
-      setSelected([]);
-      editor.focus();
+      deleteSelected();
     };
     window.addEventListener("keydown", removeSelection, true);
     window.addEventListener("pointerdown", outside, true);
@@ -82,17 +104,13 @@ export function useBlockSelection({
       window.removeEventListener("keydown", removeSelection, true);
       window.removeEventListener("pointerdown", outside, true);
     };
-  }, [editor, host, pasteLoading, selected]);
+  }, [deleteSelected, host, pasteLoading, selected]);
 
   useEffect(() => {
     const element = host.current;
     if (!element) return;
     const drag = (event: DragEvent) => {
-      event.dataTransfer?.setData(
-        "application/lotion-blocks",
-        JSON.stringify(selected),
-      );
-      if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+      if (event.dataTransfer) startSelectionDrag(event.dataTransfer);
     };
     const sync = () => {
       for (const block of outerBlocks(element)) {
@@ -118,7 +136,7 @@ export function useBlockSelection({
         block.removeAttribute("draggable");
       }
     };
-  }, [host, selected]);
+  }, [host, selected, startSelectionDrag]);
 
   useEffect(() => {
     const element = host.current;
@@ -276,11 +294,15 @@ export function useBlockSelection({
   };
 
   return {
+    deleteSelected,
+    endSelectionDrag,
     rectangle,
     rectangleClick,
     selected,
     selectedBoxes,
+    selectionDragActive,
     setSelected,
+    startSelectionDrag,
     startRectangle,
   };
 }
