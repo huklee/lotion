@@ -2,6 +2,18 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.23.0 — 2026-09-19
+
+### Added
+
+- The upper-right page toolbar now includes **Duplicate page**, using the same content-preserving and parent-link-aware operation as the sidebar action.
+
+### Fixed
+
+- Duplicating the active page immediately after editing now flushes its draft before reading the revision used by the copy request. This prevents a stale `If-Match` failure and ensures the copy contains the latest title and blocks.
+
+No document schema migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.22.0 — 2026-09-19
 
 ### Added

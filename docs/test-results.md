@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-09-19T16:22:18+09:00 — 0.23.0 upper-right page duplication verification
+
+The first focused three-browser regression reproduced a stale-revision failure when the active page was edited immediately before duplication: the copy path read the tree revision, flushed the draft to the next revision, then sent the old `If-Match`. After reordering the operation to flush loaded source/parent drafts before refreshing the tree revision, the production-build browser regression passed **3/3** across Chromium, Firefox, and WebKit. It verifies the upper-right action, latest edited title and body, copy navigation, and saved state.
+
+The first full browser pass had one unrelated WebKit timeout in the existing sidebar child-create scenario; its immediate three-run WebKit repetition passed **3/3**. The final standard `npm run check` exited **0**: ESLint, strict TypeScript, production build, **192/192 unit and integration tests**, and **181 passed Playwright cases with 2 intentional real-clipboard skips**. The browser phase completed in 4.4 minutes under concurrent local load. The known non-failing large-chunk build warning remains, and user data under `data/` was untouched.
+
 ## 2026-09-19T15:39:26+09:00 — 0.22.0 parent-page hierarchy links verification
 
 Repository and HTTP integration coverage passed **27/27** in the initial focused run. It verifies opt-in sidebar creation, idempotent retry, same-parent reorder, moves between parents and to the root, content duplication, revision preconditions, and parent-link updates through the public API. The focused production-build browser matrix passed **9/9** across Chromium, Firefox, and WebKit for sidebar nesting, child creation, duplication, rendered parent links, and `/page` single-link behavior. After the final review added immediate reload of an open affected parent, the strengthened nesting/create/duplicate browser group passed **6/6** across all three engines and verifies the link directly in the already-open parent editor.
