@@ -1223,6 +1223,66 @@ h1 span {
   font-style: normal;
   white-space: nowrap;
 }
+.move-tree-root-option,
+.move-tree {
+  margin-top: 10px;
+}
+.move-tree {
+  max-height: 320px;
+  overflow: auto;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.move-tree-root-option button,
+.move-tree-destination {
+  align-items: center;
+  border-radius: 6px;
+  display: flex;
+  font-size: 12px;
+  gap: 9px;
+  justify-content: flex-start;
+  min-width: 0;
+  padding: 10px;
+  text-align: left;
+  width: 100%;
+}
+.move-tree-root-option button:hover,
+.move-tree-root-option button:focus-visible,
+.move-tree-destination:hover,
+.move-tree-destination:focus-visible,
+.move-tree-toggle:hover,
+.move-tree-toggle:focus-visible {
+  background: var(--hover);
+  outline: 0;
+}
+.move-tree-row {
+  align-items: center;
+  display: flex;
+}
+.move-tree-toggle,
+.move-tree-toggle-spacer {
+  align-items: center;
+  display: flex;
+  flex: 0 0 28px;
+  height: 32px;
+  justify-content: center;
+  width: 28px;
+}
+.move-tree-toggle {
+  border-radius: 5px;
+  color: var(--muted);
+}
+.move-tree-destination {
+  flex: 1;
+}
+.move-tree-destination > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.modal .move-tree-empty {
+  margin: 12px;
+}
 .modal .search-summary {
   color: var(--muted);
   font-size: 10px;

@@ -2,6 +2,21 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.24.0 — 2026-09-20
+
+### Added
+
+- The upper-right page-move dialog now presents the workspace hierarchy as a nested document tree with accessible expand and collapse controls.
+- The workspace root remains an explicit destination, while every page destination retains its icon and full hierarchy depth.
+
+### Safety and compatibility
+
+- The current page and all of its descendants are omitted from the destination tree, preventing users from requesting a circular hierarchy through the move UI.
+- Orphaned or cyclic nodes caused by externally malformed workspace data are rendered through bounded traversal instead of causing recursion failure or disappearing from the recovery surface.
+- No document schema or stored-content migration is required.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.23.0 — 2026-09-19
 
 ### Added

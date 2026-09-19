@@ -151,6 +151,71 @@ test("topbar duplicates the current saved draft and opens the copy", async ({
   await expect(page.locator(".save-status")).toHaveText("Saved");
 });
 
+test("move dialog shows a collapsible document tree and excludes descendants", async ({
+  page,
+}) => {
+  const parent = await seed(page, `Move parent ${randomUUID().slice(0, 5)}`);
+  const child = await (
+    await page.request.post("/api/documents", {
+      data: {
+        title: "Move child",
+        parentId: parent.id,
+        mutationId: randomUUID(),
+      },
+    })
+  ).json();
+  await page.request.post("/api/documents", {
+    data: {
+      title: "Move grandchild",
+      parentId: child.id,
+      mutationId: randomUUID(),
+    },
+  });
+  const moving = await (
+    await page.request.post("/api/documents", {
+      data: { title: "Moving page", mutationId: randomUUID() },
+    })
+  ).json();
+  await page.request.post("/api/documents", {
+    data: {
+      title: "Excluded descendant",
+      parentId: moving.id,
+      mutationId: randomUUID(),
+    },
+  });
+  await page.goto(`/#/page/${moving.id}`);
+
+  await page.getByRole("button", { name: "Move page", exact: true }).click();
+  const tree = page.getByRole("tree", { name: "Document tree" });
+  await expect(
+    tree.getByRole("treeitem", { name: /Move parent/ }),
+  ).toHaveAttribute("aria-level", "1");
+  await expect(
+    page.getByRole("button", { name: "Move to Move child" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Move to Move grandchild" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Move to Excluded descendant" }),
+  ).toHaveCount(0);
+
+  await tree.getByRole("button", { name: `Collapse ${parent.title}` }).click();
+  await expect(
+    page.getByRole("button", { name: "Move to Move child" }),
+  ).toHaveCount(0);
+  await tree.getByRole("button", { name: `Expand ${parent.title}` }).click();
+  await page.getByRole("button", { name: "Move to Move child" }).click();
+  await expect
+    .poll(
+      async () =>
+        (await (await page.request.get(`/api/documents/${moving.id}`)).json())
+          .parentId,
+    )
+    .toBe(child.id);
+  await expect(page.getByRole("dialog", { name: "move" })).toHaveCount(0);
+});
+
 test("sidebar drop nests a page", async ({ page }) => {
   const parent = await seed(page, `Parent ${randomUUID().slice(0, 5)}`);
   const child = (

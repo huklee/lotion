@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-20T00:49:23+09:00 — 0.24.0 hierarchical page-move tree verification
+
+The move-tree unit coverage passed within the complete **146/146 unit cases**, verifying ordered hierarchy construction, active-subtree exclusion, hidden-node filtering, orphan recovery, and bounded malformed cycles. ESLint, strict TypeScript, and the production build passed; the existing non-failing large-chunk warning remains.
+
+The first focused browser execution reached all hierarchy, nesting, and descendant-exclusion assertions but failed because its collapse selector also matched the sidebar's control with the same accessible name. Scoping the selector to the move dialog's `tree` landmark corrected the test-only ambiguity. The production-build rerun passed **3/3** across Chromium, Firefox, and WebKit, verifying nested levels, expanded descendants, collapse/expand behavior, complete descendant omission, the move API result, and dialog dismissal. The complete release gate follows in this entry.
+
+The final standard `npm run check` exited **0**: ESLint, strict TypeScript, production build, **194/194 unit and integration tests**, and **184 passed Playwright cases with 2 intentional Chromium-only real-clipboard skips**. The browser phase completed in 2.4 minutes. The known non-failing large-chunk build warning remains, and user data under `data/` was untouched.
+
 ## 2026-09-19T16:22:18+09:00 — 0.23.0 upper-right page duplication verification
 
 The first focused three-browser regression reproduced a stale-revision failure when the active page was edited immediately before duplication: the copy path read the tree revision, flushed the draft to the next revision, then sent the old `If-Match`. After reordering the operation to flush loaded source/parent drafts before refreshing the tree revision, the production-build browser regression passed **3/3** across Chromium, Firefox, and WebKit. It verifies the upper-right action, latest edited title and body, copy navigation, and saved state.

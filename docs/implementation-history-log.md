@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-20T00:49:23+09:00 — 0.24.0 hierarchical page-move tree prepared
+
+Replaced the page-move dialog's flat destination list with a recursive, accessible document tree. Every branch starts expanded and provides explicit expand/collapse controls; nested rows retain workspace order, icons, and visible depth. The current page and its complete descendant subtree are removed before rendering, so the UI cannot request a cyclic move. A pure projection boundary keeps hierarchy construction independently testable and uses bounded traversal for malformed orphaned or cyclic input.
+
+Direct unit coverage validates ordering, subtree exclusion, hidden nodes, orphan recovery, and cycle bounds. The production-build move workflow passed 3/3 across Chromium, Firefox, and WebKit, including nested rendering, collapse/expand, descendant omission, move execution, and dialog dismissal. Full verification is recorded in [test results](test-results.md); user data under `data/` was untouched.
+
 ## 2026-09-19T16:22:18+09:00 — 0.23.0 upper-right page duplication prepared
 
 Added an accessible **Duplicate page** icon action beside the existing favorite, move, and trash controls in the upper-right page toolbar. It delegates to the repository-backed duplication workflow already used by the sidebar, so content copying, navigation, revision preconditions, and nested-parent links remain one implementation.
