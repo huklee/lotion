@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T10:50:57+09:00 — 0.21.2 selected-block keyboard clipboard fix prepared
+
+Reproduced the reported failure with the normal user shortcut: a rectangle-selected mixed group followed by `⌘C / Ctrl+C` never entered the selected-block copy function, leaving only the editor's native plain-text behavior. A capture-phase keyboard boundary now routes unmodified copy and cut shortcuts to the same validated asynchronous operation used by the toolbar; inputs and custom controls retain their native clipboard behavior, and cut still waits for a successful write.
+
+Expanded regression coverage beyond the prior synthetic toolbar case: all three engines exercise keyboard copy/paste into existing content and keyboard cut; Chromium additionally uses the real system clipboard, reloads the page between copy and paste, then restores a nested bullet/checklist group. Unit cases cover standard and custom block types, styles, nesting, fresh IDs, persisted-session recovery, disabled storage, unrelated text, and malformed data. Focused results and the complete gate are recorded in [test results](test-results.md). User data under `data/` was untouched.
+
 ## 2026-09-19T10:32:24+09:00 — 0.21.1 exact selected-block paste fix prepared
 
 Fixed the gap between portable Markdown copy and safe literal paste. After a successful selected-block clipboard write, Lotion now keeps a schema-validated copy record in memory and session storage. An exact subsequent clipboard-text match restores the original block structures with fresh IDs, preserving mixed paragraphs, headings, lists, checklist state, nesting, and inline styles. The portable system clipboard remains Markdown, while unrelated external Markdown continues through the established literal/limited-outline paths.

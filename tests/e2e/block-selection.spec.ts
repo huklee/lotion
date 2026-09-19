@@ -777,3 +777,273 @@ test("selected block copy and paste restores exact block structure and styles", 
     page.locator('[data-content-type="checkListItem"] input:checked'),
   ).toHaveCount(2);
 });
+
+test("keyboard copy of selected blocks owns the clipboard", async ({
+  page,
+}) => {
+  await seed(page, "Keyboard block copy", [
+    {
+      id: "keyboard-copy-heading",
+      type: "heading",
+      props: { level: 2 },
+      content: [{ type: "text", text: "Keyboard heading", styles: {} }],
+    },
+    {
+      id: "keyboard-copy-body",
+      type: "paragraph",
+      content: [
+        {
+          type: "text",
+          text: "Keyboard body",
+          styles: {
+            bold: true,
+            textColor: "purple",
+            backgroundColor: "purple",
+          },
+        },
+      ],
+    },
+    {
+      id: "keyboard-copy-task",
+      type: "checkListItem",
+      props: { checked: true },
+      content: [{ type: "text", text: "Keyboard task", styles: {} }],
+    },
+    {
+      id: "keyboard-copy-target",
+      type: "paragraph",
+      content: [{ type: "text", text: "Existing target", styles: {} }],
+    },
+  ]);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          (
+            window as typeof window & { keyboardBlockClipboard?: string }
+          ).keyboardBlockClipboard = text;
+        },
+      },
+    });
+  });
+  const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+  const first = (await page
+    .locator('[data-id="keyboard-copy-heading"]')
+    .first()
+    .boundingBox())!;
+  const last = (await page
+    .locator('[data-id="keyboard-copy-task"]')
+    .first()
+    .boundingBox())!;
+  await page.mouse.move(gutter.x + 5, first.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(last.x + last.width - 8, last.y + last.height - 2, {
+    steps: 10,
+  });
+  await page.mouse.up();
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toContainText("3 selected");
+
+  await page.keyboard.press("ControlOrMeta+c");
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            (window as typeof window & { keyboardBlockClipboard?: string })
+              .keyboardBlockClipboard,
+        ),
+      { timeout: 1_000 },
+    )
+    .toContain("## Keyboard heading");
+
+  const target = page.locator(
+    '[data-id="keyboard-copy-target"] .bn-inline-content',
+  );
+  await target.click();
+  await target.evaluate((element) => {
+    const data = new DataTransfer();
+    data.setData(
+      "text/plain",
+      (window as typeof window & { keyboardBlockClipboard?: string })
+        .keyboardBlockClipboard ?? "",
+    );
+    const event = new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, "clipboardData", { value: data });
+    element.dispatchEvent(event);
+  });
+  await expect(
+    page.getByRole("heading", { name: "Keyboard heading" }),
+  ).toHaveCount(2);
+  const copiedBody = page
+    .locator('[data-content-type="paragraph"]')
+    .filter({ hasText: "Keyboard body" });
+  await expect(copiedBody).toHaveCount(2);
+  await expect(
+    copiedBody
+      .nth(1)
+      .locator('[data-style-type="textColor"][data-value="purple"]'),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-content-type="checkListItem"] input:checked'),
+  ).toHaveCount(2);
+  await expect(
+    page.locator('.bn-block-outer[data-id="keyboard-copy-target"]'),
+  ).toContainText("Existing target");
+});
+
+test("keyboard cut deletes selected blocks only after clipboard success", async ({
+  page,
+}) => {
+  await seed(page, "Keyboard block cut", [
+    {
+      id: "keyboard-cut-heading",
+      type: "heading",
+      props: { level: 2 },
+      content: [{ type: "text", text: "Cut heading", styles: {} }],
+    },
+    {
+      id: "keyboard-cut-keep",
+      type: "paragraph",
+      content: [{ type: "text", text: "Keep block", styles: {} }],
+    },
+  ]);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          const testWindow = window as typeof window & {
+            rejectKeyboardCut?: boolean;
+            keyboardCutClipboard?: string;
+          };
+          if (testWindow.rejectKeyboardCut)
+            throw new Error("Clipboard blocked");
+          testWindow.keyboardCutClipboard = text;
+        },
+      },
+    });
+    (
+      window as typeof window & { rejectKeyboardCut?: boolean }
+    ).rejectKeyboardCut = true;
+  });
+  const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+  const heading = (await page
+    .locator('[data-id="keyboard-cut-heading"]')
+    .first()
+    .boundingBox())!;
+  await page.mouse.move(gutter.x + 5, heading.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(heading.x + heading.width - 8, heading.y + 4, {
+    steps: 5,
+  });
+  await page.mouse.up();
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toContainText("1 selected");
+
+  await page.keyboard.press("ControlOrMeta+x");
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "Could not cut selected blocks: Clipboard blocked" }),
+  ).toBeVisible();
+  await expect(
+    page.locator('.bn-block-outer[data-id="keyboard-cut-heading"]'),
+  ).toContainText("Cut heading");
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toContainText("1 selected");
+  await page.evaluate(() => {
+    (
+      window as typeof window & { rejectKeyboardCut?: boolean }
+    ).rejectKeyboardCut = false;
+  });
+  await page.keyboard.press("ControlOrMeta+x");
+  await expect(page.locator('[data-id="keyboard-cut-heading"]')).toHaveCount(0);
+  await expect(
+    page.locator('.bn-block-outer[data-id="keyboard-cut-keep"]'),
+  ).toContainText("Keep block");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & { keyboardCutClipboard?: string })
+            .keyboardCutClipboard,
+      ),
+    )
+    .toContain("## Cut heading");
+});
+
+test("real Chromium clipboard survives reload before selected-block paste", async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(browserName !== "chromium", "Uses the real browser clipboard");
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await seed(page, "Real keyboard clipboard", [
+    {
+      id: "real-copy-heading",
+      type: "heading",
+      props: { level: 3 },
+      content: [{ type: "text", text: "Persisted heading", styles: {} }],
+    },
+    {
+      id: "real-copy-bullet",
+      type: "bulletListItem",
+      content: [{ type: "text", text: "Parent bullet", styles: {} }],
+      children: [
+        {
+          id: "real-copy-child",
+          type: "checkListItem",
+          props: { checked: true },
+          content: [{ type: "text", text: "Nested checked task", styles: {} }],
+        },
+      ],
+    },
+    { id: "real-copy-target", type: "paragraph", content: [] },
+  ]);
+  const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+  const first = (await page
+    .locator('[data-id="real-copy-heading"]')
+    .first()
+    .boundingBox())!;
+  const last = (await page
+    .locator('[data-id="real-copy-bullet"]')
+    .first()
+    .boundingBox())!;
+  await page.mouse.move(gutter.x + 5, first.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(last.x + last.width - 8, last.y + 2, { steps: 10 });
+  await page.mouse.up();
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toContainText("2 selected");
+
+  await page.keyboard.press("ControlOrMeta+c");
+  await expect
+    .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+    .toContain("### Persisted heading");
+  await page.reload();
+  await page.locator('[data-id="real-copy-target"] .bn-inline-content').click();
+  await page.keyboard.press("ControlOrMeta+v");
+
+  await expect(
+    page.getByRole("heading", { name: "Persisted heading" }),
+  ).toHaveCount(2);
+  await expect(
+    page.locator('[data-content-type="bulletListItem"]').filter({
+      hasText: "Parent bullet",
+    }),
+  ).toHaveCount(2);
+  await expect(
+    page.locator('[data-content-type="checkListItem"] input:checked'),
+  ).toHaveCount(2);
+  await expect(page.locator('[data-id="real-copy-target"]')).toHaveCount(0);
+});

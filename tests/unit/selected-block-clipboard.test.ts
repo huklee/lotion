@@ -70,3 +70,71 @@ it("does not reinterpret unrelated or malformed clipboard data", () => {
   expect(selectedBlocksFromClipboard("ordinary text", malformed)).toBeNull();
   expect(selectedBlocksFromClipboard("other", malformed)).toBeNull();
 });
+
+it("restores custom and nested block payloads from session storage", () => {
+  const persisted = memoryStorage();
+  const blocks: Block[] = [
+    {
+      id: "source-callout",
+      type: "callout",
+      props: { type: "info" },
+      content: [{ type: "text", text: "Callout", styles: { italic: true } }],
+    },
+    {
+      id: "source-mermaid",
+      type: "mermaid",
+      props: { code: "graph TD; A --> B;" },
+    },
+    {
+      id: "source-bullet",
+      type: "bulletListItem",
+      content: [{ type: "text", text: "Parent", styles: {} }],
+      children: [
+        {
+          id: "source-child",
+          type: "checkListItem",
+          props: { checked: true },
+          content: [{ type: "text", text: "Child", styles: {} }],
+        },
+      ],
+    },
+  ];
+  rememberSelectedBlockClipboard("custom payload", blocks, persisted);
+  // Replace the module's in-memory value to force the original payload to be
+  // recovered from the supplied session store, as it would be after reload.
+  rememberSelectedBlockClipboard("newer memory value", blocks, memoryStorage());
+
+  const restored = selectedBlocksFromClipboard("custom payload", persisted);
+  expect(restored?.map((block) => block.type)).toEqual([
+    "callout",
+    "mermaid",
+    "bulletListItem",
+  ]);
+  expect(restored?.[1].props?.code).toBe("graph TD; A --> B;");
+  expect(restored?.[2].children?.[0]).toMatchObject({
+    type: "checkListItem",
+    props: { checked: true },
+  });
+});
+
+it("keeps the in-memory copy usable when session storage is unavailable", () => {
+  const unavailable = {
+    getItem: () => {
+      throw new Error("Storage disabled");
+    },
+    setItem: () => {
+      throw new Error("Storage disabled");
+    },
+  };
+  const blocks: Block[] = [
+    {
+      id: "source-paragraph",
+      type: "paragraph",
+      content: [{ type: "text", text: "Available", styles: {} }],
+    },
+  ];
+  rememberSelectedBlockClipboard("available", blocks, unavailable);
+  expect(selectedBlocksFromClipboard("available", unavailable)?.[0].type).toBe(
+    "paragraph",
+  );
+});
