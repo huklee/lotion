@@ -35,6 +35,7 @@ Each item is implemented from current `main`, tested, submitted as a pull reques
 8. [x] Keep document content aligned with sidebar hierarchy. Creating a child, moving a page under another page, or duplicating a nested page from the sidebar atomically maintains one managed child-page link in its parent; moving to another parent or the root removes the former link without touching user-authored links.
 9. [x] Add **Duplicate page** to the upper-right page toolbar. It flushes the current draft, copies the latest title and blocks, opens the copy, and retains the existing parent-link behavior for nested pages.
 10. [x] Show the document hierarchy in the page-move dialog as an expandable and collapsible tree. The active page and its complete descendant subtree are excluded from destinations, while malformed orphaned/cyclic data remains bounded and visible for recovery.
+11. [x] Stabilize modified sidebar page-link clicks by explicitly opening `Ctrl/Cmd` destinations in a new tab. This removes the intermittent Chromium CI timeout caused by relying on native modified-click behavior inside a draggable row.
 
 ## Existing product backlog
 

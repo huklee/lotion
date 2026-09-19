@@ -90,13 +90,20 @@ export function WorkspaceSidebar({
         aria-current={activeId === node.id && !trash ? "page" : undefined}
         onClick={(event) => {
           if (
-            event.button !== 0 ||
-            event.metaKey ||
-            event.ctrlKey ||
-            event.shiftKey ||
-            event.altKey
-          )
+            event.button === 0 &&
+            (event.metaKey || event.ctrlKey) &&
+            !event.shiftKey &&
+            !event.altKey
+          ) {
+            event.preventDefault();
+            window.open(
+              event.currentTarget.href,
+              "_blank",
+              "noopener,noreferrer",
+            );
             return;
+          }
+          if (event.button !== 0 || event.shiftKey || event.altKey) return;
           event.preventDefault();
           void openPage(node.id);
         }}
@@ -176,8 +183,7 @@ export function WorkspaceSidebar({
             className="row-action"
             aria-label={`Duplicate ${node.title || "Untitled"}`}
             draggable={false}
-            onPointerDown={(event) => event.stopPropagation()}
-            onPointerUp={(event) => {
+            onPointerDown={(event) => {
               if (event.button !== 0) return;
               event.preventDefault();
               event.stopPropagation();
@@ -193,8 +199,7 @@ export function WorkspaceSidebar({
             className="row-action"
             aria-label={`Add child to ${node.title || "Untitled"}`}
             draggable={false}
-            onPointerDown={(event) => event.stopPropagation()}
-            onPointerUp={(event) => {
+            onPointerDown={(event) => {
               if (event.button !== 0) return;
               event.preventDefault();
               event.stopPropagation();

@@ -2,11 +2,11 @@
 
 Updated: 2026-09-20. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Prepared application checkpoint 0.24.0 adds a nested, expandable document tree to the upper-right page-move dialog. The tree excludes the active page and its descendants, while the 0.23.0 toolbar duplication and parent-link-aware hierarchy behavior remain available. Earlier clipboard, storage, search, and database capabilities remain available. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
+Prepared application checkpoint 0.24.1 makes `Ctrl/Cmd` sidebar page-link clicks deterministic by explicitly opening the destination in a new tab. Version 0.24.0 added a nested, expandable document tree to the upper-right page-move dialog; the tree excludes the active page and its descendants. Earlier hierarchy, clipboard, storage, search, and database capabilities remain available. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.24.0**. Local verification is recorded before its direct-to-main pull request; do not claim publication until its remote gates pass and it is merged. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.24.1**. Local verification is recorded before its direct-to-main pull request; do not claim publication until its remote gates and the post-merge `main` workflow pass. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -31,7 +31,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; the hierarchical move dialog is added in 0.24.0.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; deterministic modified sidebar clicks are fixed in 0.24.1.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.
@@ -41,7 +41,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Current status and open work
 
-- This release branch started from `origin/main` at `4b2e849`. Check `git status --branch` and `git log` before working; later commits may exist.
+- This release branch started from `origin/main` at `38eb5b3`. Check `git status --branch` and `git log` before working; later commits may exist.
 - The complete backlog and acceptance criteria live in `docs/remained_job.md`. Continue one item at a time from current `origin/main`, using one pull request whose base is `main`; merge and verify ancestry before starting the next item. Stacked feature pull requests are prohibited.
 - The reported server pages returned HTTP 200. The specific user browser conflict draft cannot be inspected from a separate browser/session; verify it through the UI and retain a recovery copy before choosing a conflicting version.
 

@@ -2,6 +2,16 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.24.1 — 2026-09-20
+
+### Fixed
+
+- `Ctrl/Cmd`-clicking a page link in the sidebar now explicitly opens that page in a new tab instead of depending on intermittent native modified-click handling inside a draggable page row.
+- The original tab remains on its current page. Middle-click and other browser-native link gestures retain their default behavior.
+- Sidebar **Duplicate** and **Add child** actions now run on the initial primary pointer press, avoiding dropped releases when the surrounding row is draggable.
+
+No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.24.0 — 2026-09-20
 
 ### Added
