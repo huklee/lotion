@@ -1,5 +1,15 @@
 # Test results
 
+## 2026-09-20T06:45:13+09:00 — 0.24.1 modified sidebar click stabilization
+
+The post-merge `main` workflow for 0.24.0 failed with **183 passed, 2 skipped, 1 failed** because Chromium did not emit a new page for the sidebar's native `Ctrl/Cmd` click before the 30-second timeout. The page-move tree scenario passed in all three browsers in that run; the failure was isolated to the pre-existing modified-link path.
+
+After making the sidebar's modified primary click explicit, ESLint, strict TypeScript, and the production build passed. The production-build regression was repeated ten times per browser and passed **30/30** across Chromium, Firefox, and WebKit, verifying that the destination opens in another tab while the source tab remains unchanged.
+
+The first complete local gate then exposed a WebKit pointer-release miss on the existing sidebar **Add child** action. Moving the row's **Duplicate** and **Add child** actions to the initial primary pointer press passed the corresponding production-build scenario **30/30** across the three browsers. A subsequent run exposed a transient BlockNote wrapper count in the real Chromium clipboard scenario even though its duplicated heading, list, and checklist assertions all passed; the regression now verifies cleanup against the saved document model and passed **10/10** in Chromium.
+
+Final `npm run check` result: **exit 0**. ESLint, strict TypeScript, and the production build passed; Vitest passed **194/194** tests; Playwright passed **184** scenarios with **2 intentional skips** across Chromium, Firefox, and WebKit in 2.4 minutes. A local Markdown-link validation across README and `docs/`, plus `git diff --check`, also passed.
+
 ## 2026-09-20T00:49:23+09:00 — 0.24.0 hierarchical page-move tree verification
 
 The move-tree unit coverage passed within the complete **146/146 unit cases**, verifying ordered hierarchy construction, active-subtree exclusion, hidden-node filtering, orphan recovery, and bounded malformed cycles. ESLint, strict TypeScript, and the production build passed; the existing non-failing large-chunk warning remains.

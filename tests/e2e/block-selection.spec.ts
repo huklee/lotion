@@ -1045,5 +1045,11 @@ test("real Chromium clipboard survives reload before selected-block paste", asyn
   await expect(
     page.locator('[data-content-type="checkListItem"] input:checked'),
   ).toHaveCount(2);
-  await expect(page.locator('[data-id="real-copy-target"]')).toHaveCount(0);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  const documentId = new URL(page.url()).hash.split("/").at(-1)!;
+  const saved = await (
+    await page.request.get(`/api/documents/${documentId}`)
+  ).json();
+  expect(JSON.stringify(saved.blocks)).not.toContain("real-copy-target");
 });

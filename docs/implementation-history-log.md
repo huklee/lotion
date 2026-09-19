@@ -1,5 +1,13 @@
 # Implementation history log
 
+## 2026-09-20T06:45:13+09:00 — 0.24.1 modified sidebar click stabilization prepared
+
+Audited PR #40 after its successful pull-request checks and found that the separate post-merge `main` workflow had failed on the existing Chromium modified-sidebar-click scenario. The sidebar previously returned early for `Ctrl/Cmd` clicks and depended entirely on native anchor handling inside a draggable page row. Under GitHub runner load, Chromium intermittently produced no new-page event and exhausted the test timeout.
+
+The sidebar now handles an unshifted primary `Ctrl/Cmd` click as an explicit user-initiated `window.open` with `noopener,noreferrer`, while ordinary clicks keep application navigation and middle/Shift/Alt gestures retain browser-native behavior. During full-gate stress, WebKit also exposed a dropped pointer release on the draggable row's **Duplicate** and **Add child** controls; those actions now execute on the initial primary pointer press while retaining their keyboard click path. The real-browser clipboard regression now verifies removal through the persisted document model instead of counting transient BlockNote wrappers.
+
+The modified-click and row-action production-build scenarios each passed 30/30 across Chromium, Firefox, and WebKit. The final complete gate passed ESLint, strict TypeScript, the production build, all 194 unit/integration tests, and 184 Playwright scenarios with 2 intentional skips. Full verification is recorded in [test results](test-results.md); user data under `data/` was untouched.
+
 ## 2026-09-20T00:49:23+09:00 — 0.24.0 hierarchical page-move tree prepared
 
 Replaced the page-move dialog's flat destination list with a recursive, accessible document tree. Every branch starts expanded and provides explicit expand/collapse controls; nested rows retain workspace order, icons, and visible depth. The current page and its complete descendant subtree are removed before rendering, so the UI cannot request a cyclic move. A pure projection boundary keeps hierarchy construction independently testable and uses bounded traversal for malformed orphaned or cyclic input.
