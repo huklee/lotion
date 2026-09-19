@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.21.2 — 2026-09-19
+
+### Fixed
+
+- `⌘C / Ctrl+C` and `⌘X / Ctrl+X` now invoke selected-block copy and cut while the custom block selection is active. Previously only the toolbar buttons populated Lotion's structured session record, so the normal keyboard workflow pasted degraded plain text.
+- Keyboard copy/paste now restores mixed headings, paragraphs, lists, nested checklists, checked state, and inline color/font styling into empty or existing content. Keyboard cut still removes content only after the clipboard write succeeds.
+
+The browser-session record remains schema-validated, regenerates all block IDs, survives an in-tab reload, and falls back safely when session storage is unavailable. The system clipboard remains portable Markdown. No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.21.1 — 2026-09-19
 
 ### Fixed

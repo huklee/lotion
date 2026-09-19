@@ -347,25 +347,48 @@ export default function Editor({
         : blocks[Math.max(...indices) + 1];
     if (target) applyMove(target.id, direction === "up" ? "before" : "after");
   }
-  async function copySelectedBlocks(cut: boolean) {
-    const blocks = selectedBlockSubtrees(
-      editor.document as unknown as Block[],
-      selected,
-    );
-    if (!blocks.length) return;
-    try {
-      const markdown = toMarkdown(blocks).markdown;
-      await navigator.clipboard.writeText(markdown);
-      rememberSelectedBlockClipboard(markdown, blocks);
-      if (cut) deleteSelected();
-    } catch (error) {
-      setPreviewError(
-        `Could not ${cut ? "cut" : "copy"} selected blocks: ${
-          (error as Error).message
-        }`,
+  const copySelectedBlocks = useCallback(
+    async (cut: boolean) => {
+      const blocks = selectedBlockSubtrees(
+        editor.document as unknown as Block[],
+        selected,
       );
-    }
-  }
+      if (!blocks.length) return;
+      try {
+        const markdown = toMarkdown(blocks).markdown;
+        await navigator.clipboard.writeText(markdown);
+        rememberSelectedBlockClipboard(markdown, blocks);
+        if (cut) deleteSelected();
+      } catch (error) {
+        setPreviewError(
+          `Could not ${cut ? "cut" : "copy"} selected blocks: ${
+            (error as Error).message
+          }`,
+        );
+      }
+    },
+    [deleteSelected, editor, selected],
+  );
+  useEffect(() => {
+    if (!selected.length) return;
+    const copyOrCut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      const key = event.key.toLowerCase();
+      if (
+        !(event.metaKey || event.ctrlKey) ||
+        event.altKey ||
+        event.shiftKey ||
+        (key !== "c" && key !== "x") ||
+        target.closest("input, textarea, select")
+      )
+        return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      void copySelectedBlocks(key === "x");
+    };
+    window.addEventListener("keydown", copyOrCut, true);
+    return () => window.removeEventListener("keydown", copyOrCut, true);
+  }, [copySelectedBlocks, selected.length]);
   const targetAt = (event: { clientX: number; clientY: number }) => {
     const el = document
       .elementFromPoint(event.clientX, event.clientY)

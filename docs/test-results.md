@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-19T10:50:57+09:00 — 0.21.2 selected-block keyboard clipboard focused verification
+
+The new Chromium regression first reproduced the reported failure: after rectangle-selecting a heading, paragraph, and checklist, `⌘C / Ctrl+C` left the application clipboard adapter undefined because only toolbar clicks called the selected-block copy path. After connecting keyboard copy/cut, the expanded focused browser matrix passed **7 cases with 2 intentional skips**: copy/paste and safe cut passed across Chromium, Firefox, and WebKit, while the real OS clipboard plus in-tab reload scenario passed in Chromium and was skipped where automated clipboard permissions are not portable. Coverage includes empty and non-empty paste targets, mixed blocks, combined inline colors, checked state, nested bullet/checklist hierarchy, fresh block IDs, reload, denied-cut retention, and real `⌘C / Ctrl+C` plus `⌘V / Ctrl+V` input.
+
+The selected-block clipboard unit suite passed **4/4**, covering styled and nested standard blocks, callout and Mermaid custom blocks, recovery from session storage, fresh IDs, unavailable storage fallback, unrelated text, and malformed payload rejection. Strict TypeScript and the production build passed. The complete block-selection specification passed **43 cases with 2 intentional real-clipboard skips** across the browser matrix.
+
+The final `CI=1 npm run check` exited **0**: ESLint, strict TypeScript, production build, **189/189 unit and integration tests**, and **175 passed Playwright cases with 2 intentional skips** using two workers. The final browser phase completed in 2.6 minutes. Prettier and `git diff --check` passed, and documentation validation found **36 Markdown files, 189 local links, and zero missing targets**. The known non-failing large-chunk build warning remains, and user data under `data/` was untouched.
+
 ## 2026-09-19T10:32:24+09:00 — 0.21.1 exact selected-block paste focused verification
 
 Strict TypeScript and the production build passed. The selected-block clipboard and related Markdown unit group passed **23/23**, including exact mixed-block/style recovery, fresh IDs, nested state, unrelated-text rejection, and malformed-session rejection. The new production-build browser regression passed **3/3** across Chromium, Firefox, and WebKit. It copies a mixed heading, styled paragraph, and checked task through the selected-block toolbar, pastes into an empty block, verifies exact types and combined color styling, saves, reloads, and verifies the reconstructed copy again.
