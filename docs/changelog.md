@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.20.1 — 2026-09-19
+
+### Fixed
+
+- A custom block selection now clears when the user clicks or selects ordinary editor content, the page title, or another application control.
+- The selected-block toolbar is an explicit interaction boundary, so its drag, copy, cut, move, and clear controls retain the selection long enough to complete their action. Modifier-assisted lasso extension remains unchanged.
+
+No document data, schema, or migration changes are required. Verification is recorded in [test results](test-results.md).
+
 ## 0.20.0 — 2026-09-19
 
 ### Added
