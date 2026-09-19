@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T16:22:18+09:00 — 0.23.0 upper-right page duplication prepared
+
+Added an accessible **Duplicate page** icon action beside the existing favorite, move, and trash controls in the upper-right page toolbar. It delegates to the repository-backed duplication workflow already used by the sidebar, so content copying, navigation, revision preconditions, and nested-parent links remain one implementation.
+
+The new active-draft regression exposed and fixed the prior ordering gap in that shared workflow: coordinators now flush first, then the client refreshes the source revision used by `If-Match`. This guarantees a toolbar copy includes the latest title and blocks instead of failing after the flush increments the revision. Focused results and the complete gate are recorded in [test results](test-results.md); user data under `data/` was untouched.
+
 ## 2026-09-19T15:39:26+09:00 — 0.22.0 parent-page hierarchy links prepared
 
 Added a repository-level managed-link boundary for sidebar hierarchy operations. Child creation can explicitly request a parent link, page moves remove that stable managed block from the former parent and ensure it in the destination, and the new sidebar duplicate action copies one page beside its source and links the copy from their parent. Each multi-document change is exposed through the existing atomic manifest commit, uses retry receipts where applicable, and leaves ordinary user-created links untouched. The `/page` command deliberately keeps its current editor-owned link insertion to prevent duplicates.

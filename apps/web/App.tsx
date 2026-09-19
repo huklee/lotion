@@ -340,10 +340,12 @@ export default function App() {
   }
   async function duplicate(id: string) {
     try {
-      const nodes = await refresh();
-      const node = nodes.find((item) => item.id === id);
-      if (!node) throw new Error("Page not found");
-      const relevant = [id, node.parentId].filter(
+      const initialNodes = tree.some((item) => item.id === id)
+        ? tree
+        : await refresh();
+      const initialNode = initialNodes.find((item) => item.id === id);
+      if (!initialNode) throw new Error("Page not found");
+      const relevant = [id, initialNode.parentId].filter(
         (item): item is string => !!item,
       );
       for (const pageId of relevant)
@@ -355,6 +357,9 @@ export default function App() {
         })
       )
         throw new Error("Resolve pending page drafts before duplicating.");
+      const nodes = await refresh();
+      const node = nodes.find((item) => item.id === id);
+      if (!node) throw new Error("Page not found");
       const copy = await api<Document>(`/api/documents/${id}/copy`, {
         method: "POST",
         headers: { "If-Match": String(node.revision) },
@@ -604,6 +609,7 @@ export default function App() {
           favorite={!!active && favorites.includes(active.id)}
           onExport={() => setDialog("export")}
           onToggleFavorite={() => active && toggleFavorite(active.id)}
+          onDuplicate={() => active && void duplicate(active.id)}
           onMove={() => setDialog("move")}
           onTrash={() => active && void mutate(active.id, "trash")}
         />

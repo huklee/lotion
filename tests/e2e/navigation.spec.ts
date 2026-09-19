@@ -125,6 +125,32 @@ test("trash and restore retain content", async ({ page }) => {
     "Restore me",
   );
 });
+
+test("topbar duplicates the current saved draft and opens the copy", async ({
+  page,
+}) => {
+  const source = await seed(page, `Topbar copy ${randomUUID().slice(0, 5)}`, [
+    {
+      id: "topbar-copy-content",
+      type: "paragraph",
+      content: [{ type: "text", text: "Original body", styles: {} }],
+    },
+  ]);
+  const title = page.getByRole("textbox", { name: "Page title" });
+  await title.fill("Edited before duplicate");
+  await page
+    .locator('[data-id="topbar-copy-content"] .bn-inline-content')
+    .fill("Edited body before duplicate");
+
+  await page.getByRole("button", { name: "Duplicate page" }).click();
+  await expect(title).toHaveValue("Edited before duplicate (copy)");
+  await expect(page).not.toHaveURL(new RegExp(`${source.id}$`));
+  await expect(
+    page.locator('[data-id="topbar-copy-content"] .bn-inline-content'),
+  ).toHaveText("Edited body before duplicate");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+});
+
 test("sidebar drop nests a page", async ({ page }) => {
   const parent = await seed(page, `Parent ${randomUUID().slice(0, 5)}`);
   const child = (

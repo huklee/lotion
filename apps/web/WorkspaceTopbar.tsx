@@ -1,4 +1,12 @@
-import { ArrowDownToLine, Check, Menu, Move, Star, Trash2 } from "lucide-react";
+import {
+  ArrowDownToLine,
+  Check,
+  Copy,
+  Menu,
+  Move,
+  Star,
+  Trash2,
+} from "lucide-react";
 import type { TreeNode } from "../../packages/document-schema/index";
 
 type WorkspaceTopbarProps = {
@@ -13,6 +21,7 @@ type WorkspaceTopbarProps = {
   favorite: boolean;
   onExport: () => void;
   onToggleFavorite: () => void;
+  onDuplicate: () => void;
   onMove: () => void;
   onTrash: () => void;
 };
@@ -29,6 +38,7 @@ export function WorkspaceTopbar({
   favorite,
   onExport,
   onToggleFavorite,
+  onDuplicate,
   onMove,
   onTrash,
 }: WorkspaceTopbarProps) {
@@ -96,6 +106,13 @@ export function WorkspaceTopbar({
               onClick={onToggleFavorite}
             >
               <Star size={16} fill={favorite ? "currentColor" : "none"} />
+            </button>
+            <button
+              className="icon-button"
+              aria-label="Duplicate page"
+              onClick={onDuplicate}
+            >
+              <Copy size={16} />
             </button>
             <button
               className="icon-button"
