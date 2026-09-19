@@ -31,6 +31,53 @@ test("clipboard lines are saved as plain text without HTML or Markdown formattin
     await expect(page.locator(".tiptap")).toContainText(line);
 });
 
+test("structured raw text reconstructs heading, bullet, and checklist blocks", async ({
+  page,
+}) => {
+  await seed(page, "Structured clipboard", [
+    { id: "structured-paste", type: "paragraph", content: [] },
+  ]);
+  const editor = page.locator(
+    '[data-id="structured-paste"] .bn-inline-content',
+  );
+  await editor.click();
+  await editor.evaluate((element) => {
+    const data = new DataTransfer();
+    data.setData(
+      "text/plain",
+      "## Restored heading\n\n- Restored bullet\n- [x] Completed task\n- [ ] Pending task\n",
+    );
+    const event = new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, "clipboardData", { value: data });
+    element.dispatchEvent(event);
+  });
+  await expect(page.locator(".tiptap h2")).toContainText("Restored heading");
+  await expect(
+    page.locator('[data-content-type="bulletListItem"]'),
+  ).toContainText("Restored bullet");
+  const tasks = page.locator('[data-content-type="checkListItem"]');
+  await expect(tasks).toHaveCount(2);
+  await expect(tasks.nth(0).locator('input[type="checkbox"]')).toBeChecked();
+  await expect(
+    tasks.nth(1).locator('input[type="checkbox"]'),
+  ).not.toBeChecked();
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect(page.locator(".save-status")).toHaveText("Saved");
+  await page.reload();
+  await expect(page.locator(".tiptap h2")).toContainText("Restored heading");
+  await expect(
+    page.locator('[data-content-type="bulletListItem"]'),
+  ).toContainText("Restored bullet");
+  await expect(tasks).toHaveCount(2);
+  await expect(tasks.nth(0).locator('input[type="checkbox"]')).toBeChecked();
+  await expect(
+    tasks.nth(1).locator('input[type="checkbox"]'),
+  ).not.toBeChecked();
+});
+
 test("checklists toggle by click and shortcut, retain their type on paste, and disable spellcheck", async ({
   page,
 }) => {

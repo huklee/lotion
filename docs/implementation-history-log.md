@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T10:05:00+09:00 — 0.21.0 structured block reconstruction prepared
+
+Added a narrow recognizer before the established line-by-line clipboard path. On an empty paragraph it accepts only input whose every non-empty line is a heading or unordered/ordered/checklist item, parses it through the shared Markdown converter, and rejects warnings plus any inline links or styles. This reconstructs list nesting and checked state while keeping mixed prose, HTML, rich Markdown, and mid-line/checklist/callout paste literal. The selected-block Markdown exporter is covered directly against the recognizer.
+
+Focused unit coverage passed 7/7 for exported blocks, single/multiple structures, nesting, ambiguity, and unsafe/rich inline rejection. The full clipboard browser specification passed 15/15, and a narrower structured-versus-literal rerun passed 6/6 across Chromium, Firefox, and WebKit. The complete gate is recorded in [test results](test-results.md). User data under `data/` was untouched.
+
 ## 2026-09-19T09:45:36+09:00 — 0.20.1 selected-block dismissal fix prepared
 
 Closed the missing dismissal path inside the editor host. The window-level pointer guard continues clearing selection for outside/application controls, ordinary editor clicks and completed text selections now clear it locally, and modifier-assisted rectangle extension keeps its previous selection base. The selected-block toolbar carries an explicit ownership marker so its drag, clipboard, movement, and clear controls are not dismissed during pointer capture.

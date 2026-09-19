@@ -2,6 +2,19 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.21.0 — 2026-09-19
+
+### Added
+
+- Pasting a raw-text outline into an empty paragraph reconstructs headings, bullet/numbered lists, checklist state, and nested list hierarchy. The recognized form is compatible with selected-block Markdown copy output.
+
+### Compatibility and safety
+
+- Reconstruction requires every non-empty line to be structural and accepts only plain inline text. Mixed prose, HTML, links, emphasis, code, and other rich Markdown remain on the existing literal plain-text path.
+- Pasting into a non-empty paragraph, checklist, callout, code block, or custom input retains its existing behavior. No document schema or stored-content migration is required.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.20.1 — 2026-09-19
 
 ### Fixed
