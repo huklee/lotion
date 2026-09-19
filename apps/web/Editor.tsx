@@ -14,6 +14,10 @@ import { readableCodeColor } from "./code-colors";
 import { mermaidFromClipboard } from "./mermaid-paste";
 import { clipboardLines, clipboardTextLines } from "./clipboard-lines";
 import { structuredBlocksFromClipboard } from "./structured-block-paste";
+import {
+  rememberSelectedBlockClipboard,
+  selectedBlocksFromClipboard,
+} from "./selected-block-clipboard";
 import { DatePicker } from "./DatePicker";
 import { FileReferencePicker } from "./FileReferencePicker";
 import { blockToNode } from "@blocknote/core";
@@ -350,7 +354,9 @@ export default function Editor({
     );
     if (!blocks.length) return;
     try {
-      await navigator.clipboard.writeText(toMarkdown(blocks).markdown);
+      const markdown = toMarkdown(blocks).markdown;
+      await navigator.clipboard.writeText(markdown);
+      rememberSelectedBlockClipboard(markdown, blocks);
       if (cut) deleteSelected();
     } catch (error) {
       setPreviewError(
@@ -657,11 +663,13 @@ export default function Editor({
           event.stopPropagation();
           try {
             const current = editor.getTextCursorPosition().block;
+            const copiedBlocks = selectedBlocksFromClipboard(raw);
             const structured =
-              current.type === "paragraph" &&
+              copiedBlocks ??
+              (current.type === "paragraph" &&
               (!Array.isArray(current.content) || current.content.length === 0)
                 ? structuredBlocksFromClipboard(raw)
-                : null;
+                : null);
             const checklistPaste = current.type === "checkListItem";
             const lineOptions = { omitTerminalDelimiter: checklistPaste };
             const blocks = structured ?? clipboardLines(raw, lineOptions);
@@ -687,10 +695,21 @@ export default function Editor({
                 "This paste exceeds the document's save limits. Paste a smaller section.",
               );
             if (structured) {
-              editor.replaceBlocks(
-                [current],
-                structured as unknown as EditorReplacementBlocks,
-              );
+              if (
+                current.type === "paragraph" &&
+                (!Array.isArray(current.content) ||
+                  current.content.length === 0)
+              )
+                editor.replaceBlocks(
+                  [current],
+                  structured as unknown as EditorReplacementBlocks,
+                );
+              else
+                editor.insertBlocks(
+                  structured as unknown as EditorReplacementBlocks,
+                  current,
+                  "after",
+                );
               return;
             }
             // Insert schema nodes directly: pasteHTML still applies Markdown

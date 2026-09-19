@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-19T10:32:24+09:00 — 0.21.1 exact selected-block paste fix prepared
+
+Fixed the gap between portable Markdown copy and safe literal paste. After a successful selected-block clipboard write, Lotion now keeps a schema-validated copy record in memory and session storage. An exact subsequent clipboard-text match restores the original block structures with fresh IDs, preserving mixed paragraphs, headings, lists, checklist state, nesting, and inline styles. The portable system clipboard remains Markdown, while unrelated external Markdown continues through the established literal/limited-outline paths.
+
+Focused unit coverage passed 23/23 and the new production-build paste regression passed 3/3 across Chromium, Firefox, and WebKit, including save/reload. The complete gate is recorded in [test results](test-results.md). User data under `data/` was untouched.
+
 ## 2026-09-19T10:05:00+09:00 — 0.21.0 structured block reconstruction prepared
 
 Added a narrow recognizer before the established line-by-line clipboard path. On an empty paragraph it accepts only input whose every non-empty line is a heading or unordered/ordered/checklist item, parses it through the shared Markdown converter, and rejects warnings plus any inline links or styles. This reconstructs list nesting and checked state while keeping mixed prose, HTML, rich Markdown, and mid-line/checklist/callout paste literal. The selected-block Markdown exporter is covered directly against the recognizer.

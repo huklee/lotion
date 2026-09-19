@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.21.1 — 2026-09-19
+
+### Fixed
+
+- Pasting a block selection copied through Lotion's selection toolbar now restores the exact original block types, nesting, checklist state, and inline styles instead of degrading mixed selections to plain paragraphs.
+- Restored copies receive fresh block IDs and are schema-validated before insertion. The validated session record works across page navigation and an in-tab reload, while the system clipboard remains portable Markdown.
+
+Arbitrary external Markdown retains the existing literal-paste policy; only an exact match for Lotion's latest selected-block copy uses exact reconstruction. No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.21.0 — 2026-09-19
 
 ### Added
