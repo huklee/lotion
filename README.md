@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.20.1**. See the [version history and added features](docs/changelog.md).
+Current version: **0.21.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -59,7 +59,7 @@ Place the cursor in any block and choose **Copy block link** to copy a direct UR
 
 Type **@date** (or type **@** and choose **Date**) to open the calendar, choose a day and insert it. Press Enter once more immediately after opening to insert today. Dates are stored as validated ISO date references and exported to portable Markdown as readable `📅 YYYY-MM-DD` text.
 
-Ordinary clipboard text is checked line by line and pasted as plain paragraphs, preserving literal Markdown/HTML text. Complete Mermaid fences retain diagram conversion; a single HTTP(S) URL retains the link chooser. Oversized pastes show an error rather than silently dropping text. Use Markdown import when you want Markdown formatting interpreted.
+Ordinary clipboard text is checked line by line and pasted as plain paragraphs, preserving literal Markdown/HTML text. On an empty paragraph, an outline made entirely from heading, bullet, numbered-list, or checklist lines is reconstructed as those enhanced block types; mixed prose and rich inline Markdown remain literal. This accepts the structured Markdown produced by selected-block copy. Complete Mermaid fences retain diagram conversion; a single HTTP(S) URL retains the link chooser. Oversized pastes show an error rather than silently dropping text. Use Markdown import when you want broader Markdown formatting interpreted.
 
 Checklist items can be completed by clicking their checkbox or pressing **Ctrl+Enter / ⌘Enter** while editing the item. A single pasted line stays at the current cursor inside a checklist or callout instead of creating a new block; multi-line plain-text paste inside a checklist retains checklist blocks. A conventional terminal clipboard newline does not create an extra checklist item or separate the existing suffix, while intentional internal blank lines remain intact. Checkbox clicks preserve the document's scroll position. Browser spellcheck is disabled in the document editor to avoid misleading red dictionary underlines on code, product names, and mixed-language text.
 

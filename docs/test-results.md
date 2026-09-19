@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-09-19T10:05:00+09:00 — 0.21.0 structured block reconstruction focused verification
+
+Strict TypeScript and the production build passed. The structured recognizer unit suite passed **7/7** cases, including selected-block export compatibility, heading/list/checklist types, checked state, nested hierarchy, a single structural block, mixed-prose rejection, and rich/unsafe inline rejection. The complete clipboard browser specification passed **15/15**; a final structured-versus-literal rerun passed **6/6** across Chromium, Firefox, and WebKit. Browser coverage verifies enhanced block rendering, save/reload, and unchanged literal handling for mixed Markdown/HTML clipboard text.
+
+The final `CI=1 npm run check` exited **0**: ESLint, strict TypeScript, production build, **185/185 unit and integration tests**, and **165/165 Playwright cases** passed with two workers. The browser phase completed in 2.3 minutes. Prettier and `git diff --check` passed, and documentation validation found **36 Markdown files, 185 local links, and zero missing targets**. The known non-failing large-chunk build warning remains, and user data under `data/` was untouched.
+
 ## 2026-09-19T09:45:36+09:00 — 0.20.1 selected-block dismissal focused verification
 
 Strict TypeScript and the production build passed. The focused block-selection matrix passed **9/9** across Chromium, Firefox, and WebKit. It verifies dismissal after selecting another editor block and the page-title application control, retained modifier-assisted lasso extension, and retained copy/cut toolbar behavior including clipboard-denial safety.

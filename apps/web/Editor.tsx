@@ -13,6 +13,7 @@ import { BlockNoteView } from "@blocknote/mantine";
 import { readableCodeColor } from "./code-colors";
 import { mermaidFromClipboard } from "./mermaid-paste";
 import { clipboardLines, clipboardTextLines } from "./clipboard-lines";
+import { structuredBlocksFromClipboard } from "./structured-block-paste";
 import { DatePicker } from "./DatePicker";
 import { FileReferencePicker } from "./FileReferencePicker";
 import { blockToNode } from "@blocknote/core";
@@ -67,6 +68,10 @@ import {
   writeLastColorStyle,
   type AppliedColorPreset,
 } from "./last-color-style";
+
+type EditorReplacementBlocks = Parameters<
+  (typeof editorSchema.BlockNoteEditor)["replaceBlocks"]
+>[1];
 
 function pageIdFromHref(href: string): string | null {
   const direct = pageIdFromHash(href);
@@ -652,9 +657,14 @@ export default function Editor({
           event.stopPropagation();
           try {
             const current = editor.getTextCursorPosition().block;
+            const structured =
+              current.type === "paragraph" &&
+              (!Array.isArray(current.content) || current.content.length === 0)
+                ? structuredBlocksFromClipboard(raw)
+                : null;
             const checklistPaste = current.type === "checkListItem";
             const lineOptions = { omitTerminalDelimiter: checklistPaste };
-            const blocks = clipboardLines(raw, lineOptions);
+            const blocks = structured ?? clipboardLines(raw, lineOptions);
             // Inserting paragraph nodes at an inline checklist selection
             // changes the containing block into a paragraph. Keep checklist
             // semantics for every pasted line instead.
@@ -676,6 +686,13 @@ export default function Editor({
               throw new Error(
                 "This paste exceeds the document's save limits. Paste a smaller section.",
               );
+            if (structured) {
+              editor.replaceBlocks(
+                [current],
+                structured as unknown as EditorReplacementBlocks,
+              );
+              return;
+            }
             // Insert schema nodes directly: pasteHTML still applies Markdown
             // paste rules such as **bold**, even for otherwise plain paragraphs.
             const tiptap = editor._tiptapEditor;
