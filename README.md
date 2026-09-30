@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.24.1**. See the [version history and added features](docs/changelog.md).
+Current version: **0.25.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -46,6 +46,8 @@ The upper-right move action shows the document hierarchy as a collapsible tree. 
 Typing `<-` or `->` in ordinary document text immediately produces `←` or `→`. Pasted text, code blocks, Mermaid source, and active IME composition remain literal.
 
 Type **/database** to add a single table view whose rows are real child pages. Text, number, select, checkbox, and date properties are validated and saved with the containing document; opening the first cell navigates to the row page. Exact bundles preserve the database, while portable Markdown exports a static table with page links.
+
+Every page with headings shows an automatic **page outline** on the right. It lists all headings in document order with nested indentation, updates as you type, highlights the section in view while you scroll, and scrolls to a section when clicked. It is hidden on pages without headings and in windows narrower than 1,200 px; the inline `/toc` block remains available inside documents.
 
 Press **⌘K / Ctrl+K** to search page titles and document content across the workspace. Search includes the active unsaved browser draft, tables, code, attachment labels, and Mermaid source. Selecting a content result opens and highlights its exact block.
 

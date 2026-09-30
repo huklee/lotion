@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-09-30T13:41:40+09:00 — 0.25.0 automatic right-hand page outline
+
+Environment: macOS (Apple Silicon), Node.js v25.8.2, npm 11.11.1, Playwright browsers installed locally for this checkout.
+
+Focused checks: `tests/unit/document-outline.test.ts` passed **5/5**. `tests/e2e/outline.spec.ts` passed **6/6** across Chromium, Firefox, and WebKit after the end-of-page current-heading fix; the first run failed the current-section assertion in all three browsers because the final heading stopped 146 px below the reading line at the maximum scroll position. The existing `tests/e2e/editor-blocks.spec.ts` inline `/toc` scenarios passed in all three browsers after the shared-extraction refactor.
+
+First `npm run check`: ESLint, strict TypeScript, and the production build passed; Vitest passed **199/199** tests; Playwright passed **189** scenarios and failed **1** — the existing real-Chromium clipboard reload scenario (`block-selection.spec.ts:983`), which passed **3/3** when repeated alone and has an earlier recorded load-related flake. A complete Playwright rerun then passed **190/190** scenarios across the three browsers in 1.6 minutes.
+
 ## 2026-09-20T06:45:13+09:00 — 0.24.1 modified sidebar click stabilization
 
 The post-merge `main` workflow for 0.24.0 failed with **183 passed, 2 skipped, 1 failed** because Chromium did not emit a new page for the sidebar's native `Ctrl/Cmd` click before the 30-second timeout. The page-move tree scenario passed in all three browsers in that run; the failure was isolated to the pre-existing modified-link path.

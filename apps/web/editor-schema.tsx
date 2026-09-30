@@ -9,47 +9,11 @@ import { useEffect, useState } from "react";
 import { MermaidBlock } from "./MermaidBlock";
 import { mentionInline } from "./MentionInline";
 import { DatabaseBlock } from "./DatabaseBlock";
+import { headingsIn } from "./document-outline";
 import {
   DEFAULT_DATABASE_COLUMNS_JSON,
   DEFAULT_DATABASE_ROWS_JSON,
 } from "../../packages/database/model";
-
-type Heading = { id: string; level: number; title: string };
-
-function inlineText(content: unknown): string {
-  if (!Array.isArray(content)) return "";
-  return content
-    .map((item) => {
-      if (!item || typeof item !== "object") return "";
-      if ("text" in item && typeof item.text === "string") return item.text;
-      if (
-        "props" in item &&
-        item.props &&
-        typeof item.props === "object" &&
-        "label" in item.props &&
-        typeof item.props.label === "string"
-      )
-        return item.props.label;
-      if ("content" in item) return inlineText(item.content);
-      return "";
-    })
-    .join("");
-}
-
-function headingsIn(blocks: readonly any[]): Heading[] {
-  return blocks.flatMap((block) => [
-    ...(block.type === "heading"
-      ? [
-          {
-            id: block.id,
-            level: Number(block.props?.level) || 1,
-            title: inlineText(block.content).trim() || "Untitled heading",
-          },
-        ]
-      : []),
-    ...headingsIn(block.children ?? []),
-  ]);
-}
 
 function TableOfContents({ editor }: { editor: any }) {
   const [, render] = useState(0);
