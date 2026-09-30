@@ -2,6 +2,10 @@
 
 Historical completed work lives in the [implementation history](implementation-history-log.md), [test results](test-results.md), and [changelog](changelog.md). The completed sequence remains visible below for review across its six incremental pull requests.
 
+## Completed user requests — 2026-09-30
+
+- [x] Render an automatic table of contents for every page in the right-hand panel (0.25.0): headings in order with indentation, live updates, current-section highlight, click-to-scroll, hidden without headings or on narrow windows.
+
 ## Completed incremental sequence — 2026-09-16
 
 Each item must be implemented, tested, checked off here, committed, pushed, and submitted as its own pull request before moving to the next item.

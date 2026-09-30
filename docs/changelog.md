@@ -2,6 +2,16 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.25.0 — 2026-09-30
+
+### Added
+
+- Every page with headings now renders an automatic **page outline** (table of contents) in a right-hand panel. It lists all headings in document order with indentation relative to the shallowest heading level.
+- The outline follows live edits without saving or reloading, highlights the section currently in view while scrolling, and scrolls to a heading when its entry is clicked. At the end of a page, the last visible heading becomes current even if its short section cannot reach the reading line.
+- The panel is omitted on pages without headings, hidden in windows narrower than 1,200 px, and excluded from printing. The inline `/toc` block is unchanged and now shares the same heading extraction.
+
+No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.24.1 — 2026-09-20
 
 ### Fixed

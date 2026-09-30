@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import { useState, type RefObject } from "react";
 import type {
   Block,
   Document,
@@ -8,6 +8,7 @@ import type {
 import type { FormattingShortcuts } from "./format-shortcuts";
 import type { SaveCoordinator } from "./save-coordinator";
 import { ConflictPanel } from "./ConflictPanel";
+import { DocumentOutline } from "./DocumentOutline";
 import Editor from "./Editor";
 import { PageIconPicker } from "./PageIconPicker";
 
@@ -60,68 +61,78 @@ export function ActiveDocument({
   onBlocksChange,
   onBackgroundImage,
 }: ActiveDocumentProps) {
+  // Live block list for the outline panel; the editor reports every change.
+  const [outlineBlocks, setOutlineBlocks] = useState<Block[]>(
+    () => coordinator.content.blocks,
+  );
   return (
-    <article className="document">
-      <div className="page-topline">
-        <button
-          className="document-icon"
-          aria-label="Change page icon"
-          onClick={onToggleIconPicker}
-        >
-          {coordinator.content.icon || active.icon || "📄"}
-        </button>
-        <span className="document-kind">PERSONAL PAGE</span>
-      </div>
-      {iconPicker && (
-        <PageIconPicker
-          iconQuery={iconQuery}
-          setIconQuery={onIconQuery}
-          iconPickerRef={iconPickerRef}
-          onChoose={onChooseIcon}
+    <div className="document-layout">
+      <article className="document">
+        <div className="page-topline">
+          <button
+            className="document-icon"
+            aria-label="Change page icon"
+            onClick={onToggleIconPicker}
+          >
+            {coordinator.content.icon || active.icon || "📄"}
+          </button>
+          <span className="document-kind">PERSONAL PAGE</span>
+        </div>
+        {iconPicker && (
+          <PageIconPicker
+            iconQuery={iconQuery}
+            setIconQuery={onIconQuery}
+            iconPickerRef={iconPickerRef}
+            onChoose={onChooseIcon}
+          />
+        )}
+        <input
+          className="document-title"
+          aria-label="Page title"
+          ref={titleInputRef}
+          value={title}
+          placeholder="Untitled"
+          onChange={(event) => onTitleChange(event.target.value)}
         />
-      )}
-      <input
-        className="document-title"
-        aria-label="Page title"
-        ref={titleInputRef}
-        value={title}
-        placeholder="Untitled"
-        onChange={(event) => onTitleChange(event.target.value)}
-      />
-      <div className="document-meta">
-        <span>In your workspace</span>
-        <span>·</span>
-        <span>
-          {new Date(active.createdAt).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </span>
-        <span className="meta-line" />
-      </div>
-      <ConflictPanel
-        coordinator={coordinator}
-        title={title}
-        refresh={refresh}
-        openPage={openPage}
-        handleError={handleError}
-      />
-      <Editor
-        initial={coordinator.content}
-        theme={theme}
-        formattingShortcuts={formattingShortcuts}
-        pages={pages}
-        onCreateSubpage={createSubpage}
-        onCopyBlockLink={copyBlockLink}
-        onOpenPage={(id) => void openPage(id)}
-        onLinkPreview={onLinkPreview}
-        onChange={onBlocksChange}
-        onBackgroundImage={onBackgroundImage}
-      />
-      <div className="document-bottom">
-        <span>✧</span> A place for ideas to become something.
-      </div>
-    </article>
+        <div className="document-meta">
+          <span>In your workspace</span>
+          <span>·</span>
+          <span>
+            {new Date(active.createdAt).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+          <span className="meta-line" />
+        </div>
+        <ConflictPanel
+          coordinator={coordinator}
+          title={title}
+          refresh={refresh}
+          openPage={openPage}
+          handleError={handleError}
+        />
+        <Editor
+          initial={coordinator.content}
+          theme={theme}
+          formattingShortcuts={formattingShortcuts}
+          pages={pages}
+          onCreateSubpage={createSubpage}
+          onCopyBlockLink={copyBlockLink}
+          onOpenPage={(id) => void openPage(id)}
+          onLinkPreview={onLinkPreview}
+          onChange={(blocks) => {
+            setOutlineBlocks(blocks);
+            onBlocksChange(blocks);
+          }}
+          onBackgroundImage={onBackgroundImage}
+        />
+        <div className="document-bottom">
+          <span>✧</span> A place for ideas to become something.
+        </div>
+      </article>
+      <DocumentOutline blocks={outlineBlocks} />
+    </div>
   );
 }

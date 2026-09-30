@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-09-30T13:41:40+09:00 — 0.25.0 automatic right-hand page outline prepared
+
+Added a right-hand page outline that renders for every page with headings. Heading extraction moved from the inline `/toc` block into the pure `apps/web/document-outline.ts` module, which both the block and the new `DocumentOutline` panel use; the active-document view keeps the live block list from the editor's existing change callback, so the outline follows edits without extra editor coupling. A scroll-position function selects the current heading from the reading line and, once the scroll container reaches its end, promotes the last visible heading. This end-of-page rule was added after the first browser regression showed that a short final section could never become current.
+
+Unit coverage validates nested extraction, mention labels, reading-line and end-of-page selection, and relative indentation. New production-build scenarios cover listing, live updates, click-to-scroll with the current-section marker, and hiding on heading-free pages and narrow windows in Chromium, Firefox, and WebKit. Full verification is recorded in [test results](test-results.md); user data under `data/` was untouched.
+
 ## 2026-09-20T06:45:13+09:00 — 0.24.1 modified sidebar click stabilization prepared
 
 Audited PR #40 after its successful pull-request checks and found that the separate post-merge `main` workflow had failed on the existing Chromium modified-sidebar-click scenario. The sidebar previously returned early for `Ctrl/Cmd` clicks and depended entirely on native anchor handling inside a draggable page row. Under GitHub runner load, Chromium intermittently produced no new-page event and exhausted the test timeout.
