@@ -49,6 +49,11 @@ import {
   sectionIds,
   selectedBlockSubtrees,
 } from "../../packages/editor-adapter/movement";
+import {
+  bulkCheckedValue,
+  checklistIdsInSubtrees,
+  selectionCoversContent,
+} from "../../packages/editor-adapter/checklist";
 import { toMarkdown } from "../../packages/markdown/convert";
 import { api, authHeaders } from "./api";
 import { editorSchema } from "./editor-schema";
@@ -389,6 +394,74 @@ export default function Editor({
     window.addEventListener("keydown", copyOrCut, true);
     return () => window.removeEventListener("keydown", copyOrCut, true);
   }, [copySelectedBlocks, selected.length]);
+  // Cmd/Ctrl+Enter on checklist items: one item toggles; several (a text selection
+  // across blocks or a block selection, nested items included) are all checked, or
+  // all unchecked when every one of them is already checked.
+  const toggleChecklists = useCallback(
+    (ids: readonly string[]) => {
+      const items = ids
+        .map((id) => editor.getBlock(id))
+        .filter((block) => block?.type === "checkListItem");
+      if (!items.length) return false;
+      const checked = bulkCheckedValue(items);
+      editor.transact(() =>
+        items.forEach((block) => {
+          if (block!.props.checked !== checked)
+            editor.updateBlock(block!.id, { props: { checked } });
+        }),
+      );
+      return true;
+    },
+    [editor],
+  );
+  const checklistIdsInTextSelection = () => {
+    const view = editor._tiptapEditor
+      .view as typeof editor._tiptapEditor.view & {
+      domObserver?: { flush?: () => void };
+    };
+    // ProseMirror picks up mouse selections on the async selectionchange event; read a
+    // just-made selection now so the shortcut applies to what is highlighted.
+    view.domObserver?.flush?.();
+    const { doc, selection } = view.state;
+    if (selection.empty) return [editor.getTextCursorPosition().block.id];
+    const ids: string[] = [];
+    doc.nodesBetween(selection.from, selection.to, (node, pos, parent) => {
+      if (
+        node.type.name === "checkListItem" &&
+        typeof parent?.attrs.id === "string" &&
+        selectionCoversContent(
+          selection.from,
+          selection.to,
+          pos + 1,
+          pos + node.nodeSize - 1,
+        )
+      )
+        ids.push(parent.attrs.id);
+    });
+    return ids;
+  };
+  useEffect(() => {
+    if (!selected.length) return;
+    const toggleSelected = (event: KeyboardEvent) => {
+      if (
+        !(event.metaKey || event.ctrlKey) ||
+        event.altKey ||
+        event.shiftKey ||
+        event.key !== "Enter" ||
+        (event.target as HTMLElement).closest("input, textarea, select")
+      )
+        return;
+      const ids = checklistIdsInSubtrees(
+        editor.document as unknown as Block[],
+        selected,
+      );
+      if (!toggleChecklists(ids)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    window.addEventListener("keydown", toggleSelected, true);
+    return () => window.removeEventListener("keydown", toggleSelected, true);
+  }, [editor, selected, toggleChecklists]);
   const targetAt = (event: { clientX: number; clientY: number }) => {
     const el = document
       .elementFromPoint(event.clientX, event.clientY)
@@ -597,13 +670,9 @@ export default function Editor({
           !e.shiftKey &&
           e.key === "Enter"
         ) {
-          const current = editor.getTextCursorPosition().block;
-          if (current.type === "checkListItem") {
+          if (toggleChecklists(checklistIdsInTextSelection())) {
             e.preventDefault();
             e.stopPropagation();
-            editor.updateBlock(current.id, {
-              props: { checked: !current.props.checked },
-            });
             return;
           }
         }
