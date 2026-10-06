@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.26.0 — 2026-10-06
+
+### Added
+
+- **Ctrl+Enter / ⌘Enter on a selection** now applies to every checklist item in it. Select text across several blocks (drag, Shift+click, Shift+arrows) or select whole blocks (gutter drag, **Select section**) and press the shortcut: all checklist items inside — nested child items included — are checked. If every one of them is already checked, the same shortcut unchecks them all.
+- With a collapsed cursor the shortcut still toggles only the current checklist item. A selection that merely touches the edge of the next block does not include it. The bulk change is one undo step.
+
+No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.25.0 — 2026-09-30
 
 ### Added

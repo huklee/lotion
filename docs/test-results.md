@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-10-06T14:50:12+09:00 — 0.26.0 bulk checklist toggle on selections
+
+Environment: macOS (Apple Silicon), Node.js v25.8.2, npm 11.11.1, Playwright browsers installed locally for this checkout.
+
+Focused checks: `tests/unit/checklist.test.ts` passed **3/3**. `tests/e2e/checklist-bulk.spec.ts` (text selection across blocks with nested items, check → uncheck → save/API → single undo; section block selection with nested items; collapsed-cursor single toggle) first failed intermittently in Chromium only (3 of 6 repeats): a shortcut pressed right after Shift+click acted on the previous collapsed cursor because ProseMirror had not yet imported the DOM selection. After flushing the pending selection it passed **54/54** with `--repeat-each=6` across Chromium, Firefox and WebKit.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest passed **202/202**; Playwright passed **194** and failed **5**, all WebKit (`saving.spec.ts:37`, `search.spec.ts:5`, `settings.spec.ts:29`, `settings.spec.ts:107`, `settings.spec.ts:297`). `saving.spec.ts:37` passed on rerun; the other four also fail on an unmodified `origin/main` (`7b3f922`) build in this local WebKit, so they are pre-existing local-environment failures unrelated to this change. Remote CI results are recorded on the pull request.
+
 ## 2026-09-30T13:41:40+09:00 — 0.25.0 automatic right-hand page outline
 
 Environment: macOS (Apple Silicon), Node.js v25.8.2, npm 11.11.1, Playwright browsers installed locally for this checkout.

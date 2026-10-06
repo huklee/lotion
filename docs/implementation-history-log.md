@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-10-06T14:49:55+09:00 — 0.26.0 bulk checklist toggle on selections prepared
+
+Ctrl/Cmd+Enter now checks every checklist item inside the current selection. Text selections are resolved from the ProseMirror range (an item counts when the selection covers its inline content, not when it only touches an edge); block selections use the selected subtrees, so nested items are included. The target state is "check all unless all are checked" and is applied in one editor transaction (one undo step). The editor flushes ProseMirror's pending DOM selection before reading it, because a mouse selection is only imported on the asynchronous `selectionchange` event — without it a shortcut pressed immediately after Shift+click acted on the previous collapsed cursor (seen in Chromium tests). Pure helpers live in `packages/editor-adapter/checklist.ts`.
+
 ## 2026-09-30T13:41:40+09:00 — 0.25.0 automatic right-hand page outline prepared
 
 Added a right-hand page outline that renders for every page with headings. Heading extraction moved from the inline `/toc` block into the pure `apps/web/document-outline.ts` module, which both the block and the new `DocumentOutline` panel use; the active-document view keeps the live block list from the editor's existing change callback, so the outline follows edits without extra editor coupling. A scroll-position function selects the current heading from the reading line and, once the scroll container reaches its end, promotes the last visible heading. This end-of-page rule was added after the first browser regression showed that a short final section could never become current.
