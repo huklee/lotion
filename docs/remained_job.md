@@ -2,6 +2,10 @@
 
 Historical completed work lives in the [implementation history](implementation-history-log.md), [test results](test-results.md), and [changelog](changelog.md). The completed sequence remains visible below for review across its six incremental pull requests.
 
+## Completed user requests — 2026-10-08
+
+- [x] Table-of-contents clicks scroll with acceleration/deceleration within a fixed maximum time instead of an ever-growing native smooth scroll (0.26.1).
+
 ## Completed user requests — 2026-10-06
 
 - [x] Ctrl/Cmd+Enter on a block or text selection checks every checklist item it contains, nested items included (0.26.0); all-checked selections are unchecked by the same shortcut.

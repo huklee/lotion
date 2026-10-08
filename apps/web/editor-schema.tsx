@@ -10,6 +10,7 @@ import { MermaidBlock } from "./MermaidBlock";
 import { mentionInline } from "./MentionInline";
 import { DatabaseBlock } from "./DatabaseBlock";
 import { headingsIn } from "./document-outline";
+import { smoothScrollToElement } from "./scroll-to";
 import {
   DEFAULT_DATABASE_COLUMNS_JSON,
   DEFAULT_DATABASE_ROWS_JSON,
@@ -36,11 +37,10 @@ function TableOfContents({ editor }: { editor: any }) {
             type="button"
             style={{ paddingLeft: `${10 + (heading.level - 1) * 16}px` }}
             onClick={() => {
-              document
-                .querySelector<HTMLElement>(
-                  `.bn-block-outer[data-id="${heading.id}"]`,
-                )
-                ?.scrollIntoView({ behavior: "smooth", block: "center" });
+              const element = document.querySelector<HTMLElement>(
+                `.bn-block-outer[data-id="${CSS.escape(heading.id)}"]`,
+              );
+              if (element) void smoothScrollToElement(element, "center");
               editor.setTextCursorPosition(heading.id, "start");
             }}
           >
