@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.26.1 — 2026-10-08
+
+### Fixed
+
+- Clicking a heading in the page outline or in an inline `/toc` block now scrolls with a bounded animation: the page accelerates, then decelerates, and arrives in at most 0.65 s however far the heading is. The browser's native smooth scroll took longer the farther it went (up to ~1.5 s measured in Chromium on long pages) and kept chasing headings that moved while blocks rendered.
+- The target is re-measured every frame, so content that changes height mid-scroll cannot extend the jump; scrolling with the wheel, touch, a click or a key stops the animation; reduced-motion preferences jump instantly.
+
+No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.26.0 — 2026-10-06
 
 ### Added

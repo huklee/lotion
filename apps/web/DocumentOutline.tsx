@@ -5,6 +5,7 @@ import {
   headingsIn,
   outlineDepth,
 } from "./document-outline";
+import { smoothScrollToElement } from "./scroll-to";
 
 const READING_LINE_PX = 96;
 
@@ -73,10 +74,8 @@ export function DocumentOutline({ blocks }: { blocks: readonly Block[] }) {
             }}
             title={heading.title}
             onClick={() => {
-              headingElement(heading.id)?.scrollIntoView({
-                behavior: "smooth",
-                block: "start",
-              });
+              const element = headingElement(heading.id);
+              if (element) void smoothScrollToElement(element, "start");
               setActiveId(heading.id);
             }}
           >

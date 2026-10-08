@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-10-08T14:13:02+09:00 — 0.26.1 bounded table-of-contents scrolling
+
+Environment: macOS (Apple Silicon), Node.js v25.8.2, npm 11.11.1, Playwright browsers installed locally for this checkout.
+
+Focused checks: `tests/unit/scroll-to.test.ts` passed **2/2** (duration bounded and monotonic in distance, cubic ease-in-out lands exactly and is symmetric). `tests/e2e/outline.spec.ts` passed **27/27** with `--repeat-each=3` across Chromium, Firefox and WebKit, including the new long-page scenario (≥15,000 px jumps from the outline and the inline `/toc` block must animate and settle within 1 s). Against the previous native smooth scroll the new scenario fails in Chromium (1.5 s) and passes in Firefox/WebKit. Measured settle times for 4.7k/22k/54k px jumps — before: Chromium 1.13/1.50/1.49 s, Firefox 0.85/0.96/1.00 s, WebKit 0.22/0.22/0.23 s; after: 0.64–0.68 s in all three browsers.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest passed **204/204**; Playwright passed **202/202**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-06T14:50:12+09:00 — 0.26.0 bulk checklist toggle on selections
 
 Environment: macOS (Apple Silicon), Node.js v25.8.2, npm 11.11.1, Playwright browsers installed locally for this checkout.

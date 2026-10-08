@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-10-08T14:09:05+09:00 — 0.26.1 bounded table-of-contents scrolling prepared
+
+Both the right-hand outline and the inline `/toc` block used `scrollIntoView({ behavior: "smooth" })`, whose duration grows with distance and which follows a target that keeps moving while blocks render. `apps/web/scroll-to.ts` replaces it with a requestAnimationFrame animation on `.main-scroll`: duration `min(650, 180 + 9·√distance)` ms, cubic ease-in-out (acceleration then deceleration), the target re-measured each frame and clamped to the scroll range, cancellation on wheel/touch/pointer/key input or a newer jump, and an instant jump for `prefers-reduced-motion`. Measured before/after on 4.7k–54k px jumps: Chromium 1.1–1.5 s → ~0.65 s, Firefox ~0.85–1.0 s → ~0.65 s, WebKit ~0.22 s → ~0.65 s (all browsers now behave the same).
+
 ## 2026-10-06T14:49:55+09:00 — 0.26.0 bulk checklist toggle on selections prepared
 
 Ctrl/Cmd+Enter now checks every checklist item inside the current selection. Text selections are resolved from the ProseMirror range (an item counts when the selection covers its inline content, not when it only touches an edge); block selections use the selected subtrees, so nested items are included. The target state is "check all unless all are checked" and is applied in one editor transaction (one undo step). The editor flushes ProseMirror's pending DOM selection before reading it, because a mouse selection is only imported on the asynchronous `selectionchange` event — without it a shortcut pressed immediately after Shift+click acted on the previous collapsed cursor (seen in Chromium tests). Pure helpers live in `packages/editor-adapter/checklist.ts`.
