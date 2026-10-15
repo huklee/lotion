@@ -102,7 +102,7 @@ test("database properties: change type, edit options, move and delete", async ({
 test("database rows: duplicate, move and delete (page goes to the trash)", async ({
   page,
 }) => {
-  await seedDatabase(page);
+  const parent = await seedDatabase(page);
   const db = page.locator(".lotion-database");
   const rowActions = (title: string) =>
     db
@@ -116,11 +116,18 @@ test("database rows: duplicate, move and delete (page goes to the trash)", async
   await expect(copy.locator("th button").first()).toContainText("Kickoff");
   await expect(copy.getByLabel(/^Kind for /)).toHaveValue("Weekly");
   // the copy is a real child page in the tree
-  await expect(
-    page
-      .getByRole("navigation", { name: "Pages" })
-      .getByRole("link", { name: /Kickoff/ }),
-  ).toHaveCount(2);
+  // (checked through the API: workers share a workspace with other "Kickoff" pages)
+  await expect
+    .poll(async () => {
+      const tree = await (await page.request.get("/api/tree")).json();
+      return tree.nodes.filter(
+        (node: any) =>
+          node.parentId === parent.id &&
+          !node.deletedAt &&
+          /Kickoff/.test(node.title),
+      ).length;
+    })
+    .toBe(2);
 
   await rowActions("Review").click();
   await page.getByRole("button", { name: "↑ Move up" }).click();
@@ -175,6 +182,10 @@ test("database views: filter, sort, hide properties and saved views", async ({
   await expect(db.getByLabel("Status for Untitled row")).toHaveValue("Done");
   // second view: sort by Page descending, hide Notes
   await db.getByRole("button", { name: "Add view" }).click();
+  await page
+    .getByRole("dialog", { name: "Add view" })
+    .getByRole("button", { name: "▦ Table" })
+    .click();
   await expect(db.getByRole("tab", { name: /Table 2/ })).toHaveAttribute(
     "aria-selected",
     "true",
@@ -218,4 +229,173 @@ test("database views: filter, sort, hide properties and saved views", async ({
     .getByRole("button", { name: "Delete view" })
     .click();
   await expect(db.getByRole("tab")).toHaveCount(1);
+});
+
+async function seedMeetings(page: import("@playwright/test").Page) {
+  const parent = await seed(page, "Weekly sync");
+  const rows = [];
+  for (const [title, date, text] of [
+    ["Older meeting", "2026-10-01", "older body text"],
+    ["Newest meeting", "2026-10-15", "newest body text"],
+    ["Middle meeting", "2026-10-08", "middle body text"],
+  ]) {
+    const child = await (
+      await page.request.post("/api/documents", {
+        data: { title, parentId: parent.id, mutationId: randomUUID() },
+      })
+    ).json();
+    await page.request.put(`/api/documents/${child.id}/content`, {
+      headers: { "If-Match": String(child.revision) },
+      data: {
+        title,
+        blocks: [
+          {
+            id: randomUUID(),
+            type: "paragraph",
+            content: [{ type: "text", text, styles: {} }],
+          },
+        ],
+        mutationId: randomUUID(),
+      },
+    });
+    rows.push({
+      id: `row-${date}`,
+      href: `#/page/${child.id}`,
+      title,
+      values: { date },
+    });
+  }
+  const current = await (
+    await page.request.get(`/api/documents/${parent.id}`)
+  ).json();
+  await page.request.put(`/api/documents/${parent.id}/content`, {
+    headers: { "If-Match": String(current.revision) },
+    data: {
+      title: "Weekly sync",
+      blocks: [
+        {
+          id: "db",
+          type: "database",
+          props: {
+            columns: JSON.stringify([
+              { id: "date", name: "Date", type: "date" },
+              { id: "kind", name: "Kind", type: "text" },
+            ]),
+            rows: JSON.stringify(rows),
+          },
+        },
+      ],
+      mutationId: randomUUID(),
+    },
+  });
+  await page.reload();
+  await expect(page.locator(".lotion-database")).toBeVisible();
+  return { parent, rows };
+}
+
+async function pageText(
+  page: import("@playwright/test").Page,
+  href: string,
+): Promise<string> {
+  const id = href.replace("#/page/", "");
+  const doc = await (await page.request.get(`/api/documents/${id}`)).json();
+  return JSON.stringify(doc.blocks);
+}
+
+test("database feed: newest first, edit in place, new meeting from a template", async ({
+  page,
+}) => {
+  const { rows } = await seedMeetings(page);
+  const db = page.locator(".lotion-database");
+  await db.getByRole("button", { name: "Add view" }).click();
+  await page
+    .getByRole("dialog", { name: "Add view" })
+    .getByRole("button", { name: /Feed/ })
+    .click();
+  const entries = db.locator(".lotion-feed-entry");
+  await expect(entries).toHaveCount(3);
+  await expect(entries.locator(".lotion-feed-title")).toHaveText([
+    "📄 Newest meeting",
+    "📄 Middle meeting",
+    "📄 Older meeting",
+  ]);
+  // older entries are read inline
+  await expect(entries.nth(1).locator(".lotion-feed-body")).toContainText(
+    "middle body text",
+  );
+  await expect(entries.nth(2).locator(".lotion-feed-body")).toContainText(
+    "older body text",
+  );
+  // the newest is editable in place and saves to its own page
+  const newest = entries
+    .nth(0)
+    .locator(".lotion-feed-editor [contenteditable=true]");
+  await expect(newest).toContainText("newest body text");
+  await newest.getByText("newest body text").click();
+  // End scrolls instead of moving the caret on macOS.
+  await page.keyboard.press(
+    process.platform === "darwin" ? "Meta+ArrowRight" : "End",
+  );
+  await page.keyboard.type(" edited inline");
+  await expect
+    .poll(() => pageText(page, rows[1].href), { timeout: 15000 })
+    .toContain("newest body text edited inline");
+  // any other entry can be edited too
+  await entries.nth(2).getByRole("button", { name: "Edit here" }).click();
+  await expect(
+    entries.nth(2).locator(".lotion-feed-editor [contenteditable=true]"),
+  ).toContainText("older body text");
+  await entries.nth(2).getByRole("button", { name: "Done" }).click();
+  await expect(entries.nth(2).locator(".lotion-feed-body")).toBeVisible();
+  // the parent page itself is untouched by inline edits
+  await expect(page.getByText("Unsaved draft")).toHaveCount(0);
+
+  // new meeting without a template: today's date and the skeleton
+  await db.getByRole("button", { name: "+ New meeting" }).click();
+  await expect(entries).toHaveCount(4);
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  await expect(entries.nth(0).locator(".lotion-feed-title")).toHaveText(
+    `📄 ${today} 회의`,
+  );
+  await expect(entries.nth(0)).toContainText(today);
+  await expect(entries.nth(0).locator(".lotion-feed-editor")).toContainText(
+    "결정 사항",
+  );
+
+  // middle meeting as the template
+  await db.getByRole("tab", { name: /Table/ }).click();
+  await db
+    .getByRole("row", { name: /Middle meeting/ })
+    .getByRole("button", { name: "Row actions" })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Row actions" })
+    .getByRole("button", { name: "Use as template for new entries" })
+    .click();
+  await db.getByRole("tab", { name: /Feed/ }).click();
+  await expect(entries).toHaveCount(4);
+  await expect(entries.nth(0).locator(".lotion-feed-editor")).toBeVisible();
+  await db.getByRole("button", { name: "+ New meeting" }).click();
+  await expect(entries).toHaveCount(5, { timeout: 15000 });
+  await expect(entries.nth(0).locator(".lotion-feed-title")).toHaveText(
+    `📄 ${today} 회의`,
+  );
+  await expect(entries.nth(0).locator(".lotion-feed-editor")).toContainText(
+    "middle body text",
+  );
+  // the earlier entry stays open where the user was editing it
+  await expect(entries.nth(1)).toContainText("결정 사항");
+  // clicking inside the database never selects the whole block in the page editor
+  await entries
+    .nth(0)
+    .locator(".lotion-feed-editor [contenteditable=true]")
+    .click();
+  expect(
+    await db.evaluate(
+      (element) => getComputedStyle(element, "::after").display,
+    ),
+  ).not.toBe("block");
+  if (process.env.SHOT)
+    await page.screenshot({ path: process.env.SHOT, fullPage: true });
 });

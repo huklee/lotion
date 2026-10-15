@@ -52,7 +52,7 @@ function newId() {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 }
 
-type Menu = "sort" | "filter" | "properties" | `view:${string}` | null;
+type Menu = "add" | "sort" | "filter" | "properties" | `view:${string}` | null;
 
 /**
  * View tabs plus the Sort / Filter / Properties controls of the active view.
@@ -124,15 +124,9 @@ export function DatabaseViewBar({
           className="lotion-database-more"
           aria-label="Add view"
           title="Add view"
+          aria-expanded={menu?.kind === "add"}
           disabled={views.length >= MAX_VIEWS}
-          onClick={() => {
-            const view = {
-              ...defaultView("table", `Table ${views.length + 1}`),
-              id: newId(),
-            };
-            onChange([...views, view]);
-            onSelect(view.id);
-          }}
+          onClick={toggle("add")}
         >
           +
         </button>
@@ -166,6 +160,38 @@ export function DatabaseViewBar({
           {active.hidden.length ? ` (${active.hidden.length} hidden)` : ""}
         </button>
       </div>
+
+      {menu?.kind === "add" && (
+        <Floating anchor={menu.anchor} label="Add view" onClose={close}>
+          {(["table", "feed"] as const).map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => {
+                const count = views.filter((v) => v.type === type).length + 1;
+                const name = `${type === "feed" ? "Feed" : "Table"}${count > 1 ? ` ${count}` : ""}`;
+                const date = columns.find((c) => c.type === "date");
+                const view: DatabaseView = {
+                  ...defaultView(type, name),
+                  id: newId(),
+                  // A feed reads newest first when there is a date to sort by.
+                  sort:
+                    type === "feed" && date
+                      ? [{ columnId: date.id, direction: "desc" }]
+                      : [],
+                };
+                onChange([...views, view]);
+                onSelect(view.id);
+                close();
+              }}
+            >
+              {type === "feed"
+                ? "☰ Feed — read entries one after another"
+                : "▦ Table"}
+            </button>
+          ))}
+        </Floating>
+      )}
 
       {menu?.kind === `view:${active.id}` && (
         <Floating anchor={menu.anchor} label="View settings" onClose={close}>

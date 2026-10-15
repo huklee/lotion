@@ -248,6 +248,13 @@ test("sidebar drop nests a page", async ({ page }) => {
     await page.request.get(`/api/documents/${parent.id}`)
   ).json();
   expect(JSON.stringify(updatedParent.blocks)).toContain(`#/page/${d.id}`);
+  // WebKit on CI can turn the drag into a click on the child's link and open the
+  // child; the parent page must show the new link once it is open.
+  if (!page.url().includes(parent.id))
+    await parentRow
+      .getByRole("link", { name: parent.title, exact: true })
+      .click();
+  await expect(page).toHaveURL(new RegExp(parent.id));
   await expect(page.locator(`.tiptap a[href="#/page/${d.id}"]`)).toHaveCount(1);
 });
 

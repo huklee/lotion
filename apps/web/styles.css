@@ -1997,3 +1997,93 @@ kbd {
   color: var(--muted);
   text-align: center;
 }
+
+/* Database feed view */
+.lotion-feed {
+  display: grid;
+  gap: 18px;
+  padding-block: 6px;
+}
+.lotion-feed-entry {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.lotion-feed-entry > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin-bottom: 6px;
+}
+.lotion-feed-title {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 1.15em;
+  font-weight: 650;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+.lotion-feed-title:hover {
+  text-decoration: underline;
+}
+.lotion-feed-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+}
+.lotion-feed-chip {
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--hover);
+  font-variant-numeric: tabular-nums;
+}
+.lotion-feed-chip small {
+  color: var(--muted);
+}
+.lotion-feed-toggle,
+.lotion-feed-more {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.lotion-feed-toggle[aria-pressed="true"] {
+  color: var(--text);
+  border-color: var(--text);
+}
+.lotion-feed-more {
+  justify-self: start;
+}
+.lotion-feed-body {
+  cursor: text;
+}
+.lotion-feed-body .bn-block-outer {
+  line-height: 1.5;
+}
+.lotion-feed-loading,
+.lotion-feed-empty {
+  color: var(--muted);
+  font-size: 13px;
+}
+.lotion-feed-editor {
+  margin-inline: -8px;
+}
+.lotion-feed-editor .editor-tools {
+  display: none;
+}
+/* Working inside a database (inputs, feed editors) moves the DOM selection into the
+   block, which the page editor shows as a whole-block selection; hide that overlay. */
+.ProseMirror-selectednode
+  > .bn-block-content
+  > .lotion-database:focus-within::after {
+  display: none;
+}

@@ -6,7 +6,7 @@ Historical completed work lives in the [implementation history](implementation-h
 
 - [x] Database properties and rows: type change with conversion, select options, move/delete properties, duplicate/move/delete rows (0.29.0).
 - [x] Saved views with sort, filter and visible properties (0.30.0; the feed layout follows in the next step).
-- [ ] Feed view: row pages read one after another, newest first; newest editable in place; new-meeting template.
+- [x] Feed view: row pages read one after another, newest first; newest editable in place; new-meeting template (0.31.0).
 - [ ] Row multi-select and date-range presets for summary scopes.
 - [ ] Migrate topic meeting pages to one database per topic, keeping the originals.
 - [ ] On-demand summaries (one meeting / selected blocks / several rows) with selectable engine (Codex default, Claude Code), skill and editable prompt; summary page and Slack notification.

@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-16T09:50:00+09:00 — 0.31.0 database feed view
+
+Focused: `tests/e2e/database.spec.ts` feed scenario (newest-first order from the feed's date sort, older bodies read inline, typing in the in-place editor saved to the row page, "Edit here"/"Done" on another entry, no whole-block selection overlay while working inside, "+ New meeting" with today's date and the skeleton, then with a template row) passed **24/24** with `--repeat-each=8` across Chromium, Firefox and WebKit; the whole database spec passed 12/12. The row scenario's sidebar count was replaced with a `/api/tree` check under its own parent (other tests in the shared worker workspace also create "Kickoff" pages). Found and fixed during verification: the whole database block was selected (and highlighted) by clicks on its controls and by the DOM selection moving into the inline editor.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **226/226**; Playwright **226/226**. (An earlier full run had one Firefox feed failure under load, where "+ New meeting" was clicked before the feed re-rendered after a tab switch; the test now waits for the feed and allows 15 s for the entry.) Remote CI results are recorded on the pull request.
+
 ## 2026-10-16T02:35:00+09:00 — 0.30.0 saved database views
 
 Focused checks: `tests/unit/database-views.test.ts` passed **8/8** (default view for old blocks, round-trip with rules on deleted properties dropped, malformed views rejected, multi-rule stable sort with empties last, text/select/checkbox/number/date filters combined with AND, relative ranges this week/last 7 days/this month, incomplete rules not hiding rows, new-row defaults from equality filters). `tests/e2e/database.spec.ts` passed **9/9** across Chromium, Firefox and WebKit (filter Status is Done with the "1 of 2" counter, new row in a filtered view gets the filter value, second view with descending title sort and a hidden property, views stored in the block and restored after reload, view delete).

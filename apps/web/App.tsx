@@ -16,6 +16,8 @@ import { X } from "lucide-react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
 import { api, ApiError } from "./api";
 import { SaveCoordinator } from "./save-coordinator";
+import { RowPagesContext } from "./row-pages";
+import { InlineRowEditor } from "./InlineRowEditor";
 import { readBoolean } from "./preferences";
 import {
   blockIdFromHash,
@@ -128,6 +130,54 @@ export default function App() {
     setTreeTag(response.tag);
     return response.nodes;
   }, []);
+  const coordinatorFor = useCallback(async (doc: Document) => {
+    const id = doc.id;
+    let save = coordinators.current.get(id);
+    if (!save || (save.status === "Saved" && save.revision !== doc.revision)) {
+      save?.dispose();
+      save = new SaveCoordinator(doc, {
+        load: () => api<Document>(`/api/documents/${id}`),
+        archive: (draft) =>
+          set(
+            `lotion-recovery:${id}:${new Date().toISOString()}:${crypto.randomUUID()}`,
+            draft,
+          ),
+        save: (revision, content, mutationId) =>
+          api<Document>(`/api/documents/${id}/content`, {
+            method: "PUT",
+            headers: { "If-Match": String(revision) },
+            body: JSON.stringify({ ...content, mutationId }),
+          }),
+        checkpoint: (draft) => writeDraft(draftKey(id), draft),
+        changed: () => setVersion((v) => v + 1),
+        committed: (committed) =>
+          setTree((nodes) =>
+            nodes.map((node) =>
+              node.id === id
+                ? {
+                    ...node,
+                    revision: committed.revision,
+                    updatedAt: committed.updatedAt,
+                  }
+                : node,
+            ),
+          ),
+      });
+      coordinators.current.set(id, save);
+      try {
+        const draft = await readDraft(draftKey(id));
+        if (draft) {
+          save.recover(draft);
+          if (save.status === "Conflict") await save.review();
+        }
+      } catch {
+        setNotice(
+          "Browser draft recovery is unavailable. Server auto-save remains active.",
+        );
+      }
+    }
+    return save;
+  }, []);
   const openPage = useCallback(
     async (id: string, navigation: "push" | "replace" | "none" = "push") => {
       const sequence = ++loadNumber.current;
@@ -142,53 +192,7 @@ export default function App() {
           refresh(),
         ]);
         if (sequence !== loadNumber.current) return;
-        let save = coordinators.current.get(id);
-        if (
-          !save ||
-          (save.status === "Saved" && save.revision !== doc.revision)
-        ) {
-          save?.dispose();
-          save = new SaveCoordinator(doc, {
-            load: () => api<Document>(`/api/documents/${id}`),
-            archive: (draft) =>
-              set(
-                `lotion-recovery:${id}:${new Date().toISOString()}:${crypto.randomUUID()}`,
-                draft,
-              ),
-            save: (revision, content, mutationId) =>
-              api<Document>(`/api/documents/${id}/content`, {
-                method: "PUT",
-                headers: { "If-Match": String(revision) },
-                body: JSON.stringify({ ...content, mutationId }),
-              }),
-            checkpoint: (draft) => writeDraft(draftKey(id), draft),
-            changed: () => setVersion((v) => v + 1),
-            committed: (committed) =>
-              setTree((nodes) =>
-                nodes.map((node) =>
-                  node.id === id
-                    ? {
-                        ...node,
-                        revision: committed.revision,
-                        updatedAt: committed.updatedAt,
-                      }
-                    : node,
-                ),
-              ),
-          });
-          coordinators.current.set(id, save);
-          try {
-            const draft = await readDraft(draftKey(id));
-            if (draft) {
-              save.recover(draft);
-              if (save.status === "Conflict") await save.review();
-            }
-          } catch {
-            setNotice(
-              "Browser draft recovery is unavailable. Server auto-save remains active.",
-            );
-          }
-        }
+        await coordinatorFor(doc);
         if (sequence !== loadNumber.current) return;
         setActive(doc);
         setSearch(false);
@@ -556,11 +560,11 @@ export default function App() {
       setError,
       setNotice,
     });
-  async function copyBlockLink(blockId: string) {
-    if (!active) return;
+  async function copyBlockLink(blockId: string, pageId = active?.id) {
+    if (!pageId) return;
     try {
       await navigator.clipboard.writeText(
-        directBlockUrl(location.href, active.id, blockId),
+        directBlockUrl(location.href, pageId, blockId),
       );
       setNotice("Copied a direct link to this block.");
     } catch (e) {
@@ -637,170 +641,188 @@ export default function App() {
             history.pushState(null, "", "#/changes");
         }}
       />
-      <main>
-        <WorkspaceTopbar
-          sidebar={sidebar}
-          setSidebar={setSidebar}
-          trash={trash}
-          changes={changes}
-          breadcrumbPages={breadcrumbPages}
-          title={title}
-          openPage={openPage}
-          activeId={active?.id}
-          status={status}
-          favorite={!!active && favorites.includes(active.id)}
-          onExport={() => setDialog("export")}
-          onToggleFavorite={() => active && toggleFavorite(active.id)}
-          onDuplicate={() => active && void duplicate(active.id)}
-          onMove={() => setDialog("move")}
-          onTrash={() => active && void mutate(active.id, "trash")}
-        />
-        {error && (
-          <div className="message error" role="alert">
-            {error}
-            <button aria-label="Dismiss error" onClick={() => setError("")}>
-              <X size={15} />
-            </button>
-          </div>
-        )}
-        {notice && (
-          <div className="message notice" role="status">
-            {notice}
-            <button aria-label="Dismiss notice" onClick={() => setNotice("")}>
-              <X size={15} />
-            </button>
-          </div>
-        )}
-        <div className="main-scroll">
-          {changes ? (
-            <ChangesView
-              onOpen={(id, blockId) => {
-                cancelFlash.current?.();
-                cancelFlash.current = null;
-                void openPage(id).then(() => {
-                  if (blockId)
-                    cancelFlash.current = flashBlockWhenRendered(blockId);
-                });
-              }}
-              onOpenTrash={() => {
-                setChanges(false);
-                setTrash(true);
-                // the trash has no address of its own; don't keep showing #/changes
-                history.replaceState(null, "", "#/home");
-                void refresh().catch(handleError);
-              }}
-            />
-          ) : trash ? (
-            <TrashView
-              pages={tree}
-              onRestore={(id) => void mutate(id, "restore")}
-            />
-          ) : active && coordinator ? (
-            <ActiveDocument
-              key={`${active.id}:${active.revision}:${coordinator.editorVersion}`}
-              active={active}
-              coordinator={coordinator}
-              title={title}
-              theme={theme}
-              formattingShortcuts={formattingShortcuts}
-              pages={visible}
-              iconPicker={iconPicker}
-              iconQuery={iconQuery}
-              iconPickerRef={iconPickerRef}
-              titleInputRef={titleInput}
-              onToggleIconPicker={() => {
-                setIconQuery("");
-                setIconPicker((open) => !open);
-              }}
-              onIconQuery={setIconQuery}
-              onChooseIcon={(emoji) => {
-                coordinator.edit({ ...coordinator.content, icon: emoji });
-                setTree((nodes) =>
-                  nodes.map((node) =>
-                    node.id === active.id ? { ...node, icon: emoji } : node,
-                  ),
-                );
-                setIconPicker(false);
-                setIconQuery("");
-              }}
-              onTitleChange={(nextTitle) => {
-                coordinator.edit({
-                  ...coordinator.content,
-                  title: nextTitle,
-                });
-                setTree((nodes) =>
-                  nodes.map((node) =>
-                    node.id === active.id
-                      ? { ...node, title: nextTitle }
-                      : node,
-                  ),
-                );
-              }}
-              refresh={refresh}
-              openPage={openPage}
-              handleError={handleError}
-              createSubpage={(rowTitle) => createSubpage(active.id, rowTitle)}
-              duplicateRowPage={copyPage}
-              trashRowPage={async (id) => {
-                if (!(await mutate(id, "trash")))
-                  throw new Error(
-                    "The row page could not be moved to the trash.",
+      <RowPagesContext.Provider
+        value={{
+          load: (id) => api<Document>(`/api/documents/${id}`),
+          coordinator: async (id) =>
+            coordinators.current.get(id) ??
+            coordinatorFor(await api<Document>(`/api/documents/${id}`)),
+          version,
+          theme,
+          formattingShortcuts,
+          pages: visible,
+          openPage: (id) => void openPage(id),
+          createSubpage,
+          copyBlockLink: (pageId, blockId) => copyBlockLink(blockId, pageId),
+          InlineEditor: InlineRowEditor,
+        }}
+      >
+        <main>
+          <WorkspaceTopbar
+            sidebar={sidebar}
+            setSidebar={setSidebar}
+            trash={trash}
+            changes={changes}
+            breadcrumbPages={breadcrumbPages}
+            title={title}
+            openPage={openPage}
+            activeId={active?.id}
+            status={status}
+            favorite={!!active && favorites.includes(active.id)}
+            onExport={() => setDialog("export")}
+            onToggleFavorite={() => active && toggleFavorite(active.id)}
+            onDuplicate={() => active && void duplicate(active.id)}
+            onMove={() => setDialog("move")}
+            onTrash={() => active && void mutate(active.id, "trash")}
+          />
+          {error && (
+            <div className="message error" role="alert">
+              {error}
+              <button aria-label="Dismiss error" onClick={() => setError("")}>
+                <X size={15} />
+              </button>
+            </div>
+          )}
+          {notice && (
+            <div className="message notice" role="status">
+              {notice}
+              <button aria-label="Dismiss notice" onClick={() => setNotice("")}>
+                <X size={15} />
+              </button>
+            </div>
+          )}
+          <div className="main-scroll">
+            {changes ? (
+              <ChangesView
+                onOpen={(id, blockId) => {
+                  cancelFlash.current?.();
+                  cancelFlash.current = null;
+                  void openPage(id).then(() => {
+                    if (blockId)
+                      cancelFlash.current = flashBlockWhenRendered(blockId);
+                  });
+                }}
+                onOpenTrash={() => {
+                  setChanges(false);
+                  setTrash(true);
+                  // the trash has no address of its own; don't keep showing #/changes
+                  history.replaceState(null, "", "#/home");
+                  void refresh().catch(handleError);
+                }}
+              />
+            ) : trash ? (
+              <TrashView
+                pages={tree}
+                onRestore={(id) => void mutate(id, "restore")}
+              />
+            ) : active && coordinator ? (
+              <ActiveDocument
+                key={`${active.id}:${active.revision}:${coordinator.editorVersion}`}
+                active={active}
+                coordinator={coordinator}
+                title={title}
+                theme={theme}
+                formattingShortcuts={formattingShortcuts}
+                pages={visible}
+                iconPicker={iconPicker}
+                iconQuery={iconQuery}
+                iconPickerRef={iconPickerRef}
+                titleInputRef={titleInput}
+                onToggleIconPicker={() => {
+                  setIconQuery("");
+                  setIconPicker((open) => !open);
+                }}
+                onIconQuery={setIconQuery}
+                onChooseIcon={(emoji) => {
+                  coordinator.edit({ ...coordinator.content, icon: emoji });
+                  setTree((nodes) =>
+                    nodes.map((node) =>
+                      node.id === active.id ? { ...node, icon: emoji } : node,
+                    ),
                   );
-              }}
-              copyBlockLink={copyBlockLink}
-              onLinkPreview={(url, preview) =>
-                coordinator.edit({
-                  ...coordinator.content,
-                  linkPreviews: {
-                    ...coordinator.content.linkPreviews,
-                    [url]: preview,
-                  },
-                })
-              }
-              onBlocksChange={(blocks) =>
-                coordinator.edit({ ...coordinator.content, blocks })
-              }
-              onBackgroundImage={(id, url, name) => {
-                let found = false;
-                const update = (
-                  blocks: Document["blocks"],
-                ): Document["blocks"] =>
-                  blocks.map((block) => {
-                    if (block.id === id) {
-                      found = true;
+                  setIconPicker(false);
+                  setIconQuery("");
+                }}
+                onTitleChange={(nextTitle) => {
+                  coordinator.edit({
+                    ...coordinator.content,
+                    title: nextTitle,
+                  });
+                  setTree((nodes) =>
+                    nodes.map((node) =>
+                      node.id === active.id
+                        ? { ...node, title: nextTitle }
+                        : node,
+                    ),
+                  );
+                }}
+                refresh={refresh}
+                openPage={openPage}
+                handleError={handleError}
+                createSubpage={(rowTitle) => createSubpage(active.id, rowTitle)}
+                duplicateRowPage={copyPage}
+                trashRowPage={async (id) => {
+                  if (!(await mutate(id, "trash")))
+                    throw new Error(
+                      "The row page could not be moved to the trash.",
+                    );
+                }}
+                copyBlockLink={copyBlockLink}
+                onLinkPreview={(url, preview) =>
+                  coordinator.edit({
+                    ...coordinator.content,
+                    linkPreviews: {
+                      ...coordinator.content.linkPreviews,
+                      [url]: preview,
+                    },
+                  })
+                }
+                onBlocksChange={(blocks) =>
+                  coordinator.edit({ ...coordinator.content, blocks })
+                }
+                onBackgroundImage={(id, url, name) => {
+                  let found = false;
+                  const update = (
+                    blocks: Document["blocks"],
+                  ): Document["blocks"] =>
+                    blocks.map((block) => {
+                      if (block.id === id) {
+                        found = true;
+                        return {
+                          ...block,
+                          props: { ...block.props, url, name, caption: "" },
+                        };
+                      }
                       return {
                         ...block,
-                        props: { ...block.props, url, name, caption: "" },
+                        children: update(block.children ?? []),
                       };
-                    }
-                    return {
-                      ...block,
-                      children: update(block.children ?? []),
-                    };
-                  });
-                const blocks = update(coordinator.content.blocks);
-                if (found) coordinator.edit({ ...coordinator.content, blocks });
-              }}
-            />
-          ) : (
-            <WorkspaceHome
-              roots={roots}
-              pageCount={visible.length}
-              create={create}
-              openPage={openPage}
-              onExport={() => setDialog("export")}
-              onImport={() => setDialog("import")}
-            />
-          )}
-        </div>
-        <footer className="bottom-bar">
-          <span>
-            <span className="local-dot" /> LOCAL WORKSPACE
-          </span>
-          <span>No distractions. Just your thoughts.</span>
-          <button onClick={() => setDialog("help")}>?</button>
-        </footer>
-      </main>
+                    });
+                  const blocks = update(coordinator.content.blocks);
+                  if (found)
+                    coordinator.edit({ ...coordinator.content, blocks });
+                }}
+              />
+            ) : (
+              <WorkspaceHome
+                roots={roots}
+                pageCount={visible.length}
+                create={create}
+                openPage={openPage}
+                onExport={() => setDialog("export")}
+                onImport={() => setDialog("import")}
+              />
+            )}
+          </div>
+          <footer className="bottom-bar">
+            <span>
+              <span className="local-dot" /> LOCAL WORKSPACE
+            </span>
+            <span>No distractions. Just your thoughts.</span>
+            <button onClick={() => setDialog("help")}>?</button>
+          </footer>
+        </main>
+      </RowPagesContext.Provider>
       <WorkspaceDialog
         dialog={dialog}
         search={search}
