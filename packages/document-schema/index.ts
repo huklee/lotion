@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { readDatabaseState } from "../database/model";
+import { readViews } from "../database/views";
 
 export type Inline = {
   type: string;
@@ -206,7 +207,11 @@ export const contentSchema = z
         } else if (block.type === "database") {
           if (block.content !== undefined)
             throw new Error("Database cannot contain inline content");
-          readDatabaseState(block.props?.columns, block.props?.rows);
+          const database = readDatabaseState(
+            block.props?.columns,
+            block.props?.rows,
+          );
+          readViews(block.props?.views, database.columns);
         } else if (block.type === "mermaid") {
           if (
             block.content !== undefined ||

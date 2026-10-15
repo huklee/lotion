@@ -145,3 +145,77 @@ test("database rows: duplicate, move and delete (page goes to the trash)", async
     })
     .toBe(true);
 });
+
+test("database views: filter, sort, hide properties and saved views", async ({
+  page,
+}) => {
+  const parent = await seedDatabase(page);
+  const db = page.locator(".lotion-database");
+  const titles = () =>
+    db.locator(".lotion-database-row-title button:first-child").allInnerTexts();
+  await expect(db.getByRole("tab", { name: /Table/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  // filter: Status is Done
+  await db.getByRole("button", { name: "Filter" }).click();
+  const filter = page.getByRole("dialog", { name: "Filter" });
+  await filter.getByRole("button", { name: "+ Add filter" }).click();
+  await filter
+    .getByLabel("Filter 1 property")
+    .selectOption({ label: "Status" });
+  await filter.getByLabel("Filter 1 condition").selectOption("is");
+  await filter.getByLabel("Filter 1 value").selectOption("Done");
+  await page.keyboard.press("Escape");
+  await expect.poll(titles).toEqual(["📄 Review"]);
+  await expect(db.getByText("1 of 2")).toBeVisible();
+  // a new row in a filtered view satisfies the filter
+  await db.getByRole("button", { name: "New row page" }).click();
+  await expect.poll(async () => (await titles()).length).toBe(2);
+  await expect(db.getByLabel("Status for Untitled row")).toHaveValue("Done");
+  // second view: sort by Page descending, hide Notes
+  await db.getByRole("button", { name: "Add view" }).click();
+  await expect(db.getByRole("tab", { name: /Table 2/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect.poll(async () => (await titles()).length).toBe(3);
+  await db.getByRole("button", { name: "Sort" }).click();
+  const sort = page.getByRole("dialog", { name: "Sort" });
+  await sort.getByRole("button", { name: "+ Add sort" }).click();
+  await sort.getByLabel("Sort 1 direction").selectOption("desc");
+  await page.keyboard.press("Escape");
+  await expect
+    .poll(titles)
+    .toEqual(["📄 Untitled row", "📄 Review", "📄 Kickoff"]);
+  await db.getByRole("button", { name: "Properties" }).click();
+  await page
+    .getByRole("dialog", { name: "Visible properties" })
+    .getByLabel("Notes")
+    .uncheck();
+  await page.keyboard.press("Escape");
+  await expect(db.getByLabel("Notes property name")).toHaveCount(0);
+  // views are stored in the block and survive a reload
+  await expect
+    .poll(async () => {
+      const doc = await (
+        await page.request.get(`/api/documents/${parent.id}`)
+      ).json();
+      const block = doc.blocks.find((b: any) => b.type === "database");
+      return JSON.parse(block.props.views || "[]").length;
+    })
+    .toBe(2);
+  await page.reload();
+  await db.getByRole("tab", { name: /^▦ Table$/ }).click();
+  await expect.poll(async () => (await titles()).length).toBe(2);
+  await expect(db.getByLabel("Notes property name")).toBeVisible();
+  await db.getByRole("tab", { name: /Table 2/ }).click();
+  await expect(db.getByLabel("Notes property name")).toHaveCount(0);
+  // delete the second view
+  await db.getByRole("button", { name: "Table 2 view settings" }).click();
+  await page
+    .getByRole("dialog", { name: "View settings" })
+    .getByRole("button", { name: "Delete view" })
+    .click();
+  await expect(db.getByRole("tab")).toHaveCount(1);
+});

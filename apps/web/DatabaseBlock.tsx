@@ -8,6 +8,15 @@ import {
 } from "react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
 import { PropertyMenu, RowMenu } from "./DatabaseMenus";
+import { DatabaseViewBar } from "./DatabaseViews";
+import {
+  applyView,
+  defaultView,
+  filterDefaults,
+  readViews,
+  viewsJson,
+  type DatabaseView,
+} from "../../packages/database/views";
 import {
   DATABASE_PROPERTY_TYPES,
   DEFAULT_DATABASE_COLUMNS_JSON,
@@ -59,6 +68,31 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
       );
     }
   }, [block.props.columns, block.props.rows]);
+  const views = useMemo(() => {
+    try {
+      return readViews(block.props.views, state.columns);
+    } catch {
+      return [defaultView()];
+    }
+  }, [block.props.views, state.columns]);
+  const viewKey = `lotion-database-view:${block.id}`;
+  const [activeId, setActiveId] = useState<string>(() => {
+    try {
+      return localStorage.getItem(viewKey) ?? "";
+    } catch {
+      return "";
+    }
+  });
+  const active: DatabaseView =
+    views.find((view) => view.id === activeId) ?? views[0];
+  const selectView = (id: string) => {
+    setActiveId(id);
+    try {
+      localStorage.setItem(viewKey, id);
+    } catch {
+      /* per-viewer convenience only */
+    }
+  };
   const [adding, setAdding] = useState(false);
   const [propertyType, setPropertyType] =
     useState<DatabasePropertyType>("text");
@@ -79,6 +113,8 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
       }),
     [block, editor],
   );
+  const updateViews = (next: DatabaseView[]) =>
+    editor.updateBlock(block, { props: { views: viewsJson(next) } });
   /** For async results: apply `change` to the block's state as it is *now*. */
   const updateLatest = useCallback(
     (change: (current: DatabaseState) => DatabaseState) => {
@@ -108,6 +144,15 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
     if (changed) update({ ...state, rows });
   }, [actions, state, update]);
 
+  const rowTitle = (row: DatabaseRow) => {
+    const id = pageId(row.href);
+    return actions?.pages.find((page) => page.id === id)?.title ?? row.title;
+  };
+  const shownRows = applyView(state, active, rowTitle);
+  const shownColumns = state.columns.filter(
+    (column) => !active.hidden.includes(column.id),
+  );
+
   const setValue = (
     row: DatabaseRow,
     column: DatabaseColumn,
@@ -127,12 +172,21 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
 
   return (
     <section className="lotion-database" contentEditable={false}>
+      <DatabaseViewBar
+        views={views}
+        active={active}
+        columns={state.columns}
+        shown={shownRows.length}
+        total={state.rows.length}
+        onSelect={selectView}
+        onChange={updateViews}
+      />
       <div className="lotion-database-scroll">
         <table>
           <thead>
             <tr>
               <th>Page</th>
-              {state.columns.map((column) => (
+              {shownColumns.map((column) => (
                 <th key={column.id} className="lotion-database-property">
                   <input
                     aria-label={`${column.name} property name`}
@@ -189,7 +243,19 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
             </tr>
           </thead>
           <tbody>
-            {state.rows.map((row) => {
+            {shownRows.length === 0 && (
+              <tr>
+                <td
+                  className="lotion-database-empty"
+                  colSpan={shownColumns.length + 1}
+                >
+                  {state.rows.length
+                    ? "No rows match this view's filters."
+                    : "No rows yet."}
+                </td>
+              </tr>
+            )}
+            {shownRows.map((row) => {
               const id = pageId(row.href);
               const page = actions?.pages.find(
                 (candidate) => candidate.id === id,
@@ -281,7 +347,7 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
                       />
                     )}
                   </th>
-                  {state.columns.map((column) => {
+                  {shownColumns.map((column) => {
                     const value =
                       row.values[column.id] ?? emptyValue(column.type);
                     const label = `${column.name} for ${title}`;
@@ -349,20 +415,21 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
             setError("");
             void actions
               .createRowPage("Untitled row")
-              .then((page) =>
-                update({
-                  ...state,
+              .then((page) => {
+                const values = filterDefaults(active, state.columns);
+                updateLatest((latest) => ({
+                  ...latest,
                   rows: [
-                    ...state.rows,
+                    ...latest.rows,
                     {
                       id: crypto.randomUUID(),
                       href: `#/page/${page.id}`,
                       title: page.title,
-                      values: {},
+                      values,
                     },
                   ],
-                }),
-              )
+                }));
+              })
               .catch((reason) => setError((reason as Error).message))
               .finally(() => setAdding(false));
           }}

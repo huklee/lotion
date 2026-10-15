@@ -24,7 +24,7 @@ const TYPE_LABEL: Record<DatabasePropertyType, string> = {
  * table's scroll container cannot clip it. Closes on Escape, an outside click or a
  * page scroll, and returns focus to the button that opened it.
  */
-function Floating({
+export function Floating({
   anchor,
   label,
   onClose,

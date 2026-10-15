@@ -2,6 +2,18 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.30.0 — 2026-10-16
+
+### Added
+
+- **Saved database views:** a tab bar above every database. Each view has its own name, filters, sort and visible properties; add, rename, duplicate and delete views from the tab bar. Views are stored in the database block, so every reader sees them; which tab you last opened is remembered per browser.
+- **Filter:** rules on the page title or any property, all of which must match — text contains / is / is empty, select is / is not, checkbox checked / unchecked, number comparisons, and dates (is, before, after, on or before/after, today, this week, last 7 / 30 days, this month, empty). An incomplete rule never hides every row; a "N of M" counter shows how many rows the view keeps.
+- **Sort:** up to five rules (page title or any property, ascending or descending); empty values always last; without sorts rows keep their manual order.
+- **Visible properties:** hide or show properties per view.
+- A new row created in a filtered view gets values that satisfy its equality filters (e.g. "Type is Weekly", "Date is this week" → today).
+
+Existing databases get one default "Table" view; no stored-content migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.29.0 — 2026-10-16
 
 ### Added

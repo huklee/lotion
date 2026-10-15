@@ -2,11 +2,11 @@
 
 Updated: 2026-09-20. This file is the portable project memory for future Codex sessions working in `/Users/huklee/Work/lotion`.
 
-Prepared application checkpoint 0.29.0 starts the meeting-database programme ([ADR-025](adr/025-meeting-databases-and-summaries.md), progress in `docs/meeting-db-progress.md`) with database property and row management. Checkpoint 0.28.0 made Recent changes entries open the page at the edited block with a one-time flash. Checkpoint 0.27.0 added a workspace-wide Recent changes feed (sidebar, `#/changes`, `GET /api/changes`) built from the stored revision snapshots. Checkpoint 0.26.1 bounded table-of-contents scrolling (accelerate/decelerate, at most 0.65 s). Checkpoint 0.26.0 made Ctrl/Cmd+Enter check every checklist item inside a text or block selection (nested items included; all-checked selections are unchecked). Checkpoint 0.25.0 added an automatic right-hand page outline (table of contents) for every page with headings. Checkpoint 0.24.1 made `Ctrl/Cmd` sidebar page-link clicks deterministic by explicitly opening the destination in a new tab. Version 0.24.0 added a nested, expandable document tree to the upper-right page-move dialog; the tree excludes the active page and its descendants. Earlier hierarchy, clipboard, storage, search, and database capabilities remain available. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
+Prepared application checkpoint 0.30.0 adds saved database views (filter, sort, visible properties), step 2 of the meeting-database programme ([ADR-025](adr/025-meeting-databases-and-summaries.md), progress in `docs/meeting-db-progress.md`). Checkpoint 0.29.0 added database property and row management. Checkpoint 0.28.0 made Recent changes entries open the page at the edited block with a one-time flash. Checkpoint 0.27.0 added a workspace-wide Recent changes feed (sidebar, `#/changes`, `GET /api/changes`) built from the stored revision snapshots. Checkpoint 0.26.1 bounded table-of-contents scrolling (accelerate/decelerate, at most 0.65 s). Checkpoint 0.26.0 made Ctrl/Cmd+Enter check every checklist item inside a text or block selection (nested items included; all-checked selections are unchecked). Checkpoint 0.25.0 added an automatic right-hand page outline (table of contents) for every page with headings. Checkpoint 0.24.1 made `Ctrl/Cmd` sidebar page-link clicks deterministic by explicitly opening the destination in a new tab. Version 0.24.0 added a nested, expandable document tree to the upper-right page-move dialog; the tree excludes the active page and its descendants. Earlier hierarchy, clipboard, storage, search, and database capabilities remain available. Browser tests use isolated per-worker servers/workspaces and full Playwright parallelism. Remaining work is tracked under `docs/`.
 
 ## Project identity
 
-- Current prepared application version: **0.29.0**. Local verification is recorded before its direct-to-main pull request; do not claim publication until its remote gates and the post-merge `main` workflow pass. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
+- Current prepared application version: **0.30.0**. Local verification is recorded before its direct-to-main pull request; do not claim publication until its remote gates and the post-merge `main` workflow pass. Earlier failure records are historical; read the latest test/history entries before resuming old backlog work.
 
 - The project began as **Yestion** in `/Users/huklee/Work/yestion` and was moved into the Git repository `/Users/huklee/Work/lotion`.
 - Lotion is the canonical working tree and GitHub repository: `https://github.com/huklee/lotion.git`, branch `main`.
@@ -31,7 +31,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Source of truth and workflow
 
-- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; deterministic modified sidebar clicks are fixed in 0.24.1, the automatic page outline is added in 0.25.0, bulk checklist toggling on selections in 0.26.0, bounded table-of-contents scrolling in 0.26.1, the recent changes feed in 0.27.0, jump-to-edit in 0.28.0, and database property/row management in 0.29.0.
+- Follow [version management](versioning.md) and record releases in [changelog](changelog.md). Compatible features use a minor increment and bug fixes use a patch increment; deterministic modified sidebar clicks are fixed in 0.24.1, the automatic page outline is added in 0.25.0, bulk checklist toggling on selections in 0.26.0, bounded table-of-contents scrolling in 0.26.1, the recent changes feed in 0.27.0, jump-to-edit in 0.28.0, database property/row management in 0.29.0, and saved database views in 0.30.0.
 
 - Start by reading `README.md`, `docs/remained_job.md`, `docs/test-results.md`, `docs/implementation-history-log.md`, `docs/decisions.md`, and relevant ADRs.
 - Keep plans, design decisions, tests and implementation logs in `docs/` Markdown.
@@ -41,7 +41,7 @@ They are copied from the global Codex session store, retained read-only as a his
 
 ## Current status and open work
 
-- This release branch started from `origin/main` at `808de31`. Check `git status --branch` and `git log` before working; later commits may exist.
+- This release branch started from `origin/main` at `a6a0d78`. Check `git status --branch` and `git log` before working; later commits may exist.
 - The complete backlog and acceptance criteria live in `docs/remained_job.md`. Continue one item at a time from current `origin/main`, using one pull request whose base is `main`; merge and verify ancestry before starting the next item. Stacked feature pull requests are prohibited.
 - The reported server pages returned HTTP 200. The specific user browser conflict draft cannot be inspected from a separate browser/session; verify it through the UI and retain a recovery copy before choosing a conflicting version.
 

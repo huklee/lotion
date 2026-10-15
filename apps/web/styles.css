@@ -1927,3 +1927,73 @@ kbd {
   border-radius: 6px;
   background: var(--lotion-red-background, #fbe4e4);
 }
+
+/* Database views */
+.lotion-database-viewbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.lotion-database-tabs,
+.lotion-database-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+.lotion-database-tab {
+  display: inline-flex;
+  align-items: center;
+}
+.lotion-database-tab [role="tab"],
+.lotion-database-tools button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.lotion-database-tab [role="tab"][aria-selected="true"] {
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--text);
+  border-radius: 0;
+}
+.lotion-database-tab [role="tab"]:hover,
+.lotion-database-tools button:hover,
+.lotion-database-tools button[aria-expanded="true"] {
+  background: var(--hover);
+  color: var(--text);
+}
+.lotion-database-tools small {
+  color: var(--muted);
+  margin-right: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.lotion-database-hint {
+  margin: 0;
+  color: var(--muted);
+}
+.lotion-database-filter {
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+.lotion-database-filter select {
+  min-width: 0;
+  flex: 1;
+}
+.lotion-database-menu label.lotion-database-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.lotion-database-empty {
+  color: var(--muted);
+  text-align: center;
+}
