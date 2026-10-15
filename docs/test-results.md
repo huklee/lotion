@@ -1,10 +1,16 @@
 # Test results
 
+## 2026-10-15T10:57:39+09:00 — 0.28.0 recent changes open at the edit
+
+Focused checks: `tests/unit/changes.test.ts` passed **7/7** (the edited block is recorded; a sitting points at its newest edited block). `tests/e2e/changes.spec.ts` passed **36/36** with `--repeat-each=3` across Chromium, Firefox and WebKit, including opening an entry at its edit (a block 55 paragraphs down is scrolled into view, is the only element to flash, and the flash clears by itself) and an entry whose block was later deleted (the page opens without errors). Checked on the owner's live workspace: the entry opened its page with the edited line centred and flashing.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **212/212**; Playwright **213/214** twice, each time one different unrelated scenario under host load (load average ≈ 10.8 from other local services) — `block-selection.spec.ts:506` (Chromium drag) and `portability.spec.ts:7` (WebKit import) — which passed **15/15** and **5/5** when repeated alone. Remote CI results are recorded on the pull request.
+
 ## 2026-10-15T10:15:41+09:00 — 0.27.0 recent changes feed
 
 Environment: macOS (Apple Silicon), Node.js v25.8.2, npm 11.11.1, Playwright browsers installed locally for this checkout.
 
-Focused checks: `tests/unit/changes.test.ts` passed **6/6** (created/edited/renamed/moved/trashed/restored detection, nested block counts and excerpt, 30-minute sitting grouping, k-way merge order across pages, cursor paging with snapshot reuse, a missing snapshot skipped without ending the page's history). The new API integration scenario (create → edit → rename → move → trash → restore through HTTP, plus `limit`/`before` validation) passed. `tests/e2e/changes.spec.ts` passed **18/18** with `--repeat-each=3` across Chromium, Firefox and WebKit: editor edit, API rename and trash, sidebar entry, `#/changes` address and breadcrumb, newest-first order, opening a page and opening the Trash for a trashed page, direct load of `#/changes`, and paging back through the whole history without duplicates.
+Focused checks: `tests/unit/changes.test.ts` passed **6/6** (created/edited/renamed/moved/trashed/restored detection, nested block counts and excerpt, 30-minute sitting grouping, k-way merge order across pages, cursor paging with snapshot reuse, a missing snapshot skipped without ending the page's history). The new API integration scenario (create → edit → rename → move → trash → restore through HTTP, plus `limit`/`before` validation) passed. `tests/e2e/changes.spec.ts` passed **18/18** with `--repeat-each=3` across Chromium, Firefox and WebKit: editor edit, API rename and trash, sidebar entry, `#/changes` address and breadcrumb, newest-first order, opening a page and opening the Trash for a trashed page, direct load of `#/changes`, paging back through the whole history without duplicates.
 
 Two issues were found and fixed during verification: opening a trashed page's entry left the address at `#/changes` (now reset), and the first paging test named its pages "Paged N", which collided with another scenario's substring role query in the shared per-worker workspace (renamed to "Feed item N").
 

@@ -2,6 +2,14 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.28.0 — 2026-10-15
+
+### Added
+
+- **Recent changes open the page at the edit**: clicking an entry scrolls to the block that was added or changed (for a sitting, the newest one) and flashes it once — a short double pulse, or a static highlight with reduced motion. If that block no longer exists, the page opens normally.
+
+No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.27.0 — 2026-10-15
 
 ### Added
