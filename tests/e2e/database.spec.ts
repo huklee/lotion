@@ -135,5 +135,13 @@ test("database rows: duplicate, move and delete (page goes to the trash)", async
   await page.getByRole("button", { name: "Delete row", exact: true }).click();
   await expect(db.locator("tbody tr")).toHaveCount(2);
   await expect(db.getByRole("button", { name: /Review/ })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /^Trash/ })).toContainText("1");
+  // its page is in the trash (workers share a workspace, so don't rely on the trash count)
+  await expect
+    .poll(async () => {
+      const tree = await (await page.request.get("/api/tree")).json();
+      return tree.nodes
+        .filter((n: { title: string }) => n.title === "Review")
+        .some((n: { deletedAt: string | null }) => !!n.deletedAt);
+    })
+    .toBe(true);
 });
