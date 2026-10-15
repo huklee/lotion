@@ -106,6 +106,15 @@ export async function createApp(
     reply.header("ETag", `"${repo.treeTag()}"`);
     return { nodes: repo.tree(), tag: repo.treeTag() };
   });
+  app.get("/api/changes", async (req) => {
+    const query = z
+      .object({
+        limit: z.coerce.number().int().min(1).max(100).default(30),
+        before: z.string().datetime({ offset: true }).optional(),
+      })
+      .parse(req.query);
+    return repo.changes(query.limit, query.before);
+  });
   app.get("/api/search", async (req, reply) => {
     const input = z
       .object({
