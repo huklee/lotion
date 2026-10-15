@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.29.0 — 2026-10-16
+
+### Added
+
+- **Database property menu (⋯ on each property):** change the type with value conversion (text → select turns existing values into options; numbers are parsed; checkboxes become Yes/No as text), edit select options (renaming carries values along, removing clears them), move a property left or right, and delete it after an in-page confirmation.
+- **Database row menu (⋯ next to each row):** duplicate the row (its page is copied and the new row keeps the same values, right below), move it up or down, and delete it — the row disappears at once and its page goes to the trash (restorable); if trashing fails the row is put back.
+- Menus float above the page so the table's scroll area can no longer clip them; Esc, an outside click or scrolling closes them and focus returns to the button.
+
+### Fixed
+
+- Trashing or restoring a page no longer waits for its parent page's unsaved draft: only a move rewrites parent page links, so e.g. deleting a database row right after editing the table works.
+
+No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
+
 ## 0.28.0 — 2026-10-15
 
 ### Added

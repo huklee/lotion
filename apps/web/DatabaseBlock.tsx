@@ -7,11 +7,15 @@ import {
   useState,
 } from "react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
+import { PropertyMenu, RowMenu } from "./DatabaseMenus";
 import {
   DATABASE_PROPERTY_TYPES,
   DEFAULT_DATABASE_COLUMNS_JSON,
   DEFAULT_DATABASE_ROWS_JSON,
+  insertRowCopy,
+  moveRow,
   readDatabaseState,
+  removeRow,
   type DatabaseColumn,
   type DatabasePropertyType,
   type DatabaseRow,
@@ -23,6 +27,10 @@ export type DatabaseActions = {
   pages: TreeNode[];
   createRowPage: (title: string) => Promise<Document>;
   openPage: (id: string) => void;
+  /** Copy a row page (and its children) next to it without navigating. */
+  duplicateRowPage?: (id: string) => Promise<Document>;
+  /** Move a row page to the trash. */
+  trashRowPage?: (id: string) => Promise<void>;
 };
 
 export const DatabaseActionsContext = createContext<DatabaseActions | null>(
@@ -55,6 +63,11 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
   const [propertyType, setPropertyType] =
     useState<DatabasePropertyType>("text");
   const [error, setError] = useState("");
+  const [menu, setMenu] = useState<{
+    kind: "property" | "row";
+    id: string;
+    anchor: HTMLElement;
+  } | null>(null);
 
   const update = useCallback(
     (next: DatabaseState) =>
@@ -65,6 +78,21 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
         },
       }),
     [block, editor],
+  );
+  /** For async results: apply `change` to the block's state as it is *now*. */
+  const updateLatest = useCallback(
+    (change: (current: DatabaseState) => DatabaseState) => {
+      const current = editor.getBlock(block.id);
+      if (!current) return;
+      let latest: DatabaseState;
+      try {
+        latest = readDatabaseState(current.props.columns, current.props.rows);
+      } catch {
+        return;
+      }
+      update(change(latest));
+    },
+    [block.id, editor, update],
   );
 
   useEffect(() => {
@@ -105,7 +133,7 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
             <tr>
               <th>Page</th>
               {state.columns.map((column) => (
-                <th key={column.id}>
+                <th key={column.id} className="lotion-database-property">
                   <input
                     aria-label={`${column.name} property name`}
                     maxLength={100}
@@ -125,6 +153,37 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
                     }
                   />
                   <small>{column.type}</small>
+                  <button
+                    type="button"
+                    className="lotion-database-more"
+                    aria-label={`${column.name} property settings`}
+                    aria-expanded={
+                      menu?.kind === "property" && menu.id === column.id
+                    }
+                    onClick={(event) =>
+                      setMenu(
+                        menu?.kind === "property" && menu.id === column.id
+                          ? null
+                          : {
+                              kind: "property",
+                              id: column.id,
+                              anchor: event.currentTarget,
+                            },
+                      )
+                    }
+                  >
+                    ⋯
+                  </button>
+                  {menu?.kind === "property" && menu.id === column.id && (
+                    <PropertyMenu
+                      anchor={menu.anchor}
+                      column={column}
+                      state={state}
+                      index={state.columns.indexOf(column)}
+                      update={update}
+                      onClose={() => setMenu(null)}
+                    />
+                  )}
                 </th>
               ))}
             </tr>
@@ -138,7 +197,7 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
               const title = (page?.title ?? row.title) || "Untitled row";
               return (
                 <tr key={row.id}>
-                  <th>
+                  <th className="lotion-database-row-title">
                     <button
                       type="button"
                       disabled={!id || !page || !actions}
@@ -146,6 +205,81 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
                     >
                       {page?.icon ?? "📄"} {title}
                     </button>
+                    <button
+                      type="button"
+                      className="lotion-database-more"
+                      aria-label="Row actions"
+                      title={`Actions for ${title}`}
+                      aria-expanded={menu?.kind === "row" && menu.id === row.id}
+                      onClick={(event) =>
+                        setMenu(
+                          menu?.kind === "row" && menu.id === row.id
+                            ? null
+                            : {
+                                kind: "row",
+                                id: row.id,
+                                anchor: event.currentTarget,
+                              },
+                        )
+                      }
+                    >
+                      ⋯
+                    </button>
+                    {menu?.kind === "row" && menu.id === row.id && (
+                      <RowMenu
+                        anchor={menu.anchor}
+                        index={state.rows.indexOf(row)}
+                        count={state.rows.length}
+                        canPage={!!id && !!page && !!actions?.duplicateRowPage}
+                        onClose={() => setMenu(null)}
+                        onMove={(delta) =>
+                          update(moveRow(state, row.id, delta))
+                        }
+                        onDuplicate={() => {
+                          if (!id || !actions?.duplicateRowPage) return;
+                          setMenu(null);
+                          setError("");
+                          void actions
+                            .duplicateRowPage(id)
+                            .then((copy) =>
+                              updateLatest((latest) =>
+                                insertRowCopy(latest, row.id, {
+                                  id: crypto.randomUUID(),
+                                  href: `#/page/${copy.id}`,
+                                  title: copy.title,
+                                }),
+                              ),
+                            )
+                            .catch((reason) =>
+                              setError((reason as Error).message),
+                            );
+                        }}
+                        onDelete={() => {
+                          setMenu(null);
+                          setError("");
+                          // Remove the row right away, then trash its page; if trashing
+                          // fails, put the row back where it was.
+                          const index = state.rows.indexOf(row);
+                          update(removeRow(state, row.id));
+                          if (!id || !page || !actions?.trashRowPage) return;
+                          void actions.trashRowPage(id).catch((reason) => {
+                            setError((reason as Error).message);
+                            updateLatest((latest) =>
+                              latest.rows.some((r) => r.id === row.id)
+                                ? latest
+                                : {
+                                    ...latest,
+                                    rows: [
+                                      ...latest.rows.slice(0, index),
+                                      row,
+                                      ...latest.rows.slice(index),
+                                    ],
+                                  },
+                            );
+                          });
+                        }}
+                      />
+                    )}
                   </th>
                   {state.columns.map((column) => {
                     const value =
