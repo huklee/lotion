@@ -18,6 +18,7 @@ import { api, ApiError } from "./api";
 import { SaveCoordinator } from "./save-coordinator";
 import { RowPagesContext } from "./row-pages";
 import { InlineRowEditor } from "./InlineRowEditor";
+import { VersionButton } from "./VersionPanel";
 import { readBoolean } from "./preferences";
 import {
   blockIdFromHash,
@@ -819,7 +820,10 @@ export default function App() {
               <span className="local-dot" /> LOCAL WORKSPACE
             </span>
             <span>No distractions. Just your thoughts.</span>
-            <button onClick={() => setDialog("help")}>?</button>
+            <span className="bottom-bar-end">
+              <VersionButton />
+              <button onClick={() => setDialog("help")}>?</button>
+            </span>
           </footer>
         </main>
       </RowPagesContext.Provider>

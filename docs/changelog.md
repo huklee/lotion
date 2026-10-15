@@ -2,7 +2,16 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
-## 0.31.0 — 2026-10-16
+## 0.32.0 — 2026-10-16
+
+### Added
+
+- **Version button and "What's new" panel:** the bottom bar shows the running version (`v0.32.0`) at the right. Clicking it opens a panel with the build (commit and build time) and every release from this changelog — newest first, each with its date, the pull request that shipped it and its added/fixed notes. A dot marks a version you have not opened yet; releases newer than the one you last saw are tagged "new". Search filters by text, version or `#PR`.
+- Every changelog heading now links its pull request (backfilled from the merge history for 0.7.0 onwards).
+
+No stored-content change. Verification is recorded in [test results](test-results.md).
+
+## 0.31.0 — 2026-10-16 · [#49](https://github.com/huklee/lotion/pull/49)
 
 ### Added
 
@@ -16,7 +25,7 @@ Versions are recorded in `package.json` and `package-lock.json`. Each release re
 
 Existing databases are unchanged (the new `template` block property defaults to empty). Verification is recorded in [test results](test-results.md).
 
-## 0.30.0 — 2026-10-16
+## 0.30.0 — 2026-10-16 · [#48](https://github.com/huklee/lotion/pull/48)
 
 ### Added
 
@@ -28,7 +37,7 @@ Existing databases are unchanged (the new `template` block property defaults to 
 
 Existing databases get one default "Table" view; no stored-content migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.29.0 — 2026-10-16
+## 0.29.0 — 2026-10-16 · [#47](https://github.com/huklee/lotion/pull/47)
 
 ### Added
 
@@ -42,7 +51,7 @@ Existing databases get one default "Table" view; no stored-content migration is 
 
 No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.28.0 — 2026-10-15
+## 0.28.0 — 2026-10-15 · [#46](https://github.com/huklee/lotion/pull/46)
 
 ### Added
 
@@ -50,7 +59,7 @@ No document schema or stored-content migration is required. Verification is reco
 
 No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.27.0 — 2026-10-15
+## 0.27.0 — 2026-10-15 · [#45](https://github.com/huklee/lotion/pull/45)
 
 ### Added
 
@@ -60,7 +69,7 @@ No document schema or stored-content migration is required. Verification is reco
 
 No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.26.1 — 2026-10-08
+## 0.26.1 — 2026-10-08 · [#44](https://github.com/huklee/lotion/pull/44)
 
 ### Fixed
 
@@ -69,7 +78,7 @@ No document schema or stored-content migration is required. Verification is reco
 
 No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.26.0 — 2026-10-06
+## 0.26.0 — 2026-10-06 · [#43](https://github.com/huklee/lotion/pull/43)
 
 ### Added
 
@@ -78,7 +87,7 @@ No document schema or stored-content migration is required. Verification is reco
 
 No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.25.0 — 2026-09-30
+## 0.25.0 — 2026-09-30 · [#42](https://github.com/huklee/lotion/pull/42)
 
 ### Added
 
@@ -88,7 +97,7 @@ No document schema or stored-content migration is required. Verification is reco
 
 No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.24.1 — 2026-09-20
+## 0.24.1 — 2026-09-20 · [#41](https://github.com/huklee/lotion/pull/41)
 
 ### Fixed
 
@@ -98,7 +107,7 @@ No document schema or stored-content migration is required. Verification is reco
 
 No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.24.0 — 2026-09-20
+## 0.24.0 — 2026-09-20 · [#40](https://github.com/huklee/lotion/pull/40)
 
 ### Added
 
@@ -113,7 +122,7 @@ No document schema or stored-content migration is required. Verification is reco
 
 Verification is recorded in [test results](test-results.md).
 
-## 0.23.0 — 2026-09-19
+## 0.23.0 — 2026-09-19 · [#39](https://github.com/huklee/lotion/pull/39)
 
 ### Added
 
@@ -125,7 +134,7 @@ Verification is recorded in [test results](test-results.md).
 
 No document schema migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.22.0 — 2026-09-19
+## 0.22.0 — 2026-09-19 · [#38](https://github.com/huklee/lotion/pull/38)
 
 ### Added
 
@@ -135,7 +144,7 @@ No document schema migration is required. Verification is recorded in [test resu
 
 Managed hierarchy links use stable identities, so retries and same-parent reordering do not create duplicates. User-authored links are never removed. The existing `/page` command continues to insert its own single link without a backend duplicate. Parent-link and hierarchy changes share the repository's atomic manifest boundary; no stored-document schema migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.21.2 — 2026-09-19
+## 0.21.2 — 2026-09-19 · [#37](https://github.com/huklee/lotion/pull/37)
 
 ### Fixed
 
@@ -144,7 +153,7 @@ Managed hierarchy links use stable identities, so retries and same-parent reorde
 
 The browser-session record remains schema-validated, regenerates all block IDs, survives an in-tab reload, and falls back safely when session storage is unavailable. The system clipboard remains portable Markdown. No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.21.1 — 2026-09-19
+## 0.21.1 — 2026-09-19 · [#36](https://github.com/huklee/lotion/pull/36)
 
 ### Fixed
 
@@ -153,7 +162,7 @@ The browser-session record remains schema-validated, regenerates all block IDs, 
 
 Arbitrary external Markdown retains the existing literal-paste policy; only an exact match for Lotion's latest selected-block copy uses exact reconstruction. No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.21.0 — 2026-09-19
+## 0.21.0 — 2026-09-19 · [#35](https://github.com/huklee/lotion/pull/35)
 
 ### Added
 
@@ -166,7 +175,7 @@ Arbitrary external Markdown retains the existing literal-paste policy; only an e
 
 Verification is recorded in [test results](test-results.md).
 
-## 0.20.1 — 2026-09-19
+## 0.20.1 — 2026-09-19 · [#34](https://github.com/huklee/lotion/pull/34)
 
 ### Fixed
 
@@ -175,7 +184,7 @@ Verification is recorded in [test results](test-results.md).
 
 No document data, schema, or migration changes are required. Verification is recorded in [test results](test-results.md).
 
-## 0.20.0 — 2026-09-19
+## 0.20.0 — 2026-09-19 · [#33](https://github.com/huklee/lotion/pull/33)
 
 ### Added
 
@@ -184,7 +193,7 @@ No document data, schema, or migration changes are required. Verification is rec
 
 Cut waits for a successful clipboard write before deleting content, so a denied or failed clipboard operation leaves the document intact. Existing document data and schema version 1 are unchanged. Verification is recorded in [test results](test-results.md).
 
-## 0.19.1 — 2026-09-19
+## 0.19.1 — 2026-09-19 · [#32](https://github.com/huklee/lotion/pull/32)
 
 ### Fixed
 
@@ -193,7 +202,7 @@ Cut waits for a successful clipboard write before deleting content, so a denied 
 
 Ordinary paragraph paste continues preserving terminal blank lines under the existing line-by-line plain-text rules. No document schema or stored content migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.19.0 — 2026-09-19
+## 0.19.0 — 2026-09-19 · [#31](https://github.com/huklee/lotion/pull/31)
 
 ### Improved
 
@@ -203,7 +212,7 @@ Ordinary paragraph paste continues preserving terminal blank lines under the exi
 
 Stored document color keys and schema version 1 remain unchanged, so existing documents continue to render and export without migration. This backward-compatible interaction improvement is a minor release. Verification is recorded in [test results](test-results.md).
 
-## 0.18.0 — 2026-09-19
+## 0.18.0 — 2026-09-19 · [#30](https://github.com/huklee/lotion/pull/30)
 
 ### Improved
 
@@ -212,7 +221,7 @@ Stored document color keys and schema version 1 remain unchanged, so existing do
 
 This browser-local state is not document content, is not included in exports, and ends when the tab session ends. No document-schema migration is required. Verification is recorded in [test results](test-results.md).
 
-## 0.17.0 — 2026-09-19
+## 0.17.0 — 2026-09-19 · [#29](https://github.com/huklee/lotion/pull/29)
 
 ### Added
 
@@ -225,7 +234,7 @@ This browser-local state is not document content, is not included in exports, an
 
 This backward-compatible editor feature is a minor release. Verification is recorded in [test results](test-results.md).
 
-## 0.16.0 — 2026-09-18
+## 0.16.0 — 2026-09-18 · [#27](https://github.com/huklee/lotion/pull/27)
 
 ### Added
 
@@ -239,7 +248,7 @@ This backward-compatible editor feature is a minor release. Verification is reco
 
 No document/content schema migration is required. Direct external editing remains unsupported, malformed manifests still require a known-good backup, and orphan retention is deliberately separate. See [ADR-024](adr/024-storage-diagnostics-and-reconciliation.md) and the [recovery runbook](running.md#workspace-diagnosis-and-reconciliation).
 
-## 0.15.0 — 2026-09-17
+## 0.15.0 — 2026-09-17 · [#26](https://github.com/huklee/lotion/pull/26)
 
 ### Added
 
@@ -253,7 +262,7 @@ No document/content schema migration is required. Direct external editing remain
 
 No schema-version migration is required. Existing ordinary tables remain ordinary tables; they are not guessed into databases. [ADR-023](adr/023-typed-database-rows.md) records the selected scope and excluded advanced features. Verification is recorded in [test results](test-results.md).
 
-## 0.14.0 — 2026-09-17
+## 0.14.0 — 2026-09-17 · [#25](https://github.com/huklee/lotion/pull/25)
 
 ### Added
 
@@ -267,7 +276,7 @@ No schema-version migration is required. Existing ordinary tables remain ordinar
 
 No schema-version migration is required. Existing page/external mentions and legacy plain-text dates remain valid; they are not guessed into new types. [ADR-022](adr/022-file-and-date-references.md) records validation, navigation, keyboard, and portability rules. Verification is recorded in [test results](test-results.md).
 
-## 0.13.0 — 2026-09-17
+## 0.13.0 — 2026-09-17 · [#24](https://github.com/huklee/lotion/pull/24)
 
 ### Added
 
@@ -283,7 +292,7 @@ No schema-version migration is required. Existing page/external mentions and leg
 
 No schema-version migration is required. Existing links remain readable, and the new preview timestamp is optional. [ADR-021](adr/021-reference-chips-and-preview-cache.md) records the compatibility and cache boundaries. Verification is recorded in [test results](test-results.md).
 
-## 0.12.1 — 2026-09-17
+## 0.12.1 — 2026-09-17 · [#23](https://github.com/huklee/lotion/pull/23)
 
 ### Fixed
 
@@ -293,7 +302,7 @@ No schema-version migration is required. Existing links remain readable, and the
 
 No document schema migration is needed. Link-preview limits, redirect validation, DNS pinning, accepted MIME types, and locally cached image behavior remain unchanged. Verification is recorded in [test results](test-results.md).
 
-## 0.12.0 — 2026-09-17
+## 0.12.0 — 2026-09-17 · [#22](https://github.com/huklee/lotion/pull/22)
 
 ### Added
 
@@ -307,7 +316,7 @@ No document schema migration is needed. Link-preview limits, redirect validation
 
 No document schema migration is needed. The index is derived data and is not included in backups or exports. Verification is recorded in [test results](test-results.md).
 
-## 0.11.0 — 2026-09-16
+## 0.11.0 — 2026-09-16 · [#21](https://github.com/huklee/lotion/pull/21)
 
 ### Added
 
@@ -320,7 +329,7 @@ No document schema migration is needed. The index is derived data and is not inc
 
 No document schema migration is needed. These preferences remain browser-local and do not enter shared document data or exports. Verification is recorded in [test results](test-results.md).
 
-## 0.10.0 — 2026-09-16
+## 0.10.0 — 2026-09-16 · [#20](https://github.com/huklee/lotion/pull/20)
 
 ### Added
 
@@ -334,7 +343,7 @@ No document schema migration is needed. These preferences remain browser-local a
 
 No document schema migration is needed. This minor release changes presentation values and adds a browser-local appearance choice without changing portable color keys. Verification is recorded in [test results](test-results.md).
 
-## 0.9.0 — 2026-09-16
+## 0.9.0 — 2026-09-16 · [#19](https://github.com/huklee/lotion/pull/19)
 
 ### Added
 
@@ -344,7 +353,7 @@ No document schema migration is needed. This minor release changes presentation 
 
 No document schema migration is needed. This minor release derives browser presentation from existing page metadata and adds no stored fields. Verification is recorded in [test results](test-results.md).
 
-## 0.8.0 — 2026-09-16
+## 0.8.0 — 2026-09-16 · [#18](https://github.com/huklee/lotion/pull/18)
 
 ### Improved
 
@@ -353,7 +362,7 @@ No document schema migration is needed. This minor release derives browser prese
 
 No document schema migration is needed. This minor release changes transient selection hit testing only; existing documents remain compatible. Verification is recorded in [test results](test-results.md).
 
-## 0.7.2 — 2026-09-16
+## 0.7.2 — 2026-09-16 · [#17](https://github.com/huklee/lotion/pull/17)
 
 ### Fixed
 
@@ -362,7 +371,7 @@ No document schema migration is needed. This minor release changes transient sel
 
 No document schema migration is needed. This patch changes input routing only; existing diagrams remain compatible. Verification is recorded in [test results](test-results.md).
 
-## 0.7.1 — 2026-09-16
+## 0.7.1 — 2026-09-16 · [#16](https://github.com/huklee/lotion/pull/16)
 
 ### Fixed
 
@@ -370,7 +379,7 @@ No document schema migration is needed. This patch changes input routing only; e
 
 No document schema migration is needed. This patch changes checklist paste interaction only; existing documents remain compatible. Verification is recorded in [test results](test-results.md).
 
-## 0.7.0 — 2026-09-15
+## 0.7.0 — 2026-09-15 · [#1](https://github.com/huklee/lotion/pull/1)
 
 ### Added
 
