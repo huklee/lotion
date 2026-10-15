@@ -99,6 +99,8 @@ export default function Editor({
   onChange,
   onBackgroundImage,
   onCreateSubpage,
+  onDuplicateRowPage,
+  onTrashRowPage,
   onCopyBlockLink,
   onOpenPage,
   onLinkPreview,
@@ -110,6 +112,8 @@ export default function Editor({
   onChange: (blocks: Block[]) => void;
   onBackgroundImage: (id: string, url: string, name: string) => void;
   onCreateSubpage: (title?: string) => Promise<Document>;
+  onDuplicateRowPage?: (id: string) => Promise<Document>;
+  onTrashRowPage?: (id: string) => Promise<void>;
   onCopyBlockLink: (blockId: string) => Promise<void>;
   onOpenPage: (id: string) => void;
   onLinkPreview: (url: string, preview: LinkPreview) => void;
@@ -280,8 +284,10 @@ export default function Editor({
       pages,
       createRowPage: onCreateSubpage,
       openPage: onOpenPage,
+      duplicateRowPage: onDuplicateRowPage,
+      trashRowPage: onTrashRowPage,
     }),
-    [onCreateSubpage, onOpenPage, pages],
+    [onCreateSubpage, onOpenPage, onDuplicateRowPage, onTrashRowPage, pages],
   );
   const refreshedPageTitles = useRef("");
   const migrationSent = useRef(false);

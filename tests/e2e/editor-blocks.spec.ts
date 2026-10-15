@@ -297,7 +297,8 @@ test("typed database rows are child pages and other custom blocks persist", asyn
     "Status",
   );
   await database.getByRole("button", { name: "New row page" }).click();
-  const rowLink = database.getByRole("button", { name: /Untitled row/ });
+  // the title button (the row's "⋯ actions" button also mentions the title)
+  const rowLink = database.getByRole("button", { name: /Untitled row$/ });
   await expect(rowLink).toBeVisible();
   await database
     .getByLabel("Status for Untitled row")

@@ -166,3 +166,171 @@ export function databaseText(state: DatabaseState): string {
     ),
   ].join("\n");
 }
+
+/* ---------- schema and row operations (pure; the block saves the result) ---------- */
+
+const MAX_OPTIONS = 20;
+
+function convertValue(
+  value: DatabaseValue | undefined,
+  from: DatabasePropertyType,
+  to: DatabasePropertyType,
+  options: string[],
+): DatabaseValue {
+  if (value === undefined || value === null || value === "") return null;
+  const asText =
+    from === "checkbox" ? (value ? "Yes" : "No") : String(value).trim();
+  switch (to) {
+    case "text":
+      return asText.slice(0, 500);
+    case "number": {
+      if (from === "checkbox") return value ? 1 : 0;
+      const n = Number(asText.replace(/,/g, ""));
+      return asText !== "" && Number.isFinite(n) ? n : null;
+    }
+    case "checkbox":
+      if (from === "checkbox") return value as boolean;
+      return /^(yes|true|1|y|✓|done|o)$/i.test(asText);
+    case "date":
+      return isIsoDate(asText) ? asText : null;
+    case "select":
+      return options.includes(asText) ? asText : null;
+  }
+}
+
+/** Change a property's type, converting every value that has a meaningful equivalent. */
+export function changeColumnType(
+  state: DatabaseState,
+  columnId: string,
+  type: DatabasePropertyType,
+): DatabaseState {
+  const column = state.columns.find((c) => c.id === columnId);
+  if (!column || column.type === type) return state;
+  let options: string[] = [];
+  if (type === "select") {
+    // keep existing distinct values as options (bounded)
+    const seen = new Set<string>();
+    for (const row of state.rows) {
+      const value = convertValue(row.values[columnId], column.type, "text", []);
+      if (typeof value === "string" && value && !seen.has(value))
+        seen.add(value);
+    }
+    options = [...seen].map((o) => o.slice(0, 100)).slice(0, MAX_OPTIONS);
+    if (!options.length) options = ["Option 1", "Option 2"];
+  }
+  const next: DatabaseColumn = { id: column.id, name: column.name, type };
+  if (type === "select") next.options = options;
+  return {
+    columns: state.columns.map((c) => (c.id === columnId ? next : c)),
+    rows: state.rows.map((row) => {
+      const values = { ...row.values };
+      const converted = convertValue(
+        values[columnId],
+        column.type,
+        type,
+        options,
+      );
+      if (converted === null) delete values[columnId];
+      else values[columnId] = converted;
+      return { ...row, values };
+    }),
+  };
+}
+
+/**
+ * Replace a select property's options. `renames` maps old option → new option so
+ * existing values follow a rename; values of removed options are cleared.
+ */
+export function setSelectOptions(
+  state: DatabaseState,
+  columnId: string,
+  options: string[],
+  renames: Record<string, string> = {},
+): DatabaseState {
+  const column = state.columns.find((c) => c.id === columnId);
+  if (!column || column.type !== "select") return state;
+  const clean = [
+    ...new Set(options.map((o) => o.trim().slice(0, 100)).filter(Boolean)),
+  ].slice(0, MAX_OPTIONS);
+  if (!clean.length)
+    throw new Error("A select property needs at least one option");
+  return {
+    columns: state.columns.map((c) =>
+      c.id === columnId ? { ...c, options: clean } : c,
+    ),
+    rows: state.rows.map((row) => {
+      const current = row.values[columnId];
+      if (typeof current !== "string" || current === "") return row;
+      const renamed = renames[current] ?? current;
+      const values = { ...row.values };
+      if (clean.includes(renamed)) values[columnId] = renamed;
+      else delete values[columnId];
+      return { ...row, values };
+    }),
+  };
+}
+
+export function removeColumn(
+  state: DatabaseState,
+  columnId: string,
+): DatabaseState {
+  return {
+    columns: state.columns.filter((c) => c.id !== columnId),
+    rows: state.rows.map((row) => {
+      if (!(columnId in row.values)) return row;
+      const values = { ...row.values };
+      delete values[columnId];
+      return { ...row, values };
+    }),
+  };
+}
+
+function move<T extends { id: string }>(
+  items: T[],
+  id: string,
+  delta: number,
+): T[] {
+  const from = items.findIndex((item) => item.id === id);
+  const to = from + delta;
+  if (from < 0 || to < 0 || to >= items.length) return items;
+  const next = [...items];
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
+}
+
+export function moveColumn(
+  state: DatabaseState,
+  columnId: string,
+  delta: number,
+): DatabaseState {
+  return { ...state, columns: move(state.columns, columnId, delta) };
+}
+
+export function moveRow(
+  state: DatabaseState,
+  rowId: string,
+  delta: number,
+): DatabaseState {
+  return { ...state, rows: move(state.rows, rowId, delta) };
+}
+
+export function removeRow(state: DatabaseState, rowId: string): DatabaseState {
+  return { ...state, rows: state.rows.filter((row) => row.id !== rowId) };
+}
+
+/** Insert a reference to a copied row page right after the original, with the same values. */
+export function insertRowCopy(
+  state: DatabaseState,
+  rowId: string,
+  copy: { id: string; href: string; title: string },
+): DatabaseState {
+  const index = state.rows.findIndex((row) => row.id === rowId);
+  if (index < 0 || state.rows.length >= 500) return state;
+  const rows = [...state.rows];
+  rows.splice(index + 1, 0, {
+    ...copy,
+    values: structuredClone(state.rows[index].values),
+  });
+  return { ...state, rows };
+}

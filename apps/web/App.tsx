@@ -388,6 +388,20 @@ export default function App() {
       handleError(error);
     }
   }
+  /** Copy a page next to itself without opening it (database row duplicate). */
+  async function copyPage(id: string) {
+    for (const pageId of [id]) await coordinators.current.get(pageId)?.flush();
+    const nodes = await refresh();
+    const node = nodes.find((item) => item.id === id);
+    if (!node) throw new Error("Page not found");
+    const copy = await api<Document>(`/api/documents/${id}/copy`, {
+      method: "POST",
+      headers: { "If-Match": String(node.revision) },
+      body: JSON.stringify({ mutationId: crypto.randomUUID() }),
+    });
+    await refresh();
+    return copy;
+  }
   async function createSubpage(parentId: string, title = "Untitled") {
     try {
       const doc = await api<Document>("/api/documents", {
@@ -451,16 +465,18 @@ export default function App() {
     id: string,
     action: "trash" | "restore" | "move",
     options: Record<string, unknown> = {},
-  ) {
+  ): Promise<boolean> {
     try {
       const initialNode = tree.find((node) => node.id === id);
       const destination =
         action === "move" && typeof options.parentId === "string"
           ? options.parentId
           : undefined;
-      const relevant = [id, initialNode?.parentId, destination].filter(
-        (item): item is string => !!item,
-      );
+      // Only a move rewrites the parents' page links on the server; trash and restore
+      // leave the parent untouched, so its draft (e.g. a database edit) need not block them.
+      const relevant = (
+        action === "move" ? [id, initialNode?.parentId, destination] : [id]
+      ).filter((item): item is string => !!item);
       for (const pageId of relevant)
         await coordinators.current.get(pageId)?.flush();
       if (
@@ -501,8 +517,10 @@ export default function App() {
         await openPage(changed.id);
       }
       setDialog(null);
+      return true;
     } catch (e) {
       handleError(e);
+      return false;
     }
   }
   const { busy, copyPageMarkdown, exportWorkspace, importFiles, dropFolder } =
@@ -722,6 +740,13 @@ export default function App() {
               openPage={openPage}
               handleError={handleError}
               createSubpage={(rowTitle) => createSubpage(active.id, rowTitle)}
+              duplicateRowPage={copyPage}
+              trashRowPage={async (id) => {
+                if (!(await mutate(id, "trash")))
+                  throw new Error(
+                    "The row page could not be moved to the trash.",
+                  );
+              }}
               copyBlockLink={copyBlockLink}
               onLinkPreview={(url, preview) =>
                 coordinator.edit({

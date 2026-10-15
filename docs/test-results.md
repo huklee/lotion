@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-16T01:44:52+09:00 — 0.29.0 database properties and rows
+
+Focused checks: `tests/unit/database-ops.test.ts` passed **6/6** (type conversions in every direction used, option rename/removal, move/remove of properties and rows, row copy; every result re-validated by `readDatabaseState`). `tests/e2e/database.spec.ts` (property type change, option rename/removal, move, in-page delete confirmation, persistence; row duplicate as a real child page, move, delete into the trash) plus the existing database scenario passed **36/36** with `--repeat-each=4` across Chromium, Firefox and WebKit. Verification found and fixed: menus clipped by the table's scroll container (clicks intercepted in Firefox/WebKit → portal), a row delete refused right after a table edit ("Resolve the unsaved draft" — trash/restore no longer guard the parent page), and a slow-trash race that could bring a deleted row back (optimistic removal, restore on failure, async changes applied to the latest block state). The existing database scenario's title-button pattern was anchored (`/Untitled row$/`) because the row's new actions button carries the title in its tooltip only.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **218/218**; Playwright **219/220** — the one failure, `block-selection.spec.ts:983` (real Chromium clipboard across reload, already recorded as load-sensitive), also fails 1 of 5 repeats on an unmodified main build, so it is pre-existing. Remote CI results are recorded on the pull request.
+
 ## 2026-10-15T10:57:39+09:00 — 0.28.0 recent changes open at the edit
 
 Focused checks: `tests/unit/changes.test.ts` passed **7/7** (the edited block is recorded; a sitting points at its newest edited block). `tests/e2e/changes.spec.ts` passed **36/36** with `--repeat-each=3` across Chromium, Firefox and WebKit, including opening an entry at its edit (a block 55 paragraphs down is scrolled into view, is the only element to flash, and the flash clears by itself) and an entry whose block was later deleted (the page opens without errors). Checked on the owner's live workspace: the entry opened its page with the edited line centred and flashing.

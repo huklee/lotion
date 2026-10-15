@@ -2,6 +2,16 @@
 
 Historical completed work lives in the [implementation history](implementation-history-log.md), [test results](test-results.md), and [changelog](changelog.md). The completed sequence remains visible below for review across its six incremental pull requests.
 
+## Meeting databases and summaries — 2026-10-16 ([ADR-025](adr/025-meeting-databases-and-summaries.md), [progress](meeting-db-progress.md))
+
+- [x] Database properties and rows: type change with conversion, select options, move/delete properties, duplicate/move/delete rows (0.29.0).
+- [ ] Saved views with sort, filter and visible properties (table and feed).
+- [ ] Feed view: row pages read one after another, newest first; newest editable in place; new-meeting template.
+- [ ] Row multi-select and date-range presets for summary scopes.
+- [ ] Migrate topic meeting pages to one database per topic, keeping the originals.
+- [ ] On-demand summaries (one meeting / selected blocks / several rows) with selectable engine (Codex default, Claude Code), skill and editable prompt; summary page and Slack notification.
+- [ ] Later: Confluence-style email delivery.
+
 ## Completed user requests — 2026-10-15
 
 - [x] Opening a Recent changes entry goes to the edited block with a one-time flash (0.28.0).

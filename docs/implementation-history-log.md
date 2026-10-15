@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-10-16T01:41:01+09:00 — 0.29.0 database properties and rows prepared
+
+First step of [ADR-025](adr/025-meeting-databases-and-summaries.md) (meeting databases and summaries; progress in [meeting-db-progress](meeting-db-progress.md)). `packages/database/model.ts` gains pure, validator-checked operations: `changeColumnType` (value conversion; text→select derives bounded options from distinct values), `setSelectOptions` (renames carry values, removals clear them), `removeColumn`, `moveColumn`, `moveRow`, `removeRow`, `insertRowCopy`. `apps/web/DatabaseMenus.tsx` adds the property and row menus, rendered through a portal (`position: fixed`) because the table's horizontal scroll container clipped absolutely positioned menus and let the actions bar intercept clicks in Firefox and WebKit. Row duplicate uses a new non-navigating `copyPage`; row delete removes the reference immediately, trashes the page and restores the row on failure, and async results apply to the block's latest state (`updateLatest`) instead of the state captured at click time. `mutate` now returns success and only flushes/guards the parent pages for moves: trash and restore do not modify the parent on the server, and guarding them made a delete right after a table edit fail with "Resolve the unsaved draft". `apps/web/Editor.tsx` remains above the 1,000-line review threshold (pre-existing, +6 lines of action plumbing).
+
 ## 2026-10-15T10:57:39+09:00 — 0.28.0 recent changes open at the edit prepared
 
 Each revision change records the first added/changed block id (a sitting keeps its newest one); opening an entry waits for that block to render, scrolls it to the centre with the bounded scroll helper and applies a one-shot CSS pulse (`apps/web/block-flash.ts`; static highlight under reduced motion), giving up silently when the block is gone. Shipped separately because 0.27.0 was merged before this follow-up.

@@ -31,6 +31,8 @@ type ActiveDocumentProps = {
   openPage: (id: string) => Promise<void>;
   handleError: (error: unknown) => void;
   createSubpage: (title?: string) => Promise<Document>;
+  duplicateRowPage: (id: string) => Promise<Document>;
+  trashRowPage: (id: string) => Promise<void>;
   copyBlockLink: (blockId: string) => Promise<void>;
   onLinkPreview: (url: string, preview: LinkPreview) => void;
   onBlocksChange: (blocks: Block[]) => void;
@@ -56,6 +58,8 @@ export function ActiveDocument({
   openPage,
   handleError,
   createSubpage,
+  duplicateRowPage,
+  trashRowPage,
   copyBlockLink,
   onLinkPreview,
   onBlocksChange,
@@ -119,6 +123,8 @@ export function ActiveDocument({
           formattingShortcuts={formattingShortcuts}
           pages={pages}
           onCreateSubpage={createSubpage}
+          onDuplicateRowPage={duplicateRowPage}
+          onTrashRowPage={trashRowPage}
           onCopyBlockLink={copyBlockLink}
           onOpenPage={(id) => void openPage(id)}
           onLinkPreview={onLinkPreview}

@@ -41,7 +41,7 @@ type WorkspaceSidebarProps = {
     id: string,
     action: "move",
     options: Record<string, unknown>,
-  ) => Promise<void>;
+  ) => Promise<unknown>;
   toggleFavorite: (id: string) => void;
   setSearch: (open: boolean) => void;
   setDialog: (dialog: "import" | "settings" | "help") => void;
