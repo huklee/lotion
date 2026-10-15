@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-16T02:35:00+09:00 — 0.30.0 saved database views
+
+Focused checks: `tests/unit/database-views.test.ts` passed **8/8** (default view for old blocks, round-trip with rules on deleted properties dropped, malformed views rejected, multi-rule stable sort with empties last, text/select/checkbox/number/date filters combined with AND, relative ranges this week/last 7 days/this month, incomplete rules not hiding rows, new-row defaults from equality filters). `tests/e2e/database.spec.ts` passed **9/9** across Chromium, Firefox and WebKit (filter Status is Done with the "1 of 2" counter, new row in a filtered view gets the filter value, second view with descending title sort and a hidden property, views stored in the block and restored after reload, view delete).
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **226/226**; Playwright **222/223** — the one failure, `mentions.spec.ts:120` in Firefox (paste chooser, unrelated to databases), passed 3/3 when repeated alone. Remote CI results are recorded on the pull request.
+
 ## 2026-10-16T01:44:52+09:00 — 0.29.0 database properties and rows
 
 Focused checks: `tests/unit/database-ops.test.ts` passed **6/6** (type conversions in every direction used, option rename/removal, move/remove of properties and rows, row copy; every result re-validated by `readDatabaseState`). `tests/e2e/database.spec.ts` (property type change, option rename/removal, move, in-page delete confirmation, persistence; row duplicate as a real child page, move, delete into the trash) plus the existing database scenario passed **36/36** with `--repeat-each=4` across Chromium, Firefox and WebKit. Verification found and fixed: menus clipped by the table's scroll container (clicks intercepted in Firefox/WebKit → portal), a row delete refused right after a table edit ("Resolve the unsaved draft" — trash/restore no longer guard the parent page), and a slow-trash race that could bring a deleted row back (optimistic removal, restore on failure, async changes applied to the latest block state). The existing database scenario's title-button pattern was anchored (`/Untitled row$/`) because the row's new actions button carries the title in its tooltip only.
