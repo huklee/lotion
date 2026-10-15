@@ -251,8 +251,12 @@ export function RowMenu({
   onMove,
   onDelete,
   onClose,
+  isTemplate,
+  onTemplate,
 }: {
   anchor: HTMLElement;
+  isTemplate?: boolean;
+  onTemplate?: () => void;
   index: number;
   count: number;
   canPage: boolean;
@@ -267,6 +271,13 @@ export function RowMenu({
       <button type="button" disabled={!canPage} onClick={onDuplicate}>
         Duplicate row
       </button>
+      {onTemplate && (
+        <button type="button" disabled={!canPage} onClick={onTemplate}>
+          {isTemplate
+            ? "✓ Template for new entries"
+            : "Use as template for new entries"}
+        </button>
+      )}
       <div className="lotion-database-menu-row">
         <button type="button" disabled={index === 0} onClick={() => onMove(-1)}>
           ↑ Move up

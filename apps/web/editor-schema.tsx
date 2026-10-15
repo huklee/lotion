@@ -114,6 +114,7 @@ export const editorSchema = BlockNoteSchema.create({
           columns: { default: DEFAULT_DATABASE_COLUMNS_JSON },
           rows: { default: DEFAULT_DATABASE_ROWS_JSON },
           views: { default: "" },
+          template: { default: "" },
         },
       },
       {

@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.31.0 — 2026-10-16
+
+### Added
+
+- **Feed view for databases** (`+` next to the view tabs → Feed): row pages are read one after another in the view's order — a new feed sorts by the first date property, newest first — with their properties shown as chips. Bodies load as they scroll near and the feed shows 10 entries at a time ("Show more").
+- **Edit in place:** the first entry opens as a full editor inside the feed and saves to its own page through the same save pipeline as the page editor (drafts, retries, conflicts — a conflicted entry links to its page to resolve it). Any other entry switches to editing with "Edit here" (or a double-click) and back with "Done"; the title opens the page.
+- **New meeting:** a feed's "+ New meeting" creates a row page titled `YYYY-MM-DD 회의` at the top, with today's date in the first date property (plus any values the view's filters imply) and a body copied from the template row, or a meeting skeleton (참석자 / 안건 / 논의 내용 / 결정 사항 / 액션 아이템) when there is none. Choose the template with "Use as template for new entries" in a row's ⋯ menu.
+
+### Fixed
+
+- Clicking a database's own controls (tabs, menus, feed entries) no longer selects the whole database block, and working inside it no longer shows the whole-block selection overlay.
+
+Existing databases are unchanged (the new `template` block property defaults to empty). Verification is recorded in [test results](test-results.md).
+
 ## 0.30.0 — 2026-10-16
 
 ### Added
