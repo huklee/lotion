@@ -14,7 +14,7 @@ The bounded database of [ADR-023](023-typed-database-rows.md) (one table view, a
 Build it in small, separately merged releases:
 
 1. **Properties and rows (0.29.0):** change a property's type with value conversion, edit select options (rename follows values, removal clears them), move and delete properties, duplicate/move/delete rows (a deleted row's page goes to the trash; the row is removed immediately and restored if trashing fails). Menus render in a floating layer so the table's scroll container cannot clip them.
-2. **Views:** saved views per database (table and feed), each with its own sort, filter (date range, select, text, checkbox) and visible properties, stored in the block next to columns and rows; old blocks get one default table view.
+2. **Views (0.30.0):** saved views per database (table and feed), each with its own sort, filter (date range, select, text, checkbox) and visible properties, stored in the block next to columns and rows; old blocks get one default table view.
 3. **Feed view:** row pages rendered one after another, newest first, read inline; the newest editable in place, any other opened beside the feed; a "New meeting" button creating a row from a template (date = today, defaults, body skeleton).
 4. **Bulk selection and range helpers** used by summaries (select rows; filter presets such as this week).
 5. **Migration:** one database per topic page; each meeting section becomes a row (date, title), originals kept untouched in an archive page; a preview table before applying.

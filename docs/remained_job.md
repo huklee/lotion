@@ -5,7 +5,7 @@ Historical completed work lives in the [implementation history](implementation-h
 ## Meeting databases and summaries — 2026-10-16 ([ADR-025](adr/025-meeting-databases-and-summaries.md), [progress](meeting-db-progress.md))
 
 - [x] Database properties and rows: type change with conversion, select options, move/delete properties, duplicate/move/delete rows (0.29.0).
-- [ ] Saved views with sort, filter and visible properties (table and feed).
+- [x] Saved views with sort, filter and visible properties (0.30.0; the feed layout follows in the next step).
 - [ ] Feed view: row pages read one after another, newest first; newest editable in place; new-meeting template.
 - [ ] Row multi-select and date-range presets for summary scopes.
 - [ ] Migrate topic meeting pages to one database per topic, keeping the originals.
