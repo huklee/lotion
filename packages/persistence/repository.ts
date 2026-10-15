@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import lockfile from "proper-lockfile";
+import { ChangeFeed } from "./change-feed";
 import { generateKeyBetween } from "fractional-indexing";
 import {
   AppError,
@@ -41,6 +42,11 @@ export class Repository {
     documentHashes: {},
   };
   private tail: Promise<unknown> = Promise.resolve();
+  private readonly changeFeed = new ChangeFeed({
+    heads: () => [...this.docs.values()],
+    read: (id, revision) => this.readRevision(id, revision),
+    isDeleted: (id) => this.hidden(id),
+  });
   private release?: () => Promise<void>;
   constructor(
     public root: string,
@@ -255,6 +261,31 @@ export class Repository {
     if (receipt.digest !== digest)
       throw new AppError(409, "Mutation ID was reused for different content");
     return receipt.ids.map((id) => this.get(id, true));
+  }
+  /** A stored revision (the committed head from memory), or null if missing/unreadable. */
+  private async readRevision(
+    id: string,
+    revision: number,
+  ): Promise<Document | null> {
+    if (this.manifest.documents[id] === revision)
+      return this.docs.get(id) ?? null;
+    if (!Number.isSafeInteger(revision) || revision < 1) return null;
+    try {
+      const file = this.documentPath(idSchema.parse(id), revision);
+      if ((await fs.lstat(file)).isSymbolicLink()) return null;
+      const doc: Document = JSON.parse(await fs.readFile(file, "utf8"));
+      return doc.schemaVersion === 1 &&
+        doc.id === id &&
+        doc.revision === revision
+        ? doc
+        : null;
+    } catch {
+      return null;
+    }
+  }
+  /** Recent changes across the workspace (grouped sittings, newest first). */
+  changes(limit = 30, before?: string) {
+    return this.changeFeed.page(limit, before);
   }
   tree(): TreeNode[] {
     return [...this.docs.values()]

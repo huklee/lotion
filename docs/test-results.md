@@ -1,5 +1,17 @@
 # Test results
 
+## 2026-10-15T10:15:41+09:00 — 0.27.0 recent changes feed
+
+Environment: macOS (Apple Silicon), Node.js v25.8.2, npm 11.11.1, Playwright browsers installed locally for this checkout.
+
+Focused checks: `tests/unit/changes.test.ts` passed **6/6** (created/edited/renamed/moved/trashed/restored detection, nested block counts and excerpt, 30-minute sitting grouping, k-way merge order across pages, cursor paging with snapshot reuse, a missing snapshot skipped without ending the page's history). The new API integration scenario (create → edit → rename → move → trash → restore through HTTP, plus `limit`/`before` validation) passed. `tests/e2e/changes.spec.ts` passed **18/18** with `--repeat-each=3` across Chromium, Firefox and WebKit: editor edit, API rename and trash, sidebar entry, `#/changes` address and breadcrumb, newest-first order, opening a page and opening the Trash for a trashed page, direct load of `#/changes`, and paging back through the whole history without duplicates.
+
+Two issues were found and fixed during verification: opening a trashed page's entry left the address at `#/changes` (now reset), and the first paging test named its pages "Paged N", which collided with another scenario's substring role query in the shared per-worker workspace (renamed to "Feed item N").
+
+Real-data measurement (copy of a 181 MB workspace, 6,288 snapshots, 38 pages): first page 0.56 s, the same page again 4 ms, the entire history (274 sittings) 2.9 s.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest passed **211/211**; Playwright passed **208/208**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-08T14:13:02+09:00 — 0.26.1 bounded table-of-contents scrolling
 
 Environment: macOS (Apple Silicon), Node.js v25.8.2, npm 11.11.1, Playwright browsers installed locally for this checkout.

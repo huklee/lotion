@@ -4,6 +4,7 @@ import { WorkspaceDialog } from "./WorkspaceDialog";
 import { ActiveDocument } from "./ActiveDocument";
 import { WorkspaceTopbar } from "./WorkspaceTopbar";
 import { TrashView } from "./TrashView";
+import { ChangesView } from "./ChangesView";
 import { useWorkspaceTransfer } from "./use-workspace-transfer";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
 import type { ImportMode, WorkspaceDialogKind } from "./workspace.types";
@@ -75,6 +76,7 @@ export default function App() {
   const [query, setQuery] = useState(""),
     [search, setSearch] = useState(false),
     [trash, setTrash] = useState(false),
+    [changes, setChanges] = useState(false),
     [collapsed, setCollapsed] = useState<Set<string>>(new Set()),
     [sidebar, setSidebar] = useState(() =>
       readBoolean(localStorage, "sidebar-on-start", true),
@@ -129,6 +131,7 @@ export default function App() {
       const sequence = ++loadNumber.current;
       setError("");
       setTrash(false);
+      setChanges(false);
       setIconPicker(false);
       setIconQuery("");
       try {
@@ -216,6 +219,10 @@ export default function App() {
     void refresh()
       .then((nodes) => {
         if (!alive || loadNumber.current > 0) return;
+        if (location.hash === "#/changes") {
+          setChanges(true);
+          return;
+        }
         const id =
           pageIdFromHash(location.hash) ?? nodes.find((n) => !n.hidden)?.id;
         if (id && location.hash !== "#/home") void openPage(id, "replace");
@@ -286,6 +293,7 @@ export default function App() {
         ++loadNumber.current;
         setActive(null);
         setTrash(false);
+        setChanges(location.hash === "#/changes");
         setSearch(false);
         setIconPicker(false);
       }
@@ -559,6 +567,7 @@ export default function App() {
       <WorkspaceSidebar
         activeId={active?.id}
         trash={trash}
+        changes={changes}
         visible={visible}
         favorites={favorites}
         collapsed={collapsed}
@@ -586,14 +595,26 @@ export default function App() {
           ++loadNumber.current;
           setActive(null);
           setTrash(false);
+          setChanges(false);
           setSearch(false);
           setIconPicker(false);
           if (location.hash !== "#/home") history.pushState(null, "", "#/home");
         }}
         onTrash={() => {
           setTrash(true);
+          setChanges(false);
           setSearch(false);
           void refresh().catch(handleError);
+        }}
+        onChanges={() => {
+          ++loadNumber.current;
+          setActive(null);
+          setTrash(false);
+          setChanges(true);
+          setSearch(false);
+          setIconPicker(false);
+          if (location.hash !== "#/changes")
+            history.pushState(null, "", "#/changes");
         }}
       />
       <main>
@@ -601,6 +622,7 @@ export default function App() {
           sidebar={sidebar}
           setSidebar={setSidebar}
           trash={trash}
+          changes={changes}
           breadcrumbPages={breadcrumbPages}
           title={title}
           openPage={openPage}
@@ -630,7 +652,18 @@ export default function App() {
           </div>
         )}
         <div className="main-scroll">
-          {trash ? (
+          {changes ? (
+            <ChangesView
+              onOpen={(id) => void openPage(id)}
+              onOpenTrash={() => {
+                setChanges(false);
+                setTrash(true);
+                // the trash has no address of its own; don't keep showing #/changes
+                history.replaceState(null, "", "#/home");
+                void refresh().catch(handleError);
+              }}
+            />
+          ) : trash ? (
             <TrashView
               pages={tree}
               onRestore={(id) => void mutate(id, "restore")}

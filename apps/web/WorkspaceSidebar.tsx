@@ -6,6 +6,7 @@ import {
   Star,
   Plus,
   ArrowUpFromLine,
+  History,
   Trash2,
   Moon,
   Sun,
@@ -21,6 +22,7 @@ import type { ThemeMode } from "./preferences";
 type WorkspaceSidebarProps = {
   activeId: string | undefined;
   trash: boolean;
+  changes?: boolean;
   visible: TreeNode[];
   favorites: string[];
   collapsed: Set<string>;
@@ -45,11 +47,13 @@ type WorkspaceSidebarProps = {
   setDialog: (dialog: "import" | "settings" | "help") => void;
   onHome: () => void;
   onTrash: () => void;
+  onChanges: () => void;
 };
 
 export function WorkspaceSidebar({
   activeId,
   trash,
+  changes,
   visible,
   favorites,
   collapsed,
@@ -70,6 +74,7 @@ export function WorkspaceSidebar({
   setDialog,
   onHome,
   onTrash,
+  onChanges,
 }: WorkspaceSidebarProps) {
   const childrenByParent = useMemo(() => {
     const map = new Map<string | null, TreeNode[]>();
@@ -305,6 +310,10 @@ export function WorkspaceSidebar({
         <button onClick={() => setDialog("import")}>
           <ArrowUpFromLine size={15} />
           Import
+        </button>
+        <button onClick={onChanges} aria-current={changes ? "page" : undefined}>
+          <History size={15} />
+          Recent changes
         </button>
         <button onClick={onTrash}>
           <Trash2 size={15} />

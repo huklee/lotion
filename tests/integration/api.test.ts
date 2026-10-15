@@ -195,3 +195,79 @@ it("rejects script URLs in stored blocks", async () => {
   });
   expect(response.statusCode).toBe(400);
 });
+
+it("lists recent changes across pages: create, edit, rename, move, trash, restore", async () => {
+  const post = (url: string, payload: object, revision?: number) =>
+    app.inject({
+      method: "POST",
+      url,
+      headers: revision ? { "if-match": String(revision) } : {},
+      payload: { mutationId: crypto.randomUUID(), ...payload },
+    });
+  const a = (await post("/api/documents", { title: "Alpha" })).json();
+  const b = (await post("/api/documents", { title: "Beta" })).json();
+  const saved = await app.inject({
+    method: "PUT",
+    url: `/api/documents/${a.id}/content`,
+    headers: { "if-match": "1" },
+    payload: {
+      title: "Alpha renamed",
+      blocks: [
+        {
+          id: "blk-1",
+          type: "paragraph",
+          content: [{ type: "text", text: "First line", styles: {} }],
+        },
+      ],
+      mutationId: crypto.randomUUID(),
+    },
+  });
+  expect(saved.statusCode).toBe(200);
+  const moved = await post(
+    `/api/documents/${b.id}/move`,
+    {
+      parentId: a.id,
+      treeTag: (await app.inject({ url: "/api/tree" })).json().tag,
+    },
+    1,
+  );
+  expect(moved.statusCode).toBe(200);
+  const trashed = await post(`/api/documents/${b.id}/trash`, {}, 2);
+  expect(trashed.statusCode).toBe(200);
+
+  const res = await app.inject({ url: "/api/changes?limit=10" });
+  expect(res.statusCode).toBe(200);
+  const { changes } = res.json() as { changes: any[] };
+  const forA = changes.find((c) => c.id === a.id);
+  const forB = changes.find((c) => c.id === b.id);
+  // everything happened within the grouping window → one sitting per page
+  expect(forA.kinds).toEqual(
+    expect.arrayContaining(["created", "renamed", "edited"]),
+  );
+  expect(forA.title).toBe("Alpha renamed");
+  expect(forA.titleFrom).toBe("Alpha");
+  // moving Beta under Alpha adds Beta's page link to Alpha: the newest excerpt shows it
+  expect(forA.excerpt).toContain("Beta");
+  expect(forA.edits).toBe(3);
+  expect(forA.added).toBeGreaterThanOrEqual(2); // new page's default block, the saved line, the link
+  expect(forB.kinds).toEqual(
+    expect.arrayContaining(["created", "moved", "deleted"]),
+  );
+  expect(forB.deletedNow).toBe(true);
+
+  const restored = await post(`/api/documents/${b.id}/restore`, {}, 3);
+  expect(restored.statusCode).toBe(200);
+  const again = (await app.inject({ url: "/api/changes" })).json() as {
+    changes: any[];
+  };
+  const b2 = again.changes.find((c) => c.id === b.id);
+  expect(b2.kinds).toContain("restored");
+  expect(b2.deletedNow).toBe(false);
+
+  expect((await app.inject({ url: "/api/changes?limit=0" })).statusCode).toBe(
+    400,
+  );
+  expect(
+    (await app.inject({ url: "/api/changes?before=yesterday" })).statusCode,
+  ).toBe(400);
+});
