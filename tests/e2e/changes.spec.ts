@@ -113,3 +113,88 @@ test("recent changes pages through older entries", async ({ page }) => {
     .evaluateAll((rows) => rows.map((r) => r.getAttribute("data-change")));
   expect(new Set(keys).size).toBe(keys.length);
 });
+
+test("opening a change scrolls to the edited block and flashes it once", async ({
+  page,
+}) => {
+  const blocks = Array.from({ length: 60 }, (_, i) => ({
+    id: `fl-${i}`,
+    type: "paragraph",
+    content: text(`Paragraph number ${i}`),
+  }));
+  const doc = await seed(page, "Long flash page", blocks);
+  const current = await (
+    await page.request.get(`/api/documents/${doc.id}`)
+  ).json();
+  const edited = structuredClone(current.blocks);
+  edited[55].content = text("Paragraph number 55 — revised");
+  await page.request.put(`/api/documents/${doc.id}/content`, {
+    headers: { "If-Match": String(current.revision) },
+    data: {
+      title: "Long flash page",
+      blocks: edited,
+      mutationId: randomUUID(),
+    },
+  });
+  await page.goto("/#/changes");
+  const entry = page.locator(".change-row", { hasText: "Long flash page" });
+  await expect(entry).toContainText("revised");
+  await entry.click();
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "Long flash page",
+  );
+  const target = page.locator('.bn-block-outer[data-id="fl-55"]').first();
+  await expect(target).toBeInViewport();
+  const flashing = page.locator(
+    '.bn-block-outer[data-id="fl-55"] > .bn-block > .bn-block-content.lotion-flash',
+  );
+  await expect(flashing).toHaveCount(1);
+  // only the edited block flashes, and the highlight goes away by itself
+  await expect(page.locator(".lotion-flash")).toHaveCount(1);
+  await expect(flashing).toHaveCount(0, { timeout: 5000 });
+  await expect(
+    page.locator('.bn-block-outer[data-id="fl-0"]').first(),
+  ).not.toBeInViewport();
+});
+
+test("a change whose block was deleted later still opens the page", async ({
+  page,
+}) => {
+  const doc = await seed(page, "Vanishing block", [
+    { id: "vb-1", type: "paragraph", content: text("Stays") },
+    { id: "vb-2", type: "paragraph", content: text("Edited then removed") },
+  ]);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  let cur = await (await page.request.get(`/api/documents/${doc.id}`)).json();
+  const changed = structuredClone(cur.blocks);
+  changed[1].content = text("Edited then removed!");
+  await page.request.put(`/api/documents/${doc.id}/content`, {
+    headers: { "If-Match": String(cur.revision) },
+    data: {
+      title: "Vanishing block",
+      blocks: changed,
+      mutationId: randomUUID(),
+    },
+  });
+  cur = await (await page.request.get(`/api/documents/${doc.id}`)).json();
+  // much later: remove the edited block (a separate sitting would also be fine)
+  await page.request.put(`/api/documents/${doc.id}/content`, {
+    headers: { "If-Match": String(cur.revision) },
+    data: {
+      title: "Vanishing block",
+      blocks: cur.blocks.slice(0, 1),
+      mutationId: randomUUID(),
+    },
+  });
+  await page.goto("/#/changes");
+  await page
+    .locator(".change-row", { hasText: "Vanishing block" })
+    .first()
+    .click();
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    "Vanishing block",
+  );
+  await page.waitForTimeout(800);
+  expect(errors).toEqual([]);
+});

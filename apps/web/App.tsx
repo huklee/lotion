@@ -5,6 +5,7 @@ import { ActiveDocument } from "./ActiveDocument";
 import { WorkspaceTopbar } from "./WorkspaceTopbar";
 import { TrashView } from "./TrashView";
 import { ChangesView } from "./ChangesView";
+import { flashBlockWhenRendered } from "./block-flash";
 import { useWorkspaceTransfer } from "./use-workspace-transfer";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
 import type { ImportMode, WorkspaceDialogKind } from "./workspace.types";
@@ -77,6 +78,7 @@ export default function App() {
     [search, setSearch] = useState(false),
     [trash, setTrash] = useState(false),
     [changes, setChanges] = useState(false),
+    cancelFlash = useRef<(() => void) | null>(null),
     [collapsed, setCollapsed] = useState<Set<string>>(new Set()),
     [sidebar, setSidebar] = useState(() =>
       readBoolean(localStorage, "sidebar-on-start", true),
@@ -654,7 +656,14 @@ export default function App() {
         <div className="main-scroll">
           {changes ? (
             <ChangesView
-              onOpen={(id) => void openPage(id)}
+              onOpen={(id, blockId) => {
+                cancelFlash.current?.();
+                cancelFlash.current = null;
+                void openPage(id).then(() => {
+                  if (blockId)
+                    cancelFlash.current = flashBlockWhenRendered(blockId);
+                });
+              }}
               onOpenTrash={() => {
                 setChanges(false);
                 setTrash(true);

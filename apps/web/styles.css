@@ -1830,3 +1830,29 @@ kbd {
 .changes-more {
   margin-top: 18px;
 }
+
+/* One-time highlight of the block a Recent changes entry points at */
+@keyframes lotion-flash {
+  0%,
+  45%,
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 0 transparent;
+  }
+  15%,
+  65% {
+    background-color: var(--lotion-yellow-background, #fbf3db);
+    box-shadow: 0 0 0 4px var(--lotion-yellow-background, #fbf3db);
+  }
+}
+.lotion-flash {
+  border-radius: 4px;
+  animation: lotion-flash 1.6s ease-in-out 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lotion-flash {
+    animation: none;
+    background-color: var(--lotion-yellow-background, #fbf3db);
+    box-shadow: 0 0 0 4px var(--lotion-yellow-background, #fbf3db);
+  }
+}
