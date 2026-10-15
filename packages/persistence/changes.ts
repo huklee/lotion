@@ -16,6 +16,8 @@ export type RevisionChange = {
   removed: number;
   changed: number;
   excerpt?: string;
+  /** First block this revision added or changed (where the edit happened). */
+  blockId?: string;
 };
 
 /** Consecutive edits of one page in one sitting, shown as a single entry. */
@@ -67,7 +69,8 @@ export function diffRevisions(
   let added = 0,
     removed = 0,
     changed = 0,
-    excerpt: string | undefined;
+    excerpt: string | undefined,
+    blockId: string | undefined;
   const after = flatten(next.blocks);
   if (!previous) {
     kinds.push("created");
@@ -86,9 +89,11 @@ export function diffRevisions(
       const old = before.get(id);
       if (!old) {
         added++;
+        blockId ??= id;
         excerpt ??= inlineText(block.content).trim() || undefined;
       } else if (own(old) !== own(block)) {
         changed++;
+        blockId ??= id;
         excerpt ??= inlineText(block.content).trim() || undefined;
       }
     }
@@ -116,6 +121,7 @@ export function diffRevisions(
     removed,
     changed,
     ...(excerpt ? { excerpt: excerpt.slice(0, EXCERPT_LENGTH) } : {}),
+    ...(blockId ? { blockId } : {}),
   };
 }
 
@@ -158,6 +164,8 @@ export function groupChanges(
       if (change.titleFrom && current.kinds.includes("renamed"))
         current.titleFrom = change.titleFrom;
       current.excerpt ??= change.excerpt;
+      // newest edit's block wins: the group points at the latest place edited
+      current.blockId ??= change.blockId;
       continue;
     }
     const group: ChangeGroup = {
@@ -170,6 +178,7 @@ export function groupChanges(
       removed: change.removed,
       changed: change.changed,
       ...(change.excerpt ? { excerpt: change.excerpt } : {}),
+      ...(change.blockId ? { blockId: change.blockId } : {}),
       from: change.at,
       to: change.at,
       fromRevision: change.revision,

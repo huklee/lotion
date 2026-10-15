@@ -15,6 +15,7 @@ export type ChangeEntry = {
   removed: number;
   changed: number;
   excerpt?: string;
+  blockId?: string;
   from: string;
   to: string;
   fromRevision: number;
@@ -59,7 +60,7 @@ export function ChangesView({
   onOpen,
   onOpenTrash,
 }: {
-  onOpen: (id: string) => void;
+  onOpen: (id: string, blockId?: string) => void;
   onOpenTrash: () => void;
 }) {
   const [entries, setEntries] = useState<ChangeEntry[]>([]);
@@ -124,7 +125,9 @@ export function ChangesView({
                   className="change-row"
                   data-change={`${entry.id}:${entry.toRevision}`}
                   onClick={() =>
-                    entry.deletedNow ? onOpenTrash() : onOpen(entry.id)
+                    entry.deletedNow
+                      ? onOpenTrash()
+                      : onOpen(entry.id, entry.blockId)
                   }
                   title={
                     entry.deletedNow ? "In the trash — open Trash" : "Open page"

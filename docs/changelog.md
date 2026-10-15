@@ -7,7 +7,7 @@ Versions are recorded in `package.json` and `package-lock.json`. Each release re
 ### Added
 
 - **Recent changes** (sidebar, `#/changes`): a workspace-wide feed of what changed, newest first and grouped by day. Each entry names the page, what happened — created, edited, renamed (with the old title), moved, moved to trash, restored — how many blocks were added, removed and changed, an excerpt of the first changed text, and the time.
-- Autosaved revisions of one page in one sitting (each within 30 minutes of the next) are one entry ("N edits"). Clicking an entry opens the page; pages now in the trash open the Trash. "Show older changes" pages back through the whole history.
+- Autosaved revisions of one page in one sitting (each within 30 minutes of the next) are one entry ("N edits"). Clicking an entry opens the page **at the edit**: it scrolls to the block that was added or changed (for a sitting, the newest one) and flashes it once; if that block no longer exists the page opens normally. Pages now in the trash open the Trash. "Show older changes" pages back through the whole history.
 - `GET /api/changes?limit=&before=` serves the feed. It is computed from the immutable revision snapshots already in the workspace, reading only what a page of results needs, and caches per revision; a missing snapshot is skipped rather than ending a page's history. Measured on a 181 MB workspace with 6,288 snapshots: first page 0.56 s, repeated 4 ms, the entire history 2.9 s.
 
 No document schema or stored-content migration is required. Verification is recorded in [test results](test-results.md).

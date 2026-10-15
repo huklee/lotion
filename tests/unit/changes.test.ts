@@ -65,6 +65,7 @@ describe("diffRevisions", () => {
       changed: 1,
     });
     expect(c.excerpt).toBe("New text"); // first changed/added block in document order
+    expect(c.blockId).toBe("b"); // where the edit happened
   });
 
   it("recognises rename, move, trash and restore", () => {
@@ -125,6 +126,15 @@ describe("groupChanges", () => {
     expect(groups[0].titleFrom).toBe("Old");
     expect(groups[0].added).toBe(3);
     expect(groups[0].from).toBe("2026-10-01T10:10:00Z");
+  });
+
+  it("points a sitting at its newest edited block", () => {
+    const groups = groupChanges([
+      ev("a", 3, "2026-10-01T10:20:00Z", { kinds: ["renamed"] }), // newest: no block
+      ev("a", 2, "2026-10-01T10:10:00Z", { blockId: "late" }),
+      ev("a", 1, "2026-10-01T10:00:00Z", { blockId: "early" }),
+    ]);
+    expect(groups[0].blockId).toBe("late");
   });
 });
 
