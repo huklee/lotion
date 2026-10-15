@@ -4,6 +4,7 @@ Historical completed work lives in the [implementation history](implementation-h
 
 ## Completed user requests — 2026-10-15
 
+- [x] Opening a Recent changes entry goes to the edited block with a one-time flash (0.28.0).
 - [x] A view of recent changes across the workspace (0.27.0): grouped sittings with kind, block counts, excerpt and time; opens the page; pages back through the whole history.
 
 ## Completed user requests — 2026-10-08
