@@ -1,6 +1,6 @@
 # Version management guide
 
-Established 2026-09-13 from the user's versioning instructions. Read this guide before changing a version or preparing a release. Current release: **0.31.0**, incremented from **0.30.0**.
+Established 2026-09-13 from the user's versioning instructions. Read this guide before changing a version or preparing a release. Current release: **0.32.0**, incremented from **0.31.0**.
 
 ## Choose the increment
 
@@ -18,7 +18,7 @@ Do not promote a release to major merely because features were added. The Mermai
 
 1. Inspect the current package version, Git history, working tree and latest [changelog](changelog.md). Preserve uncommitted user work and `data/`.
 2. Choose one version for the complete release. Keep `package.json`, both root package version entries in `package-lock.json`, and the README current-version line consistent. Do not change dependency versions merely to update the application version.
-3. Add a dated changelog entry describing user-visible additions, fixes, compatibility/migration effects and known limits. A version entry must not imply successful tests or a published tag without evidence.
+3. Add a dated changelog entry describing user-visible additions, fixes, compatibility/migration effects and known limits. A version entry must not imply successful tests or a published tag without evidence. The heading format is `## X.Y.Z — YYYY-MM-DD · [#N](https://github.com/huklee/lotion/pull/N)`: once the pull request exists, add its link to the heading in a follow-up commit on the same branch. The in-app "What's new" panel (version button, bottom right) is built from this file, so keep entries user-readable and newest first; `tests/unit/changelog.test.ts` checks that the first entry matches `package.json`.
 4. Run relevant focused tests and `npm run check` before publishing functional changes. Record exact results and environment in [test results](test-results.md); record decisions/publication in the timestamped [implementation history](implementation-history-log.md). Update [remaining jobs](remained_job.md) only for completed work.
 5. Review the diff and tracked files. Exclude user data, raw session history, dependencies and generated test/build artifacts. Commit the release with its version in the subject, for example `feat: release v0.2.0 editor clipboard and selection improvements`.
 6. Push when requested or already authorized and open one pull request with `main` as the base. Never target an unmerged feature branch or begin the next release from one. Check the GitHub Actions run for that commit, fix failures, and repeat the applicable checks before declaring the release verified.
