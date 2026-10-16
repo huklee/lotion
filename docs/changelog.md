@@ -2,6 +2,22 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.34.0 — 2026-10-16 · [#52](https://github.com/huklee/lotion/pull/52)
+
+### Changed
+
+- **Summaries are short and decision-first by default.** The new default condensing, **핵심·결정 (짧게)**, writes 1–3 key lines, the decisions, and action items (task — owner, due), at most about 15 lines, with no discussion narrative or attendee lists. Its length and structure take precedence over the skill's own format.
+
+### Added
+
+- **Choose the condensing per summary:** every summary button has a ▾ menu — 핵심·결정 (짧게), 결정·액션만 (decisions and action items only), 표준 회의록 (the Confluence-style six sections), 상세 회의록 (standard plus each topic's opinions, reasons and how the conclusion was reached). The row ⋯ menu lists the same four. The default is set in 📝 ⚙ ("Default condensing"); the summary page header names the condensing used.
+
+### Fixed
+
+- Database menus (property, row, filter, condensing…) follow their button when the page scrolls or shifts instead of closing, open upwards near the bottom of the screen, and stay open while their own content scrolls.
+
+A saved copy of the previous built-in prompt is upgraded to the new, structure-free default; custom prompts are kept. Verification is recorded in [test results](test-results.md).
+
 ## 0.33.0 — 2026-10-16 · [#51](https://github.com/huklee/lotion/pull/51)
 
 ### Added

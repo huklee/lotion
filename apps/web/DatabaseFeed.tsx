@@ -10,6 +10,7 @@ import type {
   DatabaseValue,
 } from "../../packages/database/model";
 import { RowPagesContext } from "./row-pages";
+import { SummarizeButton } from "./summaries";
 
 const PAGE_SIZE = 10;
 
@@ -250,21 +251,19 @@ function FeedEntry({
           </button>
         ))}
         {pageId && rowPages && (
-          <button
-            type="button"
-            className="lotion-feed-toggle"
-            disabled={starting}
+          <SummarizeButton
+            label="요약"
+            className="lotion-feed-summarize"
+            busy={starting}
             title="Write a summary of this meeting with the summary settings (the text is sent to the chosen AI engine)"
-            onClick={() => {
+            onRun={(style) => {
               setStarting(true);
               void rowPages
-                .summarize({ pages: [{ id: pageId }], parentId: pageId })
+                .summarize({ pages: [{ id: pageId }], parentId: pageId, style })
                 .catch(() => undefined)
                 .finally(() => setStarting(false));
             }}
-          >
-            {starting ? "Starting…" : "요약"}
-          </button>
+          />
         )}
         {pageId && InlineEditor && (
           <button

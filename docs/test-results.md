@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-16T13:40:00+09:00 — 0.34.0 summary condensing styles
+
+Focused: `tests/integration/summaries.test.ts` **6/6** (default style brief, its section placed after the request and stated to outrank the skill, style named in the summary header; per-job style overrides the default and excludes the other rules; invalid style rejected; saved legacy default prompt upgraded, custom prompt kept). E2E `summaries.spec.ts` + `database.spec.ts` **36/36** with `--repeat-each=2` across Chromium, Firefox and WebKit (default condensing in settings, one run with "결정·액션만" from the ▾ menu recorded in the summary page). Real Codex smoke run with the brief style on a seven-line sample meeting: 13 lines — 핵심, one decision, three action items with owners and dates.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **237/237**; Playwright **235/235**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-16T12:20:00+09:00 — 0.33.0 meeting summaries
 
 Focused: `tests/integration/summaries.test.ts` **4/4** (prompt composition and block picking; settings defaults, persistence and Slack-id validation; skill listing from SKILL.md; a two-meeting job with a block subset producing a 📝 page under the parent with source links, fenced output unwrapped, and the Slack notification text/URL; engine failure recorded and notified; empty and unknown-skill requests rejected). `tests/unit/database-views.test.ts` **9/9** with period presets. E2E across Chromium, Firefox and WebKit: `summaries.spec.ts` (settings form incl. invalid channel, one-button feed summary under the meeting with its "📝 요약" link, two selected rows summarised under the database page, open from the toast) and `database.spec.ts` period/bulk-delete scenario. Real engines smoke-tested outside the suite on a three-line sample: Codex 8 s, Claude Code 9 s, both returned Korean Markdown bullets. `slk-bridge` notify listener: `go test` (remote peer, browser origin, unconfigured channel, empty text, no Slack client).

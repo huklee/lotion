@@ -12,6 +12,7 @@ import { PropertyMenu, RowMenu } from "./DatabaseMenus";
 import { DatabaseViewBar } from "./DatabaseViews";
 import { DatabaseFeed, freshBlockIds, meetingSkeleton } from "./DatabaseFeed";
 import { RowPagesContext } from "./row-pages";
+import { SummarizeButton, type SummaryStyle } from "./summaries";
 import {
   applyView,
   defaultView,
@@ -149,32 +150,42 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
     editor.updateBlock(block, { props: { views: viewsJson(next) } });
   /** For async results: apply `change` to the block's state as it is *now*. */
   const updateLatest = useCallback(
-    (change: (current: DatabaseState) => DatabaseState) => {
+    (change: (current: DatabaseState) => DatabaseState): boolean => {
       const current = editor.getBlock(block.id);
-      if (!current) return;
+      if (!current) return false;
       let latest: DatabaseState;
       try {
         latest = readDatabaseState(current.props.columns, current.props.rows);
       } catch {
-        return;
+        return false;
       }
       update(change(latest));
+      return true;
     },
     [block.id, editor, update],
   );
 
   useEffect(() => {
     if (!actions) return;
-    let changed = false;
-    const rows = state.rows.map((row) => {
-      const id = pageId(row.href);
-      const title = actions.pages.find((page) => page.id === id)?.title;
-      if (!title || title === row.title) return row;
-      changed = true;
-      return { ...row, title };
+    const stale = state.rows.some((row) => {
+      const title = actions.pages.find(
+        (page) => page.id === pageId(row.href),
+      )?.title;
+      return !!title && title !== row.title;
     });
-    if (changed) update({ ...state, rows });
-  }, [actions, state, update]);
+    if (!stale) return;
+    // Apply to the block as it is now: this render's copy can miss a row that an
+    // async action (new meeting, duplicate) added a moment ago.
+    updateLatest((latest) => ({
+      ...latest,
+      rows: latest.rows.map((row) => {
+        const title = actions.pages.find(
+          (page) => page.id === pageId(row.href),
+        )?.title;
+        return title && title !== row.title ? { ...row, title } : row;
+      }),
+    }));
+  }, [actions, state, updateLatest]);
 
   const rowTitle = (row: DatabaseRow) => {
     const id = pageId(row.href);
@@ -223,10 +234,14 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
       values,
     };
     // A feed entry goes first, so same-day meetings also read newest first.
-    updateLatest((latest) => ({
+    const added = updateLatest((latest) => ({
       ...latest,
       rows: feed ? [entry, ...latest.rows] : [...latest.rows, entry],
     }));
+    if (!added)
+      throw new Error(
+        `"${page.title}" was created but could not be added to this database; it is in the sidebar.`,
+      );
   };
 
   /** Remove rows at once, then trash their pages; rows whose page fails come back. */
@@ -454,12 +469,13 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
                           }
                           onSummarize={
                             id && page && rowPages
-                              ? () => {
+                              ? (style?: SummaryStyle) => {
                                   setMenu(null);
                                   void rowPages
                                     .summarize({
                                       pages: [{ id }],
                                       parentId: id,
+                                      style,
                                     })
                                     .catch(() => undefined);
                                 }
@@ -613,10 +629,10 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
             </button>
           )}
           {rowPages && (
-            <button
-              type="button"
+            <SummarizeButton
+              label={`📝 Summarize ${selected.size}`}
               className="lotion-database-summarize"
-              onClick={() => {
+              onRun={(style) => {
                 const pages = shownRows
                   .concat(state.rows.filter((row) => !shownRows.includes(row)))
                   .filter((row) => selected.has(row.id))
@@ -630,13 +646,15 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
                   pages.length === 1 ? pages[0] : rowPages.activePageId;
                 if (!parentId) return;
                 void rowPages
-                  .summarize({ pages: pages.map((id) => ({ id })), parentId })
+                  .summarize({
+                    pages: pages.map((id) => ({ id })),
+                    parentId,
+                    style,
+                  })
                   .then(() => setSelected(new Set()))
                   .catch(() => undefined);
               }}
-            >
-              📝 Summarize {selected.size}
-            </button>
+            />
           )}
           <button type="button" onClick={() => setSelected(new Set())}>
             Clear
