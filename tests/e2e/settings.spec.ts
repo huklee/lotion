@@ -392,3 +392,26 @@ test("ten combined color presets support shortcuts and repeat the last preset", 
     inline.locator('[data-style-type="backgroundColor"][data-value="blue"]'),
   ).toHaveCount(3);
 });
+
+test("top-right wide page toggle switches and remembers the page width", async ({
+  page,
+}) => {
+  await seed(page, "Wide toggle");
+  const toggle = page.getByRole("button", { name: "Wide page" });
+  const html = page.locator("html");
+  if ((await toggle.getAttribute("aria-pressed")) === "true")
+    await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await expect(html).toHaveAttribute("data-page-width", "comfortable");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await expect(html).toHaveAttribute("data-page-width", "wide");
+  await expect(page.locator(".document")).toHaveCSS("max-width", "1180px");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Wide page" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.getByRole("button", { name: "Wide page" }).click();
+  await expect(html).toHaveAttribute("data-page-width", "comfortable");
+});

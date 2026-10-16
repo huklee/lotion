@@ -2,7 +2,9 @@ import {
   ArrowDownToLine,
   Check,
   Copy,
+  Maximize2,
   Menu,
+  Minimize2,
   Move,
   Star,
   Trash2,
@@ -25,6 +27,8 @@ type WorkspaceTopbarProps = {
   onDuplicate: () => void;
   onMove: () => void;
   onTrash: () => void;
+  wide: boolean;
+  onToggleWide: () => void;
 };
 
 export function WorkspaceTopbar({
@@ -43,6 +47,8 @@ export function WorkspaceTopbar({
   onDuplicate,
   onMove,
   onTrash,
+  wide,
+  onToggleWide,
 }: WorkspaceTopbarProps) {
   return (
     <header className="topbar">
@@ -98,6 +104,15 @@ export function WorkspaceTopbar({
             <button className="quiet" onClick={onExport}>
               <ArrowDownToLine size={14} />
               Export
+            </button>
+            <button
+              className="icon-button"
+              aria-label="Wide page"
+              aria-pressed={wide}
+              title={wide ? "Standard page width" : "Wide page"}
+              onClick={onToggleWide}
+            >
+              {wide ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
             </button>
             <button
               className="icon-button"

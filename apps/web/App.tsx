@@ -685,6 +685,12 @@ export default function App() {
             onDuplicate={() => active && void duplicate(active.id)}
             onMove={() => setDialog("move")}
             onTrash={() => active && void mutate(active.id, "trash")}
+            wide={pageWidth === "wide"}
+            onToggleWide={() =>
+              setPageWidth((width) =>
+                width === "wide" ? "comfortable" : "wide",
+              )
+            }
           />
           {error && (
             <div className="message error" role="alert">
