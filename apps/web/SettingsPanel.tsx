@@ -4,6 +4,7 @@ import type {
   KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { Settings2 } from "lucide-react";
+import { SummarySettingsForm } from "./summaries";
 import type {
   EditorFont,
   ThemeMode,
@@ -240,6 +241,13 @@ export function SettingsPanel({
       >
         Reset formatting shortcuts
       </button>
+      <h3 className="settings-heading">Meeting summaries</h3>
+      <p>
+        Shared by every summary button in this workspace: engine, skill, Slack
+        notification channel, prompt and the meeting-note formats you can pick
+        per summary.
+      </p>
+      <SummarySettingsForm variant="full" />
     </>
   );
 }

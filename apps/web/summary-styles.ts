@@ -1,24 +1,48 @@
-/** Condensing styles offered for summaries (mirrors the server's STYLE_RULES). */
-export type SummaryStyle = "brief" | "actions" | "standard" | "detailed";
-export const STYLE_OPTIONS: {
-  value: SummaryStyle;
+import { useEffect, useState } from "react";
+import { api } from "./api";
+
+/** A condensing preset (stored on the server with the summary settings). */
+export type SummaryPreset = {
+  id: string;
   label: string;
   hint: string;
-}[] = [
-  {
-    value: "brief",
-    label: "핵심·결정 (짧게)",
-    hint: "핵심 1~3줄 + 결정 사항 + 액션 아이템, 15줄 이내",
-  },
-  {
-    value: "actions",
-    label: "결정·액션만",
-    hint: "결정 사항과 액션 아이템 목록만",
-  },
-  { value: "standard", label: "표준 회의록", hint: "Confluence 형식 6개 섹션" },
-  {
-    value: "detailed",
-    label: "상세 회의록",
-    hint: "표준 + 주제별 의견·근거·과정",
-  },
-];
+  rules: string;
+};
+/** A preset id. */
+export type SummaryStyle = string;
+
+type PresetState = { presets: SummaryPreset[]; style: string };
+let cache: PresetState | null = null;
+let loading: Promise<void> | null = null;
+const listeners = new Set<(state: PresetState) => void>();
+
+/** Publish presets after a save so every summary menu shows the current list. */
+export function publishSummaryPresets(state: PresetState) {
+  cache = state;
+  for (const listener of listeners) listener(state);
+}
+
+function load() {
+  loading ??= api<PresetState>("/api/summary/settings")
+    .then((s) => publishSummaryPresets({ presets: s.presets, style: s.style }))
+    .catch(() => undefined)
+    .finally(() => {
+      loading = null;
+    });
+  return loading;
+}
+
+/** The saved condensing presets and the default one (loaded once, kept in sync). */
+export function useSummaryPresets(): PresetState {
+  const [state, setState] = useState<PresetState>(
+    () => cache ?? { presets: [], style: "" },
+  );
+  useEffect(() => {
+    listeners.add(setState);
+    if (!cache) void load();
+    return () => {
+      listeners.delete(setState);
+    };
+  }, []);
+  return state;
+}

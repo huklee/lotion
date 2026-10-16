@@ -378,6 +378,8 @@ test("database feed: newest first, edit in place, new meeting from a template", 
   await db.getByRole("tab", { name: /Feed/ }).click();
   await expect(entries).toHaveCount(4);
   await expect(entries.nth(0).locator(".lotion-feed-editor")).toBeVisible();
+  // bodies load lazily and shift the layout; click once the feed has settled
+  await expect(db.getByText("Loading…")).toHaveCount(0);
   await db.getByRole("button", { name: "+ New meeting" }).click();
   await expect(entries).toHaveCount(5, { timeout: 15000 });
   await expect(entries.nth(0).locator(".lotion-feed-title")).toHaveText(

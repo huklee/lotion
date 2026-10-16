@@ -6,7 +6,7 @@ import path from "node:path";
 import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { LinkPreviewService } from "./link-preview-service";
-import type { SummaryService } from "./summaries";
+import { DEFAULT_PRESETS, type SummaryService } from "./summaries";
 import { Repository } from "../../packages/persistence/repository";
 import {
   AppError,
@@ -141,6 +141,10 @@ export async function createApp(
     summaries().saveSettings(req.body),
   );
   app.get("/api/summary/skills", async () => summaries().skills());
+  app.get("/api/summary/default-presets", async () => DEFAULT_PRESETS);
+  app.get("/api/summary/slack-channels", async () =>
+    summaries().slackChannels(),
+  );
   app.get("/api/summary/jobs", async () => summaries().list());
   app.post("/api/summary/jobs", async (req, reply) => {
     reply.code(202);

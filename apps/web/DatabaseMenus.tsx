@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { STYLE_OPTIONS, type SummaryStyle } from "./summary-styles";
+import { useSummaryPresets, type SummaryStyle } from "./summary-styles";
 import {
   DATABASE_PROPERTY_TYPES,
   changeColumnType,
@@ -302,16 +302,7 @@ export function RowMenu({
       {onSummarize && (
         <fieldset>
           <legend>📝 Summarize this meeting</legend>
-          {STYLE_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              title={option.hint}
-              onClick={() => onSummarize(option.value)}
-            >
-              {option.label}
-            </button>
-          ))}
+          <SummaryPresetButtons onPick={onSummarize} />
         </fieldset>
       )}
       {onTemplate && (
@@ -353,5 +344,34 @@ export function RowMenu({
         </button>
       )}
     </Floating>
+  );
+}
+
+function SummaryPresetButtons({
+  onPick,
+}: {
+  onPick: (style?: SummaryStyle) => void;
+}) {
+  const { presets, style } = useSummaryPresets();
+  if (!presets.length)
+    return (
+      <button type="button" onClick={() => onPick()}>
+        Summarize
+      </button>
+    );
+  return (
+    <>
+      {presets.map((preset) => (
+        <button
+          key={preset.id}
+          type="button"
+          title={preset.hint}
+          onClick={() => onPick(preset.id)}
+        >
+          {preset.label}
+          {preset.id === style ? " · default" : ""}
+        </button>
+      ))}
+    </>
   );
 }

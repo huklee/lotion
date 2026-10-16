@@ -242,7 +242,8 @@ it("reports engine failures, notifies them, and rejects bad input", async () => 
 });
 
 it("chooses the style per job and upgrades the legacy default prompt", async () => {
-  const { STYLE_RULES } = await import("../../apps/server/summaries");
+  const { DEFAULT_PRESETS } = await import("../../apps/server/summaries");
+  const rules = (id: string) => DEFAULT_PRESETS.find((p) => p.id === id)!.rules;
   await fs.writeFile(
     path.join(dir, "data", "summary-settings.json"),
     JSON.stringify({
@@ -267,8 +268,8 @@ it("chooses the style per job and upgrades the legacy default prompt", async () 
   });
   const job = await waitFor(started.json().id);
   expect(job.style).toBe("standard");
-  expect(calls[0].prompt).toContain(STYLE_RULES.standard.rules);
-  expect(calls[0].prompt).not.toContain(STYLE_RULES.brief.rules);
+  expect(calls[0].prompt).toContain(rules("standard"));
+  expect(calls[0].prompt).not.toContain(rules("brief"));
   expect(
     (
       await app.inject({
@@ -296,4 +297,100 @@ it("upgrades a saved copy of the legacy default prompt", async () => {
   expect(settingsSchema.parse({ prompt: "내 프롬프트" }).prompt).toBe(
     "내 프롬프트",
   );
+});
+
+it("edits presets: custom preset used per job, default falls back when deleted", async () => {
+  const current = (await app.inject({ url: "/api/summary/settings" })).json();
+  expect(current.presets.map((p: any) => p.id)).toEqual([
+    "brief",
+    "actions",
+    "standard",
+    "detailed",
+  ]);
+  const presets = [
+    ...current.presets.filter((p: any) => p.id !== "detailed"),
+    {
+      id: "exec",
+      label: "임원 보고",
+      hint: "3줄",
+      rules: "임원 보고용 3줄 요약만 작성하세요.",
+    },
+  ];
+  const saved = await app.inject({
+    method: "PUT",
+    url: "/api/summary/settings",
+    payload: { ...current, skill: "", presets, style: "exec" },
+  });
+  expect(saved.statusCode).toBe(200);
+  expect(saved.json().style).toBe("exec");
+  const parent = await page("P", null, [para("a", "x")]);
+  const job = await waitFor(
+    (
+      await app.inject({
+        method: "POST",
+        url: "/api/summary/jobs",
+        payload: { pages: [{ id: parent.id }], parentId: parent.id },
+      })
+    ).json().id,
+  );
+  expect(job).toMatchObject({ style: "exec", styleLabel: "임원 보고" });
+  expect(calls.at(-1)!.prompt).toContain("# 축약 방식: 임원 보고");
+  expect(calls.at(-1)!.prompt).toContain("임원 보고용 3줄 요약만");
+  expect(JSON.stringify(repo.get(job.summaryId).blocks)).toContain(
+    "임원 보고 로 생성",
+  );
+  // deleted preset → 400 per job; default falls back to the first preset
+  expect(
+    (
+      await app.inject({
+        method: "POST",
+        url: "/api/summary/jobs",
+        payload: {
+          pages: [{ id: parent.id }],
+          parentId: parent.id,
+          style: "detailed",
+        },
+      })
+    ).statusCode,
+  ).toBe(400);
+  const without = await app.inject({
+    method: "PUT",
+    url: "/api/summary/settings",
+    payload: {
+      ...(saved.json() as object),
+      presets: presets.filter((p) => p.id !== "exec"),
+    },
+  });
+  expect(without.json().style).toBe("brief");
+  // invalid presets are rejected
+  for (const bad of [
+    [],
+    [{ id: "a b", label: "x", rules: "y" }],
+    [presets[0], presets[0]],
+  ])
+    expect(
+      (
+        await app.inject({
+          method: "PUT",
+          url: "/api/summary/settings",
+          payload: { presets: bad },
+        })
+      ).statusCode,
+    ).toBe(400);
+});
+
+it("lists Slack channels through the bridge, or reports it is not connected", async () => {
+  expect(
+    (await app.inject({ url: "/api/summary/slack-channels" })).statusCode,
+  ).toBe(503);
+  const withSlack = await createApp(repo, {
+    summaries: new SummaryService(repo, {
+      dataDir: path.join(dir, "data"),
+      channels: async () => [{ id: "C1", name: "general", private: false }],
+    }),
+  });
+  expect(
+    (await withSlack.inject({ url: "/api/summary/slack-channels" })).json(),
+  ).toEqual([{ id: "C1", name: "general", private: false }]);
+  await withSlack.close();
 });

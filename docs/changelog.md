@@ -2,6 +2,19 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.35.0 — 2026-10-16
+
+### Added
+
+- **Control panel → Meeting summaries:** engine, default format, skill, Slack channel and prompt in one place, plus a **meeting-note format editor**: add, duplicate, rename, describe and rewrite the format/length rules of each preset, delete presets, choose the default, and restore the built-in formats while keeping your own. Every summary button's ▾ menu and the row ⋯ menu list the saved formats, so a new format can be used right away.
+- **Pick the Slack channel from a list:** the channels the Slack bot has joined (🔒 for private ones) are offered in Control panel and in the database 📝 ⚙ popover; when the Slack bridge is unreachable, a channel id can still be typed.
+
+### Changed
+
+- The database 📝 ⚙ popover is now compact (engine, default format, skill, Slack channel); the prompt and formats are edited in Control panel.
+
+Settings saved by 0.33/0.34 keep working: the four built-in formats become editable presets. Verification is recorded in [test results](test-results.md).
+
 ## 0.34.0 — 2026-10-16 · [#52](https://github.com/huklee/lotion/pull/52)
 
 ### Changed
