@@ -218,6 +218,11 @@ export const contentSchema = z
               block.props.title.length > 200)
           )
             throw new Error("Invalid database title");
+          if (
+            block.props?.variant !== undefined &&
+            !["", "meetings"].includes(block.props.variant)
+          )
+            throw new Error("Invalid database variant");
         } else if (block.type === "mermaid") {
           if (
             block.content !== undefined ||

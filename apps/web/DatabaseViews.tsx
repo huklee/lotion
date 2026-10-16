@@ -93,6 +93,8 @@ export function DatabaseViewBar({
   onQuery,
   primary,
   filterRequest,
+  meetings = false,
+  onVariant,
 }: {
   views: DatabaseView[];
   active: DatabaseView;
@@ -106,6 +108,9 @@ export function DatabaseViewBar({
   onQuery: (query: string) => void;
   /** The "New" button. */
   primary?: React.ReactNode;
+  /** Meeting logs (summary settings shown) or a basic database. */
+  meetings?: boolean;
+  onVariant?: (variant: "" | "meetings") => void;
   /** Bumped by the table to open the filter editor (e.g. "Filter by this property"). */
   filterRequest?: number;
 }) {
@@ -177,6 +182,43 @@ export function DatabaseViewBar({
         </button>
       </div>
       <div className="lotion-database-tools">
+        <span className="ldb-layout" role="group" aria-label="Layout">
+          {(["table", "feed"] as const).map((type) => (
+            <button
+              key={type}
+              type="button"
+              aria-label={`${type === "feed" ? "Feed" : "Table"} layout`}
+              aria-pressed={active.type === type}
+              title={
+                type === "feed"
+                  ? "Feed: read each row's page one after another"
+                  : "Table: rows and properties in a grid"
+              }
+              onClick={() => {
+                if (active.type === type) return;
+                const date = columns.find((c) => c.type === "date");
+                patch({
+                  type,
+                  // a feed reads newest first when there is a date to sort by
+                  ...(type === "feed" && !active.sort.length && date
+                    ? {
+                        sort: [
+                          { columnId: date.id, direction: "desc" as const },
+                        ],
+                      }
+                    : {}),
+                });
+              }}
+            >
+              {type === "feed" ? (
+                <Rows3 size={14} aria-hidden />
+              ) : (
+                <Table2 size={14} aria-hidden />
+              )}
+              {type === "feed" ? "Feed" : "Table"}
+            </button>
+          ))}
+        </span>
         {columns.some((c) => c.type === "date") && (
           <select
             className="lotion-database-period"
@@ -265,15 +307,17 @@ export function DatabaseViewBar({
         >
           <SlidersHorizontal size={14} aria-hidden />
         </button>
-        <button
-          type="button"
-          aria-label="Summary settings"
-          title="Summary settings: engine, format, skill, Slack channel"
-          aria-expanded={menu?.kind === "summary"}
-          onClick={toggle("summary")}
-        >
-          <FileText size={14} aria-hidden />
-        </button>
+        {meetings && (
+          <button
+            type="button"
+            aria-label="Summary settings"
+            title="Summary settings: engine, format, skill, Slack channel"
+            aria-expanded={menu?.kind === "summary"}
+            onClick={toggle("summary")}
+          >
+            <FileText size={14} aria-hidden />
+          </button>
+        )}
         {primary}
       </div>
       {(active.filters.length > 0 || active.sort.length > 0) && (
@@ -388,6 +432,23 @@ export function DatabaseViewBar({
               }
             />
           </label>
+          {onVariant && (
+            <label>
+              Database type
+              <select
+                aria-label="Database type"
+                value={meetings ? "meetings" : ""}
+                onChange={(event) =>
+                  onVariant(event.target.value as "" | "meetings")
+                }
+              >
+                <option value="">Database</option>
+                <option value="meetings">
+                  Meeting logs — new meeting, summaries
+                </option>
+              </select>
+            </label>
+          )}
           <div className="lotion-database-menu-row">
             <button
               type="button"

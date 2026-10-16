@@ -57,6 +57,8 @@ function pageId(href: string) {
 
 export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
   const actions = useContext(DatabaseActionsContext);
+  /** Meeting logs: meeting entries, summaries; otherwise a plain database. */
+  const meetings = block.props.variant === "meetings";
   const rowPages = useContext(RowPagesContext);
   const state = useMemo(() => {
     try {
@@ -187,29 +189,33 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
   );
 
   /**
-   * Create a row page. In a feed it is a new meeting: today's date in the first date
-   * property, and the body copied from the template row (or a meeting skeleton).
+   * Create a row page. In Meeting logs it is a new meeting: today's date in the first
+   * date property and the body from the template row (or a meeting skeleton). In a
+   * basic database it is an "Untitled row", with the template row's body if one is set.
    */
   const createEntry = async () => {
     if (!actions) return;
-    const feed = active.type === "feed";
     const today = new Date();
     const day = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
     const values = filterDefaults(active, state.columns, today);
     const dateColumn = state.columns.find((column) => column.type === "date");
-    if (feed && dateColumn && values[dateColumn.id] === undefined)
+    if (meetings && dateColumn && values[dateColumn.id] === undefined)
       values[dateColumn.id] = day;
     let body = null;
-    if (feed && rowPages) {
+    if (rowPages) {
       const templateId = pageId(String(block.props.template ?? ""));
       const template =
         templateId && actions.pages.some((page) => page.id === templateId)
           ? await rowPages.load(templateId)
           : null;
-      body = template ? freshBlockIds(template.blocks) : meetingSkeleton();
+      body = template
+        ? freshBlockIds(template.blocks)
+        : meetings
+          ? meetingSkeleton()
+          : null;
     }
     const page = await actions.createRowPage(
-      feed ? `${day} 회의` : "Untitled row",
+      meetings ? `${day} 회의` : "Untitled row",
     );
     // Fill the body before the row appears, so the feed opens it with the template.
     if (body && rowPages) {
@@ -223,10 +229,10 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
       title: page.title,
       values,
     };
-    // A feed entry goes first, so same-day meetings also read newest first.
+    // A meeting goes first, so same-day meetings also read newest first.
     const added = updateLatest((latest) => ({
       ...latest,
-      rows: feed ? [entry, ...latest.rows] : [...latest.rows, entry],
+      rows: meetings ? [entry, ...latest.rows] : [...latest.rows, entry],
     }));
     if (!added)
       throw new Error(
@@ -319,7 +325,7 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
         count={state.rows.length}
         canPage={!!id && !!page && !!actions?.duplicateRowPage}
         onSummarize={
-          id && page && rowPages
+          meetings && id && page && rowPages
             ? (style?: SummaryStyle) => {
                 close();
                 void rowPages
@@ -409,16 +415,20 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
         query={query}
         onQuery={setQuery}
         filterRequest={filterRequest}
+        meetings={meetings}
+        onVariant={(variant) =>
+          editor.updateBlock(block, { props: { variant } })
+        }
         primary={
           <button
             type="button"
             className="ldb-primary"
-            aria-label={feed ? "+ New meeting" : "New row page"}
+            aria-label={meetings ? "+ New meeting" : "New row page"}
             disabled={!actions || adding || state.rows.length >= 500}
             onClick={startEntry}
           >
             <Plus size={14} aria-hidden />
-            {adding ? "Creating…" : feed ? "New meeting" : "New"}
+            {adding ? "Creating…" : meetings ? "New meeting" : "New"}
           </button>
         }
       />
@@ -432,6 +442,7 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
             actions?.pages.find((page) => page.id === pageId(row.href))
           }
           newestEditable
+          summaries={meetings}
           selected={selected}
           onToggle={toggleSelected}
         />
@@ -519,7 +530,7 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
               Select all {visibleRows.length} shown
             </button>
           )}
-          {rowPages && (
+          {meetings && rowPages && (
             <SummarizeButton
               label={`📝 Summarize ${selected.size}`}
               className="lotion-database-summarize"
