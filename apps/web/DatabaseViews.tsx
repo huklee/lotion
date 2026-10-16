@@ -1,4 +1,16 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  FileText,
+  ListFilter,
+  Rows3,
+  Search,
+  SlidersHorizontal,
+  Table2,
+  X,
+} from "lucide-react";
 import { Floating } from "./DatabaseMenus";
 import { SummarySettingsForm } from "./summaries";
 import type { DatabaseColumn } from "../../packages/database/model";
@@ -77,6 +89,10 @@ export function DatabaseViewBar({
   total,
   onSelect,
   onChange,
+  query,
+  onQuery,
+  primary,
+  filterRequest,
 }: {
   views: DatabaseView[];
   active: DatabaseView;
@@ -85,10 +101,23 @@ export function DatabaseViewBar({
   total: number;
   onSelect: (id: string) => void;
   onChange: (views: DatabaseView[]) => void;
+  /** Quick search (not saved with the view). */
+  query: string;
+  onQuery: (query: string) => void;
+  /** The "New" button. */
+  primary?: React.ReactNode;
+  /** Bumped by the table to open the filter editor (e.g. "Filter by this property"). */
+  filterRequest?: number;
 }) {
   const [menu, setMenu] = useState<{ kind: Menu; anchor: HTMLElement } | null>(
     null,
   );
+  const filterButton = useRef<HTMLButtonElement>(null);
+  const [searching, setSearching] = useState(false);
+  useEffect(() => {
+    if (filterRequest && filterButton.current)
+      setMenu({ kind: "filter", anchor: filterButton.current });
+  }, [filterRequest]);
   const fields = fieldsOf(columns);
   const close = () => setMenu(null);
   const toggle = (kind: Menu) => (event: React.MouseEvent<HTMLButtonElement>) =>
@@ -115,7 +144,12 @@ export function DatabaseViewBar({
               aria-selected={view.id === active.id}
               onClick={() => onSelect(view.id)}
             >
-              {view.type === "feed" ? "☰" : "▦"} {view.name || "Untitled view"}
+              {view.type === "feed" ? (
+                <Rows3 size={14} aria-hidden />
+              ) : (
+                <Table2 size={14} aria-hidden />
+              )}{" "}
+              {view.name || "Untitled view"}
             </button>
             {view.id === active.id && (
               <button
@@ -176,37 +210,133 @@ export function DatabaseViewBar({
           </small>
         )}
         <button
+          ref={filterButton}
           type="button"
+          className={active.filters.length ? "on" : undefined}
           aria-expanded={menu?.kind === "filter"}
           onClick={toggle("filter")}
         >
+          <ListFilter size={14} aria-hidden />
           Filter{active.filters.length ? ` (${active.filters.length})` : ""}
         </button>
         <button
           type="button"
+          className={active.sort.length ? "on" : undefined}
           aria-expanded={menu?.kind === "sort"}
           onClick={toggle("sort")}
         >
+          <ArrowUpDown size={14} aria-hidden />
           Sort{active.sort.length ? ` (${active.sort.length})` : ""}
         </button>
+        {searching || query ? (
+          <input
+            className="ldb-search"
+            type="search"
+            aria-label="Search this database"
+            placeholder="Search…"
+            autoFocus={!query}
+            value={query}
+            onChange={(event) => onQuery(event.target.value)}
+            onBlur={() => !query && setSearching(false)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                onQuery("");
+                setSearching(false);
+              }
+            }}
+          />
+        ) : (
+          <button
+            type="button"
+            aria-label="Search"
+            title="Search"
+            onClick={() => setSearching(true)}
+          >
+            <Search size={14} aria-hidden />
+          </button>
+        )}
         <button
           type="button"
+          className={active.hidden.length ? "on" : undefined}
+          aria-label={`Properties${active.hidden.length ? ` (${active.hidden.length} hidden)` : ""}`}
+          title="Visible properties"
           aria-expanded={menu?.kind === "properties"}
           onClick={toggle("properties")}
         >
-          Properties
-          {active.hidden.length ? ` (${active.hidden.length} hidden)` : ""}
+          <SlidersHorizontal size={14} aria-hidden />
         </button>
         <button
           type="button"
           aria-label="Summary settings"
-          title="Summary settings: engine, skill, prompt, Slack channel"
+          title="Summary settings: engine, format, skill, Slack channel"
           aria-expanded={menu?.kind === "summary"}
           onClick={toggle("summary")}
         >
-          📝 ⚙
+          <FileText size={14} aria-hidden />
         </button>
+        {primary}
       </div>
+      {(active.filters.length > 0 || active.sort.length > 0) && (
+        <div className="ldb-rules" aria-label="Active sorts and filters">
+          {active.sort.map((rule, index) => {
+            const field = fields.find((f) => f.id === rule.columnId);
+            return (
+              <span key={`s${index}`} className="ldb-chip">
+                <button
+                  type="button"
+                  onClick={(event) =>
+                    setMenu({ kind: "sort", anchor: event.currentTarget })
+                  }
+                >
+                  {rule.direction === "asc" ? (
+                    <ArrowUp size={12} aria-hidden />
+                  ) : (
+                    <ArrowDown size={12} aria-hidden />
+                  )}{" "}
+                  {field?.name ?? "?"}
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Remove sort by ${field?.name ?? ""}`}
+                  onClick={() =>
+                    patch({ sort: active.sort.filter((_, i) => i !== index) })
+                  }
+                >
+                  <X size={12} aria-hidden />
+                </button>
+              </span>
+            );
+          })}
+          {active.filters.map((rule) => {
+            const field = fields.find((f) => f.id === rule.columnId);
+            const value = NO_VALUE_OPS.has(rule.op) ? "" : (rule.value ?? "…");
+            return (
+              <span key={rule.id} className="ldb-chip">
+                <button
+                  type="button"
+                  onClick={(event) =>
+                    setMenu({ kind: "filter", anchor: event.currentTarget })
+                  }
+                >
+                  <strong>{field?.name ?? "?"}</strong> {OP_LABEL[rule.op]}{" "}
+                  {value}
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Remove filter on ${field?.name ?? ""}`}
+                  onClick={() =>
+                    patch({
+                      filters: active.filters.filter((r) => r.id !== rule.id),
+                    })
+                  }
+                >
+                  <X size={12} aria-hidden />
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       {menu?.kind === "summary" && (
         <Floating anchor={menu.anchor} label="Summary settings" onClose={close}>

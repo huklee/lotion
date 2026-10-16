@@ -78,15 +78,17 @@ test("database properties: change type, edit options, move and delete", async ({
   await menu.getByRole("button", { name: "← Move left" }).click();
   await page.keyboard.press("Escape");
   const headers = await db
-    .locator("thead th.lotion-database-property > input")
-    .evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
+    .locator("thead th.lotion-database-property .ldb-th-button span")
+    .allInnerTexts();
   expect(headers).toEqual(["Status", "Kind", "Notes"]);
   await db.getByRole("button", { name: "Notes property settings" }).click();
   await page.getByRole("button", { name: "Delete property…" }).click();
   await page
     .getByRole("button", { name: "Delete property", exact: true })
     .click();
-  await expect(db.getByLabel("Notes property name")).toHaveCount(0);
+  await expect(
+    db.getByRole("button", { name: "Notes property settings" }),
+  ).toHaveCount(0);
   // persisted
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
@@ -201,13 +203,15 @@ test("database views: filter, sort, hide properties and saved views", async ({
   await expect
     .poll(titles)
     .toEqual(["📄 Untitled row", "📄 Review", "📄 Kickoff"]);
-  await db.getByRole("button", { name: "Properties" }).click();
+  await db.getByRole("button", { name: /^Properties/ }).click();
   await page
     .getByRole("dialog", { name: "Visible properties" })
     .getByLabel("Notes")
     .uncheck();
   await page.keyboard.press("Escape");
-  await expect(db.getByLabel("Notes property name")).toHaveCount(0);
+  await expect(
+    db.getByRole("button", { name: "Notes property settings" }),
+  ).toHaveCount(0);
   // views are stored in the block and survive a reload
   await expect
     .poll(async () => {
@@ -219,11 +223,15 @@ test("database views: filter, sort, hide properties and saved views", async ({
     })
     .toBe(2);
   await page.reload();
-  await db.getByRole("tab", { name: /^▦ Table$/ }).click();
+  await db.getByRole("tab", { name: /^Table$/ }).click();
   await expect.poll(async () => (await titles()).length).toBe(2);
-  await expect(db.getByLabel("Notes property name")).toBeVisible();
+  await expect(
+    db.getByRole("button", { name: "Notes property settings" }),
+  ).toBeVisible();
   await db.getByRole("tab", { name: /Table 2/ }).click();
-  await expect(db.getByLabel("Notes property name")).toHaveCount(0);
+  await expect(
+    db.getByRole("button", { name: "Notes property settings" }),
+  ).toHaveCount(0);
   // delete the second view
   await db.getByRole("button", { name: "Table 2 view settings" }).click();
   await page

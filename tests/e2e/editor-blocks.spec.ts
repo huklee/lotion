@@ -293,9 +293,9 @@ test("typed database rows are child pages and other custom blocks persist", asyn
     .filter({ hasText: "Typed properties with child-page rows" })
     .click();
   const database = page.locator(".lotion-database");
-  await expect(database.getByLabel("Status property name")).toHaveValue(
-    "Status",
-  );
+  await expect(
+    database.getByRole("button", { name: "Status property settings" }),
+  ).toBeVisible();
   await database.getByRole("button", { name: "New row page" }).click();
   // the title button (the row's "⋯ actions" button also mentions the title)
   const rowLink = database.getByRole("button", { name: /Untitled row$/ });
@@ -307,10 +307,26 @@ test("typed database rows are child pages and other custom blocks persist", asyn
   await database.getByLabel("Due for Untitled row").fill("2026-09-30");
   await database.getByLabel("Estimate for Untitled row").fill("8");
   await database.getByLabel("Notes for Untitled row").fill("Typed row value");
-  await database.getByLabel("Notes property name").fill("Context");
-  await database.getByLabel("Property type").selectOption("select");
-  await database.getByRole("button", { name: "Add property" }).click();
-  await expect(database.getByLabel("Select 2 property name")).toBeVisible();
+  // rename a property in its header menu
+  await database
+    .getByRole("button", { name: "Notes property settings" })
+    .click();
+  await page.getByLabel("Property name").fill("Context");
+  await page.keyboard.press("Enter");
+  await expect(
+    database.getByRole("button", { name: "Context property settings" }),
+  ).toBeVisible();
+  // add a property from the "+" header: its menu opens to name it
+  await database.getByRole("button", { name: "Add a property" }).click();
+  await page
+    .getByRole("dialog", { name: "Add a property" })
+    .getByRole("button", { name: "Select" })
+    .click();
+  await expect(page.getByLabel("Property name")).toHaveValue("Select 2");
+  await page.keyboard.press("Escape");
+  await expect(
+    database.getByRole("button", { name: "Select 2 property settings" }),
+  ).toBeVisible();
   await page.locator(".tiptap .bn-inline-content").last().click();
   await page.keyboard.type("/callout");
   await page.getByRole("option").filter({ hasText: "important note" }).click();

@@ -8,12 +8,15 @@ import {
   useState,
 } from "react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
-import { PropertyMenu, RowMenu } from "./DatabaseMenus";
+import { RowMenu } from "./DatabaseMenus";
+import { DatabaseTable, type RowInfo } from "./DatabaseTable";
+import { Plus, X } from "lucide-react";
 import { DatabaseViewBar } from "./DatabaseViews";
 import { DatabaseFeed, freshBlockIds, meetingSkeleton } from "./DatabaseFeed";
 import { RowPagesContext } from "./row-pages";
 import { SummarizeButton, type SummaryStyle } from "./summaries";
 import {
+  FILTER_OPS,
   applyView,
   defaultView,
   filterDefaults,
@@ -22,7 +25,6 @@ import {
   type DatabaseView,
 } from "../../packages/database/views";
 import {
-  DATABASE_PROPERTY_TYPES,
   DEFAULT_DATABASE_COLUMNS_JSON,
   DEFAULT_DATABASE_ROWS_JSON,
   insertRowCopy,
@@ -30,7 +32,6 @@ import {
   readDatabaseState,
   removeRow,
   type DatabaseColumn,
-  type DatabasePropertyType,
   type DatabaseRow,
   type DatabaseState,
   type DatabaseValue,
@@ -52,12 +53,6 @@ export const DatabaseActionsContext = createContext<DatabaseActions | null>(
 
 function pageId(href: string) {
   return /^#\/page\/([a-zA-Z0-9_-]{1,100})$/.exec(href)?.[1] ?? null;
-}
-
-function emptyValue(type: DatabasePropertyType): DatabaseValue {
-  if (type === "checkbox") return false;
-  if (type === "number") return null;
-  return "";
 }
 
 export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
@@ -127,14 +122,9 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
     });
   }, [state.rows]);
   const [adding, setAdding] = useState(false);
-  const [propertyType, setPropertyType] =
-    useState<DatabasePropertyType>("text");
+  const [query, setQuery] = useState("");
+  const [filterRequest, setFilterRequest] = useState(0);
   const [error, setError] = useState("");
-  const [menu, setMenu] = useState<{
-    kind: "property" | "row";
-    id: string;
-    anchor: HTMLElement;
-  } | null>(null);
 
   const update = useCallback(
     (next: DatabaseState) =>
@@ -290,8 +280,124 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
       ),
     });
 
+  const needle = query.trim().toLowerCase();
+  const visibleRows = needle
+    ? shownRows.filter((row) =>
+        [rowTitle(row), ...Object.values(row.values)]
+          .filter((v) => typeof v === "string" || typeof v === "number")
+          .some((v) => String(v).toLowerCase().includes(needle)),
+      )
+    : shownRows;
+  const infos: RowInfo[] = visibleRows.map((row) => {
+    const id = pageId(row.href);
+    const page = actions?.pages.find((candidate) => candidate.id === id);
+    return {
+      row,
+      pageId: id,
+      page,
+      title: (page?.title ?? row.title) || "Untitled row",
+    };
+  });
+  const patchView = (change: (view: DatabaseView) => DatabaseView) =>
+    updateViews(views.map((v) => (v.id === active.id ? change(v) : v)));
+  const startEntry = () => {
+    if (!actions || adding) return;
+    setAdding(true);
+    setError("");
+    void createEntry()
+      .catch((reason) => setError((reason as Error).message))
+      .finally(() => setAdding(false));
+  };
+  const feed = active.type === "feed";
+
+  const rowMenu = (info: RowInfo, anchor: HTMLElement, close: () => void) => {
+    const { row, pageId: id, page } = info;
+    return (
+      <RowMenu
+        anchor={anchor}
+        index={state.rows.indexOf(row)}
+        count={state.rows.length}
+        canPage={!!id && !!page && !!actions?.duplicateRowPage}
+        onSummarize={
+          id && page && rowPages
+            ? (style?: SummaryStyle) => {
+                close();
+                void rowPages
+                  .summarize({ pages: [{ id }], parentId: id, style })
+                  .catch(() => undefined);
+              }
+            : undefined
+        }
+        isTemplate={!!block.props.template && block.props.template === row.href}
+        onTemplate={() => {
+          close();
+          editor.updateBlock(block, {
+            props: {
+              template: block.props.template === row.href ? "" : row.href,
+            },
+          });
+        }}
+        onClose={close}
+        onMove={(delta) => update(moveRow(state, row.id, delta))}
+        onDuplicate={() => {
+          if (!id || !actions?.duplicateRowPage) return;
+          close();
+          setError("");
+          void actions
+            .duplicateRowPage(id)
+            .then((copy) =>
+              updateLatest((latest) =>
+                insertRowCopy(latest, row.id, {
+                  id: crypto.randomUUID(),
+                  href: `#/page/${copy.id}`,
+                  title: copy.title,
+                }),
+              ),
+            )
+            .catch((reason) => setError((reason as Error).message));
+        }}
+        onDelete={() => {
+          close();
+          setError("");
+          // Remove the row right away, then trash its page; if trashing
+          // fails, put the row back where it was.
+          const index = state.rows.indexOf(row);
+          update(removeRow(state, row.id));
+          if (!id || !page || !actions?.trashRowPage) return;
+          void actions.trashRowPage(id).catch((reason) => {
+            setError((reason as Error).message);
+            updateLatest((latest) =>
+              latest.rows.some((r) => r.id === row.id)
+                ? latest
+                : {
+                    ...latest,
+                    rows: [
+                      ...latest.rows.slice(0, index),
+                      row,
+                      ...latest.rows.slice(index),
+                    ],
+                  },
+            );
+          });
+        }}
+      />
+    );
+  };
+
   return (
     <section ref={section} className="lotion-database" contentEditable={false}>
+      <input
+        className="ldb-name"
+        aria-label="Database title"
+        placeholder="Untitled database"
+        maxLength={200}
+        value={String(block.props.title ?? "")}
+        onChange={(event) =>
+          editor.updateBlock(block, {
+            props: { title: event.target.value.slice(0, 200) },
+          })
+        }
+      />
       <DatabaseViewBar
         views={views}
         active={active}
@@ -300,10 +406,25 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
         total={state.rows.length}
         onSelect={selectView}
         onChange={updateViews}
+        query={query}
+        onQuery={setQuery}
+        filterRequest={filterRequest}
+        primary={
+          <button
+            type="button"
+            className="ldb-primary"
+            aria-label={feed ? "+ New meeting" : "New row page"}
+            disabled={!actions || adding || state.rows.length >= 500}
+            onClick={startEntry}
+          >
+            <Plus size={14} aria-hidden />
+            {adding ? "Creating…" : feed ? "New meeting" : "New"}
+          </button>
+        }
       />
-      {active.type === "feed" ? (
+      {feed ? (
         <DatabaseFeed
-          rows={shownRows}
+          rows={visibleRows}
           columns={shownColumns}
           editor={editor}
           rowTitle={rowTitle}
@@ -315,299 +436,69 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
           onToggle={toggleSelected}
         />
       ) : (
-        <div className="lotion-database-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>
-                  <input
-                    type="checkbox"
-                    className="lotion-database-select"
-                    aria-label="Select all shown rows"
-                    checked={
-                      shownRows.length > 0 &&
-                      shownRows.every((row) => selected.has(row.id))
-                    }
-                    onChange={(event) =>
-                      setSelected(
-                        event.target.checked
-                          ? new Set([
-                              ...selected,
-                              ...shownRows.map((r) => r.id),
-                            ])
-                          : new Set(
-                              [...selected].filter(
-                                (id) => !shownRows.some((r) => r.id === id),
-                              ),
-                            ),
-                      )
-                    }
-                  />{" "}
-                  Page
-                </th>
-                {shownColumns.map((column) => (
-                  <th key={column.id} className="lotion-database-property">
-                    <input
-                      aria-label={`${column.name} property name`}
-                      maxLength={100}
-                      value={column.name}
-                      onChange={(event) =>
-                        update({
-                          ...state,
-                          columns: state.columns.map((candidate) =>
-                            candidate.id === column.id
-                              ? {
-                                  ...candidate,
-                                  name: event.target.value.slice(0, 100),
-                                }
-                              : candidate,
-                          ),
-                        })
-                      }
-                    />
-                    <small>{column.type}</small>
-                    <button
-                      type="button"
-                      className="lotion-database-more"
-                      aria-label={`${column.name} property settings`}
-                      aria-expanded={
-                        menu?.kind === "property" && menu.id === column.id
-                      }
-                      onClick={(event) =>
-                        setMenu(
-                          menu?.kind === "property" && menu.id === column.id
-                            ? null
-                            : {
-                                kind: "property",
-                                id: column.id,
-                                anchor: event.currentTarget,
-                              },
-                        )
-                      }
-                    >
-                      ⋯
-                    </button>
-                    {menu?.kind === "property" && menu.id === column.id && (
-                      <PropertyMenu
-                        anchor={menu.anchor}
-                        column={column}
-                        state={state}
-                        index={state.columns.indexOf(column)}
-                        update={update}
-                        onClose={() => setMenu(null)}
-                      />
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {shownRows.length === 0 && (
-                <tr>
-                  <td
-                    className="lotion-database-empty"
-                    colSpan={shownColumns.length + 1}
-                  >
-                    {state.rows.length
-                      ? "No rows match this view's filters."
-                      : "No rows yet."}
-                  </td>
-                </tr>
-              )}
-              {shownRows.map((row) => {
-                const id = pageId(row.href);
-                const page = actions?.pages.find(
-                  (candidate) => candidate.id === id,
-                );
-                const title = (page?.title ?? row.title) || "Untitled row";
-                return (
-                  <tr key={row.id}>
-                    <th className="lotion-database-row-title">
-                      <input
-                        type="checkbox"
-                        className="lotion-database-select"
-                        aria-label={`Select ${title}`}
-                        checked={selected.has(row.id)}
-                        onChange={() => toggleSelected(row.id)}
-                      />
-                      <button
-                        type="button"
-                        disabled={!id || !page || !actions}
-                        onClick={() => id && actions?.openPage(id)}
-                      >
-                        {page?.icon ?? "📄"} {title}
-                      </button>
-                      <button
-                        type="button"
-                        className="lotion-database-more"
-                        aria-label="Row actions"
-                        title={`Actions for ${title}`}
-                        aria-expanded={
-                          menu?.kind === "row" && menu.id === row.id
-                        }
-                        onClick={(event) =>
-                          setMenu(
-                            menu?.kind === "row" && menu.id === row.id
-                              ? null
-                              : {
-                                  kind: "row",
-                                  id: row.id,
-                                  anchor: event.currentTarget,
-                                },
-                          )
-                        }
-                      >
-                        ⋯
-                      </button>
-                      {menu?.kind === "row" && menu.id === row.id && (
-                        <RowMenu
-                          anchor={menu.anchor}
-                          index={state.rows.indexOf(row)}
-                          count={state.rows.length}
-                          canPage={
-                            !!id && !!page && !!actions?.duplicateRowPage
-                          }
-                          onSummarize={
-                            id && page && rowPages
-                              ? (style?: SummaryStyle) => {
-                                  setMenu(null);
-                                  void rowPages
-                                    .summarize({
-                                      pages: [{ id }],
-                                      parentId: id,
-                                      style,
-                                    })
-                                    .catch(() => undefined);
-                                }
-                              : undefined
-                          }
-                          isTemplate={
-                            !!block.props.template &&
-                            block.props.template === row.href
-                          }
-                          onTemplate={() => {
-                            setMenu(null);
-                            editor.updateBlock(block, {
-                              props: {
-                                template:
-                                  block.props.template === row.href
-                                    ? ""
-                                    : row.href,
-                              },
-                            });
-                          }}
-                          onClose={() => setMenu(null)}
-                          onMove={(delta) =>
-                            update(moveRow(state, row.id, delta))
-                          }
-                          onDuplicate={() => {
-                            if (!id || !actions?.duplicateRowPage) return;
-                            setMenu(null);
-                            setError("");
-                            void actions
-                              .duplicateRowPage(id)
-                              .then((copy) =>
-                                updateLatest((latest) =>
-                                  insertRowCopy(latest, row.id, {
-                                    id: crypto.randomUUID(),
-                                    href: `#/page/${copy.id}`,
-                                    title: copy.title,
-                                  }),
-                                ),
-                              )
-                              .catch((reason) =>
-                                setError((reason as Error).message),
-                              );
-                          }}
-                          onDelete={() => {
-                            setMenu(null);
-                            setError("");
-                            // Remove the row right away, then trash its page; if trashing
-                            // fails, put the row back where it was.
-                            const index = state.rows.indexOf(row);
-                            update(removeRow(state, row.id));
-                            if (!id || !page || !actions?.trashRowPage) return;
-                            void actions.trashRowPage(id).catch((reason) => {
-                              setError((reason as Error).message);
-                              updateLatest((latest) =>
-                                latest.rows.some((r) => r.id === row.id)
-                                  ? latest
-                                  : {
-                                      ...latest,
-                                      rows: [
-                                        ...latest.rows.slice(0, index),
-                                        row,
-                                        ...latest.rows.slice(index),
-                                      ],
-                                    },
-                              );
-                            });
-                          }}
-                        />
-                      )}
-                    </th>
-                    {shownColumns.map((column) => {
-                      const value =
-                        row.values[column.id] ?? emptyValue(column.type);
-                      const label = `${column.name} for ${title}`;
-                      return (
-                        <td key={column.id}>
-                          {column.type === "checkbox" ? (
-                            <input
-                              type="checkbox"
-                              aria-label={label}
-                              checked={value === true}
-                              onChange={(event) =>
-                                setValue(row, column, event.target.checked)
-                              }
-                            />
-                          ) : column.type === "select" ? (
-                            <select
-                              aria-label={label}
-                              value={String(value ?? "")}
-                              onChange={(event) =>
-                                setValue(row, column, event.target.value)
-                              }
-                            >
-                              <option value="">No selection</option>
-                              {column.options?.map((option) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <input
-                              type={
-                                column.type === "date" ? "date" : column.type
-                              }
-                              aria-label={label}
-                              maxLength={
-                                column.type === "text" ? 500 : undefined
-                              }
-                              value={value === null ? "" : String(value)}
-                              onChange={(event) =>
-                                setValue(
-                                  row,
-                                  column,
-                                  column.type === "number"
-                                    ? event.target.value === ""
-                                      ? null
-                                      : Number(event.target.value)
-                                    : event.target.value,
-                                )
-                              }
-                            />
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <DatabaseTable
+          state={state}
+          columns={shownColumns}
+          rows={infos}
+          selected={selected}
+          onToggle={toggleSelected}
+          onToggleAll={(checked) =>
+            setSelected(
+              checked
+                ? new Set([...selected, ...infos.map((i) => i.row.id)])
+                : new Set(
+                    [...selected].filter(
+                      (id) => !infos.some((i) => i.row.id === id),
+                    ),
+                  ),
+            )
+          }
+          update={update}
+          setValue={setValue}
+          openRow={(info) => info.pageId && actions?.openPage(info.pageId)}
+          addRow={startEntry}
+          adding={adding}
+          canAdd={!!actions && state.rows.length < 500}
+          emptyText={
+            needle
+              ? `No rows match “${query}”.`
+              : state.rows.length
+                ? "No rows match this view's filters."
+                : "No rows yet. Click “New” to add one."
+          }
+          renderRowMenu={rowMenu}
+          view={{
+            sort: (columnId, direction) =>
+              patchView((v) => ({
+                ...v,
+                sort: [
+                  { columnId, direction },
+                  ...v.sort.filter((r) => r.columnId !== columnId),
+                ].slice(0, 5),
+              })),
+            filter: (columnId) => {
+              const column = state.columns.find((c) => c.id === columnId);
+              if (!column) return;
+              patchView((v) => ({
+                ...v,
+                filters: [
+                  ...v.filters,
+                  {
+                    id: crypto.randomUUID().replace(/-/g, "").slice(0, 16),
+                    columnId,
+                    op: FILTER_OPS[column.type][0],
+                  },
+                ].slice(0, 10),
+              }));
+              setFilterRequest((n) => n + 1);
+            },
+            hide: (columnId) =>
+              patchView((v) => ({
+                ...v,
+                hidden: [...new Set([...v.hidden, columnId])],
+              })),
+          }}
+        />
       )}
       {selected.size > 0 && (
         <div
@@ -616,16 +507,16 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
           aria-label="Selected rows"
         >
           <strong>{selected.size} selected</strong>
-          {shownRows.some((row) => !selected.has(row.id)) && (
+          {visibleRows.some((row) => !selected.has(row.id)) && (
             <button
               type="button"
               onClick={() =>
                 setSelected(
-                  new Set([...selected, ...shownRows.map((r) => r.id)]),
+                  new Set([...selected, ...visibleRows.map((r) => r.id)]),
                 )
               }
             >
-              Select all {shownRows.length} shown
+              Select all {visibleRows.length} shown
             </button>
           )}
           {rowPages && (
@@ -656,9 +547,6 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
               }}
             />
           )}
-          <button type="button" onClick={() => setSelected(new Set())}>
-            Clear
-          </button>
           {confirmBulk ? (
             <span className="lotion-database-confirm" role="alert">
               Delete {selected.size} rows? Their pages move to the trash.
@@ -685,68 +573,16 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
               Delete…
             </button>
           )}
+          <button
+            type="button"
+            className="ldb-selection-clear"
+            aria-label="Clear"
+            onClick={() => setSelected(new Set())}
+          >
+            <X size={14} aria-hidden />
+          </button>
         </div>
       )}
-      <div className="lotion-database-actions">
-        <button
-          type="button"
-          disabled={!actions || adding || state.rows.length >= 500}
-          onClick={() => {
-            if (!actions || adding) return;
-            setAdding(true);
-            setError("");
-            void createEntry()
-              .catch((reason) => setError((reason as Error).message))
-              .finally(() => setAdding(false));
-          }}
-        >
-          {adding
-            ? "Creating…"
-            : active.type === "feed"
-              ? "+ New meeting"
-              : "New row page"}
-        </button>
-        <label>
-          Property type
-          <select
-            value={propertyType}
-            onChange={(event) =>
-              setPropertyType(event.target.value as DatabasePropertyType)
-            }
-          >
-            {DATABASE_PROPERTY_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          disabled={state.columns.length >= 20}
-          onClick={() => {
-            const count =
-              state.columns.filter((column) => column.type === propertyType)
-                .length + 1;
-            update({
-              ...state,
-              columns: [
-                ...state.columns,
-                {
-                  id: crypto.randomUUID(),
-                  name: `${propertyType[0].toUpperCase()}${propertyType.slice(1)} ${count}`,
-                  type: propertyType,
-                  ...(propertyType === "select"
-                    ? { options: ["Option 1", "Option 2"] }
-                    : {}),
-                },
-              ],
-            });
-          }}
-        >
-          Add property
-        </button>
-      </div>
       {error && <p role="alert">{error}</p>}
     </section>
   );

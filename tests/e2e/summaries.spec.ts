@@ -194,7 +194,9 @@ test("Control panel edits meeting-note formats and summaries use them", async ({
   page,
 }) => {
   await seedMeetings(page);
-  await page.getByRole("button", { name: "Control panel" }).click();
+  await page
+    .getByRole("button", { name: "Control panel", exact: true })
+    .click();
   const panel = page.getByRole("dialog");
   await expect(
     panel.getByRole("heading", { name: "Meeting summaries" }),
@@ -262,7 +264,9 @@ test("Control panel edits meeting-note formats and summaries use them", async ({
     ),
   ).toContain("임원 보고 로 생성");
   // restore built-ins keeps the custom format
-  await page.getByRole("button", { name: "Control panel" }).click();
+  await page
+    .getByRole("button", { name: "Control panel", exact: true })
+    .click();
   await page.getByRole("button", { name: /Restore built-in formats/ }).click();
   await expect(
     page.getByRole("listbox", { name: "Presets" }).getByRole("option"),

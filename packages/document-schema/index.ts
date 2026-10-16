@@ -212,6 +212,12 @@ export const contentSchema = z
             block.props?.rows,
           );
           readViews(block.props?.views, database.columns);
+          if (
+            block.props?.title !== undefined &&
+            (typeof block.props.title !== "string" ||
+              block.props.title.length > 200)
+          )
+            throw new Error("Invalid database title");
         } else if (block.type === "mermaid") {
           if (
             block.content !== undefined ||

@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-16T17:10:00+09:00 — 0.36.0 Notion-style database UI
+
+Focused: `database.spec.ts`, `editor-blocks.spec.ts` (typed database scenario: rename through the header menu, add a property with "+", values persist, title opens the row page) and `summaries.spec.ts` — **24/24** across Chromium, Firefox and WebKit after updating selectors from header inputs to header menus. Visual review from screenshots (table with filter/sort chips, colored select pills, selection bar; header property menu; feed) found and fixed: titles truncated and covered by the next cell (BlockNote's fixed table layout), centred menu items, date picker icon overflowing its cell, nesting guides and indent inside feed bodies, and the inline feed editor shifted left by the page editor's margins.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **239/239**; Playwright **235/238** — `block-selection.spec.ts:506` and `outline.spec.ts:91` (load-sensitive, unrelated) passed 3/3 repeated alone; the Firefox Control panel test collided with another test's "Control panel page" in the shared workspace and now matches the button name exactly (passes in all three browsers). Remote CI results are recorded on the pull request.
+
 ## 2026-10-16T15:10:00+09:00 — 0.35.0 Control panel summaries and format editor
 
 Focused: `tests/integration/summaries.test.ts` **8/8** (custom preset as default used by a job and named in its header; deleted preset rejected per job and the default falling back to the first preset; empty, malformed-id and duplicate preset lists rejected; Slack channel list 503 without a bridge and proxied with one). E2E `summaries.spec.ts` + `database.spec.ts` **21/21** across Chromium, Firefox and WebKit (Control panel: channel field falls back to an id input without a bridge, new preset named/described/ruled and set as default, a built-in deleted, saved; the ▾ menu lists the saved formats; the one-button summary uses the new default; restore built-ins keeps the custom one). `slk-bridge`: `go vet`, `go test` pass.
