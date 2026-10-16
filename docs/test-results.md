@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-16T15:10:00+09:00 — 0.35.0 Control panel summaries and format editor
+
+Focused: `tests/integration/summaries.test.ts` **8/8** (custom preset as default used by a job and named in its header; deleted preset rejected per job and the default falling back to the first preset; empty, malformed-id and duplicate preset lists rejected; Slack channel list 503 without a bridge and proxied with one). E2E `summaries.spec.ts` + `database.spec.ts` **21/21** across Chromium, Firefox and WebKit (Control panel: channel field falls back to an id input without a bridge, new preset named/described/ruled and set as default, a built-in deleted, saved; the ▾ menu lists the saved formats; the one-button summary uses the new default; restore built-ins keeps the custom one). `slk-bridge`: `go vet`, `go test` pass.
+
+The full run first failed the Firefox "new meeting from a template" step locally (reproducing the CI failures): the sidebar showed no second page and the button never reached "Creating…" — the click was lost because lazily loading feed bodies shifted the layout between mouse-down and mouse-up. The test now waits until no entry shows "Loading…" before clicking (Firefox 4/4 repeats). Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **239/239**; Playwright **238/238**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-16T13:40:00+09:00 — 0.34.0 summary condensing styles
 
 Focused: `tests/integration/summaries.test.ts` **6/6** (default style brief, its section placed after the request and stated to outrank the skill, style named in the summary header; per-job style overrides the default and excludes the other rules; invalid style rejected; saved legacy default prompt upgraded, custom prompt kept). E2E `summaries.spec.ts` + `database.spec.ts` **36/36** with `--repeat-each=2` across Chromium, Firefox and WebKit (default condensing in settings, one run with "결정·액션만" from the ▾ menu recorded in the summary page). Real Codex smoke run with the brief style on a seven-line sample meeting: 13 lines — 핵심, one decision, three action items with owners and dates.

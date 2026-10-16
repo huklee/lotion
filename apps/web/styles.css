@@ -2433,3 +2433,65 @@ kbd {
 .lotion-database-menu .summarize-style small {
   color: var(--muted);
 }
+
+/* Summary settings in the Control panel */
+.summary-channel {
+  display: flex;
+  gap: 6px;
+}
+.summary-channel select,
+.summary-channel input {
+  flex: 1;
+  min-width: 0;
+}
+.summary-settings.full {
+  text-align: left;
+}
+.summary-settings.full label {
+  font-size: 13px;
+}
+.summary-settings.full select,
+.summary-settings.full input,
+.summary-settings.full textarea {
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+.preset-editor {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+}
+.preset-editor legend {
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.preset-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.preset-list [role="option"] {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.preset-list [role="option"][aria-selected="true"] {
+  border-color: var(--text);
+  background: var(--hover);
+}
+.preset-list small {
+  color: var(--muted);
+}

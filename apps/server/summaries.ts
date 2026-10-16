@@ -29,16 +29,14 @@ export const DEFAULT_PROMPT = `다음은 회의 원본 기록(raw notes)입니�
 
 규칙: 원문에 없는 사실을 지어내지 말고, 불확실한 내용은 "(확인 필요)"로 표시하세요. 여러 회의가 주어지면 날짜순으로 정리하세요. 결과는 Markdown 본문만 출력하세요(앞뒤 설명 없이).`;
 
-export const STYLES = ["brief", "actions", "standard", "detailed"] as const;
-export type SummaryStyle = (typeof STYLES)[number];
+export type Preset = { id: string; label: string; hint: string; rules: string };
 
-/** How much to condense: structure and length, applied on top of prompt and skill. */
-export const STYLE_RULES: Record<
-  SummaryStyle,
-  { label: string; rules: string }
-> = {
-  brief: {
+/** Built-in condensing presets: structure and length on top of prompt and skill. */
+export const DEFAULT_PRESETS: Preset[] = [
+  {
+    id: "brief",
     label: "핵심·결정 (짧게)",
+    hint: "핵심 1~3줄 + 결정 사항 + 액션 아이템, 15줄 이내",
     rules: `핵심과 결정 사항 위주로 아주 짧게 작성하세요. 전체 15줄 이내.
 구성:
 ## 핵심 — 1~3줄
@@ -46,14 +44,18 @@ export const STYLE_RULES: Record<
 ## 액션 아이템 — "- [ ] 할 일 — 담당자, 기한" 형식 (없으면 생략)
 논의 과정, 배경 설명, 참석자 목록, 인사말은 쓰지 마세요.`,
   },
-  actions: {
+  {
+    id: "actions",
     label: "결정·액션만",
+    hint: "결정 사항과 액션 아이템 목록만",
     rules: `결정 사항과 액션 아이템만 작성하세요. 다른 섹션과 설명은 쓰지 마세요.
 ## 결정 사항 — 불릿 (없으면 "결정 사항 없음")
 ## 액션 아이템 — "- [ ] 할 일 — 담당자, 기한" 형식 (없으면 "없음")`,
   },
-  standard: {
+  {
+    id: "standard",
     label: "표준 회의록",
+    hint: "Confluence 형식 6개 섹션",
     rules: `대기업 Confluence 회의록 형식으로 작성하세요.
 1. 회의 개요 — 일시, 참석자, 회의 목적
 2. 핵심 요약 — 3~5줄
@@ -62,28 +64,54 @@ export const STYLE_RULES: Record<
 5. 액션 아이템 — 표(항목 | 담당자 | 기한 | 상태)
 6. 이슈·리스크 및 후속 논의`,
   },
-  detailed: {
+  {
+    id: "detailed",
     label: "상세 회의록",
+    hint: "표준 + 주제별 의견·근거·과정",
     rules: `표준 회의록 구성(개요, 핵심 요약, 논의 사항, 결정 사항, 액션 아이템 표, 이슈·리스크)에 더해, 주제별 논의 사항마다 제기된 의견·근거·대안과 결론에 이른 과정을 빠짐없이 정리하세요.`,
   },
-};
+];
 
-export const settingsSchema = z.object({
-  engine: z.enum(ENGINES).default("codex"),
-  skill: z.string().max(200).default("create-enterprise-confluence-report"),
-  prompt: z
-    .string()
-    .min(1)
-    .max(20_000)
-    .default(DEFAULT_PROMPT)
-    .transform((p) => (p === LEGACY_DEFAULT_PROMPT ? DEFAULT_PROMPT : p)),
-  style: z.enum(STYLES).default("brief"),
-  slackChannel: z
-    .string()
-    .max(40)
-    .regex(/^([CDG][A-Z0-9]{4,})?$/, "Slack channel id like C0123ABCD")
-    .default(""),
+export const presetSchema = z.object({
+  id: z.string().regex(/^[a-z0-9_-]{1,40}$/, "Preset id: a-z, 0-9, - or _"),
+  label: z.string().trim().min(1).max(60),
+  hint: z.string().max(200).default(""),
+  rules: z.string().trim().min(1).max(8000),
 });
+
+export const settingsSchema = z
+  .object({
+    engine: z.enum(ENGINES).default("codex"),
+    skill: z.string().max(200).default("create-enterprise-confluence-report"),
+    prompt: z
+      .string()
+      .min(1)
+      .max(20_000)
+      .default(DEFAULT_PROMPT)
+      .transform((p) => (p === LEGACY_DEFAULT_PROMPT ? DEFAULT_PROMPT : p)),
+    presets: z
+      .array(presetSchema)
+      .min(1)
+      .max(30)
+      .default(DEFAULT_PRESETS)
+      .refine(
+        (list) => new Set(list.map((p) => p.id)).size === list.length,
+        "Preset ids must be unique",
+      ),
+    /** Default preset id. */
+    style: z.string().max(40).default("brief"),
+    slackChannel: z
+      .string()
+      .max(40)
+      .regex(/^([CDG][A-Z0-9]{4,})?$/, "Slack channel id like C0123ABCD")
+      .default(""),
+  })
+  // A default that no longer exists falls back to the first preset.
+  .transform((v) =>
+    v.presets.some((p) => p.id === v.style)
+      ? v
+      : { ...v, style: v.presets[0].id },
+  );
 export type SummarySettings = z.infer<typeof settingsSchema>;
 
 export const jobInputSchema = z.object({
@@ -101,7 +129,7 @@ export const jobInputSchema = z.object({
   engine: z.enum(ENGINES).optional(),
   skill: z.string().max(200).optional(),
   prompt: z.string().max(20_000).optional(),
-  style: z.enum(STYLES).optional(),
+  style: z.string().max(40).optional(),
 });
 export type JobInput = z.infer<typeof jobInputSchema>;
 
@@ -110,7 +138,8 @@ export type Job = {
   status: "queued" | "running" | "done" | "failed";
   engine: Engine;
   skill: string;
-  style: SummaryStyle;
+  style: string;
+  styleLabel: string;
   title: string;
   sources: { id: string; title: string }[];
   parentId: string;
@@ -126,6 +155,8 @@ export type Skill = { name: string; description: string; source: string };
 /** Runs one engine on `prompt` and resolves with Markdown. */
 export type Runner = (engine: Engine, prompt: string) => Promise<string>;
 export type Notifier = (channel: string, text: string) => Promise<void>;
+export type SlackChannel = { id: string; name: string; private: boolean };
+export type ChannelLister = () => Promise<SlackChannel[]>;
 
 function frontmatter(text: string): {
   meta: Record<string, string>;
@@ -155,7 +186,7 @@ export function composePrompt(
   settingsPrompt: string,
   skill: { name: string; body: string } | null,
   sources: { title: string; markdown: string }[],
-  style?: SummaryStyle,
+  preset?: Preset,
 ): string {
   const parts: string[] = [];
   if (skill)
@@ -163,9 +194,9 @@ export function composePrompt(
       `# 사용할 스킬: ${skill.name}\n\n아래 스킬 지침을 따르되, 파일을 만들거나 명령을 실행하지 말고 결과 Markdown만 답변으로 출력하세요.\n\n${skill.body.trim()}`,
     );
   parts.push(`# 요청\n\n${settingsPrompt.trim()}`);
-  if (style)
+  if (preset)
     parts.push(
-      `# 축약 방식: ${STYLE_RULES[style].label}\n\n아래 분량·구성 규칙이 스킬 지침보다 우선합니다.\n\n${STYLE_RULES[style].rules}`,
+      `# 축약 방식: ${preset.label}\n\n아래 분량·구성 규칙이 스킬 지침보다 우선합니다.\n\n${preset.rules.trim()}`,
     );
   parts.push(
     `# 원본 회의록\n\n${sources
@@ -270,6 +301,25 @@ export const defaultRunner: Runner = async (engine, prompt) => {
   }
 };
 
+/** Lists channels through the local Slack bridge (`…/notify` → `…/channels`). */
+export function bridgeChannels(notifyUrl: string): ChannelLister {
+  const url = notifyUrl.replace(/\/notify$/, "/channels");
+  return async () => {
+    const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+    if (!response.ok)
+      throw Object.assign(
+        new Error(`Slack bridge answered ${response.status}`),
+        { statusCode: 502 },
+      );
+    const list = (await response.json()) as {
+      id: string;
+      name: string;
+      private?: boolean;
+    }[];
+    return list.map((c) => ({ id: c.id, name: c.name, private: !!c.private }));
+  };
+}
+
 /** Posts through the local Slack bridge, which holds the Slack credentials. */
 export function bridgeNotifier(url: string): Notifier {
   return async (channel, text) => {
@@ -296,11 +346,21 @@ export class SummaryService {
       skillDirs?: string[];
       runner?: Runner;
       notifier?: Notifier;
+      channels?: ChannelLister;
       publicUrl?: string;
       allowTestEngine?: boolean;
     },
   ) {
     this.settingsFile = path.join(options.dataDir, "summary-settings.json");
+  }
+
+  /** Slack channels the notification can go to (via the local bridge). */
+  async slackChannels(): Promise<SlackChannel[]> {
+    if (!this.options.channels)
+      throw Object.assign(new Error("Slack is not connected on this server"), {
+        statusCode: 503,
+      });
+    return this.options.channels();
   }
 
   async settings(): Promise<SummarySettings> {
@@ -382,11 +442,19 @@ export class SummaryService {
       return { title: doc.title, markdown: toMarkdown(blocks).markdown };
     });
     const style = input.style ?? settings.style;
+    const preset = settings.presets.find((p) => p.id === style);
+    if (!preset)
+      throw Object.assign(
+        new Error(`Summary preset "${style}" was not found`),
+        {
+          statusCode: 400,
+        },
+      );
     const prompt = composePrompt(
       input.prompt || settings.prompt,
       skillBody,
       sources,
-      style,
+      preset,
     );
     const day = new Date().toISOString().slice(0, 10);
     const job: Job = {
@@ -395,6 +463,7 @@ export class SummaryService {
       engine,
       skill,
       style,
+      styleLabel: preset.label,
       title:
         input.title ??
         `요약 · ${docs.length === 1 ? docs[0].title || "Untitled" : `${docs[0].title} 외 ${docs.length - 1}건`}`,
@@ -428,7 +497,7 @@ export class SummaryService {
         markdown.replace(/^```(?:markdown|md)?\n([\s\S]*)\n```\s*$/, "$1"),
       );
       const header = fromMarkdown(
-        `> ${day} · ${job.engine === "claude" ? "Claude Code" : job.engine === "codex" ? "Codex" : job.engine}${job.skill ? ` · ${job.skill}` : ""} · ${STYLE_RULES[job.style].label} 로 생성 · 원본: ${job.sources
+        `> ${day} · ${job.engine === "claude" ? "Claude Code" : job.engine === "codex" ? "Codex" : job.engine}${job.skill ? ` · ${job.skill}` : ""} · ${job.styleLabel} 로 생성 · 원본: ${job.sources
           .map(
             (s) =>
               `[${(s.title || "Untitled").replace(/[[\]]/g, "")}](#/page/${s.id})`,

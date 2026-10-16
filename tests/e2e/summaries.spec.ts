@@ -89,16 +89,15 @@ test("one-button meeting summary, multi-row summary and summary settings", async
   await db.getByRole("button", { name: "Summary settings" }).click();
   const settings = page.getByRole("dialog", { name: "Summary settings" });
   await expect(settings.getByLabel("Summary engine")).toHaveValue("codex");
-  await expect(settings.getByLabel("Summary prompt")).toHaveValue(
-    /Markdown 본문만/,
-  );
+  await expect(settings.getByText(/Control panel → Meeting/)).toBeVisible();
+
   await expect(settings.getByLabel("Summary style")).toHaveValue("brief");
   await settings.getByLabel("Summary engine").selectOption("claude");
   await settings.getByLabel("Summary skill").selectOption("");
-  await settings.getByLabel("Slack channel").fill("#bad");
+  await settings.getByLabel("Slack channel", { exact: true }).fill("#bad");
   await settings.getByRole("button", { name: "Save" }).click();
   await expect(settings.getByRole("status")).toContainText("Slack channel id");
-  await settings.getByLabel("Slack channel").fill("");
+  await settings.getByLabel("Slack channel", { exact: true }).fill("");
   await settings.getByRole("button", { name: "Save" }).click();
   await expect(settings.getByRole("status")).toHaveText("Saved");
   await page.keyboard.press("Escape");
@@ -106,7 +105,10 @@ test("one-button meeting summary, multi-row summary and summary settings", async
   // one button on a feed entry: summary page under that meeting
   const entries = db.locator(".lotion-feed-entry");
   await expect(entries).toHaveCount(2);
-  await entries.nth(0).getByRole("button", { name: "요약", exact: true }).click();
+  await entries
+    .nth(0)
+    .getByRole("button", { name: "요약", exact: true })
+    .click();
   const toast = page.locator(".summary-toast").first();
   await expect(toast).toContainText("요약 완료 · 요약 · Design 회의", {
     timeout: 15000,
@@ -186,4 +188,83 @@ test("one-button meeting summary, multi-row summary and summary settings", async
   await expect(page.getByLabel("Page title")).toHaveValue(
     "요약 · Design 회의 외 1건",
   );
+});
+
+test("Control panel edits meeting-note formats and summaries use them", async ({
+  page,
+}) => {
+  await seedMeetings(page);
+  await page.getByRole("button", { name: "Control panel" }).click();
+  const panel = page.getByRole("dialog");
+  await expect(
+    panel.getByRole("heading", { name: "Meeting summaries" }),
+  ).toBeVisible();
+  // no Slack bridge in tests: the channel field falls back to an id input
+  await expect(panel.getByText(/Channel list unavailable/)).toBeVisible();
+  await expect(panel.getByLabel("Summary prompt")).toHaveValue(
+    /Markdown 본문만/,
+  );
+  const presets = panel.getByRole("listbox", { name: "Presets" });
+  await expect(presets.getByRole("option")).toHaveCount(4);
+  await panel.getByRole("button", { name: "+ New" }).click();
+  await expect(presets.getByRole("option")).toHaveCount(5);
+  await panel.getByLabel("Preset name").fill("임원 보고");
+  await panel.getByLabel("Preset description").fill("세 줄");
+  await panel
+    .getByLabel("Preset rules")
+    .fill("임원 보고용 세 줄 요약만 작성하세요.");
+  await panel.getByRole("button", { name: "Set as default" }).click();
+  await expect(
+    presets.getByRole("option", { name: /임원 보고 · default/ }),
+  ).toBeVisible();
+  // delete a built-in, then save
+  await presets.getByRole("option", { name: /상세 회의록/ }).click();
+  await panel.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(presets.getByRole("option")).toHaveCount(4);
+  // the test server has no installed skills
+  await panel.getByLabel("Summary skill").selectOption("");
+  await panel.getByRole("button", { name: "Save" }).click();
+  await expect(panel.getByRole("status")).toHaveText("Saved");
+  await page.keyboard.press("Escape");
+
+  // summary menus list the saved formats, the default first-class
+  const entries = page.locator(".lotion-feed-entry");
+  await entries
+    .nth(0)
+    .getByRole("button", { name: "요약: choose condensing" })
+    .click();
+  const menu = page.getByRole("dialog", { name: "Condensing" });
+  await expect(
+    menu.getByRole("button", { name: /임원 보고 · default/ }),
+  ).toBeVisible();
+  await expect(menu.getByRole("button", { name: /상세 회의록/ })).toHaveCount(
+    0,
+  );
+  await page.keyboard.press("Escape");
+  // one button uses the new default
+  await entries
+    .nth(0)
+    .getByRole("button", { name: "요약", exact: true })
+    .click();
+  await expect(page.locator(".summary-toast").first()).toContainText(
+    "요약 완료",
+    {
+      timeout: 15000,
+    },
+  );
+  const summary = (
+    await (await page.request.get("/api/tree")).json()
+  ).nodes.find((n: any) => n.title === "요약 · Design 회의");
+  expect(
+    JSON.stringify(
+      (await (await page.request.get(`/api/documents/${summary.id}`)).json())
+        .blocks,
+    ),
+  ).toContain("임원 보고 로 생성");
+  // restore built-ins keeps the custom format
+  await page.getByRole("button", { name: "Control panel" }).click();
+  await page.getByRole("button", { name: /Restore built-in formats/ }).click();
+  await expect(
+    page.getByRole("listbox", { name: "Presets" }).getByRole("option"),
+  ).toHaveCount(5);
 });

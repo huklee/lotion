@@ -2,7 +2,7 @@ import { Repository } from "../../packages/persistence/repository";
 import os from "node:os";
 import path from "node:path";
 import { createApp } from "./app";
-import { SummaryService, bridgeNotifier } from "./summaries";
+import { SummaryService, bridgeChannels, bridgeNotifier } from "./summaries";
 const host = process.env.HOST ?? "127.0.0.1";
 // Legacy environment aliases keep existing deployments pointed at their workspace.
 const token = process.env.LOTION_TOKEN ?? process.env.YESTION_TOKEN;
@@ -13,15 +13,16 @@ if (!["127.0.0.1", "localhost", "::1"].includes(host) && !token)
     "Remote binding requires LOTION_TOKEN; terminate TLS at your reverse proxy.",
   );
 const repo = await new Repository(dataDir).init();
+const notifyUrl =
+  process.env.LOTION_SLACK_NOTIFY_URL ?? "http://127.0.0.1:47833/notify";
 const summaries = new SummaryService(repo, {
   dataDir,
   skillDirs: [
     path.join(os.homedir(), ".claude", "skills"),
     path.join(os.homedir(), ".codex", "skills"),
   ],
-  notifier: bridgeNotifier(
-    process.env.LOTION_SLACK_NOTIFY_URL ?? "http://127.0.0.1:47833/notify",
-  ),
+  notifier: bridgeNotifier(notifyUrl),
+  channels: bridgeChannels(notifyUrl),
   publicUrl: process.env.LOTION_PUBLIC_URL,
   allowTestEngine: process.env.LOTION_SUMMARY_ENGINE === "test",
 });
