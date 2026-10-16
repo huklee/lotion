@@ -1,3 +1,4 @@
+import { meetingLogProps } from "./meeting-logs";
 import { useCallback, useRef, useState, type RefObject } from "react";
 import { getDefaultReactSlashMenuItems } from "@blocknote/react";
 import {
@@ -11,6 +12,7 @@ import {
   FilePlus2,
   MessageSquareQuote,
   Paperclip,
+  NotebookPen,
 } from "lucide-react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
 import type { LotionEditor } from "./editor.types";
@@ -166,6 +168,26 @@ export function useEditorSuggestions({
               const table = insertOrUpdateBlockForSlashMenu(editor, {
                 type: "database",
               });
+              const next = editor.insertBlocks(
+                [{ type: "paragraph" }],
+                table,
+                "after",
+              )[0];
+              editor.setTextCursorPosition(next, "start");
+              editor.focus();
+            },
+          },
+          {
+            title: "Meeting logs",
+            subtext: "Meeting notes: feed, new meeting, one-button summaries",
+            aliases: ["meeting", "minutes", "회의록", "회의"],
+            group: "Lotion",
+            icon: <NotebookPen size={18} />,
+            onItemClick: () => {
+              const table = insertOrUpdateBlockForSlashMenu(editor, {
+                type: "database",
+                props: meetingLogProps(),
+              } as any);
               const next = editor.insertBlocks(
                 [{ type: "paragraph" }],
                 table,

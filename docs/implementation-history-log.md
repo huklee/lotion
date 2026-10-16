@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-10-16T19:30:00+09:00 — 0.38.0 Meeting logs block and layout switch prepared
+
+Owner requests: make the feed easy to reach from view selection (list/feed); rename the meeting-optimised database to "Meeting logs" and keep a plain database without the meeting features. The database block gains an optional `variant` prop ("" or "meetings", validated); `meeting-logs.ts` builds the preset (title, Date/Type/Attendees, Feed + Table views sorted by date) inserted by the new "/Meeting logs" slash item. `DatabaseBlock` derives `meetings` from the variant: meeting entry creation (today's date, "회의" title, skeleton, prepend) and every summary entry point (feed, row menu, selection bar, toolbar settings) are limited to it, while a template row now applies to both kinds. `DatabaseViewBar` adds a segmented Table | Feed control that changes the active view's type (adding a date-descending sort for a new feed without sorts) and a "Database type" select in the view menu. E2E seeds for meeting scenarios set `variant: "meetings"`.
+
 ## 2026-10-16T18:00:00+09:00 — 0.37.0 top-bar wide page toggle prepared
 
 Owner request: a wide page view control at the top right. `WorkspaceTopbar` gains a pressed-state icon button ("Wide page", Maximize2/Minimize2) bound to the existing per-browser `pageWidth` preference (`comfortable` ↔ `wide`), so it stays in sync with Control panel's "Page width" and persists across reloads.

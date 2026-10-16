@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-16T19:40:00+09:00 — 0.38.0 Meeting logs block and layout switch
+
+Focused: `database.spec.ts` **21/21** across Chromium, Firefox and WebKit, including the new scenarios (plain database without summary features and "New row page"; Table ↔ Feed layout switch; "/Meeting logs" preset with title, Feed tab, summary settings, New meeting with skeleton and 요약 button; switching a plain database to Meeting logs from the view menu); `summaries.spec.ts` and `editor-blocks.spec.ts` pass with meeting seeds marked `variant: "meetings"`. WebKit selected the whole table when the test clicked the empty paragraph after it, so the slash-menu scenario now starts on its own page.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **239/239**; Playwright **247/247**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-16T18:05:00+09:00 — 0.37.0 top-bar wide page toggle
 
 Focused: `settings.spec.ts` **18/18** across Chromium, Firefox and WebKit, including the new toggle scenario (pressed state, `data-page-width`, 1180 px document width, persistence after reload, toggling back).

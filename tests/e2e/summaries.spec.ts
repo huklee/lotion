@@ -47,6 +47,7 @@ async function seedMeetings(page: import("@playwright/test").Page) {
           id: "db",
           type: "database",
           props: {
+            variant: "meetings",
             columns: JSON.stringify([
               { id: "date", name: "Date", type: "date" },
             ]),

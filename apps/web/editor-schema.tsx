@@ -116,6 +116,7 @@ export const editorSchema = BlockNoteSchema.create({
           views: { default: "" },
           template: { default: "" },
           title: { default: "" },
+          variant: { default: "" },
         },
       },
       {

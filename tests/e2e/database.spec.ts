@@ -287,6 +287,7 @@ async function seedMeetings(page: import("@playwright/test").Page) {
           id: "db",
           type: "database",
           props: {
+            variant: "meetings",
             columns: JSON.stringify([
               { id: "date", name: "Date", type: "date" },
               { id: "kind", name: "Kind", type: "text" },
@@ -448,4 +449,73 @@ test("database period presets and bulk delete of selected rows", async ({
       );
     })
     .toEqual([true, true]);
+});
+
+test("Meeting logs block vs basic database, and the Table | Feed layout switch", async ({
+  page,
+}) => {
+  await seedDatabase(page);
+  const basic = page.locator(".lotion-database").first();
+  // a basic database: no meeting or summary features
+  await expect(
+    basic.getByRole("button", { name: "Summary settings" }),
+  ).toHaveCount(0);
+  await expect(
+    basic.getByRole("button", { name: "New row page" }),
+  ).toBeVisible();
+  // switch the current view's layout to Feed and back
+  await basic.getByRole("button", { name: "Feed layout" }).click();
+  await expect(
+    basic.getByRole("button", { name: "Feed layout" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(basic.locator(".lotion-feed-entry")).toHaveCount(2);
+  await expect(
+    basic.getByRole("button", { name: "요약", exact: true }),
+  ).toHaveCount(0);
+  await basic.getByRole("button", { name: "Table layout" }).click();
+  await expect(basic.locator("tbody tr")).toHaveCount(2);
+
+  // the basic database can become Meeting logs from its view menu
+  await basic.getByRole("button", { name: "Table view settings" }).click();
+  await page.getByLabel("Database type").selectOption("meetings");
+  await page.keyboard.press("Escape");
+  await expect(
+    basic.getByRole("button", { name: "Summary settings" }),
+  ).toBeVisible();
+  await expect(
+    basic.getByRole("button", { name: "+ New meeting" }),
+  ).toBeVisible();
+});
+
+test("/Meeting logs inserts the meeting preset", async ({ page }) => {
+  // "/Meeting logs" inserts the meeting preset
+  await seed(page, "Logs page", [
+    { id: "logs-here", type: "paragraph", content: [] },
+  ]);
+  await page.locator('[data-id="logs-here"] .bn-inline-content').click();
+  await page.keyboard.type("/meeting logs");
+  await page
+    .getByRole("option")
+    .filter({ hasText: "one-button summaries" })
+    .click();
+  const logs = page.locator(".lotion-database");
+  await expect(logs.getByLabel("Database title")).toHaveValue("Meeting logs");
+  await expect(logs.getByRole("tab", { name: "Feed" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(
+    logs.getByRole("button", { name: "Summary settings" }),
+  ).toBeVisible();
+  await logs.getByRole("button", { name: "+ New meeting" }).click();
+  await expect(logs.locator(".lotion-feed-entry")).toHaveCount(1);
+  await expect(logs.locator(".lotion-feed-entry").first()).toContainText(
+    "회의",
+  );
+  await expect(logs.locator(".lotion-feed-entry").first()).toContainText(
+    "결정 사항",
+  );
+  await expect(
+    logs.getByRole("button", { name: "요약", exact: true }),
+  ).toBeVisible();
 });

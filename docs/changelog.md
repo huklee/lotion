@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.38.0 — 2026-10-16 · [#56](https://github.com/huklee/lotion/pull/56)
+
+### Added
+
+- **Meeting logs** — a separate block in the `/` menu ("Meeting logs"; also found by "회의록", "meeting", "minutes"). It starts with Date, Type (Weekly, 1:1, Review, Ad-hoc) and Attendees, a **Feed** view (newest first) and a Table view, and keeps the meeting features: **New meeting** (today's date, `YYYY-MM-DD 회의`, template or meeting skeleton, newest on top), one-button summaries (feed "요약", row ⋯, selection bar) and summary settings.
+- **Table | Feed layout switch** in every database toolbar: change the current view between a table and a feed of row pages in one click (a feed sorts by date, newest first, when it has no sort yet).
+- A database's view menu (⋯ on the tab) can switch the **Database type** between Database and Meeting logs.
+
+### Changed
+
+- **Database** is now a plain database: **New** creates an "Untitled row" (with the template row's body if one is set) in table and feed alike; no meeting skeleton, no summary buttons or summary settings. Existing databases open as plain databases — switch one to Meeting logs from its view menu.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.37.0 — 2026-10-16 · [#55](https://github.com/huklee/lotion/pull/55)
 
 ### Added

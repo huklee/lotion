@@ -71,6 +71,8 @@ type FeedProps = {
   newestEditable: boolean;
   selected?: Set<string>;
   onToggle?: (rowId: string) => void;
+  /** Offer one-button summaries (Meeting logs). */
+  summaries?: boolean;
 };
 
 /**
@@ -86,6 +88,7 @@ export function DatabaseFeed({
   newestEditable,
   selected,
   onToggle,
+  summaries = false,
 }: FeedProps) {
   const [limit, setLimit] = useState(PAGE_SIZE);
   if (!rows.length)
@@ -106,6 +109,7 @@ export function DatabaseFeed({
           title={rowTitle(row) || "Untitled"}
           startEditing={newestEditable && index === 0}
           selected={selected?.has(row.id) ?? false}
+          summaries={summaries}
           onToggle={onToggle && (() => onToggle(row.id))}
         />
       ))}
@@ -132,7 +136,9 @@ function FeedEntry({
   startEditing,
   selected,
   onToggle,
+  summaries: canSummarize,
 }: {
+  summaries: boolean;
   selected: boolean;
   onToggle?: () => void;
   row: DatabaseRow;
@@ -250,7 +256,7 @@ function FeedEntry({
             📝 요약
           </button>
         ))}
-        {pageId && rowPages && (
+        {canSummarize && pageId && rowPages && (
           <SummarizeButton
             label="요약"
             className="lotion-feed-summarize"
