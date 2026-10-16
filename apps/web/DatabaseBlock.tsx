@@ -107,6 +107,24 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
     element.addEventListener("mousedown", stop);
     return () => element.removeEventListener("mousedown", stop);
   }, []);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [confirmBulk, setConfirmBulk] = useState(false);
+  const toggleSelected = (id: string) =>
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  // Rows removed elsewhere drop out of the selection.
+  useEffect(() => {
+    setSelected((current) => {
+      const next = new Set(
+        [...current].filter((id) => state.rows.some((row) => row.id === id)),
+      );
+      return next.size === current.size ? current : next;
+    });
+  }, [state.rows]);
   const [adding, setAdding] = useState(false);
   const [propertyType, setPropertyType] =
     useState<DatabasePropertyType>("text");
@@ -211,6 +229,35 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
     }));
   };
 
+  /** Remove rows at once, then trash their pages; rows whose page fails come back. */
+  const deleteRows = async (ids: string[]) => {
+    setError("");
+    const removed = state.rows.filter((row) => ids.includes(row.id));
+    updateLatest((latest) => ({
+      ...latest,
+      rows: latest.rows.filter((row) => !ids.includes(row.id)),
+    }));
+    setSelected(new Set());
+    const failed: DatabaseRow[] = [];
+    for (const row of removed) {
+      const id = pageId(row.href);
+      if (!id || !actions?.trashRowPage) continue;
+      if (!actions.pages.some((page) => page.id === id)) continue;
+      try {
+        await actions.trashRowPage(id);
+      } catch {
+        failed.push(row);
+      }
+    }
+    if (failed.length) {
+      setError(`${failed.length} row page(s) could not be moved to the trash.`);
+      updateLatest((latest) => ({
+        ...latest,
+        rows: [...latest.rows, ...failed],
+      }));
+    }
+  };
+
   const setValue = (
     row: DatabaseRow,
     column: DatabaseColumn,
@@ -249,13 +296,40 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
             actions?.pages.find((page) => page.id === pageId(row.href))
           }
           newestEditable
+          selected={selected}
+          onToggle={toggleSelected}
         />
       ) : (
         <div className="lotion-database-scroll">
           <table>
             <thead>
               <tr>
-                <th>Page</th>
+                <th>
+                  <input
+                    type="checkbox"
+                    className="lotion-database-select"
+                    aria-label="Select all shown rows"
+                    checked={
+                      shownRows.length > 0 &&
+                      shownRows.every((row) => selected.has(row.id))
+                    }
+                    onChange={(event) =>
+                      setSelected(
+                        event.target.checked
+                          ? new Set([
+                              ...selected,
+                              ...shownRows.map((r) => r.id),
+                            ])
+                          : new Set(
+                              [...selected].filter(
+                                (id) => !shownRows.some((r) => r.id === id),
+                              ),
+                            ),
+                      )
+                    }
+                  />{" "}
+                  Page
+                </th>
                 {shownColumns.map((column) => (
                   <th key={column.id} className="lotion-database-property">
                     <input
@@ -334,6 +408,13 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
                 return (
                   <tr key={row.id}>
                     <th className="lotion-database-row-title">
+                      <input
+                        type="checkbox"
+                        className="lotion-database-select"
+                        aria-label={`Select ${title}`}
+                        checked={selected.has(row.id)}
+                        onChange={() => toggleSelected(row.id)}
+                      />
                       <button
                         type="button"
                         disabled={!id || !page || !actions}
@@ -370,6 +451,19 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
                           count={state.rows.length}
                           canPage={
                             !!id && !!page && !!actions?.duplicateRowPage
+                          }
+                          onSummarize={
+                            id && page && rowPages
+                              ? () => {
+                                  setMenu(null);
+                                  void rowPages
+                                    .summarize({
+                                      pages: [{ id }],
+                                      parentId: id,
+                                    })
+                                    .catch(() => undefined);
+                                }
+                              : undefined
                           }
                           isTemplate={
                             !!block.props.template &&
@@ -497,6 +591,82 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+      {selected.size > 0 && (
+        <div
+          className="lotion-database-selection"
+          role="toolbar"
+          aria-label="Selected rows"
+        >
+          <strong>{selected.size} selected</strong>
+          {shownRows.some((row) => !selected.has(row.id)) && (
+            <button
+              type="button"
+              onClick={() =>
+                setSelected(
+                  new Set([...selected, ...shownRows.map((r) => r.id)]),
+                )
+              }
+            >
+              Select all {shownRows.length} shown
+            </button>
+          )}
+          {rowPages && (
+            <button
+              type="button"
+              className="lotion-database-summarize"
+              onClick={() => {
+                const pages = shownRows
+                  .concat(state.rows.filter((row) => !shownRows.includes(row)))
+                  .filter((row) => selected.has(row.id))
+                  .map((row) => pageId(row.href))
+                  .filter(
+                    (id): id is string =>
+                      !!id && !!actions?.pages.some((page) => page.id === id),
+                  );
+                if (!pages.length) return;
+                const parentId =
+                  pages.length === 1 ? pages[0] : rowPages.activePageId;
+                if (!parentId) return;
+                void rowPages
+                  .summarize({ pages: pages.map((id) => ({ id })), parentId })
+                  .then(() => setSelected(new Set()))
+                  .catch(() => undefined);
+              }}
+            >
+              📝 Summarize {selected.size}
+            </button>
+          )}
+          <button type="button" onClick={() => setSelected(new Set())}>
+            Clear
+          </button>
+          {confirmBulk ? (
+            <span className="lotion-database-confirm" role="alert">
+              Delete {selected.size} rows? Their pages move to the trash.
+              <button
+                type="button"
+                className="danger"
+                onClick={() => {
+                  setConfirmBulk(false);
+                  void deleteRows([...selected]);
+                }}
+              >
+                Delete rows
+              </button>
+              <button type="button" onClick={() => setConfirmBulk(false)}>
+                Cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="danger"
+              onClick={() => setConfirmBulk(true)}
+            >
+              Delete…
+            </button>
+          )}
         </div>
       )}
       <div className="lotion-database-actions">

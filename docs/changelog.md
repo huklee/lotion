@@ -2,6 +2,22 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.33.0 — 2026-10-16 · [#51](https://github.com/huklee/lotion/pull/51)
+
+### Added
+
+- **On-demand meeting summaries.** One button writes a summary page in a Korean enterprise (Confluence-style) minutes format:
+  - **One meeting:** "요약" on a feed entry, or "📝 Summarize this meeting" in a row's ⋯ menu. The summary page (📝) is created under that meeting and appears as a "📝 요약" link on the feed entry.
+  - **Several meetings:** select rows (checkboxes in the table and the feed) and press "📝 Summarize N" in the selection bar; the summary goes under the database page.
+  - **Part of a page:** select blocks in any page and press 📝 in the selection toolbar.
+  - The summary starts with its engine, skill, date and links back to every source meeting. A status toast shows progress and opens the result.
+- **Summary settings** (📝 ⚙ in a database toolbar): engine (Codex by default, or Claude Code), skill (any installed Claude/Codex skill, default `create-enterprise-confluence-report`, or none), the editable prompt, and the Slack channel for the "summary ready" notification. The selected meeting text is sent to the chosen engine; the engines run headless and read-only in an empty temporary folder.
+- **Slack notification** when a summary is written or fails, posted through the local Slack bridge (Lotion holds no Slack credentials).
+- **Row selection** in tables and feeds with "select all shown", clear, and bulk delete (pages go to the trash).
+- **Period presets** in the database toolbar: today, this week, last 7 / 30 days, this month (an ordinary, editable filter on the first date property).
+
+Settings are stored in the workspace folder (`summary-settings.json`); documents are unchanged. Verification is recorded in [test results](test-results.md).
+
 ## 0.32.0 — 2026-10-16 · [#50](https://github.com/huklee/lotion/pull/50)
 
 ### Added

@@ -61,6 +61,11 @@ export function InlineRowEditor({ pageId }: { pageId: string }) {
         onCreateSubpage={(title) => rowPages.createSubpage(pageId, title)}
         onCopyBlockLink={(blockId) => rowPages.copyBlockLink(pageId, blockId)}
         onOpenPage={rowPages.openPage}
+        onSummarizeBlocks={(blockIds) =>
+          void rowPages
+            .summarize({ pages: [{ id: pageId, blockIds }], parentId: pageId })
+            .catch(() => undefined)
+        }
         onLinkPreview={(url, preview) =>
           c.edit({
             ...c.content,

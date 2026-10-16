@@ -107,7 +107,9 @@ export default function Editor({
   pages,
   theme,
   formattingShortcuts,
+  onSummarizeBlocks,
 }: {
+  onSummarizeBlocks?: (blockIds: string[]) => void;
   initial: Content;
   onChange: (blocks: Block[]) => void;
   onBackgroundImage: (id: string, url: string, name: string) => void;
@@ -970,6 +972,15 @@ export default function Editor({
             <GripVertical size={16} />
             {selected.length} selected
           </button>
+          {onSummarizeBlocks && (
+            <button
+              onClick={() => onSummarizeBlocks(selected)}
+              aria-label="Summarize selected blocks"
+              title="Write a summary of the selected blocks (sent to the chosen AI engine)"
+            >
+              📝
+            </button>
+          )}
           <button
             onClick={() => void copySelectedBlocks(false)}
             aria-label="Copy selected blocks"

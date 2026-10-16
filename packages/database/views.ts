@@ -366,3 +366,45 @@ export function filterDefaults(
   }
   return values;
 }
+
+export const DATE_PRESETS = [
+  "today",
+  "this_week",
+  "last_7_days",
+  "last_30_days",
+  "this_month",
+] as const;
+export type DatePreset = (typeof DATE_PRESETS)[number];
+const PRESET_FILTER = "period";
+
+/** The period preset currently applied to `view`, if any. */
+export function datePreset(view: DatabaseView): DatePreset | null {
+  const rule = view.filters.find((r) => r.id === PRESET_FILTER);
+  return rule && (DATE_PRESETS as readonly string[]).includes(rule.op)
+    ? (rule.op as DatePreset)
+    : null;
+}
+
+/**
+ * `view` limited to a period of its first date property (`null` removes the period).
+ * The period is an ordinary, editable filter rule with a fixed id.
+ */
+export function withDatePreset(
+  view: DatabaseView,
+  columns: DatabaseColumn[],
+  preset: DatePreset | null,
+): DatabaseView {
+  const others = view.filters.filter((r) => r.id !== PRESET_FILTER);
+  const date = columns.find((c) => c.type === "date");
+  if (!preset || !date) return { ...view, filters: others };
+  const current = view.filters.find((r) => r.id === PRESET_FILTER);
+  const rule: FilterRule = {
+    id: PRESET_FILTER,
+    columnId:
+      current && columnType(columns, current.columnId) === "date"
+        ? current.columnId
+        : date.id,
+    op: preset,
+  };
+  return { ...view, filters: [rule, ...others].slice(0, MAX_FILTERS) };
+}

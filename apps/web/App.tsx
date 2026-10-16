@@ -19,6 +19,7 @@ import { SaveCoordinator } from "./save-coordinator";
 import { RowPagesContext } from "./row-pages";
 import { InlineRowEditor } from "./InlineRowEditor";
 import { VersionButton } from "./VersionPanel";
+import { SummaryToasts, useSummaryJobs } from "./summaries";
 import { readBoolean } from "./preferences";
 import {
   blockIdFromHash,
@@ -179,6 +180,9 @@ export default function App() {
     }
     return save;
   }, []);
+  const summaryJobs = useSummaryJobs(
+    () => void refresh().catch(() => undefined),
+  );
   const openPage = useCallback(
     async (id: string, navigation: "push" | "replace" | "none" = "push") => {
       const sequence = ++loadNumber.current;
@@ -656,6 +660,12 @@ export default function App() {
           createSubpage,
           copyBlockLink: (pageId, blockId) => copyBlockLink(blockId, pageId),
           InlineEditor: InlineRowEditor,
+          activePageId: active?.id ?? null,
+          summarize: (request) =>
+            summaryJobs.start(request).catch((e) => {
+              handleError(e);
+              throw e;
+            }),
         }}
       >
         <main>
@@ -826,6 +836,11 @@ export default function App() {
             </span>
           </footer>
         </main>
+        <SummaryToasts
+          jobs={summaryJobs.jobs}
+          dismiss={summaryJobs.dismiss}
+          openPage={(id) => void openPage(id)}
+        />
       </RowPagesContext.Provider>
       <WorkspaceDialog
         dialog={dialog}

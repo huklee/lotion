@@ -78,7 +78,7 @@ test("database properties: change type, edit options, move and delete", async ({
   await menu.getByRole("button", { name: "← Move left" }).click();
   await page.keyboard.press("Escape");
   const headers = await db
-    .locator("thead th > input")
+    .locator("thead th.lotion-database-property > input")
     .evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
   expect(headers).toEqual(["Status", "Kind", "Notes"]);
   await db.getByRole("button", { name: "Notes property settings" }).click();
@@ -132,7 +132,7 @@ test("database rows: duplicate, move and delete (page goes to the trash)", async
   await rowActions("Review").click();
   await page.getByRole("button", { name: "↑ Move up" }).click();
   const order = await db
-    .locator("tbody tr th button:first-child")
+    .locator("tbody tr th button:first-of-type")
     .allInnerTexts();
   expect(order[1]).toContain("Review");
   await page.keyboard.press("Escape");
@@ -159,7 +159,9 @@ test("database views: filter, sort, hide properties and saved views", async ({
   const parent = await seedDatabase(page);
   const db = page.locator(".lotion-database");
   const titles = () =>
-    db.locator(".lotion-database-row-title button:first-child").allInnerTexts();
+    db
+      .locator(".lotion-database-row-title button:first-of-type")
+      .allInnerTexts();
   await expect(db.getByRole("tab", { name: /Table/ })).toHaveAttribute(
     "aria-selected",
     "true",
@@ -398,4 +400,42 @@ test("database feed: newest first, edit in place, new meeting from a template", 
   ).not.toBe("block");
   if (process.env.SHOT)
     await page.screenshot({ path: process.env.SHOT, fullPage: true });
+});
+
+test("database period presets and bulk delete of selected rows", async ({
+  page,
+}) => {
+  const { rows } = await seedMeetings(page);
+  const db = page.locator(".lotion-database");
+  const titles = () =>
+    db
+      .locator(".lotion-database-row-title button:first-of-type")
+      .allInnerTexts();
+  await expect.poll(async () => (await titles()).length).toBe(3);
+  // no seeded meeting is dated today
+  await db.getByLabel("Period").selectOption("today");
+  await expect(
+    db.getByText("No rows match this view's filters."),
+  ).toBeVisible();
+  await expect(db.getByRole("button", { name: "Filter (1)" })).toBeVisible();
+  await db.getByLabel("Period").selectOption("");
+  await expect.poll(async () => (await titles()).length).toBe(3);
+  // select two rows, delete them together
+  await db.getByLabel("Select Older meeting").check();
+  await db.getByLabel("Select Middle meeting").check();
+  const bar = db.getByRole("toolbar", { name: "Selected rows" });
+  await expect(bar).toContainText("2 selected");
+  await bar.getByRole("button", { name: "Delete…" }).click();
+  await bar.getByRole("button", { name: "Delete rows" }).click();
+  await expect.poll(titles).toEqual(["📄 Newest meeting"]);
+  await expect(bar).toHaveCount(0);
+  await expect
+    .poll(async () => {
+      const tree = await (await page.request.get("/api/tree")).json();
+      return [rows[0].href, rows[2].href].map(
+        (href) =>
+          !!tree.nodes.find((n: any) => `#/page/${n.id}` === href)?.deletedAt,
+      );
+    })
+    .toEqual([true, true]);
 });
