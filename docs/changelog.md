@@ -2,6 +2,27 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.36.0 — 2026-10-16
+
+### Changed
+
+- **Databases redesigned after Notion.**
+  - A database title above the views; view tabs with icons; on the right Filter, Sort, Search, visible properties, summary settings and a blue **New** button (**New meeting** in a feed).
+  - Active sorts and filters appear as chips under the toolbar; click one to edit it, × to remove it.
+  - Column headers show the property's type icon and name; clicking a header opens its menu: rename, sort ascending/descending, filter by it, hide it in this view, change type, edit options, move, delete. A **+** at the end of the header adds a property (pick its type, then name it).
+  - Cells look like text until you edit them; select values are colored pills; numbers are right-aligned; checkboxes are plain.
+  - Row checkbox and ⋯ appear on hover; the title opens the row page; a **+ New** row and a row **count** sit under the table.
+  - Columns keep their width and the table scrolls sideways instead of squeezing.
+  - Selected rows get a floating dark action bar (summarize, delete, clear).
+  - Feed entries read like pages: large title, property chips, body without nesting guides, quiet actions.
+- **Quick search** in a database filters the shown rows by title and text values (not saved with the view).
+
+### Fixed
+
+- A database is no longer covered by the editor's whole-block selection overlay; a selected database gets a light outline instead.
+
+Stored data is unchanged except an optional database `title`. Verification is recorded in [test results](test-results.md).
+
 ## 0.35.0 — 2026-10-16 · [#53](https://github.com/huklee/lotion/pull/53)
 
 ### Added

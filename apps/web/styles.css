@@ -826,62 +826,297 @@ h1 span {
   background: #342f27;
   border-color: #514839;
 }
+/* Database block — Notion-style layout */
 .lotion-database {
   width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--panel);
-  overflow: hidden;
+  font-size: 14px;
+  color: var(--text);
+  padding-block: 4px 8px;
+  --ldb-line: color-mix(in srgb, var(--text) 9%, transparent);
+  --ldb-hover: color-mix(in srgb, var(--text) 4%, transparent);
+  --ldb-blue: #2383e2;
 }
 .lotion-database-scroll {
   overflow-x: auto;
 }
-.lotion-database table {
-  width: 100%;
-  min-width: 900px;
-  border-collapse: collapse;
-}
-.lotion-database th,
-.lotion-database td {
-  min-width: 135px;
-  border-bottom: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  padding: 6px;
-  text-align: left;
-}
-.lotion-database th:first-child {
-  min-width: 180px;
-}
-.lotion-database th input,
-.lotion-database td input:not([type="checkbox"]),
-.lotion-database td select {
-  width: 100%;
-}
-.lotion-database th small {
+.ldb-name {
   display: block;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 500;
-  text-transform: uppercase;
+  width: 100%;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.25em;
+  font-weight: 700;
+  padding: 2px 2px 6px;
+  outline: none;
 }
-.lotion-database th button {
-  max-width: 100%;
+.ldb-name::placeholder {
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+}
+/* beats BlockNote's ".ProseMirror table { table-layout: fixed; width: 100% }":
+   columns keep their width and the block scrolls sideways (Notion-like) */
+.lotion-database table.ldb-table {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+  overflow: visible;
+}
+.ldb-table th,
+.ldb-table td {
+  border-bottom: 1px solid var(--ldb-line);
+  padding: 0;
+  text-align: left;
+  font-weight: 400;
+  height: 34px;
+  vertical-align: middle;
+}
+.ldb-table th + th,
+.ldb-table td + td,
+.ldb-table td + th,
+.ldb-table th + td {
+  border-left: 1px solid var(--ldb-line);
+}
+.ldb-table thead th {
+  border-top: 1px solid var(--ldb-line);
+  color: var(--muted);
+  font-size: 13px;
+}
+.ldb-table .ldb-gutter {
+  width: 28px;
+  min-width: 28px;
+  border-left: 0;
+  border-right: 0;
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  text-align: center;
+}
+.ldb-table .ldb-gutter + th,
+.ldb-table .ldb-gutter + td {
+  border-left: 0;
+}
+.ldb-table .ldb-gutter .lotion-database-select {
+  opacity: 0;
+  margin: 0;
+}
+.ldb-table tr:hover .ldb-gutter .lotion-database-select,
+.ldb-table .ldb-gutter .lotion-database-select:checked,
+.ldb-table .ldb-gutter .lotion-database-select:focus-visible,
+.ldb-table-wrap.selecting .ldb-gutter .lotion-database-select {
+  opacity: 1;
+}
+.ldb-th {
+  min-width: 150px;
+  white-space: nowrap;
+}
+.ldb-th-title {
+  min-width: 240px;
+}
+.ldb-th-label,
+.ldb-th-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 34px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: default;
+}
+.ldb-th-button {
+  justify-content: flex-start;
+  cursor: pointer;
+}
+.ldb-th-button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ldb-th-button:hover,
+.ldb-th-button[aria-expanded="true"] {
+  background: var(--ldb-hover);
+}
+.ldb-type-icon {
+  flex: none;
+  opacity: 0.75;
+}
+.ldb-th-add {
+  min-width: 36px;
+  width: 36px;
+}
+.ldb-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 0 4px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.ldb-icon-button:hover,
+.ldb-icon-button[aria-expanded="true"] {
+  background: var(--ldb-hover);
+  color: var(--text);
+}
+.ldb-table tbody tr:hover td:not(.ldb-gutter),
+.ldb-table tbody tr:hover th {
+  background: var(--ldb-hover);
+}
+.ldb-table tbody tr.selected td:not(.ldb-gutter),
+.ldb-table tbody tr.selected th {
+  background: color-mix(in srgb, var(--ldb-blue) 9%, transparent);
+}
+.ldb-title-cell {
+  position: relative;
+}
+.ldb-title {
+  display: block;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 34px 0 8px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.lotion-database-actions {
-  display: flex;
-  align-items: end;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
+.ldb-title:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--ldb-line);
+  text-underline-offset: 3px;
 }
-.lotion-database-actions label {
-  display: grid;
-  gap: 2px;
+.ldb-row-more {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  background: var(--bg) !important;
+  border: 1px solid var(--ldb-line) !important;
+}
+.ldb-table tr:hover .ldb-row-more,
+.ldb-row-more:focus-visible,
+.ldb-row-more[aria-expanded="true"] {
+  opacity: 1;
+}
+.ldb-td {
+  min-width: 150px;
+}
+.ldb-cell-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+.ldb-cell-input:focus {
+  background: var(--bg);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ldb-blue) 55%, transparent);
+  border-radius: 2px;
+}
+.ldb-cell-input.ldb-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ldb-cell-input.ldb-date {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.ldb-cell-input.ldb-date:not(:focus):invalid,
+.ldb-cell-input.ldb-date[value=""]:not(:focus) {
+  color: transparent;
+}
+.ldb-td-checkbox {
+  text-align: left;
+  padding-left: 8px !important;
+}
+.ldb-check {
+  width: 16px;
+  height: 16px;
+  margin: 0 0 0 8px;
+  accent-color: var(--ldb-blue);
+  cursor: pointer;
+}
+.ldb-pill-select {
+  appearance: none;
+  -webkit-appearance: none;
+  max-width: calc(100% - 12px);
+  margin: 0 6px;
+  padding: 1px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
   color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
+}
+.ldb-pill-select:not(.filled) {
+  color: transparent;
+  width: calc(100% - 12px);
+}
+.ldb-pill-select:not(.filled):hover,
+.ldb-pill-select:not(.filled):focus {
+  color: var(--muted);
+}
+.ldb-pill-select option {
+  background: var(--bg);
+  color: var(--text);
+}
+.ldb-td-filler {
+  border-left: 0 !important;
+}
+.ldb-new-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 34px;
+  padding: 0 8px 0 36px;
+  border: 0;
+  border-bottom: 1px solid var(--ldb-line);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.ldb-new-row:hover:not(:disabled) {
+  background: var(--ldb-hover);
+}
+.ldb-count {
+  padding: 6px 8px 0 36px;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.ldb-count span {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   font-size: 11px;
+  margin-right: 4px;
+  opacity: 0.8;
 }
 .bn-block-content[data-content-type="codeBlock"] {
   background: #efe7d5 !important;
@@ -2494,4 +2729,323 @@ kbd {
 }
 .preset-list small {
   color: var(--muted);
+}
+
+/* Database toolbar, chips, selection — Notion-style (overrides earlier rules) */
+.lotion-database .lotion-database-viewbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 0 0 6px;
+  border-bottom: 1px solid var(--ldb-line);
+  font-size: 14px;
+}
+.lotion-database .lotion-database-tabs {
+  gap: 2px;
+}
+.lotion-database .lotion-database-tab [role="tab"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  color: var(--muted);
+  font-weight: 500;
+  border-radius: 4px;
+}
+.lotion-database .lotion-database-tab [role="tab"][aria-selected="true"] {
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--text);
+  border-radius: 0;
+}
+.lotion-database .lotion-database-tools {
+  gap: 2px;
+  padding-bottom: 4px;
+}
+.lotion-database .lotion-database-tools > button,
+.lotion-database .lotion-database-period {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.lotion-database .lotion-database-tools > button:hover,
+.lotion-database .lotion-database-tools > button[aria-expanded="true"],
+.lotion-database .lotion-database-period:hover {
+  background: var(--ldb-hover);
+  color: var(--text);
+}
+.lotion-database .lotion-database-tools > button.on {
+  color: var(--ldb-blue);
+}
+.lotion-database .lotion-database-tools small {
+  color: var(--muted);
+  font-size: 12px;
+  margin-right: 2px;
+}
+.ldb-search {
+  width: 160px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--ldb-hover);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.lotion-database .lotion-database-tools > .ldb-primary {
+  margin-left: 6px;
+  padding: 0 10px;
+  background: var(--ldb-blue);
+  color: #fff;
+  font-weight: 500;
+}
+.lotion-database .lotion-database-tools > .ldb-primary:hover {
+  background: color-mix(in srgb, var(--ldb-blue) 88%, black);
+  color: #fff;
+}
+.lotion-database .lotion-database-tools > .ldb-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.ldb-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 0 6px;
+}
+.ldb-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--ldb-blue) 35%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ldb-blue) 7%, transparent);
+  color: var(--ldb-blue);
+  font-size: 12.5px;
+  overflow: hidden;
+}
+.ldb-chip button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 2px 4px 2px 10px;
+  cursor: pointer;
+}
+.ldb-chip button + button {
+  padding: 2px 8px 2px 2px;
+}
+.ldb-chip strong {
+  font-weight: 600;
+}
+.ldb-menu-list {
+  display: grid;
+  gap: 1px;
+}
+.lotion-database-menu .ldb-menu-list button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 6px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.lotion-database-menu .ldb-menu-list button:hover {
+  background: var(--hover);
+}
+.lotion-database .lotion-database-selection {
+  position: sticky;
+  bottom: 12px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 10px auto 0;
+  padding: 6px 8px 6px 14px;
+  border-radius: 8px;
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  font-size: 13px;
+}
+.lotion-database .lotion-database-selection strong {
+  margin-right: 6px;
+  color: var(--bg);
+}
+.lotion-database .lotion-database-selection button,
+.lotion-database .lotion-database-selection .summarize-split > button {
+  border: 0;
+  background: none;
+  color: var(--bg);
+  opacity: 0.9;
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.lotion-database .lotion-database-selection button:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--bg) 14%, transparent);
+}
+.lotion-database .lotion-database-selection .danger {
+  color: #ff8a80;
+}
+.lotion-database .lotion-database-selection .lotion-database-confirm {
+  background: none;
+  color: var(--bg);
+}
+.lotion-database .lotion-database-empty {
+  height: 64px;
+  padding: 0 8px;
+  color: var(--muted);
+  text-align: left;
+}
+
+/* The page editor's whole-block selection overlay is not used for databases;
+   a selected database gets a light outline instead (Notion-like). */
+.ProseMirror-selectednode > .bn-block-content > .lotion-database::after {
+  display: none;
+}
+.ProseMirror-selectednode > .bn-block-content > .lotion-database:not(:focus-within) {
+  box-shadow: 0 0 0 2px color-mix(in srgb, #2383e2 30%, transparent);
+  border-radius: 4px;
+}
+
+/* Feed view — Notion-style entries */
+.lotion-database .lotion-feed {
+  gap: 4px;
+}
+.lotion-database .lotion-feed-entry {
+  border: 0;
+  border-bottom: 1px solid var(--ldb-line);
+  padding: 14px 4px 18px;
+}
+.lotion-database .lotion-feed-entry > header {
+  gap: 6px 10px;
+  margin-bottom: 8px;
+}
+.lotion-database .lotion-feed-title {
+  font-size: 1.35em;
+  font-weight: 700;
+}
+.lotion-database .lotion-feed-chip {
+  background: none;
+  border: 1px solid var(--ldb-line);
+  border-radius: 12px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+.lotion-database .lotion-feed-toggle,
+.lotion-database .lotion-feed-summarize > button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  border-radius: 4px;
+}
+.lotion-database .lotion-feed-toggle:hover,
+.lotion-database .lotion-feed-summarize > button:hover {
+  background: var(--ldb-hover);
+  color: var(--text);
+}
+.lotion-database .lotion-feed-entry .lotion-database-select {
+  opacity: 0.35;
+}
+.lotion-database .lotion-feed-entry:hover .lotion-database-select,
+.lotion-database .lotion-feed-entry .lotion-database-select:checked {
+  opacity: 1;
+}
+.ldb-title-cell .ldb-title {
+  width: 280px;
+  max-width: 280px;
+}
+.ldb-th-title .ldb-th-label {
+  width: 280px;
+}
+.ldb-td > .ldb-cell-input,
+.ldb-td > .ldb-pill-select:not(.filled) {
+  min-width: 140px;
+}
+.lotion-database-menu .ldb-menu-list button {
+  justify-content: flex-start;
+  text-align: left;
+}
+/* inline feed editor: no page chrome */
+.lotion-feed-editor .editor-shell {
+  min-height: 0;
+}
+.lotion-feed-editor .selection-gutter {
+  display: none;
+}
+.lotion-feed-editor .bn-editor {
+  padding: 0 8px !important;
+}
+.ldb-td-date > .ldb-cell-input {
+  min-width: 150px;
+}
+.ldb-td-number > .ldb-cell-input {
+  min-width: 90px;
+}
+.ldb-cell-input.ldb-date::-webkit-calendar-picker-indicator {
+  opacity: 0;
+}
+.ldb-cell-input.ldb-date:hover::-webkit-calendar-picker-indicator,
+.ldb-cell-input.ldb-date:focus::-webkit-calendar-picker-indicator {
+  opacity: 0.6;
+}
+/* Feed bodies live inside the page editor's block group: their own top level is
+   not "nested" (no extra indent); nesting guides are not drawn inside feeds. */
+.lotion-database .lotion-feed-body .bn-block-group,
+.lotion-database .lotion-feed-editor .bn-block-group {
+  margin-left: 0;
+}
+.lotion-database .lotion-feed-body .bn-block-group .bn-block-group,
+.lotion-database .lotion-feed-editor .bn-block-group .bn-block-group {
+  margin-left: 24px;
+}
+.lotion-feed-body .bn-block-outer::before,
+.lotion-feed-editor .bn-block-outer::before {
+  display: none !important;
+}
+.lotion-feed-body {
+  font-family: var(--workspace-font);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.lotion-database .lotion-feed-editor {
+  margin-inline: 0;
+}
+.lotion-feed-editor .editor-shell {
+  margin: 0;
+  padding: 0;
+}
+.lotion-feed-editor .bn-editor {
+  padding: 0 !important;
+}
+.lotion-feed-body {
+  padding: 0;
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { ArrowDown, ArrowUp, EyeOff, ListFilter } from "lucide-react";
 import { useSummaryPresets, type SummaryStyle } from "./summary-styles";
 import {
   DATABASE_PROPERTY_TYPES,
@@ -109,6 +110,7 @@ export function PropertyMenu({
   index,
   update,
   onClose,
+  view,
 }: {
   anchor: HTMLElement;
   column: DatabaseColumn;
@@ -116,6 +118,12 @@ export function PropertyMenu({
   index: number;
   update: (next: DatabaseState) => void;
   onClose: () => void;
+  /** Actions on the current view (sort, filter, hide) for this property. */
+  view?: {
+    sort: (direction: "asc" | "desc") => void;
+    filter: () => void;
+    hide: () => void;
+  };
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [options, setOptions] = useState(
@@ -147,6 +155,46 @@ export function PropertyMenu({
       label={`${column.name} property settings`}
       onClose={onClose}
     >
+      <label>
+        Property name
+        <input
+          aria-label="Property name"
+          maxLength={100}
+          value={column.name}
+          onChange={(event) =>
+            update({
+              ...state,
+              columns: state.columns.map((c) =>
+                c.id === column.id
+                  ? { ...c, name: event.target.value.slice(0, 100) }
+                  : c,
+              ),
+            })
+          }
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              onClose();
+            }
+          }}
+        />
+      </label>
+      {view && (
+        <div className="ldb-menu-list">
+          <button type="button" onClick={() => view.sort("asc")}>
+            <ArrowUp size={14} aria-hidden /> Sort ascending
+          </button>
+          <button type="button" onClick={() => view.sort("desc")}>
+            <ArrowDown size={14} aria-hidden /> Sort descending
+          </button>
+          <button type="button" onClick={view.filter}>
+            <ListFilter size={14} aria-hidden /> Filter by this property
+          </button>
+          <button type="button" onClick={view.hide}>
+            <EyeOff size={14} aria-hidden /> Hide in this view
+          </button>
+        </div>
+      )}
       <label>
         Type
         <select
