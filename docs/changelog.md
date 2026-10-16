@@ -2,6 +2,14 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.37.0 — 2026-10-16
+
+### Added
+
+- **Wide page toggle in the top-right toolbar** (⤢ next to Export): switches between the standard and the wide page width in one click; the button shows the current state, and the choice is the same "Page width" preference as in Control panel, remembered in this browser.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.36.0 — 2026-10-16 · [#54](https://github.com/huklee/lotion/pull/54)
 
 ### Changed

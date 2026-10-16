@@ -21,7 +21,7 @@ test("version button shows the running version and the changelog per pull reques
   const first = panel.locator(".version-release").first();
   await expect(first).toHaveAttribute("open", "");
   await expect(first.locator(".version-number")).toHaveText(version);
-  await expect(first.getByText("current")).toBeVisible();
+  await expect(first.getByText("current", { exact: true })).toBeVisible();
   // releases link to the pull request that shipped them
   await expect(
     panel.locator('a[href="https://github.com/huklee/lotion/pull/49"]'),

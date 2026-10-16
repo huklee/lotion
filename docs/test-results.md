@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-16T18:05:00+09:00 — 0.37.0 top-bar wide page toggle
+
+Focused: `settings.spec.ts` **18/18** across Chromium, Firefox and WebKit, including the new toggle scenario (pressed state, `data-page-width`, 1180 px document width, persistence after reload, toggling back).
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **239/239**; Playwright **238/241** — the 3 failures were `version-panel.spec.ts` matching the word "current" inside this release's own changelog text; the test now matches the tag exactly (3/3). Remote CI results are recorded on the pull request.
+
 ## 2026-10-16T17:10:00+09:00 — 0.36.0 Notion-style database UI
 
 Focused: `database.spec.ts`, `editor-blocks.spec.ts` (typed database scenario: rename through the header menu, add a property with "+", values persist, title opens the row page) and `summaries.spec.ts` — **24/24** across Chromium, Firefox and WebKit after updating selectors from header inputs to header menus. Visual review from screenshots (table with filter/sort chips, colored select pills, selection bar; header property menu; feed) found and fixed: titles truncated and covered by the next cell (BlockNote's fixed table layout), centred menu items, date picker icon overflowing its cell, nesting guides and indent inside feed bodies, and the inline feed editor shifted left by the page editor's margins.
