@@ -68,6 +68,8 @@ type FeedProps = {
   pageOf: (row: DatabaseRow) => TreeNode | undefined;
   rowTitle: (row: DatabaseRow) => string;
   newestEditable: boolean;
+  selected?: Set<string>;
+  onToggle?: (rowId: string) => void;
 };
 
 /**
@@ -81,6 +83,8 @@ export function DatabaseFeed({
   pageOf,
   rowTitle,
   newestEditable,
+  selected,
+  onToggle,
 }: FeedProps) {
   const [limit, setLimit] = useState(PAGE_SIZE);
   if (!rows.length)
@@ -100,6 +104,8 @@ export function DatabaseFeed({
           page={pageOf(row)}
           title={rowTitle(row) || "Untitled"}
           startEditing={newestEditable && index === 0}
+          selected={selected?.has(row.id) ?? false}
+          onToggle={onToggle && (() => onToggle(row.id))}
         />
       ))}
       {rows.length > limit && (
@@ -123,7 +129,11 @@ function FeedEntry({
   page,
   title,
   startEditing,
+  selected,
+  onToggle,
 }: {
+  selected: boolean;
+  onToggle?: () => void;
   row: DatabaseRow;
   columns: DatabaseColumn[];
   editor: any;
@@ -189,10 +199,25 @@ function FeedEntry({
     }))
     .filter((chip) => chip.text !== null);
   const InlineEditor = rowPages?.InlineEditor;
+  const summaries = pageId
+    ? (rowPages?.pages ?? []).filter(
+        (node) => node.parentId === pageId && node.icon === "📝",
+      )
+    : [];
+  const [starting, setStarting] = useState(false);
 
   return (
     <article ref={ref} className="lotion-feed-entry" aria-label={title}>
       <header>
+        {onToggle && (
+          <input
+            type="checkbox"
+            className="lotion-database-select"
+            aria-label={`Select ${title}`}
+            checked={selected}
+            onChange={onToggle}
+          />
+        )}
         <button
           type="button"
           className="lotion-feed-title"
@@ -213,6 +238,34 @@ function FeedEntry({
             </span>
           ))}
         </span>
+        {summaries.map((summary) => (
+          <button
+            key={summary.id}
+            type="button"
+            className="lotion-feed-summary-link"
+            onClick={() => rowPages?.openPage(summary.id)}
+            title={summary.title}
+          >
+            📝 요약
+          </button>
+        ))}
+        {pageId && rowPages && (
+          <button
+            type="button"
+            className="lotion-feed-toggle"
+            disabled={starting}
+            title="Write a summary of this meeting with the summary settings (the text is sent to the chosen AI engine)"
+            onClick={() => {
+              setStarting(true);
+              void rowPages
+                .summarize({ pages: [{ id: pageId }], parentId: pageId })
+                .catch(() => undefined)
+                .finally(() => setStarting(false));
+            }}
+          >
+            {starting ? "Starting…" : "요약"}
+          </button>
+        )}
         {pageId && InlineEditor && (
           <button
             type="button"

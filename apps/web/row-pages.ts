@@ -2,6 +2,7 @@ import { createContext, type ComponentType } from "react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
 import type { FormattingShortcuts } from "./format-shortcuts";
 import type { SaveCoordinator } from "./save-coordinator";
+import type { SummaryRequest } from "./summaries";
 
 /**
  * What a database feed needs to read row pages inline and edit them in place with
@@ -20,6 +21,10 @@ export type RowPages = {
   copyBlockLink: (pageId: string, blockId: string) => Promise<void>;
   /** Provided by the app so the database block does not import the editor (import cycle). */
   InlineEditor: ComponentType<{ pageId: string }>;
+  /** The page open in the main editor (hosts the database). */
+  activePageId: string | null;
+  /** Start a summary job; progress is shown by the app. */
+  summarize: (request: SummaryRequest) => Promise<unknown>;
 };
 
 export const RowPagesContext = createContext<RowPages | null>(null);

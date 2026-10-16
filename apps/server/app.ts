@@ -6,6 +6,7 @@ import path from "node:path";
 import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { LinkPreviewService } from "./link-preview-service";
+import type { SummaryService } from "./summaries";
 import { Repository } from "../../packages/persistence/repository";
 import {
   AppError,
@@ -22,7 +23,11 @@ import {
 
 export async function createApp(
   repo: Repository,
-  options: { token?: string; production?: boolean } = {},
+  options: {
+    token?: string;
+    production?: boolean;
+    summaries?: SummaryService;
+  } = {},
 ) {
   const app = Fastify({ bodyLimit: 12 * 1024 * 1024, logger: false });
   await app.register(multipart, {
@@ -125,6 +130,26 @@ export async function createApp(
       .parse(req.query);
     reply.header("Cache-Control", "no-store");
     return repo.search(input.q, input.limit, input.exclude);
+  });
+  const summaries = () => {
+    if (!options.summaries)
+      throw new AppError(503, "Summaries are not configured on this server");
+    return options.summaries;
+  };
+  app.get("/api/summary/settings", async () => summaries().settings());
+  app.put("/api/summary/settings", async (req) =>
+    summaries().saveSettings(req.body),
+  );
+  app.get("/api/summary/skills", async () => summaries().skills());
+  app.get("/api/summary/jobs", async () => summaries().list());
+  app.post("/api/summary/jobs", async (req, reply) => {
+    reply.code(202);
+    return summaries().start(req.body);
+  });
+  app.get("/api/summary/jobs/:id", async (req) => {
+    const job = summaries().get(String((req.params as any).id));
+    if (!job) throw new AppError(404, "Summary job not found");
+    return job;
   });
   app.get("/api/documents/:id", async (req, reply) => {
     const doc = repo.get(id(req));

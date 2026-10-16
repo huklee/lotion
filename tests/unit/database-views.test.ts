@@ -209,3 +209,27 @@ describe("database views", () => {
     ).toEqual({ kind: "1:1", done: true, date: "2026-10-16" });
   });
 });
+
+describe("date presets", () => {
+  it("adds, replaces and removes one period filter on the date property", async () => {
+    const { datePreset, withDatePreset } =
+      await import("../../packages/database/views");
+    const base = view({
+      filters: [{ id: "k", columnId: "kind", op: "is", value: "Weekly" }],
+    });
+    const week = withDatePreset(base, state.columns, "this_week");
+    expect(datePreset(week)).toBe("this_week");
+    expect(week.filters).toHaveLength(2);
+    expect(ids(week)).toEqual(["d"]);
+    const month = withDatePreset(week, state.columns, "this_month");
+    expect(month.filters).toHaveLength(2);
+    expect(datePreset(month)).toBe("this_month");
+    const all = withDatePreset(month, state.columns, null);
+    expect(datePreset(all)).toBeNull();
+    expect(all.filters).toEqual(base.filters);
+    expect(
+      withDatePreset(base, [{ id: "t", name: "T", type: "text" }], "today")
+        .filters,
+    ).toEqual(base.filters);
+  });
+});

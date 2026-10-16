@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { Floating } from "./DatabaseMenus";
+import { SummarySettingsForm } from "./summaries";
 import type { DatabaseColumn } from "../../packages/database/model";
 import {
   FILTER_OPS,
   MAX_VIEWS,
   NO_VALUE_OPS,
   TITLE_COLUMN,
+  datePreset,
   defaultView,
+  withDatePreset,
   type DatabaseView,
+  type DatePreset,
   type FilterOp,
   type FilterRule,
   type SortRule,
@@ -52,7 +56,14 @@ function newId() {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 }
 
-type Menu = "add" | "sort" | "filter" | "properties" | `view:${string}` | null;
+type Menu =
+  | "summary"
+  | "add"
+  | "sort"
+  | "filter"
+  | "properties"
+  | `view:${string}`
+  | null;
 
 /**
  * View tabs plus the Sort / Filter / Properties controls of the active view.
@@ -132,6 +143,33 @@ export function DatabaseViewBar({
         </button>
       </div>
       <div className="lotion-database-tools">
+        {columns.some((c) => c.type === "date") && (
+          <select
+            className="lotion-database-period"
+            aria-label="Period"
+            value={datePreset(active) ?? ""}
+            onChange={(event) =>
+              onChange(
+                views.map((view) =>
+                  view.id === active.id
+                    ? withDatePreset(
+                        view,
+                        columns,
+                        (event.target.value || null) as DatePreset | null,
+                      )
+                    : view,
+                ),
+              )
+            }
+          >
+            <option value="">All dates</option>
+            <option value="today">Today</option>
+            <option value="this_week">This week</option>
+            <option value="last_7_days">Last 7 days</option>
+            <option value="last_30_days">Last 30 days</option>
+            <option value="this_month">This month</option>
+          </select>
+        )}
         {(active.filters.length > 0 || shown !== total) && (
           <small aria-live="polite">
             {shown} of {total}
@@ -159,7 +197,22 @@ export function DatabaseViewBar({
           Properties
           {active.hidden.length ? ` (${active.hidden.length} hidden)` : ""}
         </button>
+        <button
+          type="button"
+          aria-label="Summary settings"
+          title="Summary settings: engine, skill, prompt, Slack channel"
+          aria-expanded={menu?.kind === "summary"}
+          onClick={toggle("summary")}
+        >
+          📝 ⚙
+        </button>
       </div>
+
+      {menu?.kind === "summary" && (
+        <Floating anchor={menu.anchor} label="Summary settings" onClose={close}>
+          <SummarySettingsForm />
+        </Floating>
+      )}
 
       {menu?.kind === "add" && (
         <Floating anchor={menu.anchor} label="Add view" onClose={close}>

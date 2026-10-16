@@ -253,7 +253,9 @@ export function RowMenu({
   onClose,
   isTemplate,
   onTemplate,
+  onSummarize,
 }: {
+  onSummarize?: () => void;
   anchor: HTMLElement;
   isTemplate?: boolean;
   onTemplate?: () => void;
@@ -271,6 +273,11 @@ export function RowMenu({
       <button type="button" disabled={!canPage} onClick={onDuplicate}>
         Duplicate row
       </button>
+      {onSummarize && (
+        <button type="button" onClick={onSummarize}>
+          📝 Summarize this meeting
+        </button>
+      )}
       {onTemplate && (
         <button type="button" disabled={!canPage} onClick={onTemplate}>
           {isTemplate

@@ -1,4 +1,4 @@
-import { useState, type RefObject } from "react";
+import { useContext, useState, type RefObject } from "react";
 import type {
   Block,
   Document,
@@ -10,6 +10,7 @@ import type { SaveCoordinator } from "./save-coordinator";
 import { ConflictPanel } from "./ConflictPanel";
 import { DocumentOutline } from "./DocumentOutline";
 import Editor from "./Editor";
+import { RowPagesContext } from "./row-pages";
 import { PageIconPicker } from "./PageIconPicker";
 
 type ActiveDocumentProps = {
@@ -65,6 +66,7 @@ export function ActiveDocument({
   onBlocksChange,
   onBackgroundImage,
 }: ActiveDocumentProps) {
+  const rowPages = useContext(RowPagesContext);
   // Live block list for the outline panel; the editor reports every change.
   const [outlineBlocks, setOutlineBlocks] = useState<Block[]>(
     () => coordinator.content.blocks,
@@ -118,6 +120,17 @@ export function ActiveDocument({
           handleError={handleError}
         />
         <Editor
+          onSummarizeBlocks={
+            rowPages
+              ? (blockIds) =>
+                  void rowPages
+                    .summarize({
+                      pages: [{ id: active.id, blockIds }],
+                      parentId: active.id,
+                    })
+                    .catch(() => undefined)
+              : undefined
+          }
           initial={coordinator.content}
           theme={theme}
           formattingShortcuts={formattingShortcuts}

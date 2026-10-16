@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-16T12:20:00+09:00 — 0.33.0 meeting summaries
+
+Focused: `tests/integration/summaries.test.ts` **4/4** (prompt composition and block picking; settings defaults, persistence and Slack-id validation; skill listing from SKILL.md; a two-meeting job with a block subset producing a 📝 page under the parent with source links, fenced output unwrapped, and the Slack notification text/URL; engine failure recorded and notified; empty and unknown-skill requests rejected). `tests/unit/database-views.test.ts` **9/9** with period presets. E2E across Chromium, Firefox and WebKit: `summaries.spec.ts` (settings form incl. invalid channel, one-button feed summary under the meeting with its "📝 요약" link, two selected rows summarised under the database page, open from the toast) and `database.spec.ts` period/bulk-delete scenario. Real engines smoke-tested outside the suite on a three-line sample: Codex 8 s, Claude Code 9 s, both returned Korean Markdown bullets. `slk-bridge` notify listener: `go test` (remote peer, browser origin, unconfigured channel, empty text, no Slack client).
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **235/235**; Playwright **235/235** (an earlier run's 6 database failures were selectors that picked up the new selection checkboxes; fixed). Remote CI results are recorded on the pull request.
+
 ## 2026-10-16T10:20:00+09:00 — 0.32.0 version panel
 
 Focused: `tests/unit/changelog.test.ts` **4/4** (release headings with and without PR links, nested/wrapped items and inline markup, version comparison and link filtering, and the real `docs/changelog.md` starting with the `package.json` version in strictly descending order). `tests/e2e/version-panel.spec.ts` **3/3** across Chromium, Firefox and WebKit (button label and unseen dot, current release open with its PR link, search narrowing to one release, Escape closes, dot cleared and still cleared after reload).
