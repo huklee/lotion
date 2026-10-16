@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
+import { Floating } from "./DatabaseMenus";
 
 export type SummaryEngine = "codex" | "claude";
+import { STYLE_OPTIONS, type SummaryStyle } from "./summary-styles";
+export { STYLE_OPTIONS, type SummaryStyle };
 export type SummarySettings = {
   engine: SummaryEngine;
   skill: string;
   prompt: string;
   slackChannel: string;
+  style: SummaryStyle;
 };
 export type SummaryJob = {
   id: string;
@@ -24,6 +28,7 @@ export type SummaryRequest = {
   pages: { id: string; blockIds?: string[] }[];
   parentId: string;
   title?: string;
+  style?: SummaryStyle;
 };
 
 export const ENGINE_LABEL: Record<string, string> = {
@@ -180,6 +185,20 @@ export function SummarySettingsForm({ onSaved }: { onSaved?: () => void }) {
         </select>
       </label>
       <label>
+        Default condensing
+        <select
+          aria-label="Summary style"
+          value={settings.style}
+          onChange={(e) => set({ style: e.target.value as SummaryStyle })}
+        >
+          {STYLE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value} title={option.hint}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
         Skill
         <select
           aria-label="Summary skill"
@@ -229,5 +248,69 @@ export function SummarySettingsForm({ onSaved }: { onSaved?: () => void }) {
         {status && <small role="status">{status}</small>}
       </div>
     </form>
+  );
+}
+
+/**
+ * A summary button: the main part runs with the default condensing style, the ▾
+ * part opens a menu to pick the style for this run.
+ */
+export function SummarizeButton({
+  label,
+  busy,
+  className,
+  title,
+  onRun,
+}: {
+  label: string;
+  busy?: boolean;
+  className?: string;
+  title?: string;
+  onRun: (style?: SummaryStyle) => void;
+}) {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  return (
+    <span className={`summarize-split ${className ?? ""}`}>
+      <button
+        type="button"
+        disabled={busy}
+        title={title}
+        onClick={() => onRun()}
+      >
+        {busy ? "Starting…" : label}
+      </button>
+      <button
+        type="button"
+        className="summarize-more"
+        aria-label={`${label}: choose condensing`}
+        aria-expanded={!!anchor}
+        disabled={busy}
+        onClick={(event) => setAnchor(anchor ? null : event.currentTarget)}
+      >
+        ▾
+      </button>
+      {anchor && (
+        <Floating
+          anchor={anchor}
+          label="Condensing"
+          onClose={() => setAnchor(null)}
+        >
+          {STYLE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className="summarize-style"
+              onClick={() => {
+                setAnchor(null);
+                onRun(option.value);
+              }}
+            >
+              <strong>{option.label}</strong>
+              <small>{option.hint}</small>
+            </button>
+          ))}
+        </Floating>
+      )}
+    </span>
   );
 }

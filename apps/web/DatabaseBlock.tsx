@@ -12,6 +12,7 @@ import { PropertyMenu, RowMenu } from "./DatabaseMenus";
 import { DatabaseViewBar } from "./DatabaseViews";
 import { DatabaseFeed, freshBlockIds, meetingSkeleton } from "./DatabaseFeed";
 import { RowPagesContext } from "./row-pages";
+import { SummarizeButton, type SummaryStyle } from "./summaries";
 import {
   applyView,
   defaultView,
@@ -454,12 +455,13 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
                           }
                           onSummarize={
                             id && page && rowPages
-                              ? () => {
+                              ? (style?: SummaryStyle) => {
                                   setMenu(null);
                                   void rowPages
                                     .summarize({
                                       pages: [{ id }],
                                       parentId: id,
+                                      style,
                                     })
                                     .catch(() => undefined);
                                 }
@@ -613,10 +615,10 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
             </button>
           )}
           {rowPages && (
-            <button
-              type="button"
+            <SummarizeButton
+              label={`📝 Summarize ${selected.size}`}
               className="lotion-database-summarize"
-              onClick={() => {
+              onRun={(style) => {
                 const pages = shownRows
                   .concat(state.rows.filter((row) => !shownRows.includes(row)))
                   .filter((row) => selected.has(row.id))
@@ -630,13 +632,15 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
                   pages.length === 1 ? pages[0] : rowPages.activePageId;
                 if (!parentId) return;
                 void rowPages
-                  .summarize({ pages: pages.map((id) => ({ id })), parentId })
+                  .summarize({
+                    pages: pages.map((id) => ({ id })),
+                    parentId,
+                    style,
+                  })
                   .then(() => setSelected(new Set()))
                   .catch(() => undefined);
               }}
-            >
-              📝 Summarize {selected.size}
-            </button>
+            />
           )}
           <button type="button" onClick={() => setSelected(new Set())}>
             Clear

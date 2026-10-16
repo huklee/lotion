@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { STYLE_OPTIONS, type SummaryStyle } from "./summary-styles";
 import {
   DATABASE_PROPERTY_TYPES,
   changeColumnType,
@@ -21,8 +22,8 @@ const TYPE_LABEL: Record<DatabasePropertyType, string> = {
 
 /**
  * A menu floating above the page (portal to <body>, fixed under its button), so the
- * table's scroll container cannot clip it. Closes on Escape, an outside click or a
- * page scroll, and returns focus to the button that opened it.
+ * table's scroll container cannot clip it. Follows its button on scroll and closes on
+ * Escape, an outside click or when the button scrolls away; focus returns to the button.
  */
 export function Floating({
   anchor,
@@ -36,6 +37,7 @@ export function Floating({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [, setTick] = useState(0);
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -50,17 +52,41 @@ export function Floating({
     };
     document.addEventListener("keydown", key, true);
     document.addEventListener("pointerdown", outside, true);
-    document.addEventListener("scroll", outside, true);
+    // A page scroll (or a layout shift that scrolls) moves the menu with its button;
+    // it closes only once the button leaves the viewport.
+    const scrolled = (event: Event) => {
+      if (ref.current?.contains(event.target as Node)) return;
+      const rect = anchor.getBoundingClientRect();
+      if (
+        rect.bottom < 0 ||
+        rect.top > window.innerHeight ||
+        !anchor.isConnected
+      )
+        onClose();
+      else setTick((n) => n + 1);
+    };
+    document.addEventListener("scroll", scrolled, true);
     ref.current?.querySelector<HTMLElement>("select, input, button")?.focus();
     return () => {
       document.removeEventListener("keydown", key, true);
       document.removeEventListener("pointerdown", outside, true);
-      document.removeEventListener("scroll", outside, true);
+      document.removeEventListener("scroll", scrolled, true);
       if (anchor.isConnected) anchor.focus({ preventScroll: true });
     };
   }, [anchor, onClose]);
   const rect = anchor.getBoundingClientRect();
-  const top = Math.min(rect.bottom + 4, window.innerHeight - 120);
+  const below = window.innerHeight - rect.bottom - 12;
+  // Open upwards when there is clearly more room above the button.
+  const up = below < 240 && rect.top > below;
+  const position = up
+    ? {
+        bottom: window.innerHeight - rect.top + 4,
+        maxHeight: rect.top - 12,
+      }
+    : {
+        top: rect.bottom + 4,
+        maxHeight: Math.max(120, below),
+      };
   const left = Math.max(8, Math.min(rect.left, window.innerWidth - 268));
   return createPortal(
     <div
@@ -68,7 +94,7 @@ export function Floating({
       className="lotion-database-menu"
       role="dialog"
       aria-label={label}
-      style={{ top, left, maxHeight: window.innerHeight - top - 12 }}
+      style={{ ...position, left }}
     >
       {children}
     </div>,
@@ -255,7 +281,7 @@ export function RowMenu({
   onTemplate,
   onSummarize,
 }: {
-  onSummarize?: () => void;
+  onSummarize?: (style?: SummaryStyle) => void;
   anchor: HTMLElement;
   isTemplate?: boolean;
   onTemplate?: () => void;
@@ -274,9 +300,19 @@ export function RowMenu({
         Duplicate row
       </button>
       {onSummarize && (
-        <button type="button" onClick={onSummarize}>
-          📝 Summarize this meeting
-        </button>
+        <fieldset>
+          <legend>📝 Summarize this meeting</legend>
+          {STYLE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              title={option.hint}
+              onClick={() => onSummarize(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </fieldset>
       )}
       {onTemplate && (
         <button type="button" disabled={!canPage} onClick={onTemplate}>

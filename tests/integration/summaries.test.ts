@@ -98,7 +98,8 @@ it("composes prompt from skill, request and sources; picks selected blocks", () 
 it("stores settings with defaults and lists skills", async () => {
   const defaults = (await app.inject({ url: "/api/summary/settings" })).json();
   expect(defaults.engine).toBe("codex");
-  expect(defaults.prompt).toContain("Confluence");
+  expect(defaults.style).toBe("brief");
+  expect(defaults.prompt).toContain("Markdown 본문만");
   const saved = await app.inject({
     method: "PUT",
     url: "/api/summary/settings",
@@ -164,6 +165,14 @@ it("summarises meetings into a page under the parent and notifies Slack", async 
   expect(calls[0].prompt).not.toContain("skip me");
   expect(calls[0].prompt).toContain("second raw");
   expect(calls[0].prompt).toContain("Use the house style.");
+  // default style: short, decisions first, and it outranks the skill
+  expect(job.style).toBe("brief");
+  expect(calls[0].prompt).toMatch(
+    /# 축약 방식: 핵심·결정 \(짧게\)[\s\S]*스킬 지침보다 우선[\s\S]*## 결정 사항/,
+  );
+  expect(JSON.stringify(repo.get(job.summaryId).blocks)).toContain(
+    "핵심·결정 (짧게)",
+  );
   const summary = repo.get(job.summaryId);
   expect(summary.parentId).toBe(parent.id);
   expect(summary.icon).toBe("📝");
@@ -230,4 +239,61 @@ it("reports engine failures, notifies them, and rejects bad input", async () => 
       })
     ).statusCode,
   ).toBe(400);
+});
+
+it("chooses the style per job and upgrades the legacy default prompt", async () => {
+  const { STYLE_RULES } = await import("../../apps/server/summaries");
+  await fs.writeFile(
+    path.join(dir, "data", "summary-settings.json"),
+    JSON.stringify({
+      engine: "codex",
+      skill: "",
+      prompt:
+        "다음은 회의 원본 기록(raw notes)입니다. 이를 바탕으로 대기업 Confluence 회의록 형식의 한국어 요약 회의록을 작성하세요.",
+      slackChannel: "",
+    }),
+  );
+  const custom = (await app.inject({ url: "/api/summary/settings" })).json();
+  expect(custom.style).toBe("brief");
+  const parent = await page("P", null, [para("a", "x")]);
+  const started = await app.inject({
+    method: "POST",
+    url: "/api/summary/jobs",
+    payload: {
+      pages: [{ id: parent.id }],
+      parentId: parent.id,
+      style: "standard",
+    },
+  });
+  const job = await waitFor(started.json().id);
+  expect(job.style).toBe("standard");
+  expect(calls[0].prompt).toContain(STYLE_RULES.standard.rules);
+  expect(calls[0].prompt).not.toContain(STYLE_RULES.brief.rules);
+  expect(
+    (
+      await app.inject({
+        method: "POST",
+        url: "/api/summary/jobs",
+        payload: {
+          pages: [{ id: parent.id }],
+          parentId: parent.id,
+          style: "huge",
+        },
+      })
+    ).statusCode,
+  ).toBe(400);
+});
+
+it("upgrades a saved copy of the legacy default prompt", async () => {
+  const { DEFAULT_PROMPT, settingsSchema } =
+    await import("../../apps/server/summaries");
+  const legacy = (await import("node:fs")).readFileSync(
+    "apps/server/summaries.ts",
+    "utf8",
+  );
+  const text = /const LEGACY_DEFAULT_PROMPT = `([\s\S]*?)`;/.exec(legacy)![1];
+  expect(settingsSchema.parse({ prompt: text }).prompt).toBe(DEFAULT_PROMPT);
+  expect(settingsSchema.parse({ prompt: "내 프롬프트" }).prompt).toBe(
+    "내 프롬프트",
+  );
 });

@@ -2385,3 +2385,51 @@ kbd {
   color: var(--text);
   font-weight: 600;
 }
+
+/* Summary button with a condensing menu */
+.summarize-split {
+  display: inline-flex;
+  align-items: stretch;
+}
+.summarize-split > button {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.summarize-split > button:first-child {
+  border-radius: 4px 0 0 4px;
+}
+.summarize-split > .summarize-more {
+  border-left: 0;
+  border-radius: 0 4px 4px 0;
+  padding: 2px 5px;
+  color: var(--muted);
+}
+.summarize-split > button:hover,
+.summarize-split > .summarize-more[aria-expanded="true"] {
+  background: var(--hover);
+}
+.lotion-database-selection .summarize-split > button {
+  font-size: 13px;
+  font-weight: 600;
+}
+.lotion-database-menu .summarize-style {
+  display: grid;
+  gap: 1px;
+  border: 0;
+  background: none;
+  padding: 5px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+}
+.lotion-database-menu .summarize-style:hover {
+  background: var(--hover);
+}
+.lotion-database-menu .summarize-style small {
+  color: var(--muted);
+}

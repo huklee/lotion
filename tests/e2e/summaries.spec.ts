@@ -89,7 +89,10 @@ test("one-button meeting summary, multi-row summary and summary settings", async
   await db.getByRole("button", { name: "Summary settings" }).click();
   const settings = page.getByRole("dialog", { name: "Summary settings" });
   await expect(settings.getByLabel("Summary engine")).toHaveValue("codex");
-  await expect(settings.getByLabel("Summary prompt")).toHaveValue(/Confluence/);
+  await expect(settings.getByLabel("Summary prompt")).toHaveValue(
+    /Markdown 본문만/,
+  );
+  await expect(settings.getByLabel("Summary style")).toHaveValue("brief");
   await settings.getByLabel("Summary engine").selectOption("claude");
   await settings.getByLabel("Summary skill").selectOption("");
   await settings.getByLabel("Slack channel").fill("#bad");
@@ -103,7 +106,7 @@ test("one-button meeting summary, multi-row summary and summary settings", async
   // one button on a feed entry: summary page under that meeting
   const entries = db.locator(".lotion-feed-entry");
   await expect(entries).toHaveCount(2);
-  await entries.nth(0).getByRole("button", { name: "요약" }).click();
+  await entries.nth(0).getByRole("button", { name: "요약", exact: true }).click();
   const toast = page.locator(".summary-toast").first();
   await expect(toast).toContainText("요약 완료 · 요약 · Design 회의", {
     timeout: 15000,
@@ -119,13 +122,42 @@ test("one-button meeting summary, multi-row summary and summary settings", async
       .blocks,
   );
   expect(body).toContain("핵심 요약 (claude)");
+  expect(body).toContain("핵심·결정 (짧게)");
   expect(body).toContain("Design 회의");
   await toast.getByRole("button", { name: "Dismiss" }).click();
+
+  // pick the condensing for one run from the ▾ menu
+  await entries
+    .nth(1)
+    .getByRole("button", { name: "요약: choose condensing" })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Condensing" })
+    .getByRole("button", { name: /결정·액션만/ })
+    .click();
+  await expect(page.locator(".summary-toast").first()).toContainText(
+    "요약 완료 · 요약 · Kickoff 회의",
+    { timeout: 15000 },
+  );
+  const kickoff = (
+    await (await page.request.get("/api/tree")).json()
+  ).nodes.find((n: any) => n.title === "요약 · Kickoff 회의");
+  expect(
+    JSON.stringify(
+      (await (await page.request.get(`/api/documents/${kickoff.id}`)).json())
+        .blocks,
+    ),
+  ).toContain("결정·액션만");
+  await page
+    .locator(".summary-toast")
+    .first()
+    .getByRole("button", { name: "Dismiss" })
+    .click();
 
   // several rows: select both, summarize once, summary goes under the database page
   await entries.nth(0).getByLabel("Select Design 회의").check();
   await entries.nth(1).getByLabel("Select Kickoff 회의").check();
-  await db.getByRole("button", { name: "📝 Summarize 2" }).click();
+  await db.getByRole("button", { name: "📝 Summarize 2", exact: true }).click();
   await expect(page.locator(".summary-toast").first()).toContainText(
     "Design 회의 외 1건",
     {
