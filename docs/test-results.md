@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-19T00:40:00+09:00 — 0.40.0 browser sessions
+
+Focused: `tests/integration/sessions.test.ts` **2/2** with `api.test.ts` (401 without token; session cookie attributes; cookie authenticates; forged cookie and session-minted sessions refused; only hashes stored, file mode 600; a new store on the same folder accepts the session; sliding expiry over 80 + 80 days; expiry after 91 idle days; sign-out revokes). E2E `session-auth.spec.ts` **6/6** on a token-protected server across Chromium, Firefox and WebKit (wrong token message; unlock; no token in sessionStorage; HttpOnly SameSite=Strict cookie; reload and a new tab not prompted; sign out prompts again; a tab with a legacy token is upgraded silently).
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **245/245**; Playwright **270/271** — the Firefox feed test typed before the caret reached the line end under load (text landed mid-word); the test now waits until the caret is at the end (9/9 repeated). Remote CI results are recorded on the pull request.
+
 ## 2026-10-18T23:30:00+09:00 — 0.39.1 delete keeps unselected nested blocks
 
 Focused: `tests/unit/movement.test.ts` **15/15** (a deleted parent's children and grandchildren move into its place; a selected child goes with it; `withDescendants` + delete removes a whole subtree). `block-selection.spec.ts` **46/46** across Chromium, Firefox and WebKit, including the new scenario (lasso a parent's own row → Backspace keeps its child at top level; handle menu → Delete on another parent keeps its child) and the unchanged "Backspace deletes a selected section with children".

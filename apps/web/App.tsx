@@ -14,7 +14,7 @@ import { set } from "idb-keyval";
 import { readSetting, readDraft, writeDraft } from "./storage-compat";
 import { X } from "lucide-react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
-import { api, ApiError } from "./api";
+import { api, ApiError, startSession, upgradeLegacyToken } from "./api";
 import { SaveCoordinator } from "./save-coordinator";
 import { RowPagesContext } from "./row-pages";
 import { InlineRowEditor } from "./InlineRowEditor";
@@ -229,7 +229,8 @@ export default function App() {
   );
   useEffect(() => {
     let alive = true;
-    void refresh()
+    void upgradeLegacyToken()
+      .then(() => refresh())
       .then((nodes) => {
         if (!alive || loadNumber.current > 0) return;
         if (location.hash === "#/changes") {
@@ -856,11 +857,15 @@ export default function App() {
         auth={auth}
         token={token}
         setToken={setToken}
-        onUnlock={() => {
-          sessionStorage.setItem("lotion-token", token);
-          setAuth(false);
-          void refresh().catch(handleError);
-        }}
+        onUnlock={() =>
+          void startSession(token)
+            .then(() => {
+              setToken("");
+              setAuth(false);
+              void refresh().catch(handleError);
+            })
+            .catch((e) => setError((e as Error).message))
+        }
         query={query}
         setQuery={setQuery}
         visible={visible}

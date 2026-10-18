@@ -8,6 +8,13 @@ import { z } from "zod";
 import { LinkPreviewService } from "./link-preview-service";
 import { DEFAULT_PRESETS, type SummaryService } from "./summaries";
 import type { NotificationService } from "./notifications";
+import {
+  SESSION_COOKIE,
+  SESSION_DAYS,
+  readCookie,
+  sessionCookie,
+  type SessionStore,
+} from "./sessions";
 import { Repository } from "../../packages/persistence/repository";
 import {
   AppError,
@@ -29,6 +36,7 @@ export async function createApp(
     production?: boolean;
     summaries?: SummaryService;
     notifications?: NotificationService;
+    sessions?: SessionStore;
   } = {},
 ) {
   const app = Fastify({ bodyLimit: 12 * 1024 * 1024, logger: false });
@@ -82,8 +90,17 @@ export async function createApp(
           req.headers.authorization?.replace(/^Bearer /, "") ?? "";
         const a = Buffer.from(provided),
           b = Buffer.from(options.token);
-        if (a.length !== b.length || !timingSafeEqual(a, b))
+        const tokenOk = a.length === b.length && timingSafeEqual(a, b);
+        // a browser session created by an earlier token check also counts
+        const sessionOk =
+          !tokenOk &&
+          !!options.sessions &&
+          (await options.sessions.verify(
+            readCookie(req.headers.cookie, SESSION_COOKIE),
+          ));
+        if (!tokenOk && !sessionOk)
           throw new AppError(401, "Workspace token required");
+        (req as any).viaToken = tokenOk;
       }
     }
   });
@@ -132,6 +149,32 @@ export async function createApp(
       .parse(req.query);
     reply.header("Cache-Control", "no-store");
     return repo.search(input.q, input.limit, input.exclude);
+  });
+  const secureCookie = (req: any) =>
+    !["localhost", "127.0.0.1", "[::1]"].includes(
+      new URL(`http://${req.headers.host}`).hostname,
+    ) || req.headers["x-forwarded-proto"] === "https";
+  /** Trade the token (Authorization header) for a long-lived session cookie. */
+  app.post("/api/session", async (req, reply) => {
+    if (!options.token) return { authenticated: true, session: false };
+    if (!options.sessions)
+      throw new AppError(503, "Sessions are not configured on this server");
+    if (!(req as any).viaToken)
+      throw new AppError(401, "Workspace token required");
+    const id = await options.sessions.create();
+    reply.header(
+      "Set-Cookie",
+      sessionCookie(id, secureCookie(req), SESSION_DAYS),
+    );
+    return { authenticated: true, session: true, days: SESSION_DAYS };
+  });
+  app.get("/api/session", async () => ({ authenticated: true }));
+  app.delete("/api/session", async (req, reply) => {
+    await options.sessions?.revoke(
+      readCookie(req.headers.cookie, SESSION_COOKIE),
+    );
+    reply.header("Set-Cookie", sessionCookie("", secureCookie(req), 0));
+    return { authenticated: false };
   });
   const notifications = () => {
     if (!options.notifications)

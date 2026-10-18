@@ -2,6 +2,14 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.40.0 — 2026-10-18
+
+### Changed
+
+- **The workspace token is asked once per browser.** Unlocking now trades the token for a session cookie (HttpOnly, SameSite=Strict, Secure over HTTPS) that stays valid for 90 days after its last use and survives server restarts, so new tabs, reloads and browser restarts no longer ask again. The token is no longer kept in the page. Tabs that still hold a token from before are upgraded silently. "Sign out of this browser" is in Control panel. A wrong token now says so.
+
+Sessions are stored as hashes in the workspace folder (`sessions.json`, readable only by the owner). Verification is recorded in [test results](test-results.md).
+
 ## 0.39.1 — 2026-10-18 · [#58](https://github.com/huklee/lotion/pull/58)
 
 ### Fixed

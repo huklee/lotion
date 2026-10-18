@@ -343,10 +343,21 @@ test("database feed: newest first, edit in place, new meeting from a template", 
     .locator(".lotion-feed-editor [contenteditable=true]");
   await expect(newest).toContainText("newest body text");
   await newest.getByText("newest body text").click();
-  // End scrolls instead of moving the caret on macOS.
-  await page.keyboard.press(
-    process.platform === "darwin" ? "Meta+ArrowRight" : "End",
-  );
+  // put the caret at the end of the line (End scrolls on macOS) and make sure it
+  // got there before typing — under load the key can land before focus settles
+  await expect
+    .poll(async () => {
+      await page.keyboard.press(
+        process.platform === "darwin" ? "Meta+ArrowRight" : "End",
+      );
+      return page.evaluate(() => {
+        const s = getSelection();
+        return (
+          !!s && s.anchorOffset === (s.anchorNode?.textContent ?? "").length
+        );
+      });
+    })
+    .toBe(true);
   await page.keyboard.type(" edited inline");
   await expect
     .poll(() => pageText(page, rows[1].href), { timeout: 15000 })
