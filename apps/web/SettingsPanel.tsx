@@ -5,6 +5,7 @@ import type {
 } from "react";
 import { Settings2 } from "lucide-react";
 import { SummarySettingsForm } from "./summaries";
+import { endSession } from "./api";
 import type {
   EditorFont,
   ThemeMode,
@@ -240,6 +241,17 @@ export function SettingsPanel({
         }
       >
         Reset formatting shortcuts
+      </button>
+      <h3 className="settings-heading">This browser</h3>
+      <p>
+        After the workspace token is entered once, this browser stays signed in
+        (90 days after its last use).
+      </p>
+      <button
+        className="settings-reset"
+        onClick={() => void endSession().then(() => location.reload())}
+      >
+        Sign out of this browser
       </button>
       <h3 className="settings-heading">Meeting summaries</h3>
       <p>

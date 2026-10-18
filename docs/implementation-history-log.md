@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-10-19T00:30:00+09:00 — 0.40.0 browser sessions prepared
+
+Owner request: stop asking for authentication repeatedly; once authenticated, a session should be enough. The web client kept the token in `sessionStorage`, i.e. per tab. `apps/server/sessions.ts`: `SessionStore` (random 256-bit ids, only SHA-256 hashes persisted in `<data>/sessions.json` with mode 600, 90-day sliding expiry written at most hourly, expired entries pruned). `createApp` accepts either the Bearer token or a valid `lotion_session` cookie; `POST /api/session` requires the token itself (a session cannot mint sessions) and sets the cookie (HttpOnly, SameSite=Strict, Secure unless the Host is loopback or when forwarded as https); `DELETE /api/session` revokes it. The existing Origin/Sec-Fetch-Site checks remain. Client: the unlock dialog calls `startSession` and no longer stores the token; `upgradeLegacyToken` converts a tab's old token once; Control panel → "Sign out of this browser". Asset URLs now load through the cookie as well.
+
 ## 2026-10-18T23:20:00+09:00 — 0.39.1 delete keeps unselected nested blocks prepared
 
 Owner report: deleting one block also deleted its nested blocks although they were not selected. Two paths did that: block-selection Backspace (`removeBlocksPreservingHierarchy` skipped a selected block's whole subtree) and BlockNote's default handle-menu "Delete" (`editor.removeBlocks`). `removeBlocksPreservingHierarchy` now removes only selected ids and splices a removed block's (recursively processed) children into its place; `withDescendants` lets "Select section" select nested blocks explicitly so section deletion is unchanged. `apps/web/DragHandleMenu.tsx` replaces the side menu (`sideMenu={false}` + `SideMenuController`) with the same items, except that "Delete" uses the helper on the block or the selection containing it. The block-selection highlight only ever covered a block's own row, which matches the new rule.
