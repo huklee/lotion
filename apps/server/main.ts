@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { createApp } from "./app";
 import { SummaryService, bridgeChannels, bridgeNotifier } from "./summaries";
+import { NotificationService } from "./notifications";
 const host = process.env.HOST ?? "127.0.0.1";
 // Legacy environment aliases keep existing deployments pointed at their workspace.
 const token = process.env.LOTION_TOKEN ?? process.env.YESTION_TOKEN;
@@ -15,7 +16,9 @@ if (!["127.0.0.1", "localhost", "::1"].includes(host) && !token)
 const repo = await new Repository(dataDir).init();
 const notifyUrl =
   process.env.LOTION_SLACK_NOTIFY_URL ?? "http://127.0.0.1:47833/notify";
+const notifications = new NotificationService(dataDir);
 const summaries = new SummaryService(repo, {
+  events: (event) => notifications.add(event),
   dataDir,
   skillDirs: [
     path.join(os.homedir(), ".claude", "skills"),
@@ -30,6 +33,7 @@ const app = await createApp(repo, {
   token,
   production: true,
   summaries,
+  notifications,
 });
 await app.listen({ host, port: Number(process.env.PORT ?? 3001) });
 console.log(`Lotion is running at http://${host}:${process.env.PORT ?? 3001}`);

@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.39.0 — 2026-10-18 · [#57](https://github.com/huklee/lotion/pull/57)
+
+### Added
+
+- **Notifications (🔔, top right):** workspace events — a new meeting in Meeting logs, a summary written or failed, Meeting logs created from an existing page — listed newest first and grouped by day (오늘, 어제, date) with relative times. The bell shows the unread count; opening the panel marks everything read (events new since the last look stay highlighted while it is open). Click an event to open its page. Events are stored in the workspace (`notifications.json`, last 500) and refresh every 20 s, when the tab becomes visible, and right after a summary or a new meeting.
+- **New meetings are linked from their page:** creating a meeting in Meeting logs also adds a link to it at the end of the page that holds the database.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.38.0 — 2026-10-16 · [#56](https://github.com/huklee/lotion/pull/56)
 
 ### Added

@@ -347,6 +347,13 @@ export class SummaryService {
       runner?: Runner;
       notifier?: Notifier;
       channels?: ChannelLister;
+      /** Workspace event (bell) when a job finishes. */
+      events?: (event: {
+        kind: "summary.done" | "summary.failed";
+        title: string;
+        detail?: string;
+        pageId?: string;
+      }) => Promise<unknown>;
       publicUrl?: string;
       allowTestEngine?: boolean;
     },
@@ -532,6 +539,23 @@ export class SummaryService {
   }
 
   private async notify(job: Job, settings: SummarySettings) {
+    await this.options
+      .events?.(
+        job.status === "done"
+          ? {
+              kind: "summary.done",
+              title: job.title,
+              detail: `${job.sources.length}건 · ${job.styleLabel}`,
+              pageId: job.summaryId,
+            }
+          : {
+              kind: "summary.failed",
+              title: job.title,
+              detail: (job.error ?? "").slice(0, 500),
+              pageId: job.sources[0]?.id,
+            },
+      )
+      .catch(() => undefined);
     if (!settings.slackChannel || !this.options.notifier) return;
     const base = (this.options.publicUrl ?? "").replace(/\/$/, "");
     const text =

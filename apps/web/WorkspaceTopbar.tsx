@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { TreeNode } from "../../packages/document-schema/index";
+import { NotificationBell } from "./NotificationBell";
 
 type WorkspaceTopbarProps = {
   sidebar: boolean;
@@ -147,6 +148,7 @@ export function WorkspaceTopbar({
             </button>
           </>
         )}
+        <NotificationBell openPage={(id) => void openPage(id)} />
         <div className="avatar">Y</div>
       </div>
     </header>
