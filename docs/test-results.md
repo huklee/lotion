@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-19T03:10:00+09:00 — 0.41.0 paste engine v2 (preview)
+
+Focused: `tests/unit/paste-text.test.ts` **5/5** (indentation nesting, markers with tabs, inline Markdown only where present, over-indentation and blank lines, code fences and tables). `paste-lab.spec.ts` golden suite **26/26** (13 cases × Chromium and WebKit; Firefox skipped because script-made clipboard data is empty there). Comparison run of both engines with screenshots for all 13 cases (Notion, Google Docs, Word, Slack, AI chat, web article, indented memo, Markdown file, VS Code into a code block, spreadsheet, inline line, lines into the middle of a line, lines into a list): Classic lost structure in 12 of 13; New kept it in all 13. Defects found and fixed during the run: unsupported code languages (`ts`, `bash`) made the editor reject the whole paste; Slack's top-level `<br>` lines were joined; Markdown blank lines became empty blocks.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **250/250**; Playwright **294 passed, 15 skipped (Firefox paste lab)**, 3 failed only because `editor-blocks.spec.ts` counted 5 code languages — now 6 with Plain text (updated, 3/3). Remote CI results are recorded on the pull request.
+
 ## 2026-10-19T00:40:00+09:00 — 0.40.0 browser sessions
 
 Focused: `tests/integration/sessions.test.ts` **2/2** with `api.test.ts` (401 without token; session cookie attributes; cookie authenticates; forged cookie and session-minted sessions refused; only hashes stored, file mode 600; a new store on the same folder accepts the session; sliding expiry over 80 + 80 days; expiry after 91 idle days; sign-out revokes). E2E `session-auth.spec.ts` **6/6** on a token-protected server across Chromium, Firefox and WebKit (wrong token message; unlock; no token in sessionStorage; HttpOnly SameSite=Strict cookie; reload and a new tab not prompted; sign out prompts again; a tab with a legacy token is upgraded silently).

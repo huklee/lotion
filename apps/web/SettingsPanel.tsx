@@ -6,6 +6,11 @@ import type {
 import { Settings2 } from "lucide-react";
 import { SummarySettingsForm } from "./summaries";
 import { endSession } from "./api";
+import {
+  getPasteEngine,
+  setPasteEngine,
+  type PasteEngine,
+} from "./paste/engine-choice";
 import type {
   EditorFont,
   ThemeMode,
@@ -242,6 +247,27 @@ export function SettingsPanel({
       >
         Reset formatting shortcuts
       </button>
+      <h3 className="settings-heading">Paste</h3>
+      <label className="settings-row">
+        <span>
+          Paste engine
+          <small>
+            New (preview): keeps formatting from Notion, Google Docs, Word,
+            Slack, web pages and AI chats, and turns indented text into nested
+            lines. Classic: the previous behaviour.
+          </small>
+        </span>
+        <select
+          aria-label="Paste engine"
+          defaultValue={getPasteEngine()}
+          onChange={(event) =>
+            setPasteEngine(event.target.value as PasteEngine)
+          }
+        >
+          <option value="v2">New (preview)</option>
+          <option value="classic">Classic</option>
+        </select>
+      </label>
       <h3 className="settings-heading">This browser</h3>
       <p>
         After the workspace token is entered once, this browser stays signed in

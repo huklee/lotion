@@ -102,6 +102,7 @@ export const editorSchema = BlockNoteSchema.create({
         python: { name: "Python", aliases: ["py"] },
         go: { name: "Go", aliases: ["golang"] },
         cpp: { name: "C++", aliases: ["c++"] },
+        text: { name: "Plain text", aliases: ["plaintext", "txt"] },
       },
     }),
     tableOfContents,

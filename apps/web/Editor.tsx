@@ -16,6 +16,8 @@ import { readableCodeColor } from "./code-colors";
 import { mermaidFromClipboard } from "./mermaid-paste";
 import { clipboardLines, clipboardTextLines } from "./clipboard-lines";
 import { structuredBlocksFromClipboard } from "./structured-block-paste";
+import { pasteV2 } from "./paste/paste-v2";
+import { getPasteEngine } from "./paste/engine-choice";
 import {
   rememberSelectedBlockClipboard,
   selectedBlocksFromClipboard,
@@ -786,6 +788,19 @@ export default function Editor({
             type: "mermaid",
             props: { code },
           });
+          return;
+        }
+        if (!/^https?:\/\/\S+$/i.test(value) && getPasteEngine() === "v2") {
+          if (event.clipboardData.files.length) return;
+          const html = event.clipboardData.getData("text/html");
+          if (!raw && !html) return;
+          event.preventDefault();
+          event.stopPropagation();
+          try {
+            pasteV2(editor, { html, text: raw }, initial.title);
+          } catch (error) {
+            setPreviewError((error as Error).message);
+          }
           return;
         }
         if (!/^https?:\/\/\S+$/i.test(value)) {
