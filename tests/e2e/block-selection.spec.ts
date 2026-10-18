@@ -1053,3 +1053,72 @@ test("real Chromium clipboard survives reload before selected-block paste", asyn
   ).json();
   expect(JSON.stringify(saved.blocks)).not.toContain("real-copy-target");
 });
+
+test("deleting a selected parent keeps its unselected nested blocks (Backspace and the handle menu)", async ({
+  page,
+}) => {
+  await seed(page, "Delete keeps children", [
+    {
+      id: "p1",
+      type: "paragraph",
+      content: [{ type: "text", text: "Parent one", styles: {} }],
+      children: [
+        {
+          id: "p1-child",
+          type: "paragraph",
+          content: [{ type: "text", text: "Child of one", styles: {} }],
+        },
+      ],
+    },
+    {
+      id: "p2",
+      type: "paragraph",
+      content: [{ type: "text", text: "Parent two", styles: {} }],
+      children: [
+        {
+          id: "p2-child",
+          type: "paragraph",
+          content: [{ type: "text", text: "Child of two", styles: {} }],
+        },
+      ],
+    },
+    {
+      id: "tail",
+      type: "paragraph",
+      content: [{ type: "text", text: "Tail", styles: {} }],
+    },
+  ]);
+  // lasso only the first parent's own row, then Backspace
+  const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+  const row = (await page
+    .locator('[data-id="p1"] > .bn-block > .bn-block-content')
+    .first()
+    .boundingBox())!;
+  await page.mouse.move(gutter.x + 5, row.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(row.x + row.width - 8, row.y + row.height - 2, {
+    steps: 10,
+  });
+  await page.mouse.up();
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toContainText("1 selected");
+  await page.keyboard.press("Backspace");
+  await expect(page.getByText("Parent one")).toHaveCount(0);
+  await expect(page.getByText("Child of one")).toBeVisible();
+  // the child moved up to the top level
+  await expect(
+    page.locator('.bn-editor > .bn-block-group > [data-id="p1-child"]'),
+  ).toHaveCount(1);
+
+  // handle menu → Delete on the second parent
+  await page.locator('[data-id="p2"] .bn-inline-content').first().hover();
+  await page.locator(".bn-side-menu [data-test='dragHandle']").first().click();
+  await page.getByRole("menuitem", { name: "Delete" }).click();
+  await expect(page.getByText("Parent two")).toHaveCount(0);
+  await expect(page.getByText("Child of two")).toBeVisible();
+  await expect(
+    page.locator('.bn-editor > .bn-block-group > [data-id="p2-child"]'),
+  ).toHaveCount(1);
+  await expect(page.getByText("Tail")).toBeVisible();
+});

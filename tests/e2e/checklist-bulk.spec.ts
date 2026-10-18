@@ -92,7 +92,7 @@ test("Cmd/Ctrl+Enter on a block selection checks the checklist items inside it, 
     .click();
   await expect(
     page.getByRole("toolbar", { name: "Selected blocks" }),
-  ).toContainText("3 selected");
+  ).toContainText("4 selected");
   await page.keyboard.press("ControlOrMeta+Enter");
   for (const id of ["sel-a", "sel-b", "sel-b1"])
     await expect(box(id)).toBeChecked();
