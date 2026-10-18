@@ -15,6 +15,8 @@ import {
   ChevronRight,
   ChevronDown,
   Copy,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import type { TreeNode, Content } from "../../packages/document-schema/index";
 import type { ThemeMode } from "./preferences";
@@ -48,9 +50,14 @@ type WorkspaceSidebarProps = {
   onHome: () => void;
   onTrash: () => void;
   onChanges: () => void;
+  /** Minimized to an icon rail. */
+  mini: boolean;
+  onToggleMini: () => void;
 };
 
 export function WorkspaceSidebar({
+  mini,
+  onToggleMini,
   activeId,
   trash,
   changes,
@@ -234,7 +241,7 @@ export function WorkspaceSidebar({
   }
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${mini ? " mini" : ""}`}>
       <div className="workspace">
         <div className="brand-mark">
           l<span>.</span>
@@ -243,17 +250,33 @@ export function WorkspaceSidebar({
           <strong>Lotion</strong>
           <span>Personal workspace</span>
         </div>
-        <ChevronsUpDown size={14} className="muted" />
+        <ChevronsUpDown size={14} className="muted workspace-chevron" />
+        <button
+          className="sidebar-mini-toggle"
+          aria-label={mini ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!mini}
+          title={mini ? "Expand sidebar" : "Collapse sidebar"}
+          onClick={onToggleMini}
+        >
+          {mini ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        </button>
       </div>
       <div className="sidebar-primary">
-        <button onClick={() => setSearch(true)}>
+        <button title="Search" onClick={() => setSearch(true)}>
           <Search size={16} />
-          Search<span className="keycap">⌘ K</span>
+          <span className="label">Search</span>
+          <span className="keycap">⌘ K</span>
         </button>
-        <button onClick={onHome}>
+        <button title="Home" onClick={onHome}>
           <Home size={16} />
-          Home
+          <span className="label">Home</span>
         </button>
+        {mini && (
+          <button title="New page" onClick={() => void create()}>
+            <Plus size={16} />
+            <span className="label">New page</span>
+          </button>
+        )}
       </div>
       {favorites.some((id) => visible.some((node) => node.id === id)) && (
         <>
@@ -307,17 +330,21 @@ export function WorkspaceSidebar({
           <span className="local-dot" />
           Stored in your workspace<span>Only yours.</span>
         </div>
-        <button onClick={() => setDialog("import")}>
+        <button title="Import" onClick={() => setDialog("import")}>
           <ArrowUpFromLine size={15} />
-          Import
+          <span className="label">Import</span>
         </button>
-        <button onClick={onChanges} aria-current={changes ? "page" : undefined}>
+        <button
+          title="Recent changes"
+          onClick={onChanges}
+          aria-current={changes ? "page" : undefined}
+        >
           <History size={15} />
-          Recent changes
+          <span className="label">Recent changes</span>
         </button>
-        <button onClick={onTrash}>
+        <button title="Trash" onClick={onTrash}>
           <Trash2 size={15} />
-          Trash
+          <span className="label">Trash</span>
           <span className="count">{deletedCount || ""}</span>
         </button>
         <button
@@ -334,15 +361,16 @@ export function WorkspaceSidebar({
           }
         >
           {theme === "dark" ? <Moon size={15} /> : <Sun size={15} />}
-          Appearance<span className="mode">{themeMode}</span>
+          <span className="label">Appearance</span>
+          <span className="mode">{themeMode}</span>
         </button>
-        <button onClick={() => setDialog("settings")}>
+        <button title="Control panel" onClick={() => setDialog("settings")}>
           <Settings2 size={15} />
-          Control panel
+          <span className="label">Control panel</span>
         </button>
-        <button onClick={() => setDialog("help")}>
+        <button title="Help & shortcuts" onClick={() => setDialog("help")}>
           <CircleHelp size={15} />
-          Help & shortcuts
+          <span className="label">Help & shortcuts</span>
         </button>
         <div className="sidebar-footer">
           <span>MADE FOR YOUR MIND</span>

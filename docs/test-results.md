@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-19T10:40:00+09:00 — 0.42.0 server favorites and collapsible sidebar
+
+Focused: `tests/integration/favorites.test.ts` **2/2** (ordered add without duplicates, remove, persisted across a new store, bad id rejected; three concurrent adds all kept). `navigation.spec.ts` favorites and rail scenarios **9/9** across Chromium, Firefox and WebKit (favorite added in one browser appears in a second, separate browser context; removal there disappears in the first after reload; titles followed; a browser's old local favorites moved to the server once; Collapse → rail under 80 px with the page tree hidden, Control panel and New page usable from icons, remembered after reload, Expand restores).
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **252/252**; Playwright **303 passed, 15 skipped** (Firefox paste lab). Remote CI results are recorded on the pull request.
+
 ## 2026-10-19T03:10:00+09:00 — 0.41.0 paste engine v2 (preview)
 
 Focused: `tests/unit/paste-text.test.ts` **5/5** (indentation nesting, markers with tabs, inline Markdown only where present, over-indentation and blank lines, code fences and tables). `paste-lab.spec.ts` golden suite **26/26** (13 cases × Chromium and WebKit; Firefox skipped because script-made clipboard data is empty there). Comparison run of both engines with screenshots for all 13 cases (Notion, Google Docs, Word, Slack, AI chat, web article, indented memo, Markdown file, VS Code into a code block, spreadsheet, inline line, lines into the middle of a line, lines into a list): Classic lost structure in 12 of 13; New kept it in all 13. Defects found and fixed during the run: unsupported code languages (`ts`, `bash`) made the editor reject the whole paste; Slack's top-level `<br>` lines were joined; Markdown blank lines became empty blocks.

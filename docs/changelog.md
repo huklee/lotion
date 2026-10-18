@@ -2,6 +2,18 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.42.0 — 2026-10-19
+
+### Changed
+
+- **Favorites are shared by every browser and device.** They are kept by the server (`favorites.json` in the workspace) instead of each browser, in the order they were added; adding and removing from two devices at once keeps both changes. Another open tab picks up changes when you return to it. Favorites saved by a browser before this version are moved to the server the first time it opens Lotion.
+
+### Added
+
+- **Collapse / expand the left panel:** the button at the top of the sidebar minimizes it to an icon rail (Search, Home, New page, Import, Recent changes, Trash, Appearance, Control panel, Help — names show as tooltips) and expands it again. The choice is remembered in this browser. The ☰ button in the top bar still hides the panel completely.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.41.0 — 2026-10-19 · [#60](https://github.com/huklee/lotion/pull/60)
 
 ### Added

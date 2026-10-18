@@ -3203,3 +3203,83 @@ kbd {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+
+/* Sidebar: collapse / expand button and the minimized icon rail */
+.sidebar .workspace {
+  position: relative;
+}
+.sidebar-mini-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.sidebar-mini-toggle:hover,
+.sidebar-mini-toggle:focus-visible {
+  background: var(--hover);
+  color: var(--text);
+}
+.app.sidebar-mini:not(.sidebar-hidden) {
+  grid-template-columns: 60px 1fr;
+}
+.sidebar.mini {
+  padding: 18px 8px 0;
+  align-items: center;
+  overflow: hidden;
+}
+.sidebar.mini .workspace {
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+}
+.sidebar.mini .workspace > div:not(.brand-mark),
+.sidebar.mini .workspace-chevron,
+.sidebar.mini .section-label,
+.sidebar.mini .favorite-pages,
+.sidebar.mini .page-tree,
+.sidebar.mini .local-note,
+.sidebar.mini .sidebar-footer,
+.sidebar.mini .keycap,
+.sidebar.mini .count,
+.sidebar.mini .mode {
+  display: none;
+}
+.sidebar.mini .sidebar-mini-toggle {
+  margin-left: 0;
+}
+.sidebar.mini .sidebar-primary,
+.sidebar.mini .sidebar-bottom {
+  width: 100%;
+  align-items: center;
+}
+.sidebar.mini .sidebar-bottom {
+  margin-top: auto;
+}
+.sidebar.mini .sidebar-primary button,
+.sidebar.mini .sidebar-bottom button {
+  justify-content: center;
+  width: 40px;
+  height: 36px;
+  padding: 0;
+  gap: 0;
+}
+/* labels stay for screen readers; tooltips show them on hover */
+.sidebar.mini .label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .app.sidebar-mini:not(.sidebar-hidden) .sidebar.mini {
+    width: 60px;
+  }
+}

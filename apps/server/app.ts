@@ -8,6 +8,7 @@ import { z } from "zod";
 import { LinkPreviewService } from "./link-preview-service";
 import { DEFAULT_PRESETS, type SummaryService } from "./summaries";
 import type { NotificationService } from "./notifications";
+import type { FavoritesStore } from "./favorites";
 import {
   SESSION_COOKIE,
   SESSION_DAYS,
@@ -37,6 +38,7 @@ export async function createApp(
     summaries?: SummaryService;
     notifications?: NotificationService;
     sessions?: SessionStore;
+    favorites?: FavoritesStore;
   } = {},
 ) {
   const app = Fastify({ bodyLimit: 12 * 1024 * 1024, logger: false });
@@ -176,6 +178,18 @@ export async function createApp(
     reply.header("Set-Cookie", sessionCookie("", secureCookie(req), 0));
     return { authenticated: false };
   });
+  const favorites = () => {
+    if (!options.favorites)
+      throw new AppError(503, "Favorites are not configured on this server");
+    return options.favorites;
+  };
+  app.get("/api/favorites", async () => ({ ids: await favorites().list() }));
+  app.put("/api/favorites/:id", async (req) => ({
+    ids: await favorites().add(String((req.params as any).id)),
+  }));
+  app.delete("/api/favorites/:id", async (req) => ({
+    ids: await favorites().remove(String((req.params as any).id)),
+  }));
   const notifications = () => {
     if (!options.notifications)
       throw new AppError(
