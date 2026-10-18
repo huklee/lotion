@@ -7,6 +7,7 @@ import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { LinkPreviewService } from "./link-preview-service";
 import { DEFAULT_PRESETS, type SummaryService } from "./summaries";
+import type { NotificationService } from "./notifications";
 import { Repository } from "../../packages/persistence/repository";
 import {
   AppError,
@@ -27,6 +28,7 @@ export async function createApp(
     token?: string;
     production?: boolean;
     summaries?: SummaryService;
+    notifications?: NotificationService;
   } = {},
 ) {
   const app = Fastify({ bodyLimit: 12 * 1024 * 1024, logger: false });
@@ -131,6 +133,24 @@ export async function createApp(
     reply.header("Cache-Control", "no-store");
     return repo.search(input.q, input.limit, input.exclude);
   });
+  const notifications = () => {
+    if (!options.notifications)
+      throw new AppError(
+        503,
+        "Notifications are not configured on this server",
+      );
+    return options.notifications;
+  };
+  app.get("/api/notifications", async (req) =>
+    notifications().list(Number((req.query as any)?.limit) || 100),
+  );
+  app.post("/api/notifications", async (req, reply) => {
+    reply.code(201);
+    return notifications().add(req.body);
+  });
+  app.post("/api/notifications/seen", async (req) =>
+    notifications().markSeen((req.body as any)?.at),
+  );
   const summaries = () => {
     if (!options.summaries)
       throw new AppError(503, "Summaries are not configured on this server");

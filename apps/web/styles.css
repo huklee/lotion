@@ -3077,3 +3077,129 @@ kbd {
   color: var(--text);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
+
+/* Notifications (top-right bell) */
+.notification-bell {
+  position: relative;
+}
+.notification-badge {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #e5484d;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.notification-panel {
+  position: fixed;
+  z-index: 1000;
+  width: min(380px, calc(100vw - 24px));
+  max-height: min(70vh, 560px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+  font-size: 13px;
+  overflow: hidden;
+}
+.notification-panel header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 12px 14px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.notification-panel header small,
+.notification-empty {
+  color: var(--muted);
+}
+.notification-empty {
+  margin: 0;
+  padding: 18px 14px;
+  line-height: 1.6;
+}
+.notification-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 4px 6px 8px;
+  overflow: auto;
+}
+.notification-panel h4 {
+  margin: 10px 8px 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+.notification-item {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: start;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.notification-item:hover:not(:disabled) {
+  background: var(--hover);
+}
+.notification-item:disabled {
+  cursor: default;
+}
+.notification-item svg {
+  margin-top: 2px;
+  color: var(--muted);
+}
+.notification-item.summary-done svg {
+  color: #2383e2;
+}
+.notification-item.meeting-created svg,
+.notification-item.meetings-imported svg {
+  color: #3f8a4f;
+}
+.notification-item.summary-failed svg {
+  color: #d44c47;
+}
+.notification-item.fresh {
+  background: color-mix(in srgb, #2383e2 7%, transparent);
+}
+.notification-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.notification-text small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.notification-text strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.notification-text span {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.notification-item time {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

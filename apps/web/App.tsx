@@ -19,6 +19,7 @@ import { SaveCoordinator } from "./save-coordinator";
 import { RowPagesContext } from "./row-pages";
 import { InlineRowEditor } from "./InlineRowEditor";
 import { VersionButton } from "./VersionPanel";
+import { refreshNotifications } from "./NotificationBell";
 import { SummaryToasts, useSummaryJobs } from "./summaries";
 import { readBoolean } from "./preferences";
 import {
@@ -180,9 +181,10 @@ export default function App() {
     }
     return save;
   }, []);
-  const summaryJobs = useSummaryJobs(
-    () => void refresh().catch(() => undefined),
-  );
+  const summaryJobs = useSummaryJobs(() => {
+    void refresh().catch(() => undefined);
+    refreshNotifications();
+  });
   const openPage = useCallback(
     async (id: string, navigation: "push" | "replace" | "none" = "push") => {
       const sequence = ++loadNumber.current;

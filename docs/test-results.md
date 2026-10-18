@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-18T22:40:00+09:00 — 0.39.0 notifications and meeting links
+
+Focused: `tests/integration/notifications.test.ts` **3/3** (newest-first list, unread count, mark read, persistence across a restart, invalid kind/title/pageId rejected; a finished summary records `summary.done` pointing at the summary page; 500-event cap) with `summaries.test.ts` 8/8. E2E `notifications.spec.ts` **3/3** across Chromium, Firefox and WebKit ("/Meeting logs" → New meeting → page-mention link stored as the page's last non-empty block; bell "1 unread" → a summary → "2 unread"; panel lists "Summary written" above "New meeting" under 오늘; opening clears the count; clicking the meeting opens it and closes the panel). Visual check of the panel from a screenshot.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **242/242**; Playwright **250/250**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-16T19:40:00+09:00 — 0.38.0 Meeting logs block and layout switch
 
 Focused: `database.spec.ts` **21/21** across Chromium, Firefox and WebKit, including the new scenarios (plain database without summary features and "New row page"; Table ↔ Feed layout switch; "/Meeting logs" preset with title, Feed tab, summary settings, New meeting with skeleton and 요약 button; switching a plain database to Meeting logs from the view menu); `summaries.spec.ts` and `editor-blocks.spec.ts` pass with meeting seeds marked `variant: "meetings"`. WebKit selected the whole table when the test clicked the empty paragraph after it, so the slash-menu scenario now starts on its own page.

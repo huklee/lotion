@@ -14,6 +14,7 @@ import { Plus, X } from "lucide-react";
 import { DatabaseViewBar } from "./DatabaseViews";
 import { DatabaseFeed, freshBlockIds, meetingSkeleton } from "./DatabaseFeed";
 import { RowPagesContext } from "./row-pages";
+import { recordNotification } from "./NotificationBell";
 import { SummarizeButton, type SummaryStyle } from "./summaries";
 import {
   FILTER_OPS,
@@ -53,6 +54,37 @@ export const DatabaseActionsContext = createContext<DatabaseActions | null>(
 
 function pageId(href: string) {
   return /^#\/page\/([a-zA-Z0-9_-]{1,100})$/.exec(href)?.[1] ?? null;
+}
+
+/**
+ * Add a link to a new meeting page at the end of the page that holds the database
+ * (before a trailing empty paragraph, so typing at the end stays easy).
+ */
+function linkAtPageEnd(editor: any, page: Document) {
+  try {
+    const blocks = editor.document as any[];
+    const last = blocks[blocks.length - 1];
+    const link = {
+      type: "paragraph",
+      content: [
+        {
+          type: "mention",
+          props: {
+            kind: "page",
+            href: `#/page/${page.id}`,
+            label: page.title,
+            icon: page.icon ?? "📄",
+            value: "",
+          },
+        },
+      ],
+    };
+    const trailingEmpty =
+      last?.type === "paragraph" && !(last.content ?? []).length;
+    editor.insertBlocks([link], last, trailingEmpty ? "before" : "after");
+  } catch {
+    // the link is a convenience; the row and its page already exist
+  }
 }
 
 export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
@@ -234,6 +266,14 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
       ...latest,
       rows: meetings ? [entry, ...latest.rows] : [...latest.rows, entry],
     }));
+    if (added && meetings) linkAtPageEnd(editor, page);
+    if (added && meetings)
+      recordNotification({
+        kind: "meeting.created",
+        title: page.title,
+        detail: String(block.props.title || "Meeting logs"),
+        pageId: page.id,
+      });
     if (!added)
       throw new Error(
         `"${page.title}" was created but could not be added to this database; it is in the sidebar.`,
