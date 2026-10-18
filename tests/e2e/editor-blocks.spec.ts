@@ -281,7 +281,8 @@ test("typed database rows are child pages and other custom blocks persist", asyn
   );
   await expect(code).toHaveCSS("background-color", "rgb(239, 231, 213)");
   await expect(code).toHaveCSS("color", "rgb(180, 35, 45)");
-  await expect(code.locator("select option")).toHaveCount(5);
+  // JSON, HTML, Python, Go, C++ and Plain text
+  await expect(code.locator("select option")).toHaveCount(6);
   await expect(code.locator(".shiki").first()).toBeVisible({
     timeout: 15000,
   });

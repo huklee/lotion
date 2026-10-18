@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.41.0 — 2026-10-19 · [#60](https://github.com/huklee/lotion/pull/60)
+
+### Added
+
+- **New paste engine (preview, opt-in):** Control panel → Paste → Paste engine → **New (preview)**. It reads the richest form on the clipboard — Lotion's own copy, then HTML (Notion, Google Docs, Word, Slack, web pages, AI chats), then Markdown / plain text — and places the result where the cursor is:
+  - formatting, links, headings, quotes, code blocks, tables and nested / to-do / numbered lists are kept; site colours and fonts are dropped;
+  - Google Docs' all-bold wrapper, style-only bold/italic and level-only lists, Word list levels and Notion to-do checkboxes are understood;
+  - plain text keeps every line as its own block, turns indentation into nesting and list markers (-, •, 1., [ ]) into lists;
+  - one line goes into the sentence at the cursor; on an empty line the paste replaces it; in the middle of a line the line is split around it; pasted plain lines inside a list continue that list; code pasted into a code block stays in it.
+  The Classic engine remains the default until the new one is approved.
+- Code blocks gain a "Plain text" language; pasted or imported code in other languages uses it instead of being rejected.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.40.0 — 2026-10-18 · [#59](https://github.com/huklee/lotion/pull/59)
 
 ### Changed
