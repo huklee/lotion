@@ -9,12 +9,15 @@ export function removeBlocksPreservingHierarchy(
     let changed = false;
     const result: Block[] = [];
     for (const block of items) {
-      if (ids.has(block.id)) {
-        changed = true;
-        continue;
-      }
       const originalChildren = block.children ?? [];
       const children = remove(originalChildren);
+      if (ids.has(block.id)) {
+        // Only the selected block goes; its unselected children move up into
+        // its place (selected descendants are removed with it).
+        changed = true;
+        result.push(...children);
+        continue;
+      }
       if (children !== originalChildren) {
         changed = true;
         result.push({ ...block, children });
@@ -23,6 +26,24 @@ export function removeBlocksPreservingHierarchy(
     return changed ? result : items;
   };
   return remove(blocks);
+}
+
+/** `selected` plus every descendant of those blocks, in document order. */
+export function withDescendants(
+  blocks: Block[],
+  selected: readonly string[],
+): string[] {
+  const ids = new Set(selected);
+  const out: string[] = [];
+  const walk = (items: Block[], inside: boolean) => {
+    for (const block of items) {
+      const hit = inside || ids.has(block.id);
+      if (hit) out.push(block.id);
+      walk(block.children ?? [], hit);
+    }
+  };
+  walk(blocks, false);
+  return out;
 }
 
 export function selectedBlockSubtrees(

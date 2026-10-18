@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.39.1 — 2026-10-18
+
+### Fixed
+
+- **Deleting a block no longer deletes the blocks nested under it unless they are selected.** Backspace on selected blocks and "Delete" in the block handle menu (⋮⋮) now remove only the selected blocks; their unselected nested blocks move up into their place. "Select section" now selects everything nested in the section (and highlights it), so deleting a section still removes all of it.
+- **Backspace no longer shifts the indent of the next line.** At the start of an indented line, Backspace used to pull the line out of its parent, which made the following lines its children. Now an empty indented line is simply deleted (the cursor goes to the end of the line above), and a line with text is merged into the line above while the other lines stay where they were. Merging a line that has nested lines keeps them nested under the merged line instead of moving them to the top level. One undo restores the line. The first Backspace on a list item still turns it into plain text.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.39.0 — 2026-10-18 · [#57](https://github.com/huklee/lotion/pull/57)
 
 ### Added

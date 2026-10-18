@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import {
   moveBlocks,
   removeBlocksPreservingHierarchy,
+  withDescendants,
   selectedBlockSubtrees,
   sectionIds,
 } from "../../packages/editor-adapter/movement";
@@ -89,3 +90,40 @@ it.each([
   "//evil.test",
   "file:///etc/passwd",
 ])("rejects unsafe URL %s", (url) => expect(safeUrl(url)).toBe(false));
+
+it("deleting a selected parent keeps its unselected children in its place", () => {
+  const doc = [
+    { id: "top", type: "paragraph" },
+    {
+      id: "parent",
+      type: "paragraph",
+      children: [
+        {
+          id: "c1",
+          type: "paragraph",
+          children: [{ id: "g1", type: "paragraph" }],
+        },
+        { id: "c2", type: "paragraph" },
+      ],
+    },
+    { id: "after", type: "paragraph" },
+  ] as any;
+  const kept = removeBlocksPreservingHierarchy(doc, ["parent"]);
+  expect(kept.map((b) => b.id)).toEqual(["top", "c1", "c2", "after"]);
+  expect(kept[1].children?.map((b) => b.id)).toEqual(["g1"]);
+  // a selected child goes with it; the other child stays
+  const partly = removeBlocksPreservingHierarchy(doc, ["parent", "c1"]);
+  expect(partly.map((b) => b.id)).toEqual(["top", "g1", "c2", "after"]);
+  // a whole subtree selected is removed entirely
+  expect(
+    removeBlocksPreservingHierarchy(doc, withDescendants(doc, ["parent"])).map(
+      (b) => b.id,
+    ),
+  ).toEqual(["top", "after"]);
+  expect(withDescendants(doc, ["parent"])).toEqual([
+    "parent",
+    "c1",
+    "g1",
+    "c2",
+  ]);
+});

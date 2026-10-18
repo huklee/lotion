@@ -4,6 +4,8 @@ import { usePasteLink } from "./use-paste-link";
 import { PasteLinkChooser } from "./PasteLinkChooser";
 import { LinkPreviewCard } from "./LinkPreviewCard";
 import { EditorInteractionOverlays } from "./EditorInteractionOverlays";
+import { LotionSideMenu } from "./DragHandleMenu";
+import { handleBackspace } from "./backspace";
 import {
   FormattingToolbarController,
   SuggestionMenuController,
@@ -47,6 +49,7 @@ import type {
 import {
   moveBlocks,
   sectionIds,
+  withDescendants,
   selectedBlockSubtrees,
 } from "../../packages/editor-adapter/movement";
 import {
@@ -220,6 +223,34 @@ export default function Editor({
   );
   const mounted = useRef(true);
   const host = useRef<HTMLDivElement>(null);
+  // Backspace at the start of a nested line deletes/merges it instead of lifting it
+  // (which re-parented the following lines); see backspace.ts.
+  useEffect(() => {
+    const element = host.current;
+    if (!element) return;
+    const key = (event: KeyboardEvent) => {
+      if (
+        event.key !== "Backspace" ||
+        event.defaultPrevented ||
+        event.isComposing ||
+        event.shiftKey ||
+        event.altKey ||
+        event.metaKey ||
+        event.ctrlKey
+      )
+        return;
+      const target = event.target as HTMLElement;
+      // only this editor's own text (not a nested feed editor or a form field)
+      if (target.closest(".bn-editor") !== editor.domElement) return;
+      if (target.closest("input, textarea, select")) return;
+      if (handleBackspace(editor)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    element.addEventListener("keydown", key, true);
+    return () => element.removeEventListener("keydown", key, true);
+  }, [editor]);
   const [uploadState, setUploadState] = useState("");
   const rememberColorStyle = useCallback((style: AppliedColorPreset) => {
     lastColorStyle.current = style;
@@ -937,7 +968,11 @@ export default function Editor({
             onClick={() => {
               const current = editor.getTextCursorPosition().block;
               setSelected(
-                sectionIds(editor.document as unknown as Block[], current.id),
+                // the section with everything nested in it (deleting it removes all)
+                withDescendants(
+                  editor.document as unknown as Block[],
+                  sectionIds(editor.document as unknown as Block[], current.id),
+                ),
               );
             }}
             title="Select the current heading and its section"
@@ -1022,8 +1057,10 @@ export default function Editor({
           theme={theme}
           formattingToolbar={false}
           slashMenu={false}
+          sideMenu={false}
           onChange={() => onChange(editor.document as unknown as Block[])}
         >
+          <LotionSideMenu />
           <FormattingToolbarController
             formattingToolbar={() => (
               <EditorFormattingToolbar

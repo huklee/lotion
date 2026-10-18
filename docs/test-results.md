@@ -1,5 +1,12 @@
 # Test results
 
+## 2026-10-18T23:30:00+09:00 — 0.39.1 delete keeps unselected nested blocks
+
+Focused: `tests/unit/movement.test.ts` **15/15** (a deleted parent's children and grandchildren move into its place; a selected child goes with it; `withDescendants` + delete removes a whole subtree). `block-selection.spec.ts` **46/46** across Chromium, Firefox and WebKit, including the new scenario (lasso a parent's own row → Backspace keeps its child at top level; handle menu → Delete on another parent keeps its child) and the unchanged "Backspace deletes a selected section with children".
+ `backspace.spec.ts` **12/12** across the three browsers (empty indented line deleted with the next line keeping its indent, typing continues at the end of the line above, one undo restores it; indented line merged into the line above with siblings unchanged and the cursor at the join; a merged line's nested lines stay nested; plain top-level and list Backspace unchanged). `checklist-bulk.spec.ts` now expects "4 selected" because "Select section" includes the nested task.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **243/243**; Playwright **265/265**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-18T22:40:00+09:00 — 0.39.0 notifications and meeting links
 
 Focused: `tests/integration/notifications.test.ts` **3/3** (newest-first list, unread count, mark read, persistence across a restart, invalid kind/title/pageId rejected; a finished summary records `summary.done` pointing at the summary page; 500-event cap) with `summaries.test.ts` 8/8. E2E `notifications.spec.ts` **3/3** across Chromium, Firefox and WebKit ("/Meeting logs" → New meeting → page-mention link stored as the page's last non-empty block; bell "1 unread" → a summary → "2 unread"; panel lists "Summary written" above "New meeting" under 오늘; opening clears the count; clicking the meeting opens it and closes the panel). Visual check of the panel from a screenshot.
