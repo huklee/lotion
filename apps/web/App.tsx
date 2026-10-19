@@ -34,8 +34,9 @@ import type { SearchResult } from "../../packages/search/index";
 const sessionId = readSetting(sessionStorage, "session") ?? crypto.randomUUID();
 sessionStorage.setItem("lotion-session", sessionId);
 const draftKey = (id: string) => `lotion-draft:${sessionId}:${id}`;
+/** Favorites kept by an older version in this browser; uploaded to the server once. */
 const favoritesKey = "lotion-favorites";
-function readFavorites(): string[] {
+function readLocalFavorites(): string[] {
   try {
     const value: unknown = JSON.parse(
       localStorage.getItem(favoritesKey) ?? "[]",
@@ -63,15 +64,51 @@ export default function App() {
     formattingShortcuts,
     setFormattingShortcuts,
   } = useWorkspacePreferences();
-  const [favorites, setFavorites] = useState(readFavorites);
-  useEffect(() => {
-    const sync = (event: StorageEvent) => {
-      if (event.key === favoritesKey || event.key === null)
-        setFavorites(readFavorites());
-    };
-    window.addEventListener("storage", sync);
-    return () => window.removeEventListener("storage", sync);
+  // The left panel can be minimized to an icon rail (remembered in this browser).
+  const [sidebarMini, setSidebarMini] = useState(() => {
+    try {
+      return localStorage.getItem("lotion-sidebar-mini") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleSidebarMini = () =>
+    setSidebarMini((mini) => {
+      try {
+        localStorage.setItem("lotion-sidebar-mini", mini ? "0" : "1");
+      } catch {
+        /* per-browser convenience */
+      }
+      return !mini;
+    });
+  // Favorites are shared by every browser and device (stored on the server).
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const loadFavorites = useCallback(async () => {
+    const local = readLocalFavorites();
+    if (local.length) {
+      // first run after the move to the server: keep this browser's favorites
+      for (const id of local)
+        await api(`/api/favorites/${encodeURIComponent(id)}`, {
+          method: "PUT",
+        }).catch(() => undefined);
+      try {
+        localStorage.removeItem(favoritesKey);
+      } catch {
+        /* nothing to clean up */
+      }
+    }
+    const { ids } = await api<{ ids: string[] }>("/api/favorites");
+    setFavorites(ids);
   }, []);
+  useEffect(() => {
+    const reload = () => {
+      if (document.visibilityState === "visible")
+        void loadFavorites().catch(() => undefined);
+    };
+    reload();
+    document.addEventListener("visibilitychange", reload);
+    return () => document.removeEventListener("visibilitychange", reload);
+  }, [loadFavorites]);
   const [tree, setTree] = useState<TreeNode[]>([]),
     [treeTag, setTreeTag] = useState(""),
     [active, setActive] = useState<Document | null>(null),
@@ -580,22 +617,28 @@ export default function App() {
     }
   }
   function toggleFavorite(id: string) {
-    const current = readFavorites();
-    const next = current.includes(id)
-      ? current.filter((item) => item !== id)
-      : [...current, id];
-    try {
-      localStorage.setItem(favoritesKey, JSON.stringify(next));
-      setFavorites(next);
-    } catch {
-      handleError(new Error("Could not save favorites in this browser."));
-    }
+    const adding = !favorites.includes(id);
+    const before = favorites;
+    // show it right away; the server's answer is the truth
+    setFavorites(
+      adding ? [...favorites, id] : favorites.filter((f) => f !== id),
+    );
+    void api<{ ids: string[] }>(`/api/favorites/${encodeURIComponent(id)}`, {
+      method: adding ? "PUT" : "DELETE",
+    })
+      .then(({ ids }) => setFavorites(ids))
+      .catch((error) => {
+        setFavorites(before);
+        handleError(error);
+      });
   }
   const status = coordinator?.status ?? "Saved";
   void version;
   void treeTag;
   return (
-    <div className={`app ${sidebar ? "" : "sidebar-hidden"}`}>
+    <div
+      className={`app ${sidebar ? "" : "sidebar-hidden"}${sidebarMini ? " sidebar-mini" : ""}`}
+    >
       <WorkspaceSidebar
         activeId={active?.id}
         trash={trash}
@@ -616,6 +659,8 @@ export default function App() {
         duplicate={duplicate}
         mutate={mutate}
         toggleFavorite={toggleFavorite}
+        mini={sidebarMini}
+        onToggleMini={toggleSidebarMini}
         setSearch={(open) => {
           if (open)
             searchReturnFocus.current =

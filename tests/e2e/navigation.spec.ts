@@ -2,9 +2,10 @@ import { test, expect, type Page } from "./fixtures";
 import { randomUUID } from "node:crypto";
 import { seed } from "./helpers";
 
-test("favorites persist, follow titles and sync removal across tabs", async ({
+test("favorites are shared by every browser: persist, follow titles, add and remove anywhere", async ({
   page,
-  context,
+  browser,
+  baseURL,
 }) => {
   const doc = await seed(page, "Favorite page");
   await page
@@ -26,17 +27,50 @@ test("favorites persist, follow titles and sync removal across tabs", async ({
   await expect(
     favorites.getByRole("link", { name: "Renamed favorite", exact: true }),
   ).toBeVisible();
-  const other = await context.newPage();
+  // another browser (separate storage, like another device) sees the same favorites
+  const device = await browser.newContext({ baseURL });
+  const other = await device.newPage();
   await other.goto(`/#/page/${doc.id}`);
+  await expect(
+    other
+      .getByRole("navigation", { name: "Favorites" })
+      .getByRole("link", { name: "Renamed favorite", exact: true }),
+  ).toBeVisible();
   await other
     .getByRole("button", { name: "Remove from favorites", exact: true })
     .click();
-  await expect(favorites).toHaveCount(0);
+  await expect(
+    other.getByRole("navigation", { name: "Favorites" }),
+  ).toHaveCount(0);
+  // the first browser picks it up when it reloads or comes back to the tab
   await page.reload();
+  await expect(favorites).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Add to favorites", exact: true }),
   ).toBeVisible();
-  await other.close();
+  await device.close();
+});
+
+test("favorites kept by an older version in this browser are moved to the server once", async ({
+  page,
+}) => {
+  const doc = await seed(page, "Old local favorite");
+  await page.evaluate(
+    (id) => localStorage.setItem("lotion-favorites", JSON.stringify([id])),
+    doc.id,
+  );
+  await page.reload();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Favorites" })
+      .getByRole("link", { name: "Old local favorite", exact: true }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => localStorage.getItem("lotion-favorites")),
+  ).toBeNull();
+  const { ids } = await (await page.request.get("/api/favorites")).json();
+  expect(ids).toContain(doc.id);
+  await page.request.delete(`/api/favorites/${doc.id}`);
 });
 
 test("page and Home navigation build history without duplicate entries and preserve drafts", async ({
@@ -358,3 +392,38 @@ async function revealSidebarPage(page: Page, id: string) {
   while (!(await link.count()) && (await more.isVisible())) await more.click();
   await expect(link).toBeVisible();
 }
+
+test("the left panel collapses to an icon rail and expands again; the choice is remembered", async ({
+  page,
+}) => {
+  await seed(page, "Rail page");
+  const tree = page.getByRole("navigation", { name: "Pages" });
+  await expect(tree).toBeVisible();
+  await page.getByRole("button", { name: "Collapse sidebar" }).click();
+  await expect(tree).toBeHidden();
+  const width = await page
+    .locator(".sidebar")
+    .evaluate((el) => el.getBoundingClientRect().width);
+  expect(width).toBeLessThan(80);
+  // icons still work and keep their names
+  await page
+    .getByRole("button", { name: "Control panel", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Control panel" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("button", { name: "New page", exact: true }).first(),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Expand sidebar" }),
+  ).toBeVisible();
+  await expect(tree).toBeHidden();
+  await page.getByRole("button", { name: "Expand sidebar" }).click();
+  await expect(tree).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Collapse sidebar" }),
+  ).toHaveAttribute("aria-expanded", "true");
+});
