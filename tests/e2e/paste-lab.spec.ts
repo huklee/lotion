@@ -111,9 +111,25 @@ for (const engine of ENGINES)
         .first();
       const box = (await target.boundingBox())!;
       // click at the end (or start) of the line, then step right for an offset
-      if (cursor.at === "end")
+      if (cursor.at === "end") {
         await page.mouse.click(box.x + box.width - 2, box.y + box.height / 2);
-      else await page.mouse.click(box.x + 1, box.y + box.height / 2);
+        // a click can land at the line start in some engines: move to the end and
+        // check the caret got there before pasting
+        await expect
+          .poll(async () => {
+            await page.keyboard.press(
+              process.platform === "darwin" ? "Meta+ArrowRight" : "End",
+            );
+            return page.evaluate(() => {
+              const s = getSelection();
+              return (
+                !!s &&
+                s.anchorOffset === (s.anchorNode?.textContent ?? "").length
+              );
+            });
+          })
+          .toBe(true);
+      } else await page.mouse.click(box.x + 1, box.y + box.height / 2);
       if (typeof cursor.at === "number") {
         await page.waitForTimeout(100);
         for (let i = 0; i < cursor.at; i++)
