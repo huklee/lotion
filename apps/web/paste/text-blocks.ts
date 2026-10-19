@@ -30,6 +30,10 @@ function textInline(text: string): Inline[] {
   return text ? [{ type: "text", text, styles: {} }] : [];
 }
 
+export function hasInlineMarkdown(text: string): boolean {
+  return INLINE_MD.test(text);
+}
+
 /** Inline content for one line: Markdown inline syntax when present. */
 export function lineInline(text: string): Inline[] {
   if (!INLINE_MD.test(text)) return textInline(text);

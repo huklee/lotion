@@ -252,7 +252,7 @@ export function SettingsPanel({
         <span>
           Paste engine
           <small>
-            New (preview): keeps formatting from Notion, Google Docs, Word,
+            New (default): keeps formatting from Notion, Google Docs, Word,
             Slack, web pages and AI chats, and turns indented text into nested
             lines. Classic: the previous behaviour.
           </small>
@@ -264,7 +264,7 @@ export function SettingsPanel({
             setPasteEngine(event.target.value as PasteEngine)
           }
         >
-          <option value="v2">New (preview)</option>
+          <option value="v2">New (default)</option>
           <option value="classic">Classic</option>
         </select>
       </label>
