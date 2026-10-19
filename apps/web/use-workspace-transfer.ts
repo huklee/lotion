@@ -1,3 +1,4 @@
+import { markdownToConfluence } from "../../packages/confluence/convert";
 import { useState } from "react";
 import { api, authHeaders } from "./api";
 import { toMarkdown } from "../../packages/markdown/convert";
@@ -29,6 +30,57 @@ export function useWorkspaceTransfer({
   setNotice,
 }: WorkspaceTransferOptions) {
   const [busy, setBusy] = useState(false);
+  /** The open page (current draft included) as Markdown, with its title as H1. */
+  function pageMarkdown(): { markdown: string; warnings: string[] } | null {
+    const content = getCurrentContent();
+    if (!content) return null;
+    return toMarkdown([
+      {
+        id: "title",
+        type: "heading",
+        props: { level: 1 },
+        content: [
+          { type: "text", text: content.title || "Untitled", styles: {} },
+        ],
+      },
+      ...content.blocks,
+    ]);
+  }
+
+  /** The open page converted for Confluence (static converter, no AI). */
+  function pageConfluence() {
+    const output = pageMarkdown();
+    return output ? markdownToConfluence(output.markdown) : null;
+  }
+
+  /**
+   * Copy for Confluence: rich HTML (pastes formatted into the Confluence editor)
+   * plus the storage format as plain text. `storageOnly` copies just the XHTML.
+   */
+  async function copyPageConfluence(storageOnly = false) {
+    const converted = pageConfluence();
+    if (!converted) return;
+    try {
+      if (!storageOnly && typeof ClipboardItem !== "undefined") {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([converted.html], { type: "text/html" }),
+            "text/plain": new Blob([converted.storage], { type: "text/plain" }),
+          }),
+        ]);
+        setNotice(
+          "Copied this page for Confluence. Paste it into a Confluence page.",
+        );
+      } else {
+        await navigator.clipboard.writeText(converted.storage);
+        setNotice("Copied this page as Confluence storage format (XHTML).");
+      }
+      onComplete();
+    } catch (e) {
+      handleError(e);
+    }
+  }
+
   async function copyPageMarkdown() {
     const content = getCurrentContent();
     if (!content) return;
@@ -145,5 +197,13 @@ export function useWorkspaceTransfer({
     }
   }
 
-  return { busy, copyPageMarkdown, exportWorkspace, importFiles, dropFolder };
+  return {
+    busy,
+    copyPageMarkdown,
+    copyPageConfluence,
+    pageConfluence,
+    exportWorkspace,
+    importFiles,
+    dropFolder,
+  };
 }

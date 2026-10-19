@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-19T12:10:00+09:00 — 0.43.0 Confluence export
+
+Focused: `tests/unit/confluence.test.ts` **5/5** (exact storage output for headings, inline formatting, escaping and links; nested lists and task lists including a mixed list split into runs; code macro with typescript alias, CDATA split, Mermaid title and unknown language → none; table header/alignment/empty cell; TOC macro, quote, rule, image, unsafe link). E2E `confluence.spec.ts` across browsers: Export → Preview as Confluence shows title, heading, bold, nested list, checked task and code in a sandboxed frame and the storage tab shows the task list and code macro (3/3); Copy page for Confluence puts the HTML and the storage format on the clipboard (Chromium, where clipboard reading can be granted; skipped in Firefox/WebKit).
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **257/257**; Playwright **305 passed, 17 skipped**, 2 failed only because the test's "Back" button selector also matched other tests' "Backspace …" pages in the shared workspace (now exact; passes). Remote CI results are recorded on the pull request.
+
 ## 2026-10-19T10:40:00+09:00 — 0.42.0 server favorites and collapsible sidebar
 
 Focused: `tests/integration/favorites.test.ts` **2/2** (ordered add without duplicates, remove, persisted across a new store, bad id rejected; three concurrent adds all kept). `navigation.spec.ts` favorites and rail scenarios **9/9** across Chromium, Firefox and WebKit (favorite added in one browser appears in a second, separate browser context; removal there disappears in the first after reload; titles followed; a browser's old local favorites moved to the server once; Collapse → rail under 80 px with the page tree hidden, Control panel and New page usable from icons, remembered after reload, Expand restores).

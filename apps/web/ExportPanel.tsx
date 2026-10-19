@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { ArrowDownToLine } from "lucide-react";
+import type { ConfluenceOutput } from "../../packages/confluence/convert";
+import { ConfluencePreview } from "./ConfluencePreview";
 
 type ExportPanelProps = {
   busy: boolean;
@@ -6,6 +9,8 @@ type ExportPanelProps = {
   pageCount: number;
   title: string;
   copyPageMarkdown: () => Promise<void>;
+  copyPageConfluence: (storageOnly?: boolean) => Promise<void>;
+  pageConfluence: () => ConfluenceOutput | null;
   exportWorkspace: (rootId?: string, portable?: boolean) => Promise<void>;
 };
 
@@ -15,8 +20,19 @@ export function ExportPanel({
   pageCount,
   title,
   copyPageMarkdown,
+  copyPageConfluence,
+  pageConfluence,
   exportWorkspace,
 }: ExportPanelProps) {
+  const [preview, setPreview] = useState<ConfluenceOutput | null>(null);
+  if (preview)
+    return (
+      <ConfluencePreview
+        converted={preview}
+        copy={(storageOnly) => void copyPageConfluence(storageOnly)}
+        back={() => setPreview(null)}
+      />
+    );
   return (
     <>
       <div className="modal-symbol">
@@ -32,6 +48,18 @@ export function ExportPanel({
           <button disabled={busy} onClick={() => void copyPageMarkdown()}>
             Copy page as Markdown
             <span>Title and complete page content</span>
+          </button>
+        )}
+        {activeId && (
+          <button disabled={busy} onClick={() => void copyPageConfluence()}>
+            Copy page for Confluence
+            <span>Paste into a Confluence page; formatting kept</span>
+          </button>
+        )}
+        {activeId && (
+          <button disabled={busy} onClick={() => setPreview(pageConfluence())}>
+            Preview as Confluence
+            <span>See the page and its Confluence storage format</span>
           </button>
         )}
         <button disabled={busy} onClick={() => void exportWorkspace()}>
