@@ -4,7 +4,7 @@
 
 Running every existing paste test with the new engine as default first failed 13 (across browsers): the Classic-only "plain text without formatting" rule (replaced by a text+HTML safety test), multi-line paste into the middle of a checklist line (4 items instead of Notion's 2), a single line losing its spaces, and Lotion block copies splitting the target line — all fixed; the paste lab's golden outlines for "middle" and "into-list" were refreshed to the Notion-style merge. `mobile.spec.ts` **6/6** across Chromium, Firefox and WebKit at 390×844 (starts on the page at full width; Pages shows the tree full width with the page hidden; choosing a page — including the already-open one — switches back; ☰ opens the tree) and at 1280×800 (side by side, no tab bar); screenshots of both phone views reviewed.
 
-Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest all passed; Playwright **313 passed, 17 skipped** (Firefox paste lab). Remote CI results are recorded on the pull request.
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **257/257**; Playwright **313 passed, 17 skipped** (Firefox paste lab). Remote CI results are recorded on the pull request.
 
 ## 2026-10-19T12:10:00+09:00 — 0.43.0 Confluence export
 
