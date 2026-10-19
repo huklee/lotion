@@ -3283,3 +3283,57 @@ kbd {
     width: 60px;
   }
 }
+
+/* Confluence preview (Export) */
+.modal:has(.confluence-preview) {
+  width: min(960px, calc(100vw - 32px));
+  max-width: none;
+}
+.confluence-preview {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+}
+.confluence-preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.confluence-preview-bar [role="tab"] {
+  border: 0;
+  background: none;
+  padding: 6px 10px;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+.confluence-preview-bar [role="tab"][aria-selected="true"] {
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--text);
+}
+.confluence-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.confluence-preview-frame {
+  width: 100%;
+  height: min(62vh, 640px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+.confluence-preview-source {
+  height: min(62vh, 640px);
+  margin: 0;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--hover);
+  font: 12px/1.6 ui-monospace, Menlo, monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

@@ -1,3 +1,4 @@
+import type { ConfluenceOutput } from "../../packages/confluence/convert";
 import type { Dispatch, DragEvent, SetStateAction } from "react";
 import { LockKeyhole, X } from "lucide-react";
 import type { Content, TreeNode } from "../../packages/document-schema/index";
@@ -40,6 +41,8 @@ type WorkspaceDialogProps = {
   title: string;
   copyPageMarkdown: () => Promise<void>;
   exportWorkspace: (rootId?: string, portable?: boolean) => Promise<void>;
+  copyPageConfluence: (storageOnly?: boolean) => Promise<void>;
+  pageConfluence: () => ConfluenceOutput | null;
   movePage: (parentId: string | null) => void;
   themeMode: ThemeMode;
   setThemeMode: Dispatch<SetStateAction<ThemeMode>>;
@@ -126,6 +129,8 @@ export function WorkspaceDialog(props: WorkspaceDialogProps) {
             pageCount={props.visible.length}
             title={props.title}
             copyPageMarkdown={props.copyPageMarkdown}
+            copyPageConfluence={props.copyPageConfluence}
+            pageConfluence={props.pageConfluence}
             exportWorkspace={props.exportWorkspace}
           />
         ) : dialog === "move" ? (

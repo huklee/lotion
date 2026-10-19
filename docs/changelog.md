@@ -2,6 +2,16 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.43.0 — 2026-10-19 · [#62](https://github.com/huklee/lotion/pull/62)
+
+### Added
+
+- **Markdown → Confluence converter** (fixed rules, no AI). It produces Confluence's storage format — headings, bold/italic/strike/inline code, safe links, nested and numbered lists, task lists (`ac:task-list`), code blocks (code macro with a supported language, Mermaid titled), tables with header row and alignment, quotes, rules, images (`ac:image`) and Lotion's table of contents (`toc` macro) — plus matching HTML for pasting and previewing. Raw HTML in the page is shown as text, never passed through.
+- **Export → Copy page for Confluence:** puts formatted HTML on the clipboard (paste into a Confluence page and the formatting stays) together with the storage format as plain text. **Copy storage format** copies just the XHTML (for the API or a source editor).
+- **Export → Preview as Confluence:** the converted page shown with Confluence-like styling (in a sandboxed frame that cannot run scripts), and a Storage format tab with the exact XHTML.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.42.0 — 2026-10-19 · [#61](https://github.com/huklee/lotion/pull/61)
 
 ### Changed

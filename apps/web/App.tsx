@@ -572,39 +572,44 @@ export default function App() {
       return false;
     }
   }
-  const { busy, copyPageMarkdown, exportWorkspace, importFiles, dropFolder } =
-    useWorkspaceTransfer({
-      importMode,
-      getCurrentContent: () =>
-        active
-          ? (coordinators.current.get(active.id)?.content ?? active)
-          : undefined,
-      flushSaves: async () => {
-        await Promise.all(
-          [...coordinators.current.values()].map((c) => c.flush()),
-        );
-        if (
-          [...coordinators.current.values()].some((c) => c.status !== "Saved")
-        )
-          throw new Error("Resolve pending saves before exporting.");
-      },
-      onImported: async (result) => {
-        await refresh();
-        // Newly imported roots must remain visible beyond the incremental tree limit.
-        setTreeLimit(Number.MAX_SAFE_INTEGER);
-        setNotice(
-          result.warnings.length
-            ? `Imported ${result.documents.length} pages. ${result.warnings.join(" · ")}`
-            : `Imported ${result.documents.length} pages with their folder structure.`,
-        );
-        setDialog(null);
-        if (result.documents[0]) await openPage(result.documents[0].id);
-      },
-      onComplete: () => setDialog(null),
-      handleError,
-      setError,
-      setNotice,
-    });
+  const {
+    busy,
+    copyPageMarkdown,
+    copyPageConfluence,
+    pageConfluence,
+    exportWorkspace,
+    importFiles,
+    dropFolder,
+  } = useWorkspaceTransfer({
+    importMode,
+    getCurrentContent: () =>
+      active
+        ? (coordinators.current.get(active.id)?.content ?? active)
+        : undefined,
+    flushSaves: async () => {
+      await Promise.all(
+        [...coordinators.current.values()].map((c) => c.flush()),
+      );
+      if ([...coordinators.current.values()].some((c) => c.status !== "Saved"))
+        throw new Error("Resolve pending saves before exporting.");
+    },
+    onImported: async (result) => {
+      await refresh();
+      // Newly imported roots must remain visible beyond the incremental tree limit.
+      setTreeLimit(Number.MAX_SAFE_INTEGER);
+      setNotice(
+        result.warnings.length
+          ? `Imported ${result.documents.length} pages. ${result.warnings.join(" · ")}`
+          : `Imported ${result.documents.length} pages with their folder structure.`,
+      );
+      setDialog(null);
+      if (result.documents[0]) await openPage(result.documents[0].id);
+    },
+    onComplete: () => setDialog(null),
+    handleError,
+    setError,
+    setNotice,
+  });
   async function copyBlockLink(blockId: string, pageId = active?.id) {
     if (!pageId) return;
     try {
@@ -934,6 +939,8 @@ export default function App() {
         }}
         title={title}
         copyPageMarkdown={copyPageMarkdown}
+        copyPageConfluence={copyPageConfluence}
+        pageConfluence={pageConfluence}
         exportWorkspace={exportWorkspace}
         movePage={(parentId) => {
           if (active) void mutate(active.id, "move", { parentId });
