@@ -1,34 +1,55 @@
 import { test, expect } from "./fixtures";
 import { seed } from "./helpers";
 
-test("clipboard lines are saved as plain text without HTML or Markdown formatting", async ({
+test("pasted text and HTML never bring scripts or unsafe links (new paste engine)", async ({
   page,
 }) => {
-  await seed(page, "Plain clipboard");
+  await seed(page, "Safe clipboard");
   await page.locator(".tiptap").click();
-  const text =
-    "# Literal heading\n**literal bold**\n<script>alert(1)</script>\n[link](javascript:alert(1))\nLast line";
-  await page.locator(".tiptap").evaluate((element, text) => {
-    const data = new DataTransfer();
-    data.setData("text/plain", text);
-    data.setData("text/html", "<h1>Unwanted HTML</h1>");
-    const event = new ClipboardEvent("paste", {
-      bubbles: true,
-      cancelable: true,
-    });
-    Object.defineProperty(event, "clipboardData", { value: data });
-    element.dispatchEvent(event);
-  }, text);
-  for (const line of text.split("\n"))
-    await expect(page.locator(".tiptap")).toContainText(line);
+  const paste = (text: string, html?: string) =>
+    page.locator(".tiptap").evaluate(
+      (element, { text, html }) => {
+        const data = new DataTransfer();
+        data.setData("text/plain", text);
+        if (html) data.setData("text/html", html);
+        const event = new ClipboardEvent("paste", {
+          bubbles: true,
+          cancelable: true,
+        });
+        Object.defineProperty(event, "clipboardData", { value: data });
+        element.dispatchEvent(event);
+      },
+      { text, html },
+    );
+  // Markdown text: structure is kept, the javascript: link becomes plain text
+  await paste(
+    "# Pasted heading\n**bold words**\n<script>alert(1)</script>\n[bad link](javascript:alert(1))\nLast line",
+  );
+  await expect(page.locator(".tiptap h1")).toContainText("Pasted heading");
+  await expect(page.locator(".tiptap strong")).toContainText("bold words");
+  await expect(page.locator(".tiptap")).toContainText(
+    "<script>alert(1)</script>",
+  );
+  await expect(page.locator(".tiptap")).toContainText("bad link");
+  await expect(page.locator(".tiptap")).toContainText("Last line");
+  // HTML from a web page: script, event handlers and javascript: links are dropped
+  await paste(
+    "html fallback",
+    '<p>Web <a href="javascript:alert(2)">trap</a> and <a href="https://example.com/ok">safe</a></p><script>alert(3)</script><img src="x" onerror="alert(4)">',
+  );
+  await expect(page.locator(".tiptap")).toContainText("Web trap and safe");
+  await expect(page.locator(".tiptap script, .tiptap [onerror]")).toHaveCount(
+    0,
+  );
+  await expect(page.locator('.tiptap a[href^="javascript"]')).toHaveCount(0);
   await expect(
-    page.locator(".tiptap h1, .tiptap strong, .tiptap a, .tiptap script"),
-  ).toHaveCount(0);
+    page.locator('.tiptap a[href="https://example.com/ok"]'),
+  ).toHaveCount(1);
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
-  for (const line of text.split("\n"))
-    await expect(page.locator(".tiptap")).toContainText(line);
+  await expect(page.locator(".tiptap")).toContainText("Last line");
+  await expect(page.locator('.tiptap a[href^="javascript"]')).toHaveCount(0);
 });
 
 test("structured raw text reconstructs heading, bullet, and checklist blocks", async ({

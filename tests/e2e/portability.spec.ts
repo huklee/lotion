@@ -125,12 +125,17 @@ test("nested quotes, code and tables render after Markdown import", async ({
       "# Rich content\n\n> A quotation\n>\n> - Nested item\n\n```js\nconst saved = true;\n```\n\n| A | B |\n| - | - |\n| English | 🙂 |\n",
     ),
   });
-  await expect(page.locator(".tiptap")).toContainText("Nested item");
-  await expect(page.locator(".tiptap table")).toBeVisible();
-  await page.locator(".tiptap").click();
+  // wait for the imported page (the first page opened at "/" may be any test's page)
+  await expect(page.getByRole("textbox", { name: "Page title" })).toHaveValue(
+    /Rich/,
+  );
+  const editor = page.locator(".document .tiptap").first();
+  await expect(editor).toContainText("Nested item");
+  await expect(editor.locator("table")).toBeVisible();
+  await editor.click();
   await page.keyboard.press("ControlOrMeta+s");
   await expect(page.locator(".save-status")).toHaveText("Saved");
   await page.reload();
-  await expect(page.locator(".tiptap table")).toBeVisible();
+  await expect(editor.locator("table")).toBeVisible();
   expect(errors).toEqual([]);
 });

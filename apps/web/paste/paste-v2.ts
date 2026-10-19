@@ -3,7 +3,7 @@ import type { Block } from "../../../packages/document-schema/index";
 import { contentSchema } from "../../../packages/document-schema/index";
 import { selectedBlocksFromClipboard } from "../selected-block-clipboard";
 import { cleanClipboardHtml, isSemanticHtml } from "./html-clean";
-import { textToBlocks } from "./text-blocks";
+import { hasInlineMarkdown, textToBlocks } from "./text-blocks";
 
 /**
  * Paste engine v2: choose the richest clipboard flavour, turn it into blocks, and
@@ -81,7 +81,9 @@ function supportedCode(blocks: any[]): any[] {
       ? {
           props: {
             ...b.props,
-            language: LANGUAGES[String(b.props?.language ?? "").toLowerCase()] ?? "text",
+            language:
+              LANGUAGES[String(b.props?.language ?? "").toLowerCase()] ??
+              "text",
           },
         }
       : {}),
@@ -94,6 +96,27 @@ function lastDeep(block: any): any {
   while (current.children?.length)
     current = current.children[current.children.length - 1];
   return current;
+}
+
+const SAFE_HREF = /^(https?:|mailto:|#\/page\/)/i;
+
+/** Links with other protocols (javascript:, data:, file:…) become plain text. */
+export function safeLinks(blocks: any[]): any[] {
+  const inline = (content: any): any =>
+    Array.isArray(content)
+      ? content.flatMap((item: any) =>
+          item?.type === "link"
+            ? SAFE_HREF.test(String(item.href ?? ""))
+              ? [{ ...item, content: inline(item.content) }]
+              : inline(item.content)
+            : [item],
+        )
+      : content;
+  return blocks.map((b) => ({
+    ...b,
+    content: inline(b.content),
+    children: safeLinks(b.children ?? []),
+  }));
 }
 
 /** Blocks for this clipboard (no editor changes). */
@@ -111,6 +134,21 @@ export function clipboardBlocks(
     if (blocks.length) return { source: "html", blocks };
   }
   if (!data.text) return null;
+  // one plain line goes in exactly as copied (spaces included)
+  const line = data.text.replace(/\r?\n$/, "");
+  if (!/[\r\n]/.test(line) && !hasInlineMarkdown(line))
+    return {
+      source: "text",
+      blocks: [
+        {
+          id: crypto.randomUUID(),
+          type: "paragraph",
+          props: {},
+          content: line ? [{ type: "text", text: line, styles: {} }] : [],
+          children: [],
+        },
+      ],
+    };
   return { source: "text", blocks: tidyBlocks(textToBlocks(data.text)) };
 }
 
@@ -121,7 +159,7 @@ export function pasteV2(
 ): PasteResult {
   const result = clipboardBlocks(editor, data);
   if (!result || !result.blocks.length) return null;
-  let blocks = supportedCode(result.blocks);
+  let blocks = safeLinks(supportedCode(result.blocks));
   const tiptap = editor._tiptapEditor;
   const current = editor.getTextCursorPosition().block;
 
@@ -172,29 +210,56 @@ export function pasteV2(
   }
 
   if (!tiptap.state.selection.empty) tiptap.commands.deleteSelection();
-  let anchor = editor.getTextCursorPosition().block;
+  const insertInline = (block: any) => {
+    const node = blockToNode(block, tiptap.schema, editor.schema.styleSchema);
+    const inline = node.firstChild?.content.toJSON() ?? [];
+    if (inline.length)
+      tiptap.commands.insertContentAt(
+        { from: tiptap.state.selection.from, to: tiptap.state.selection.to },
+        inline,
+        { applyPasteRules: false, applyInputRules: false },
+      );
+  };
+  const anchor = editor.getTextCursorPosition().block;
   const { $from } = tiptap.state.selection;
   const offset = $from.parentOffset;
   const length = $from.parent.content.size;
-  let where: "replace" | "before" | "after" = "after";
+  const mergeable = (b: any) =>
+    !(b.children ?? []).length &&
+    Array.isArray(b.content) &&
+    (b.type === "paragraph" || b.type === anchor.type);
+
   if (
     isEmptyInline(anchor) &&
     anchor.type === "paragraph" &&
     !(anchor.children ?? []).length
-  )
-    where = "replace";
-  else if (offset === 0 && length > 0) where = "before";
-  else if (offset < length) {
-    // split the line (BlockNote's own Enter): the text after the cursor ends up
-    // after the pasted blocks
+  ) {
+    editor.transact(() => editor.replaceBlocks([anchor], blocks));
+  } else if (result.source === "lotion") {
+    // whole blocks copied in Lotion go after the current line, which stays intact
+    editor.transact(() => editor.insertBlocks(blocks, anchor, "after"));
+  } else if (offset > 0 && mergeable(blocks[0])) {
+    // Notion-style: the first line joins the text before the cursor, the last
+    // line joins the text after it, the lines in between become blocks
+    insertInline(blocks[0]);
+    let rest = blocks.slice(1);
     tiptap.commands.keyboardShortcut("Enter");
-    anchor =
-      editor.getPrevBlock(editor.getTextCursorPosition().block) ?? anchor;
+    const tail = editor.getTextCursorPosition().block;
+    const last = rest[rest.length - 1];
+    const mergeLast = mergeable(last);
+    if (mergeLast) rest = rest.slice(0, -1);
+    if (rest.length)
+      editor.transact(() => editor.insertBlocks(rest, tail, "before"));
+    if (mergeLast) {
+      editor.setTextCursorPosition(tail.id, "start");
+      insertInline(last);
+      return { source: result.source, blocks: blocks.length };
+    }
+  } else if (offset === 0 && length > 0) {
+    editor.transact(() => editor.insertBlocks(blocks, anchor, "before"));
+  } else {
+    editor.transact(() => editor.insertBlocks(blocks, anchor, "after"));
   }
-  editor.transact(() => {
-    if (where === "replace") editor.replaceBlocks([anchor], blocks);
-    else editor.insertBlocks(blocks, anchor, where);
-  });
   try {
     const target = lastDeep(blocks[blocks.length - 1]);
     if (editor.getBlock(target.id))

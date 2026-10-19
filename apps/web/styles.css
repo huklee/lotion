@@ -3337,3 +3337,69 @@ kbd {
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* Phones: the page tree or the page, full screen, one at a time */
+.mobile-view-switch {
+  display: none;
+}
+@media (max-width: 650px) {
+  .app.mobile {
+    grid-template-columns: 1fr;
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    height: 100dvh;
+    box-sizing: border-box;
+  }
+  .app.mobile .sidebar,
+  .app.mobile:not(.sidebar-hidden) .sidebar {
+    position: static;
+    width: auto;
+    box-shadow: none;
+    min-height: 0;
+    overflow: auto;
+  }
+  .app.mobile-tree .sidebar {
+    display: flex;
+  }
+  .app.mobile-tree main {
+    display: none;
+  }
+  .app.mobile-page .sidebar,
+  .app.mobile-page:not(.sidebar-hidden) .sidebar {
+    display: none;
+  }
+  .app.mobile-page main {
+    display: flex;
+  }
+  .mobile-view-switch {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+  .mobile-view-switch button {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    height: 56px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .mobile-view-switch button[aria-pressed="true"] {
+    color: var(--text);
+    font-weight: 600;
+  }
+  /* the minimize button is a desktop control */
+  .app.mobile .sidebar-mini-toggle {
+    display: none;
+  }
+}

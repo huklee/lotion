@@ -76,15 +76,13 @@
   "paragraph 앞 문장 자세한 내용은 **위키**의 [설계 문서](https://example.com/wiki)| 뒤 문장"
  ],
  "middle": [
-  "paragraph 앞부분",
-  "paragraph 첫째 줄",
+  "paragraph 앞부분첫째 줄",
   "paragraph 둘째 줄",
   "  paragraph 들여쓴 줄",
   "paragraph |뒷부분"
  ],
  "into-list": [
-  "bulletListItem 장보기",
-  "bulletListItem 우유",
+  "bulletListItem 장보기우유",
   "bulletListItem 계란",
   "bulletListItem 빵"
  ]

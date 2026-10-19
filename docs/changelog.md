@@ -2,6 +2,23 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.44.0 — 2026-10-19 · [#63](https://github.com/huklee/lotion/pull/63)
+
+### Changed
+
+- **The new paste engine is now the default** (approved after the comparison). Classic can still be chosen in Control panel → Paste.
+- Paste refinements found by the existing paste tests:
+  - several lines pasted in the middle or at the end of a line follow Notion: the first line joins the text before the cursor, the last line joins the text after it, the lines in between become blocks (in a checklist: "Task first line", "second linetail");
+  - a single plain line is inserted exactly as copied, spaces included;
+  - blocks copied with Lotion's block selection are pasted after the current line, which stays intact;
+  - links in pasted text or Markdown may only use http, https, mailto or Lotion page links — others (javascript:, data:, …) become plain text.
+
+### Added
+
+- **Phones show the page tree or the page, one at a time.** A tab bar at the bottom switches between **Pages** (the tree, full screen) and **Page**; choosing a page, Home, Trash or Recent changes in the tree opens it in the page view, and ☰ in the top bar opens the tree. Desktop is unchanged.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.43.0 — 2026-10-19 · [#62](https://github.com/huklee/lotion/pull/62)
 
 ### Added

@@ -1,4 +1,6 @@
 import { useWorkspacePreferences } from "./use-workspace-preferences";
+import { useMediaQuery } from "./use-media-query";
+import { MobileViewSwitch } from "./MobileViewSwitch";
 import { WorkspaceHome } from "./WorkspaceHome";
 import { WorkspaceDialog } from "./WorkspaceDialog";
 import { ActiveDocument } from "./ActiveDocument";
@@ -64,6 +66,9 @@ export default function App() {
     formattingShortcuts,
     setFormattingShortcuts,
   } = useWorkspacePreferences();
+  // Phones show either the page tree or the page, full screen, never both.
+  const isMobile = useMediaQuery("(max-width: 650px)");
+  const [mobileView, setMobileView] = useState<"page" | "tree">("page");
   // The left panel can be minimized to an icon rail (remembered in this browser).
   const [sidebarMini, setSidebarMini] = useState(() => {
     try {
@@ -139,6 +144,10 @@ export default function App() {
     searchReturnFocus = useRef<HTMLElement | null>(null),
     newId = useRef<string | null>(null);
   const coordinator = active ? coordinators.current.get(active.id) : undefined;
+  // on a phone, opening a page (or Home, Trash, Recent changes) shows the page view
+  useEffect(() => {
+    setMobileView("page");
+  }, [active?.id, trash, changes]);
   const visible = useMemo(() => tree.filter((d) => !d.hidden), [tree]);
   const breadcrumbPages = useMemo(() => {
     if (!active) return [];
@@ -642,7 +651,7 @@ export default function App() {
   void treeTag;
   return (
     <div
-      className={`app ${sidebar ? "" : "sidebar-hidden"}${sidebarMini ? " sidebar-mini" : ""}`}
+      className={`app ${sidebar ? "" : "sidebar-hidden"}${sidebarMini && !isMobile ? " sidebar-mini" : ""}${isMobile ? ` mobile mobile-${mobileView}` : ""}`}
     >
       <WorkspaceSidebar
         activeId={active?.id}
@@ -659,12 +668,15 @@ export default function App() {
         setThemeMode={setThemeMode}
         deletedCount={tree.filter((n) => n.deletedAt).length}
         draftFor={(id) => coordinators.current.get(id)?.content}
-        openPage={openPage}
+        openPage={(id) => {
+          setMobileView("page");
+          return openPage(id);
+        }}
         create={create}
         duplicate={duplicate}
         mutate={mutate}
         toggleFavorite={toggleFavorite}
-        mini={sidebarMini}
+        mini={sidebarMini && !isMobile}
         onToggleMini={toggleSidebarMini}
         setSearch={(open) => {
           if (open)
@@ -674,6 +686,7 @@ export default function App() {
         }}
         setDialog={setDialog}
         onHome={() => {
+          setMobileView("page");
           ++loadNumber.current;
           setActive(null);
           setTrash(false);
@@ -683,12 +696,14 @@ export default function App() {
           if (location.hash !== "#/home") history.pushState(null, "", "#/home");
         }}
         onTrash={() => {
+          setMobileView("page");
           setTrash(true);
           setChanges(false);
           setSearch(false);
           void refresh().catch(handleError);
         }}
         onChanges={() => {
+          setMobileView("page");
           ++loadNumber.current;
           setActive(null);
           setTrash(false);
@@ -723,8 +738,12 @@ export default function App() {
       >
         <main>
           <WorkspaceTopbar
-            sidebar={sidebar}
-            setSidebar={setSidebar}
+            sidebar={isMobile ? mobileView === "tree" : sidebar}
+            setSidebar={(open) =>
+              isMobile
+                ? setMobileView(open ? "tree" : "page")
+                : setSidebar(open)
+            }
             trash={trash}
             changes={changes}
             breadcrumbPages={breadcrumbPages}
@@ -895,6 +914,9 @@ export default function App() {
             </span>
           </footer>
         </main>
+        {isMobile && (
+          <MobileViewSwitch view={mobileView} onChange={setMobileView} />
+        )}
         <SummaryToasts
           jobs={summaryJobs.jobs}
           dismiss={summaryJobs.dismiss}
