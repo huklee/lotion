@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-10-20T09:30:00+09:00 — 0.44.1 duplicate view switch removed
+
+Owner report: Meeting notes showed two pairs of Table / Feed tabs. The 0.38.0 toolbar layout switch duplicated the view tabs (most visibly in Meeting logs, which starts with a Feed and a Table view); it was removed from `DatabaseViewBar` together with its CSS. Feed views are added through the tab bar's "+" (Add view), as before.
+
 ## 2026-10-19T14:30:00+09:00 — 0.44.0 new paste engine by default; phone page/tree views prepared
 
 Owner decisions: the new paste engine is better — make it the default; on phones show the page view and the tree view separately, never both. `engine-choice.ts` now returns v2 unless Classic was chosen. Running the existing paste suites against v2 exposed real gaps, fixed in `paste-v2.ts`: Notion-style merge for multi-line pastes inside or at the end of a line (first line inline before the cursor, Enter split via BlockNote, middle blocks before the tail, last line inline at the tail's start), verbatim insertion of a single plain line (no trimming), Lotion block-selection copies inserted after the current line without splitting, and `safeLinks` turning non-http(s)/mailto/page links from text or Markdown into plain text (the text path could otherwise create `javascript:` links). The Classic-specific test "clipboard lines are saved as plain text…" was replaced by a safety test for both text and HTML pastes. Phone layout: `useMediaQuery("(max-width: 650px)")`, `mobileView` ("page" | "tree") with the app classes `mobile mobile-page|mobile-tree`, a fixed `MobileViewSwitch` tab bar (safe-area aware), tree actions and opening pages switch to the page view, the top-bar ☰ opens the tree, and the desktop rail toggle is hidden on phones.

@@ -182,43 +182,6 @@ export function DatabaseViewBar({
         </button>
       </div>
       <div className="lotion-database-tools">
-        <span className="ldb-layout" role="group" aria-label="Layout">
-          {(["table", "feed"] as const).map((type) => (
-            <button
-              key={type}
-              type="button"
-              aria-label={`${type === "feed" ? "Feed" : "Table"} layout`}
-              aria-pressed={active.type === type}
-              title={
-                type === "feed"
-                  ? "Feed: read each row's page one after another"
-                  : "Table: rows and properties in a grid"
-              }
-              onClick={() => {
-                if (active.type === type) return;
-                const date = columns.find((c) => c.type === "date");
-                patch({
-                  type,
-                  // a feed reads newest first when there is a date to sort by
-                  ...(type === "feed" && !active.sort.length && date
-                    ? {
-                        sort: [
-                          { columnId: date.id, direction: "desc" as const },
-                        ],
-                      }
-                    : {}),
-                });
-              }}
-            >
-              {type === "feed" ? (
-                <Rows3 size={14} aria-hidden />
-              ) : (
-                <Table2 size={14} aria-hidden />
-              )}
-              {type === "feed" ? "Feed" : "Table"}
-            </button>
-          ))}
-        </span>
         {columns.some((c) => c.type === "date") && (
           <select
             className="lotion-database-period"

@@ -1,5 +1,9 @@
 # Test results
 
+## 2026-10-20T09:40:00+09:00 — 0.44.1 duplicate view switch removed
+
+Focused: `database.spec.ts` and `summaries.spec.ts` **27/27** across Chromium, Firefox and WebKit; the plain-database scenario now checks that no layout switch exists and adds a Feed view from "+" (entries shown, no summary button) before returning to the Table tab. Remote CI results are recorded on the pull request.
+
 ## 2026-10-19T14:40:00+09:00 — 0.44.0 new paste engine by default; phone views
 
 Running every existing paste test with the new engine as default first failed 13 (across browsers): the Classic-only "plain text without formatting" rule (replaced by a text+HTML safety test), multi-line paste into the middle of a checklist line (4 items instead of Notion's 2), a single line losing its spaces, and Lotion block copies splitting the target line — all fixed; the paste lab's golden outlines for "middle" and "into-list" were refreshed to the Notion-style merge. `mobile.spec.ts` **6/6** across Chromium, Firefox and WebKit at 390×844 (starts on the page at full width; Pages shows the tree full width with the page hidden; choosing a page — including the already-open one — switches back; ☰ opens the tree) and at 1280×800 (side by side, no tab bar); screenshots of both phone views reviewed.

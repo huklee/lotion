@@ -462,7 +462,7 @@ test("database period presets and bulk delete of selected rows", async ({
     .toEqual([true, true]);
 });
 
-test("Meeting logs block vs basic database, and the Table | Feed layout switch", async ({
+test("Meeting logs block vs basic database, and adding a Feed view", async ({
   page,
 }) => {
   await seedDatabase(page);
@@ -474,16 +474,18 @@ test("Meeting logs block vs basic database, and the Table | Feed layout switch",
   await expect(
     basic.getByRole("button", { name: "New row page" }),
   ).toBeVisible();
-  // switch the current view's layout to Feed and back
-  await basic.getByRole("button", { name: "Feed layout" }).click();
-  await expect(
-    basic.getByRole("button", { name: "Feed layout" }),
-  ).toHaveAttribute("aria-pressed", "true");
+  // a Feed view is added from the "+" next to the view tabs (no second set of tabs)
+  await expect(basic.getByRole("group", { name: "Layout" })).toHaveCount(0);
+  await basic.getByRole("button", { name: "Add view" }).click();
+  await page
+    .getByRole("dialog", { name: "Add view" })
+    .getByRole("button", { name: /Feed/ })
+    .click();
   await expect(basic.locator(".lotion-feed-entry")).toHaveCount(2);
   await expect(
     basic.getByRole("button", { name: "요약", exact: true }),
   ).toHaveCount(0);
-  await basic.getByRole("button", { name: "Table layout" }).click();
+  await basic.getByRole("tab", { name: "Table", exact: true }).click();
   await expect(basic.locator("tbody tr")).toHaveCount(2);
 
   // the basic database can become Meeting logs from its view menu
