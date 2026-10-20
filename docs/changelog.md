@@ -2,6 +2,14 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.44.1 — 2026-10-20
+
+### Fixed
+
+- **One set of view tabs per database.** The toolbar's Table | Feed switch repeated the view tabs (Meeting logs showed Feed / Table twice) and was removed. Add a Feed or Table view with the **+** next to the tabs.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.44.0 — 2026-10-19 · [#63](https://github.com/huklee/lotion/pull/63)
 
 ### Changed
