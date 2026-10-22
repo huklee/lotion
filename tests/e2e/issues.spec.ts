@@ -115,7 +115,11 @@ test("issue panel edits title and labels, refuses stale edits, deletes", async (
     page.locator(".issue-card").filter({ hasText: `${title} renamed` }),
   ).toContainText("bug");
 
-  // someone else edits first: the stale edit is not saved; you choose
+  // you type, someone else saves before you leave the field: your edit is not
+  // saved over theirs; you choose (whether a refresh or the save notices first)
+  await panel.getByRole("button", { name: /Add a description/ }).click();
+  const body = panel.getByRole("textbox", { name: "Description" });
+  await body.fill("from the browser");
   const current = await (
     await page.request.get(`/api/issues/${created.number}`)
   ).json();
@@ -123,13 +127,13 @@ test("issue panel edits title and labels, refuses stale edits, deletes", async (
     headers: { "If-Match": `"${current.version}"`, "X-Lotion-Author": "cli" },
     data: { body: "from the CLI" },
   });
-  const body = panel.getByRole("textbox", { name: "Description" });
-  await body.fill("from the browser");
   await body.blur();
   const conflict = panel.getByRole("alert");
   await expect(conflict).toContainText("cli changed this issue");
   await conflict.getByRole("button", { name: "Use theirs" }).click();
-  await expect(body).toHaveValue("from the CLI");
+  await expect(panel.getByRole("region", { name: "Description" })).toHaveText(
+    "from the CLI",
+  );
   await expect(conflict).toBeHidden();
 
   await panel.getByRole("button", { name: "Delete issue" }).click();
@@ -138,4 +142,84 @@ test("issue panel edits title and labels, refuses stale edits, deletes", async (
   await expect(
     page.locator(".issue-card").filter({ hasText: `${title} renamed` }),
   ).toHaveCount(0);
+});
+
+test("descriptions and notes render Markdown; click to edit the source", async ({
+  page,
+}) => {
+  const created = await (
+    await page.request.post("/api/issues", {
+      data: {
+        title: `Markdown ${randomUUID().slice(0, 6)}`,
+        body: "## Steps\n**Repro** in [docs](https://example.com)\n- [ ] add a test\n- ship it\n\n```ts\nconst x = 1;\n```\n<script>window.hacked = 1</script>",
+      },
+    })
+  ).json();
+  await page.goto(`/#/issues/${created.number}`);
+  const panel = page.getByRole("complementary", {
+    name: `Issue #${created.number}`,
+  });
+  const view = panel.getByRole("region", { name: "Description" });
+  await expect(view.locator("h2")).toHaveText("Steps");
+  await expect(view.locator("strong")).toHaveText("Repro");
+  await expect(view.getByRole("link", { name: "docs" })).toHaveAttribute(
+    "target",
+    "_blank",
+  );
+  await expect(view.locator('input[type="checkbox"]')).toHaveCount(1);
+  await expect(view.locator("pre code")).toHaveText("const x = 1;");
+  await expect(view).toContainText("<script>window.hacked = 1</script>");
+  expect(await page.evaluate(() => (window as any).hacked)).toBeUndefined();
+
+  // click to edit the Markdown source; leaving the field renders it again
+  await view.locator("h2").click();
+  const source = panel.getByRole("textbox", { name: "Description" });
+  await expect(source).toBeFocused();
+  await expect(source).toHaveValue(/^## Steps/);
+  await source.press("End");
+  await source.press("ControlOrMeta+End");
+  await page.keyboard.type("\n\n_added later_");
+  await source.blur();
+  await expect(view.locator("em")).toHaveText("added later");
+  await expect
+    .poll(
+      async () =>
+        (await (await page.request.get(`/api/issues/${created.number}`)).json())
+          .body,
+    )
+    .toContain("_added later_");
+
+  // notes render Markdown too
+  const note = panel.getByRole("textbox", { name: "Add a status note" });
+  await note.fill("**done**: `npm test` green");
+  await note.press("ControlOrMeta+Enter");
+  const notes = panel.getByRole("list", { name: "Status notes" });
+  await expect(notes.locator("strong")).toHaveText("done");
+  await expect(notes.locator("code")).toHaveText("npm test");
+});
+
+test("columns share the window width and scroll sideways when it is too narrow", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1600, height: 800 });
+  await page.goto("/#/issues");
+  const board = page.getByRole("list", { name: "Issue board" });
+  await expect(board).toBeVisible();
+  const widths = async () =>
+    board
+      .getByRole("listitem")
+      .evaluateAll((cols) => cols.map((c) => c.getBoundingClientRect().width));
+  const wide = await widths();
+  expect(wide).toHaveLength(4);
+  // equal shares, wider than the old fixed 272 px, and no horizontal scroll
+  expect(Math.min(...wide)).toBeGreaterThan(272);
+  expect(Math.max(...wide) - Math.min(...wide)).toBeLessThan(2);
+  expect(await board.evaluate((b) => b.scrollWidth <= b.clientWidth + 1)).toBe(
+    true,
+  );
+
+  await page.setViewportSize({ width: 820, height: 800 });
+  const narrow = await widths();
+  expect(Math.min(...narrow)).toBeGreaterThanOrEqual(239.5);
+  expect(await board.evaluate((b) => b.scrollWidth > b.clientWidth)).toBe(true);
 });

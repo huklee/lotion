@@ -37,9 +37,9 @@ test("Create issue from a block links both ways; the panel links pages and moves
   await linked.getByRole("button").filter({ hasText: tag }).click();
   await expect(page).toHaveURL(/#\/issues\/\d+$/);
   const panel = page.getByRole("complementary", { name: /Issue #\d+/ });
-  await expect(panel.getByRole("textbox", { name: "Description" })).toHaveValue(
-    /- add a regression test/,
-  );
+  await expect(
+    panel.getByRole("region", { name: "Description" }).locator("li"),
+  ).toContainText("add a regression test");
   await expect(
     panel
       .getByRole("region", { name: "Linked pages" })
@@ -62,9 +62,9 @@ test("Create issue from a block links both ways; the panel links pages and moves
   await panel
     .getByRole("button", { name: "Move description to a page" })
     .click();
-  await expect(panel.getByRole("textbox", { name: "Description" })).toHaveValue(
-    /moved to the page/,
-  );
+  await expect(
+    panel.getByRole("region", { name: "Description" }),
+  ).toContainText("moved to the page");
   await expect(panel.locator(".issue-page-chip")).toHaveCount(3);
 
   // back to the block it came from

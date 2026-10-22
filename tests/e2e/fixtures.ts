@@ -1,8 +1,4 @@
-import {
-  test as base,
-  expect,
-  type Page,
-} from "@playwright/test";
+import { test as base, expect, type Page } from "@playwright/test";
 import { startE2EServer } from "./server";
 
 type WorkerFixtures = { workerBaseURL: string };

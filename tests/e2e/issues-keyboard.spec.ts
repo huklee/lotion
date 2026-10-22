@@ -157,3 +157,25 @@ test("⌘K finds and creates issues; g i opens the board from a page", async ({
   await expect(page).toHaveURL(/#\/issues$/);
   await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
 });
+
+test("a slow keyboard move never pulls focus out of the note box", async ({
+  page,
+}) => {
+  const { numbers } = await setup(page, 1);
+  const [a] = numbers;
+  await expect(card(page, a)).toBeFocused();
+  // the server answers the move late, after m has opened the note box
+  await page.route("**/api/issues/*/move", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.continue();
+  });
+  await page.keyboard.press("x");
+  await page.keyboard.press("m");
+  const note = page
+    .getByRole("complementary", { name: `Issue #${a}` })
+    .getByRole("textbox", { name: "Add a status note" });
+  await expect(note).toBeFocused();
+  await expect.poll(async () => (await issue(page, a)).status).toBe("done");
+  await page.waitForTimeout(800);
+  await expect(note).toBeFocused();
+});

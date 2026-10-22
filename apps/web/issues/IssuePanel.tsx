@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Archive, FileText, Link2, Trash2, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Archive, FileText, Link2, Pencil, Trash2, X } from "lucide-react";
+import { markdownToHtml } from "../../../packages/markdown/render-html";
 
 import { textToBlocks } from "../paste/text-blocks";
 import type { TreeNode } from "../../../packages/document-schema/index";
@@ -71,6 +72,8 @@ export function IssuePanel({
   onPagesChanged?: () => void;
 }) {
   const [linkQuery, setLinkQuery] = useState("");
+  /** The description shows rendered Markdown until you click to edit it. */
+  const [editingBody, setEditingBody] = useState(false);
   const [linking, setLinking] = useState(false);
   const [issue, setIssue] = useState<Issue | null>(null);
   const [missing, setMissing] = useState(false);
@@ -90,9 +93,13 @@ export function IssuePanel({
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const loaded = !!issue;
+  const openedAt = useRef(Date.now());
+  const bodyHtml = useMemo(() => markdownToHtml(body), [body]);
 
   useEffect(() => {
-    if (!focus || !loaded || Date.now() - focus.at > 3000) return;
+    // only a request made for this panel (just before it opened), however
+    // long the issue takes to load; older requests belong to earlier panels
+    if (!focus || !loaded || focus.at < openedAt.current - 1000) return;
     const el = focus.field === "title" ? titleRef.current : noteRef.current;
     el?.focus();
     if (focus.field === "title") el?.select();
@@ -463,22 +470,55 @@ export function IssuePanel({
           {issue.archivedAt ? ` · Archived ${when(issue.archivedAt)}` : ""}
         </div>
       </div>
-      <textarea
-        className="issue-body"
-        aria-label="Description"
-        placeholder="Description (Markdown)…"
-        value={body}
-        rows={5}
-        onChange={(event) => {
-          dirty.current.add("body");
-          setBody(event.target.value);
-        }}
-        onBlur={() => {
-          if (!dirty.current.has("body")) return;
-          if (body !== issue.body) void save("body", body);
-          else dirty.current.delete("body");
-        }}
-      />
+      {editingBody || (conflict && dirty.current.has("body")) ? (
+        <textarea
+          autoFocus
+          className="issue-body"
+          aria-label="Description"
+          placeholder="Description (Markdown)…"
+          value={body}
+          rows={Math.min(24, Math.max(5, body.split("\n").length + 1))}
+          onChange={(event) => {
+            dirty.current.add("body");
+            setBody(event.target.value);
+          }}
+          onBlur={() => {
+            setEditingBody(false);
+            if (!dirty.current.has("body")) return;
+            if (body !== issue.body) void save("body", body);
+            else dirty.current.delete("body");
+          }}
+        />
+      ) : bodyHtml ? (
+        <div className="issue-body-view">
+          <div
+            role="region"
+            aria-label="Description"
+            className="issue-markdown"
+            title="Click to edit"
+            onClick={(event) => {
+              // links and checkboxes inside the description keep their own clicks
+              if ((event.target as HTMLElement).closest("a, input")) return;
+              setEditingBody(true);
+            }}
+            dangerouslySetInnerHTML={{ __html: bodyHtml }}
+          />
+          <button
+            className="issue-body-edit"
+            aria-label="Edit description"
+            onClick={() => setEditingBody(true)}
+          >
+            <Pencil size={13} />
+          </button>
+        </div>
+      ) : (
+        <button
+          className="issue-body-empty"
+          onClick={() => setEditingBody(true)}
+        >
+          Add a description (Markdown)…
+        </button>
+      )}
       <h2 className="issue-notes-title">Status notes</h2>
       <ol className="issue-notes" aria-label="Status notes">
         {issue.notes.map((n) => (
@@ -495,7 +535,10 @@ export function IssuePanel({
               )}
             </div>
             {n.kind === "note" && (
-              <div className="issue-note-text">{n.text}</div>
+              <div
+                className="issue-note-text issue-markdown"
+                dangerouslySetInnerHTML={{ __html: markdownToHtml(n.text) }}
+              />
             )}
           </li>
         ))}

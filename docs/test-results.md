@@ -1,5 +1,28 @@
 # Test results
 
+## 2026-10-22T23:55:00+09:00 — 0.50.0 Markdown in issues, fluid board columns
+
+Focused:
+- `tests/unit/render-html.test.ts` **1/1**:
+  - headings, emphasis and inline code;
+  - web links with `target="_blank"`, and an internal page link without it;
+  - open and checked tasks, ordered lists, escaped code;
+  - `<script>` shown as text, a `javascript:` link removed, empty input.
+- E2E in `issues.spec.ts`, across Chromium, Firefox and WebKit:
+  - **Markdown rendering:** the description renders heading, bold, a new-tab link, a task checkbox and a code block. The script text is shown and never runs. A click opens the source, an edit saves on blur and renders again, and a note renders bold and code.
+  - **Column widths:** 4 equal columns wider than 272 px with no scroll at 1600 px; at 820 px each is at least 240 px and the board scrolls.
+- Existing panel tests now enter editing first (Add a description) and check the rendered text.
+- `issues-keyboard.spec.ts` once failed in Chromium under full parallel load: `m` did not focus the note box because the focus request expired after 3 s. It now applies to the panel it was made for. Afterwards the issue specs passed 33/33, and Chromium keyboard repeats passed 18/18.
+- Wide board and rendered description were reviewed in screenshots.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **300/300**; Playwright **352/352**. Remote CI results are recorded on the pull request.
+
+Remote CI on #70:
+- One run failed only the known flake `block-selection.spec.ts:506` (WebKit).
+- One run was cancelled twice by the 20-minute job limit while installing Playwright browsers, before any test ran.
+- The third attempt of that run failed `issues.spec.ts` "issue panel edits…" (WebKit). This was a test race: when a refresh arrived between the external edit and the click, the empty-description button was already gone. The test now types first and the other writer saves before the field is left, so the prompt appears whichever side notices first. Afterwards it passed **48/48** (4 repeats, 3 browsers).
+- A rerun failed `issues-keyboard.spec.ts` again in Chromium: `m` focused the note box, then a late-finishing `x` move refocused the card. A new test delays the move response by 1.5 s. It failed in all 3 browsers before the fix (the board never takes focus from a text field) and passed in all 3 after it. With the fix the issue, keyboard and home-shortcut specs passed **108/108** (4 repeats, 8 workers).
+
 ## 2026-10-22T17:40:00+09:00 — 0.49.0 home, go-to shortcuts, Korean-layout shortcuts
 
 Focused:
