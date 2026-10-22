@@ -217,8 +217,28 @@ export async function createApp(
     });
   });
   app.get("/api/issues/seq", async () => ({ seq: await issues().seq() }));
+  // changes made by agents and scripts (any author but "me") appear in the bell
+  const notifyIssue = (
+    who: string,
+    issue: { number: number; title: string },
+    detail: string,
+  ) => {
+    if (who === "me" || !options.notifications) return;
+    void options.notifications
+      .add({
+        kind: "issue.changed",
+        title: `#${issue.number} ${issue.title}`.slice(0, 300),
+        detail: `${who} ${detail}`.slice(0, 500),
+        issue: issue.number,
+      })
+      .catch(() => undefined);
+  };
+  const statusName = async (key: string) =>
+    (await issues().board()).statuses.find((s) => s.key === key)?.name ?? key;
   app.post("/api/issues", async (req, reply) => {
-    const issue = await issues().create(req.body ?? {}, author(req));
+    const who = author(req);
+    const issue = await issues().create(req.body ?? {}, who);
+    notifyIssue(who, issue, `created it in ${await statusName(issue.status)}`);
     reply.code(201);
     return issue;
   });
@@ -231,22 +251,36 @@ export async function createApp(
         : Number(String(header).replaceAll('"', ""));
     if (expected !== undefined && !Number.isSafeInteger(expected))
       throw new AppError(400, "Invalid If-Match version");
-    return issues().patch(
+    const who = author(req);
+    const before = await issues().get(issueNumber(req));
+    const issue = await issues().patch(
       issueNumber(req),
       req.body ?? {},
-      author(req),
+      who,
       expected,
     );
+    if (issue.version !== before.version)
+      notifyIssue(
+        who,
+        issue,
+        issue.status !== before.status
+          ? `moved it to ${await statusName(issue.status)}`
+          : "edited it",
+      );
+    return issue;
   });
-  app.post("/api/issues/:number/move", async (req) =>
-    issues().move(issueNumber(req), req.body ?? {}, author(req)),
-  );
+  app.post("/api/issues/:number/move", async (req) => {
+    const who = author(req);
+    const before = await issues().get(issueNumber(req));
+    const issue = await issues().move(issueNumber(req), req.body ?? {}, who);
+    if (issue.status !== before.status)
+      notifyIssue(who, issue, `moved it to ${await statusName(issue.status)}`);
+    return issue;
+  });
   app.post("/api/issues/:number/notes", async (req, reply) => {
-    const issue = await issues().note(
-      issueNumber(req),
-      req.body ?? {},
-      author(req),
-    );
+    const who = author(req);
+    const issue = await issues().note(issueNumber(req), req.body ?? {}, who);
+    notifyIssue(who, issue, `noted: ${issue.notes.at(-1)?.text ?? ""}`);
     reply.code(201);
     return issue;
   });

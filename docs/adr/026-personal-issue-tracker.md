@@ -1,6 +1,6 @@
 # ADR-026: Personal issue tracker (Issues board, status notes, CLI)
 
-- **Status:** Accepted. Stage 1 (MVP) is in 0.45.0, stage 2 (keyboard) in 0.46.0; stages 3–4 follow in their own releases.
+- **Status:** Accepted. Stage 1 (MVP) is in 0.45.0, stage 2 (keyboard) in 0.46.0, stage 3 (agents) in 0.47.0; stage 4 follows in its own release.
 - **Date:** 2026-10-22
 
 ## Context
@@ -71,6 +71,16 @@ Issues are a server-side store, not a document block.
 - **Focus:** keyboard focus moves to a card only when a key asked for it, so a poll never steals focus from the panel.
 - **Hints:** single letters while there are at most 26 cards, otherwise two letters for every card.
 - **Data:** `priority` was added to issues; older `issues.json` entries are read as `none`.
+
+## Stage 3 notes
+
+- **MCP:** `apps/mcp/issues-mcp.ts` is a dependency-free MCP server: newline-delimited JSON-RPC 2.0 over stdio.
+  - Methods: `initialize` (protocol versions 2025-06-18, 2025-03-26, 2024-11-05), `ping`, `tools/list`, `tools/call`.
+  - Tool failures are returned as results with `isError`, so agents see the message.
+  - It and the CLI share `apps/cli/issues-client.ts`.
+- **Authors:** every change records `updatedBy` (from `X-Lotion-Author`).
+- **Notifications:** the server adds an `issue.changed` notification (with the issue number) for changes by any author except `me`.
+- **Conflicts:** the panel compares an incoming version with its unsaved fields. On a real difference it blocks saving and asks: Keep mine re-saves with the new version, Use theirs discards the local text.
 
 ## Consequences
 

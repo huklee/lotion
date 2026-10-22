@@ -347,6 +347,14 @@ export function IssuesView({
                 {label}
               </span>
             ))}
+            {issue.updatedBy && issue.updatedBy !== "me" && (
+              <span
+                className="issue-author"
+                title={`Last changed by ${issue.updatedBy}`}
+              >
+                {issue.updatedBy}
+              </span>
+            )}
             {issue.noteCount > 1 && (
               <span
                 className="issue-notes-count"

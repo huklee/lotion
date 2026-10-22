@@ -2,6 +2,25 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.47.0 — 2026-10-22
+
+### Added
+
+- **MCP server for agents** (`bin/lotion-mcp`): Claude Code, Codex and other MCP clients get the issue tools directly — `list_issues`, `get_issue`, `create_issue`, `update_issue` (including add/remove labels), `move_issue`, `add_note`, `claim_issue`, `close_issue`. Register it once, for example `claude mcp add lotion-issues -e LOTION_AUTHOR=claude -e LOTION_TOKEN_FILE=~/.config/lotion/token -- ~/Work/lotion/bin/lotion-mcp`.
+- **More `lotion issue` commands:**
+  - `edit`, and `label` with `+name` / `-name`.
+  - `claim` moves the issue to In progress and notes who took it.
+  - `close` / `reopen`, `search`, `rm`.
+  - `watch` prints changes as they happen (created, moved, renamed, new notes, deleted).
+- **Who changed it:**
+  - Cards show the agent that made the latest change (`codex`, `claude`, …).
+  - Notes by agents are marked.
+  - `show` prints "Updated … by …".
+- **Agent changes appear in the bell:** an issue created, moved, edited or noted by anyone but you. Clicking the entry opens the issue.
+- **No silent overwrites while you edit:** if an agent or another device changes an issue while you have unsaved text in its panel, the panel says who changed it and lets you choose **Keep mine** or **Use theirs**. A save that arrives too late asks the same way instead of being dropped.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.46.0 — 2026-10-22 · [#66](https://github.com/huklee/lotion/pull/66)
 
 ### Added

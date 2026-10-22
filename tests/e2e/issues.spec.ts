@@ -115,19 +115,22 @@ test("issue panel edits title and labels, refuses stale edits, deletes", async (
     page.locator(".issue-card").filter({ hasText: `${title} renamed` }),
   ).toContainText("bug");
 
-  // someone else edits first: our stale edit is refused and the issue reloads
+  // someone else edits first: the stale edit is not saved; you choose
   const current = await (
     await page.request.get(`/api/issues/${created.number}`)
   ).json();
   await page.request.patch(`/api/issues/${created.number}`, {
-    headers: { "If-Match": `"${current.version}"` },
+    headers: { "If-Match": `"${current.version}"`, "X-Lotion-Author": "cli" },
     data: { body: "from the CLI" },
   });
   const body = panel.getByRole("textbox", { name: "Description" });
   await body.fill("from the browser");
   await body.blur();
-  await expect(panel.getByRole("status")).toContainText("changed elsewhere");
+  const conflict = panel.getByRole("alert");
+  await expect(conflict).toContainText("cli changed this issue");
+  await conflict.getByRole("button", { name: "Use theirs" }).click();
   await expect(body).toHaveValue("from the CLI");
+  await expect(conflict).toBeHidden();
 
   await panel.getByRole("button", { name: "Delete issue" }).click();
   await panel.getByRole("button", { name: "Delete", exact: true }).click();

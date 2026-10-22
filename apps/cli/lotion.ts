@@ -1,10 +1,18 @@
-import { readFileSync } from "node:fs";
 import type {
   Issue,
   IssueBoard,
   IssueNote,
   IssueStatus,
 } from "../../packages/issues/model";
+import {
+  LotionError,
+  diffBoards,
+  editLabels,
+  issueClient,
+  resolveStatus,
+  workingStatus,
+  type IssueInput,
+} from "./issues-client";
 
 /**
  * `lotion issue …` — the issue tracker for people and agents (ADR-026).
@@ -18,34 +26,46 @@ export type CliIO = {
   out: (text: string) => void;
   err: (text: string) => void;
   stdin?: () => string;
+  /** Stops `watch` (Ctrl+C in a terminal). */
+  signal?: AbortSignal;
 };
 
 export const USAGE = `Usage: lotion issue <command> [options]
 
-Commands
-  ls                     List issues by status
-      --status <s>       Only this status (key or name)
-      --label <l>        Only issues with this label
-      --priority <p>     Only this priority (none, low, medium, high, urgent)
-      -q <text>          Title/body search
-  show <n>               One issue with its notes
-  new <title>            Create an issue
-      --body <text|->    Body (Markdown); "-" reads stdin
-      --status <s>       Start in this status (default: first column)
-      --label <a,b>      Labels, comma separated
-      --priority <p>     none, low, medium, high or urgent
-  move <n> <status>      Move to a status column
-      --before <m>       Place before issue #m (default: end of column)
-  note <n> <text|->      Add a status note; "-" reads stdin
+Read
+  ls                       List issues by status
+      --status <s>         Only this status (key or name)
+      --label <l>          Only issues with this label
+      --priority <p>       Only this priority (none, low, medium, high, urgent)
+      -q <text>            Title/body search
+  search <text>            Same as ls -q <text>
+  show <n>                 One issue with its notes
+  watch                    Print changes as they happen (Ctrl+C stops)
+      --interval <sec>     Poll interval (default 3)
+
+Change
+  new <title>              Create an issue
+      --body <text|->      Body (Markdown); "-" reads stdin
+      --status <s>         Start in this status (default: first column)
+      --label <a,b>        Labels, comma separated
+      --priority <p>       none, low, medium, high or urgent
+  edit <n>                 Change --title, --body, --label (replaces) or --priority
+  label <n> <+a|-b>...     Add (+) or remove (-) labels
+  move <n> <status>        Move to a status column
+      --before <m>         Place before issue #m (default: end of column)
+  claim <n>                Move to In progress and note who took it
+  close <n> / reopen <n>   Move to the last / first column
+  note <n> <text|->        Add a status note; "-" reads stdin
+  rm <n>                   Delete an issue and its notes
 
 Options
-  --json                 Print JSON (API objects)
-  --as <name>            Author shown on notes (default: $LOTION_AUTHOR or "cli")
-  -h, --help             This help
+  --json                   Print JSON (API objects)
+  --as <name>              Author shown on notes (default: $LOTION_AUTHOR or "cli")
+  -h, --help               This help
 
 Environment
-  LOTION_URL             Server (default http://127.0.0.1:3001)
-  LOTION_TOKEN           Workspace token, or LOTION_TOKEN_FILE with its path`;
+  LOTION_URL               Server (default http://127.0.0.1:3001)
+  LOTION_TOKEN             Workspace token, or LOTION_TOKEN_FILE with its path`;
 
 class CliError extends Error {}
 
@@ -59,6 +79,8 @@ const VALUE_FLAGS = new Set([
   "before",
   "as",
   "priority",
+  "title",
+  "interval",
 ]);
 
 export function parseArgs(argv: string[]): Parsed {
@@ -70,8 +92,15 @@ export function parseArgs(argv: string[]): Parsed {
       args.push(...argv.slice(i + 1));
       break;
     }
+    // "+label" / "-label" arguments of `label` are values, not options
     const match = /^--?([a-z-]+)(?:=(.*))?$/.exec(arg);
-    if (!match || arg === "-") {
+    if (
+      !match ||
+      arg === "-" ||
+      (arg.startsWith("-") &&
+        !arg.startsWith("--") &&
+        !["q", "h"].includes(match[1]))
+    ) {
       args.push(arg);
       continue;
     }
@@ -84,53 +113,6 @@ export function parseArgs(argv: string[]): Parsed {
     else throw new CliError(`Unknown option: ${arg}`);
   }
   return { args, flags };
-}
-
-function client(io: CliIO, author: string) {
-  const base = (io.env.LOTION_URL || "http://127.0.0.1:3001").replace(
-    /\/+$/,
-    "",
-  );
-  let token = io.env.LOTION_TOKEN;
-  if (!token && io.env.LOTION_TOKEN_FILE)
-    token = readFileSync(io.env.LOTION_TOKEN_FILE, "utf8").trim();
-  return async <T>(method: string, url: string, body?: unknown) => {
-    const headers: Record<string, string> = { "X-Lotion-Author": author };
-    if (token) headers.Authorization = `Bearer ${token}`;
-    if (body !== undefined) headers["Content-Type"] = "application/json";
-    let response: Response;
-    try {
-      response = await io.fetch(base + url, {
-        method,
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-      });
-    } catch (error) {
-      throw new CliError(
-        `Cannot reach Lotion at ${base} (${(error as Error).message})`,
-      );
-    }
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok)
-      throw new CliError(
-        response.status === 401
-          ? "The server needs a token: set LOTION_TOKEN or LOTION_TOKEN_FILE"
-          : `${data.error ?? response.statusText} (HTTP ${response.status})`,
-      );
-    return data as T;
-  };
-}
-
-export function resolveStatus(statuses: IssueStatus[], value: string): string {
-  const v = value.trim().toLowerCase();
-  const found = statuses.find(
-    (s) => s.key.toLowerCase() === v || s.name.toLowerCase() === v,
-  );
-  if (!found)
-    throw new CliError(
-      `Unknown status "${value}". Use one of: ${statuses.map((s) => s.key).join(", ")}`,
-    );
-  return found.key;
 }
 
 function number(value: string | undefined): number {
@@ -168,13 +150,22 @@ export function formatIssue(issue: Issue, statuses: IssueStatus[]): string {
   return [
     `#${issue.number}  ${issue.title}`,
     `Status: ${status}${issue.priority && issue.priority !== "none" ? `   Priority: ${issue.priority}` : ""}${issue.labels.length ? `   Labels: ${issue.labels.join(", ")}` : ""}`,
-    `Created ${time(issue.createdAt)}   Updated ${time(issue.updatedAt)}`,
+    `Created ${time(issue.createdAt)}   Updated ${time(issue.updatedAt)}${issue.updatedBy ? ` by ${issue.updatedBy}` : ""}`,
     ...(issue.body.trim() ? ["", issue.body.trim()] : []),
     "",
     "Notes",
     ...issue.notes.map(formatNote),
   ].join("\n");
 }
+
+const sleep = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener("abort", () => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
 
 export async function run(argv: string[], io: CliIO): Promise<number> {
   try {
@@ -189,38 +180,55 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
         `Unknown command "${group}". Try: lotion issue --help`,
       );
     const author = String(flags.get("as") ?? io.env.LOTION_AUTHOR ?? "cli");
-    const call = client(io, author);
+    const api = issueClient({ env: io.env, fetch: io.fetch, author });
     const json = flags.has("json");
     const text = (value: string | true | undefined) => {
       if (value === "-") return io.stdin?.() ?? "";
       return typeof value === "string" ? value : undefined;
     };
-    const board = () => call<IssueBoard>("GET", "/api/issues");
+    const flag = (name: string) => {
+      const value = flags.get(name);
+      return typeof value === "string" ? value : undefined;
+    };
     const print = (value: unknown, human: () => string) =>
       io.out(json ? JSON.stringify(value, null, 2) : human());
+    const statusName = (statuses: IssueStatus[], key: string) =>
+      statuses.find((s) => s.key === key)?.name ?? key;
+    const moved = async (
+      n: number,
+      status: string,
+      statuses: IssueStatus[],
+    ) => {
+      const issue = await api.move(n, status);
+      print(
+        issue,
+        () => `#${issue.number} → ${statusName(statuses, issue.status)}`,
+      );
+      return issue;
+    };
 
     switch (command) {
       case "ls":
-      case "list": {
-        const all = await board();
-        const status = flags.get("status");
-        const query = new URLSearchParams();
-        if (typeof status === "string")
-          query.set("status", resolveStatus(all.statuses, status));
-        for (const key of ["label", "q", "priority"] as const) {
-          const value = flags.get(key);
-          if (typeof value === "string") query.set(key, value);
-        }
-        const result = query.size
-          ? await call<IssueBoard>("GET", `/api/issues?${query}`)
-          : all;
+      case "list":
+      case "search": {
+        const all = await api.board();
+        const status = flag("status");
+        const q =
+          command === "search" ? rest.join(" ") || flag("q") : flag("q");
+        if (command === "search" && !q) throw new CliError("search needs text");
+        const result = await api.board({
+          status: status ? resolveStatus(all.statuses, status) : undefined,
+          label: flag("label"),
+          priority: flag("priority")?.toLowerCase(),
+          q,
+        });
         print(json ? result.issues : result, () => formatBoard(result));
         return 0;
       }
       case "show": {
         const [issue, all] = await Promise.all([
-          call<Issue>("GET", `/api/issues/${number(rest[0])}`),
-          board(),
+          api.get(number(rest[0])),
+          api.board(),
         ]);
         print(issue, () => formatIssue(issue, all.statuses));
         return 0;
@@ -229,39 +237,110 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
       case "create": {
         const title = rest.join(" ").trim();
         if (!title) throw new CliError("new needs a title");
-        const body: Record<string, unknown> = { title };
-        const b = text(flags.get("body"));
-        if (b !== undefined) body.body = b;
-        const status = flags.get("status");
-        if (typeof status === "string")
-          body.status = resolveStatus((await board()).statuses, status);
-        const priority = flags.get("priority");
-        if (typeof priority === "string")
-          body.priority = priority.toLowerCase();
-        const labels = flags.get("label");
-        if (typeof labels === "string")
-          body.labels = labels
-            .split(",")
-            .map((l) => l.trim())
-            .filter(Boolean);
-        const issue = await call<Issue>("POST", "/api/issues", body);
+        const input: IssueInput = { title };
+        const body = text(flags.get("body"));
+        if (body !== undefined) input.body = body;
+        const status = flag("status");
+        if (status)
+          input.status = resolveStatus((await api.board()).statuses, status);
+        const priority = flag("priority");
+        if (priority) input.priority = priority.toLowerCase();
+        const labels = flag("label");
+        if (labels !== undefined) input.labels = editLabels([], [labels]);
+        const issue = await api.create(input);
         print(issue, () => `Created #${issue.number}  ${issue.title}`);
         return 0;
+      }
+      case "edit": {
+        const n = number(rest[0]);
+        const input: IssueInput = {};
+        const title = flag("title");
+        if (title !== undefined) input.title = title;
+        const body = text(flags.get("body"));
+        if (body !== undefined) input.body = body;
+        const labels = flag("label");
+        if (labels !== undefined) input.labels = editLabels([], [labels]);
+        const priority = flag("priority");
+        if (priority) input.priority = priority.toLowerCase();
+        if (flag("status")) {
+          const all = await api.board();
+          input.status = resolveStatus(all.statuses, flag("status")!);
+        }
+        if (!Object.keys(input).length)
+          throw new CliError(
+            "edit needs --title, --body, --label, --priority or --status",
+          );
+        const issue = await api.patch(n, input);
+        print(issue, () => `Updated #${issue.number}  ${issue.title}`);
+        return 0;
+      }
+      case "label": {
+        const n = number(rest[0]);
+        if (!rest.length || rest.length < 2)
+          throw new CliError("label needs +name or -name");
+        // read-modify-write with the version; retry once if someone else wrote
+        for (let attempt = 0; ; attempt++) {
+          const current = await api.get(n);
+          try {
+            const issue = await api.patch(
+              n,
+              { labels: editLabels(current.labels, rest.slice(1)) },
+              current.version,
+            );
+            print(
+              issue,
+              () =>
+                `#${issue.number} labels: ${issue.labels.join(", ") || "(none)"}`,
+            );
+            return 0;
+          } catch (error) {
+            if (
+              !(error instanceof LotionError && error.status === 409) ||
+              attempt
+            )
+              throw error;
+          }
+        }
       }
       case "move": {
         const n = number(rest[0]);
         if (!rest[1]) throw new CliError("move needs a status");
-        const all = await board();
+        const all = await api.board();
         const status = resolveStatus(all.statuses, rest.slice(1).join(" "));
-        const before = flags.get("before");
-        const issue = await call<Issue>("POST", `/api/issues/${n}/move`, {
+        const before = flag("before");
+        const issue = await api.move(
+          n,
           status,
-          ...(typeof before === "string" ? { before: number(before) } : {}),
-        });
+          before === undefined ? undefined : number(before),
+        );
+        print(
+          issue,
+          () => `#${issue.number} → ${statusName(all.statuses, issue.status)}`,
+        );
+        return 0;
+      }
+      case "close":
+      case "reopen": {
+        const n = number(rest[0]);
+        const { statuses } = await api.board();
+        await moved(
+          n,
+          (command === "close" ? statuses.at(-1)! : statuses[0]).key,
+          statuses,
+        );
+        return 0;
+      }
+      case "claim": {
+        const n = number(rest[0]);
+        const { statuses } = await api.board();
+        const status = workingStatus(statuses);
+        const current = await api.get(n);
+        if (current.status !== status) await api.move(n, status);
+        const issue = await api.note(n, `Claimed by ${author}`);
         print(
           issue,
           () =>
-            `#${issue.number} → ${all.statuses.find((s) => s.key === issue.status)?.name ?? issue.status}`,
+            `#${issue.number} claimed by ${author} (${statusName(statuses, issue.status)})`,
         );
         return 0;
       }
@@ -269,10 +348,45 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
         const n = number(rest[0]);
         const body = text(rest.slice(1).join(" ") || undefined);
         if (!body?.trim()) throw new CliError("note needs text");
-        const issue = await call<Issue>("POST", `/api/issues/${n}/notes`, {
-          text: body,
-        });
+        const issue = await api.note(n, body);
         print(issue, () => `Noted on #${issue.number}`);
+        return 0;
+      }
+      case "rm":
+      case "delete": {
+        const n = number(rest[0]);
+        const result = await api.remove(n);
+        print(result, () => `Deleted #${n}`);
+        return 0;
+      }
+      case "watch": {
+        const interval = Math.max(0.2, Number(flag("interval") ?? 3)) * 1000;
+        let board = await api.board();
+        let seq = board.seq;
+        if (!json)
+          io.out(`Watching ${board.issues.length} issues (Ctrl+C stops)…`);
+        while (!io.signal?.aborted) {
+          await sleep(interval, io.signal);
+          if (io.signal?.aborted) break;
+          try {
+            const current = await api.seq();
+            if (current.seq === seq) continue;
+            const next = await api.board();
+            for (const line of diffBoards(board, next))
+              io.out(
+                json
+                  ? JSON.stringify({
+                      at: new Date().toISOString(),
+                      event: line,
+                    })
+                  : `${time(new Date().toISOString())}  ${line}`,
+              );
+            board = next;
+            seq = next.seq;
+          } catch (error) {
+            io.err(String((error as Error).message));
+          }
+        }
         return 0;
       }
       default:
@@ -283,10 +397,6 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
         );
     }
   } catch (error) {
-    if (error instanceof CliError) {
-      io.err(error.message);
-      return 1;
-    }
     io.err(String((error as Error)?.message ?? error));
     return 1;
   }

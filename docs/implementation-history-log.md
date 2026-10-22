@@ -1,5 +1,18 @@
 # Implementation history log
 
+## 2026-10-22T14:30:00+09:00 — 0.47.0 agents: MCP server, CLI, badges, notifications, conflicts (stage 3 of ADR-026)
+
+- **Shared client:** `apps/cli/issues-client.ts` holds the HTTP client and the `resolveStatus`, `workingStatus`, `editLabels` and `diffBoards` helpers. The CLI was rewritten on top of it, with `edit`, `label`, `claim`, `close`, `reopen`, `search`, `rm` and `watch` (abortable; Ctrl+C via `main.ts`).
+- **MCP:** `apps/mcp/issues-mcp.ts` (`createMcpServer` and `serve`), `apps/mcp/main.ts` and the `bin/lotion-mcp` wrapper.
+- **Model:** `updatedBy`, set by every change.
+- **Server:** `notifyIssue` in `app.ts` records `issue.changed` notifications for non-`me` authors. Notifications accept an `issue` number.
+- **Web:**
+  - The bell opens issues through a new `openIssue` prop (App → Topbar → Bell).
+  - The board refreshes the bell when it sees an outside change.
+  - Cards show an `updatedBy` badge, and agent note authors are marked.
+- **Panel:** conflict detection in `show`, a `resolve(keepMine)` choice, and a 409 that now raises the prompt instead of dropping the edit.
+- **Development:** to keep the live server's `dist` on `main`, development moved to the git worktree `~/Work/lotion-dev` (with `node_modules` linked); `~/Work/lotion` only checks out `main` for deploys.
+
 ## 2026-10-22T13:00:00+09:00 — 0.46.0 keyboard-only Issues board (stage 2 of ADR-026)
 
 The owner asked to continue through stages 1–4, merging each stage after its tests pass.
