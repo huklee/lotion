@@ -7,6 +7,7 @@ import {
   FileText,
   FolderInput,
   Info,
+  SquareKanban,
 } from "lucide-react";
 import { api } from "./api";
 
@@ -17,10 +18,12 @@ export type AppNotification = {
     | "meetings.imported"
     | "summary.done"
     | "summary.failed"
+    | "issue.changed"
     | "info";
   title: string;
   detail?: string;
   pageId?: string;
+  issue?: number;
   at: string;
 };
 type List = { items: AppNotification[]; seenAt: string; unread: number };
@@ -50,6 +53,7 @@ const KIND: Record<
   "meetings.imported": { label: "Meeting logs created", icon: FolderInput },
   "summary.done": { label: "Summary written", icon: FileText },
   "summary.failed": { label: "Summary failed", icon: AlertTriangle },
+  "issue.changed": { label: "Issue", icon: SquareKanban },
   info: { label: "Notice", icon: Info },
 };
 
@@ -81,8 +85,10 @@ function dayLabel(at: string) {
  */
 export function NotificationBell({
   openPage,
+  openIssue,
 }: {
   openPage: (id: string) => void;
+  openIssue?: (number: number) => void;
 }) {
   const [list, setList] = useState<List>({ items: [], seenAt: "", unread: 0 });
   const [open, setOpen] = useState(false);
@@ -200,8 +206,13 @@ export function NotificationBell({
                       <button
                         type="button"
                         className={`notification-item ${item.kind.replace(".", "-")}${fresh ? " fresh" : ""}`}
-                        disabled={!item.pageId}
+                        disabled={!item.pageId && !item.issue}
                         onClick={() => {
+                          if (item.issue && openIssue) {
+                            setOpen(false);
+                            openIssue(item.issue);
+                            return;
+                          }
                           if (!item.pageId) return;
                           setOpen(false);
                           openPage(item.pageId);

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
+import { refreshNotifications } from "../NotificationBell";
 import type { Issue, IssueBoard } from "../../../packages/issues/model";
 
 const json = (method: string, body?: unknown, headers?: HeadersInit) => ({
@@ -55,7 +56,11 @@ export function useIssueBoard(onError: (error: unknown) => void) {
       if (document.visibilityState !== "visible") return;
       try {
         const { seq: current } = await issuesApi.seq();
-        if (alive && current !== seq.current) await reload();
+        if (alive && current !== seq.current) {
+          await reload();
+          // an outside change (agent, CLI, other device) may also be in the bell
+          refreshNotifications();
+        }
       } catch {
         // offline for a moment; the next tick tries again
       }

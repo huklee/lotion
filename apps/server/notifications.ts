@@ -8,6 +8,7 @@ export const NOTIFICATION_KINDS = [
   "meetings.imported",
   "summary.done",
   "summary.failed",
+  "issue.changed",
   "info",
 ] as const;
 
@@ -19,6 +20,8 @@ export const notificationInput = z.object({
     .string()
     .regex(/^[a-zA-Z0-9_-]{1,100}$/)
     .optional(),
+  /** An issue number: clicking the notification opens that issue. */
+  issue: z.number().int().positive().optional(),
 });
 export type NotificationInput = z.infer<typeof notificationInput>;
 export type Notification = NotificationInput & { id: string; at: string };

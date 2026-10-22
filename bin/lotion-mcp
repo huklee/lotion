@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# MCP server for Lotion issues (stdio). Register it with an agent, e.g.
+#   claude mcp add lotion-issues -e LOTION_AUTHOR=claude -e LOTION_TOKEN_FILE=~/.config/lotion/token -- /path/to/lotion/bin/lotion-mcp
+set -euo pipefail
+src=${BASH_SOURCE[0]}
+while [[ -L $src ]]; do
+  dir=$(cd -P "$(dirname "$src")" && pwd)
+  src=$(readlink "$src")
+  [[ $src == /* ]] || src=$dir/$src
+done
+root=$(cd -P "$(dirname "$src")/.." && pwd)
+exec "$root/node_modules/.bin/tsx" "$root/apps/mcp/main.ts" "$@"

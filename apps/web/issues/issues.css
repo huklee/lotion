@@ -371,7 +371,10 @@
   border-radius: 3px;
   background: #fde68a;
   color: #3f2d00;
-  font: 600 11px/16px ui-monospace, SFMono-Regular, monospace;
+  font:
+    600 11px/16px ui-monospace,
+    SFMono-Regular,
+    monospace;
   text-transform: lowercase;
   box-shadow: 0 1px 2px rgb(0 0 0 / 15%);
 }
@@ -459,4 +462,46 @@
   border-top: 1px solid var(--border);
   margin-top: 6px;
   padding-top: 6px;
+}
+/* stage 3: agents */
+.issue-author {
+  border-radius: 999px;
+  padding: 0 7px;
+  font-size: 11px;
+  line-height: 17px;
+  background: var(--soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.issue-author-name.agent {
+  border-radius: 999px;
+  padding: 0 7px;
+  background: var(--soft);
+  color: var(--accent);
+}
+.issue-conflict {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #d9a441;
+  border-radius: 8px;
+  background: color-mix(in srgb, #f5c451 16%, var(--bg));
+  font-size: 13px;
+}
+.issue-conflict p {
+  margin: 0 0 8px;
+}
+.issue-conflict div {
+  display: flex;
+  gap: 8px;
+}
+.issue-conflict button {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+.issue-conflict button:first-child {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
 }

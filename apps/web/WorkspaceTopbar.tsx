@@ -21,6 +21,7 @@ type WorkspaceTopbarProps = {
   breadcrumbPages: TreeNode[];
   title: string;
   openPage: (id: string) => Promise<void>;
+  openIssue?: (number: number) => void;
   activeId: string | undefined;
   status: string;
   favorite: boolean;
@@ -42,6 +43,7 @@ export function WorkspaceTopbar({
   breadcrumbPages,
   title,
   openPage,
+  openIssue,
   activeId,
   status,
   favorite,
@@ -152,7 +154,10 @@ export function WorkspaceTopbar({
             </button>
           </>
         )}
-        <NotificationBell openPage={(id) => void openPage(id)} />
+        <NotificationBell
+          openPage={(id) => void openPage(id)}
+          openIssue={openIssue}
+        />
         <div className="avatar">Y</div>
       </div>
     </header>

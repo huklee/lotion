@@ -771,6 +771,7 @@ export default function App() {
             changes={changes}
             issues={!!issueRoute && !trash && !changes}
             breadcrumbPages={breadcrumbPages}
+            openIssue={showIssues}
             title={title}
             openPage={openPage}
             activeId={active?.id}

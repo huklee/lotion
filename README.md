@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.46.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.47.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -93,6 +93,17 @@ lotion issue ls --json
 lotion issue move 12 "in progress"
 lotion issue note 12 "found the cause; fixing"
 ```
+
+More commands: `edit`, `label 12 +ui -bug`, `claim`, `close`, `reopen`, `search`, `rm`, and `watch` to follow changes live (`lotion issue --help`).
+
+Agents that speak MCP (Claude Code, Codex, …) can use the issue tools directly:
+
+```sh
+claude mcp add lotion-issues -e LOTION_AUTHOR=claude \
+  -e LOTION_TOKEN_FILE=~/.config/lotion/token -- ~/Work/lotion/bin/lotion-mcp
+```
+
+Changes by agents carry their name on the card, appear in the notification bell, and never silently overwrite what you are typing in an issue.
 
 Design: [ADR-026](docs/adr/026-personal-issue-tracker.md).
 

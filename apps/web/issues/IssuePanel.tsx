@@ -58,8 +58,13 @@ export function IssuePanel({
   const [labels, setLabels] = useState("");
   const [body, setBody] = useState("");
   const [note, setNote] = useState("");
-  const [notice, setNotice] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  /** The newer server version while you have unsaved edits to the same issue. */
+  const [conflict, setConflict] = useState<Issue | null>(null);
+  const conflictRef = useRef<Issue | null>(null);
+  const current = useRef<Issue | null>(null);
+  const draft = useRef({ title: "", labels: "", body: "" });
+  draft.current = { title, labels, body };
   const dirty = useRef(new Set<string>());
   const panel = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -74,11 +79,58 @@ export function IssuePanel({
   }, [focus, loaded]);
 
   const show = useCallback((next: Issue) => {
+    const previous = current.current;
+    // someone else changed the issue while a field here has unsaved text
+    const local = draft.current;
+    const clashes = [...dirty.current].filter((field) =>
+      field === "title"
+        ? local.title.trim() !== next.title
+        : field === "labels"
+          ? labelText(parseLabels(local.labels)) !== labelText(next.labels)
+          : field === "body"
+            ? local.body !== next.body
+            : false,
+    );
+    if (previous && next.version !== previous.version && clashes.length) {
+      conflictRef.current = next;
+      setConflict(next);
+    }
+    current.current = next;
     setIssue(next);
     if (!dirty.current.has("title")) setTitle(next.title);
     if (!dirty.current.has("labels")) setLabels(labelText(next.labels));
     if (!dirty.current.has("body")) setBody(next.body);
   }, []);
+
+  const resolve = async (keepMine: boolean) => {
+    const theirs = conflictRef.current;
+    conflictRef.current = null;
+    setConflict(null);
+    if (!theirs) return;
+    if (!keepMine) {
+      dirty.current.clear();
+      show(theirs);
+      return;
+    }
+    const input: Record<string, unknown> = {};
+    for (const field of dirty.current)
+      input[field] =
+        field === "title"
+          ? draft.current.title.trim() || theirs.title
+          : field === "labels"
+            ? parseLabels(draft.current.labels)
+            : draft.current.body;
+    try {
+      const next = await issuesApi.patch(number, theirs.version, input);
+      dirty.current.clear();
+      show(next);
+      await onChanged();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409)
+        show(await issuesApi.get(number));
+      else onError(error);
+    }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -119,21 +171,18 @@ export function IssuePanel({
     field: "title" | "labels" | "body" | "status" | "priority",
     value: unknown,
   ) => {
-    if (!issue) return;
+    if (!issue || conflictRef.current) return;
     try {
       const next = await issuesApi.patch(number, issue.version, {
         [field]: value,
       });
       dirty.current.delete(field);
       show(next);
-      setNotice("");
       await onChanged();
     } catch (error) {
+      // a newer version exists: show it next to your edit and let you choose
       if (error instanceof ApiError && error.status === 409) {
-        dirty.current.delete(field);
-        setNotice(
-          "This issue changed elsewhere; it was reloaded. Make your edit again.",
-        );
+        dirty.current.add(field);
         show(await issuesApi.get(number));
       } else onError(error);
     }
@@ -207,10 +256,17 @@ export function IssuePanel({
           else dirty.current.delete("title");
         }}
       />
-      {notice && (
-        <p className="issue-notice" role="status">
-          {notice}
-        </p>
+      {conflict && (
+        <div className="issue-conflict" role="alert">
+          <p>
+            <b>{conflict.updatedBy ?? "Someone"}</b> changed this issue while
+            you were editing it.
+          </p>
+          <div>
+            <button onClick={() => void resolve(true)}>Keep mine</button>
+            <button onClick={() => void resolve(false)}>Use theirs</button>
+          </div>
+        </div>
       )}
       <div className="issue-props">
         <label>
@@ -304,7 +360,11 @@ export function IssuePanel({
         {issue.notes.map((n) => (
           <li key={n.id} className={`issue-note kind-${n.kind}`}>
             <div className="issue-note-head">
-              <b>{n.author}</b>
+              <b
+                className={`issue-author-name${n.author !== "me" ? " agent" : ""}`}
+              >
+                {n.author}
+              </b>
               <time dateTime={n.at}>{when(n.at)}</time>
               {n.kind !== "note" && (
                 <span className="issue-note-kind">{n.text}</span>

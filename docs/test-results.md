@@ -1,5 +1,29 @@
 # Test results
 
+## 2026-10-22T14:40:00+09:00 — 0.47.0 agents: MCP server, CLI, badges, notifications, conflicts
+
+Focused:
+- `tests/integration/issues-agents.test.ts` **6/6**:
+  - **Client helpers:** label edits, the working status, and `diffBoards` (moved, noted, created, deleted).
+  - **CLI against a real server:**
+    - `edit` with title and priority, `label +ui -bug +idea`;
+    - `claim` by codex (In progress, `updatedBy`, "Claimed by codex" note), `close` / `reopen`;
+    - `search --json`, `show` with priority and "by", `rm`, the `edit` usage error;
+    - `watch` printing a creation or move and a note until aborted.
+  - **MCP:**
+    - `initialize` version negotiation, notifications with no reply, `tools/list`;
+    - `create_issue`, `claim_issue`, `add_note`, `update_issue` with add/remove labels and body, `close_issue` with a note (the full note thread checked), `list_issues` by status;
+    - tool errors returned as `isError` results, unknown methods as -32601, and stdio framing with a parse error.
+  - **Notifications:** for codex's create, move, note and edit, none for `me`.
+- E2E `issues-agents.spec.ts` **6/6** across Chromium, Firefox and WebKit (repeated 4× for 24/24):
+  - an agent's create and move show a `codex` badge on the card;
+  - the bell entry "codex moved it to In progress" opens the issue, where the agent's note author is marked;
+  - an agent edit during typing raises the prompt and Keep mine saves your text.
+- `issues.spec.ts`: the stale-edit step now expects the prompt and Use theirs.
+- Smoke test of the real executables over stdio: `bin/lotion-mcp` answered `initialize` and created an issue; `bin/lotion issue new` / `ls` worked against a temporary server.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **290/290**; Playwright **333 passed, 1 failed**. The failure was "Target crashed" (the Chromium renderer died under full-suite load) in `issues-agents.spec.ts`. The same spec then passed 24/24. Remote CI results are recorded on the pull request.
+
 ## 2026-10-22T13:10:00+09:00 — 0.46.0 keyboard-only Issues board
 
 Focused:

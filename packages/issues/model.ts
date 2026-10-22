@@ -51,6 +51,8 @@ export type Issue = {
   closedAt: string | null;
   /** Bumped by every change; PATCH may require it (If-Match). */
   version: number;
+  /** Who made the latest change (an older file may not have it). */
+  updatedBy?: string;
   notes: IssueNote[];
 };
 
@@ -199,6 +201,7 @@ export function createIssue(
     updatedAt: clock.now,
     closedAt: isDone(statuses, status) ? clock.now : null,
     version: 1,
+    updatedBy: author,
     notes: [note(clock, author, "created", "Created")],
   };
 }
@@ -252,27 +255,32 @@ export function moveIssue(
   }
   const statusChanged = issue.status !== status;
   if (!statusChanged && issue.rank === rank) return [...changed.values()];
-  const moved = touch(issue, clock, {
-    status,
-    rank,
-    closedAt: statusChanged
-      ? isDone(statuses, status)
-        ? clock.now
-        : null
-      : issue.closedAt,
-    notes: statusChanged
-      ? [
-          ...issue.notes,
-          note(
-            clock,
-            author,
-            "status",
-            `${statusOf(statuses, issue.status).name} → ${statusOf(statuses, status).name}`,
-            { from: issue.status, to: status },
-          ),
-        ].slice(-MAX_NOTES)
-      : issue.notes,
-  });
+  const moved = touch(
+    issue,
+    clock,
+    {
+      status,
+      rank,
+      closedAt: statusChanged
+        ? isDone(statuses, status)
+          ? clock.now
+          : null
+        : issue.closedAt,
+      notes: statusChanged
+        ? [
+            ...issue.notes,
+            note(
+              clock,
+              author,
+              "status",
+              `${statusOf(statuses, issue.status).name} → ${statusOf(statuses, status).name}`,
+              { from: issue.status, to: status },
+            ),
+          ].slice(-MAX_NOTES)
+        : issue.notes,
+    },
+    author,
+  );
   return [moved, ...changed.values()];
 }
 
@@ -317,7 +325,12 @@ export function patchIssue(
     edited = true;
   }
   if (!edited) return moved === issue ? [] : result;
-  return [moved === issue ? touch(next, clock, {}) : next, ...rest];
+  return [
+    moved === issue
+      ? touch(next, clock, {}, author)
+      : { ...next, updatedBy: author },
+    ...rest,
+  ];
 }
 
 export function addNote(
@@ -329,11 +342,16 @@ export function addNote(
 ): Issue {
   const { text } = noteSchema.parse(input);
   const issue = find(issues, number);
-  return touch(issue, clock, {
-    notes: [...issue.notes, note(clock, author, "note", text)].slice(
-      -MAX_NOTES,
-    ),
-  });
+  return touch(
+    issue,
+    clock,
+    {
+      notes: [...issue.notes, note(clock, author, "note", text)].slice(
+        -MAX_NOTES,
+      ),
+    },
+    author,
+  );
 }
 
 export function find(issues: Issue[], number: number): Issue {
@@ -342,11 +360,17 @@ export function find(issues: Issue[], number: number): Issue {
   return issue;
 }
 
-function touch(issue: Issue, clock: Clock, changes: Partial<Issue>): Issue {
+function touch(
+  issue: Issue,
+  clock: Clock,
+  changes: Partial<Issue>,
+  author: string,
+): Issue {
   return {
     ...issue,
     ...changes,
     updatedAt: clock.now,
+    updatedBy: author,
     version: issue.version + 1,
   };
 }
