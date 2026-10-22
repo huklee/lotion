@@ -1,5 +1,21 @@
 # Test results
 
+## 2026-10-22T17:40:00+09:00 — 0.49.0 home, go-to shortcuts, Korean-layout shortcuts
+
+Focused:
+- `tests/unit/keyboard-layout.test.ts` **2/2**:
+  - jamo, `Process` and `Unidentified` keys map to letters by `code`, with Shift giving upper case and `?`;
+  - ASCII and named keys are unchanged, and a non-US ASCII layout is left alone.
+- E2E `home-shortcuts.spec.ts` **6/6** across Chromium, Firefox and WebKit, with keydown events as a browser in 두벌식 mode sends them:
+  - from a page, ㅎ ㅑ (g i) opens Issues;
+  - on the board, ㅓ (j) focuses the filtered card, ⇧ㅣ (⇧L) moves it to Todo, ㅐ (o) opens it, and ⇧/ shows the shortcut list;
+  - ㅎ ㅗ (g h) goes Home and leaves the board;
+  - the Home button and the logo go Home from the board;
+  - Home's Recent changes lists the edited page and opens it; See all opens `#/changes`.
+- The first run of `navigation.spec.ts` failed 3 runs, one per browser, because the logo was also labelled "Home"; it is now "Lotion home".
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **299/299**; Playwright **346/346**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-22T16:10:00+09:00 — 0.48.0 Lotion integration
 
 Focused:
