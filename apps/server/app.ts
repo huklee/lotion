@@ -9,6 +9,8 @@ import { LinkPreviewService } from "./link-preview-service";
 import { DEFAULT_PRESETS, type SummaryService } from "./summaries";
 import type { NotificationService } from "./notifications";
 import type { FavoritesStore } from "./favorites";
+import type { IssueStore } from "./issues";
+import { parseAuthor } from "../../packages/issues/model";
 import {
   SESSION_COOKIE,
   SESSION_DAYS,
@@ -39,6 +41,7 @@ export async function createApp(
     notifications?: NotificationService;
     sessions?: SessionStore;
     favorites?: FavoritesStore;
+    issues?: IssueStore;
   } = {},
 ) {
   const app = Fastify({ bodyLimit: 12 * 1024 * 1024, logger: false });
@@ -190,6 +193,65 @@ export async function createApp(
   app.delete("/api/favorites/:id", async (req) => ({
     ids: await favorites().remove(String((req.params as any).id)),
   }));
+  const issues = () => {
+    if (!options.issues)
+      throw new AppError(503, "Issues are not configured on this server");
+    return options.issues;
+  };
+  const issueNumber = (req: any) => {
+    const value = Number(req.params.number);
+    if (!Number.isSafeInteger(value) || value < 1)
+      throw new AppError(400, "Invalid issue number");
+    return value;
+  };
+  const author = (req: any) => parseAuthor(req.headers["x-lotion-author"]);
+  app.get("/api/issues", async (req) => {
+    const q = (req.query ?? {}) as Record<string, unknown>;
+    const text = (key: string) =>
+      typeof q[key] === "string" && q[key] ? String(q[key]) : undefined;
+    return issues().board({
+      status: text("status"),
+      label: text("label"),
+      q: text("q"),
+    });
+  });
+  app.get("/api/issues/seq", async () => ({ seq: await issues().seq() }));
+  app.post("/api/issues", async (req, reply) => {
+    const issue = await issues().create(req.body ?? {}, author(req));
+    reply.code(201);
+    return issue;
+  });
+  app.get("/api/issues/:number", async (req) => issues().get(issueNumber(req)));
+  app.patch("/api/issues/:number", async (req) => {
+    const header = req.headers["if-match"];
+    const expected =
+      header === undefined
+        ? undefined
+        : Number(String(header).replaceAll('"', ""));
+    if (expected !== undefined && !Number.isSafeInteger(expected))
+      throw new AppError(400, "Invalid If-Match version");
+    return issues().patch(
+      issueNumber(req),
+      req.body ?? {},
+      author(req),
+      expected,
+    );
+  });
+  app.post("/api/issues/:number/move", async (req) =>
+    issues().move(issueNumber(req), req.body ?? {}, author(req)),
+  );
+  app.post("/api/issues/:number/notes", async (req, reply) => {
+    const issue = await issues().note(
+      issueNumber(req),
+      req.body ?? {},
+      author(req),
+    );
+    reply.code(201);
+    return issue;
+  });
+  app.delete("/api/issues/:number", async (req) =>
+    issues().remove(issueNumber(req)),
+  );
   const notifications = () => {
     if (!options.notifications)
       throw new AppError(

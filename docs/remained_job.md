@@ -2,6 +2,13 @@
 
 Historical completed work lives in the [implementation history](implementation-history-log.md), [test results](test-results.md), and [changelog](changelog.md). The completed sequence remains visible below for review across its six incremental pull requests.
 
+## Personal issue tracker — 2026-10-22 ([ADR-026](adr/026-personal-issue-tracker.md))
+
+- [x] Stage 1 MVP: issue store and API, board with drag between statuses, issue panel, status notes, live refresh, `lotion issue` CLI (0.45.0).
+- [ ] Stage 2: keyboard-only use (hints, j/k/h/l, card moves, ⌘K, filters).
+- [ ] Stage 3: agents (MCP server, more CLI commands, author badges, notifications, conflict prompts).
+- [ ] Stage 4: Lotion integration (page links, issues from blocks, archive, settings, export, mobile board).
+
 ## Meeting databases and summaries — 2026-10-16 ([ADR-025](adr/025-meeting-databases-and-summaries.md), [progress](meeting-db-progress.md))
 
 - [x] Database properties and rows: type change with conversion, select options, move/delete properties, duplicate/move/delete rows (0.29.0).

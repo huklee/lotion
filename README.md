@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.29.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.45.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -76,6 +76,23 @@ Checklist items can be completed by clicking their checkbox or pressing **Ctrl+E
 ## Favorites and navigation
 
 Mark a page with the top-bar star to add it to **Favorites** in the sidebar. Favorites persist in this browser and sync across its tabs; they are not server-side workspace data. Page navigation supports browser Back/Forward. Use ⌘click on macOS or Ctrl+click on Windows/Linux on sidebar links to open another tab (Shift+click follows the browser's new-window behavior).
+
+## Issues
+
+Sidebar → **Issues** (`#/issues`) is a personal issue board: one column per status (Backlog, Todo, In progress, Done), cards dragged between columns, **c** for a new issue, and a side panel with the description, labels and a thread of status notes. Status changes are noted automatically.
+
+Agents and scripts use the command line against a running server:
+
+```sh
+ln -s "$PWD/bin/lotion" ~/.local/bin/lotion   # once
+export LOTION_URL=http://127.0.0.1:3001 LOTION_TOKEN_FILE=~/.config/lotion/token
+lotion issue new "Fix paste in lists" --label bug --as codex
+lotion issue ls --json
+lotion issue move 12 "in progress"
+lotion issue note 12 "found the cause; fixing"
+```
+
+Design: [ADR-026](docs/adr/026-personal-issue-tracker.md).
 
 ## Control panel
 

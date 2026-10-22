@@ -7,6 +7,7 @@ import { SummaryService } from "../../apps/server/summaries";
 import { NotificationService } from "../../apps/server/notifications";
 import { SessionStore } from "../../apps/server/sessions";
 import { FavoritesStore } from "../../apps/server/favorites";
+import { IssueStore } from "../../apps/server/issues";
 
 export async function startE2EServer(options: { token?: string } = {}) {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lotion-e2e-"));
@@ -19,6 +20,7 @@ export async function startE2EServer(options: { token?: string } = {}) {
       token: options.token,
       sessions: new SessionStore(dir),
       favorites: new FavoritesStore(dir),
+      issues: new IssueStore(dir),
       notifications,
       // A deterministic stand-in for Codex/Claude: echoes what it was given.
       summaries: new SummaryService(repo, {

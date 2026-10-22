@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Lotion command line: `lotion issue --help`. Link it onto PATH, e.g.
+#   ln -s "$PWD/bin/lotion" ~/.local/bin/lotion
+set -euo pipefail
+src=${BASH_SOURCE[0]}
+while [[ -L $src ]]; do
+  dir=$(cd -P "$(dirname "$src")" && pwd)
+  src=$(readlink "$src")
+  [[ $src == /* ]] || src=$dir/$src
+done
+root=$(cd -P "$(dirname "$src")/.." && pwd)
+exec "$root/node_modules/.bin/tsx" "$root/apps/cli/main.ts" "$@"

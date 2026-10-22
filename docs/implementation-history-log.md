@@ -1,5 +1,19 @@
 # Implementation history log
 
+## 2026-10-22T11:30:00+09:00 — 0.45.0 Issues board and CLI (stage 1 of ADR-026)
+
+The owner chose to build a personal issue tracker into Lotion (direction B: a server-side store, not a database block) and approved four stages, MVP first.
+
+- **Domain:** `packages/issues/model.ts`, pure, with Zod schemas. It covers create, move (fractional ranks; a column is renumbered when the gap collapses; a no-op move changes nothing; a status note on every status change; `closedAt` set in the last column), patch (a status change moves the issue to the end of the new column), notes, filters and author parsing.
+- **Store:** `apps/server/issues.ts` `IssueStore`. It writes `<data>/issues.json` atomically from a serial queue and bumps `seq` on every write; `If-Match` on PATCH is answered with 409 when stale.
+- **API:** routes under `/api/issues` in `app.ts`, wired in `main.ts` and in the e2e server.
+- **Web:** `apps/web/issues/`.
+  - `IssuesView` is the board: HTML5 drag with a drop line and an optimistic move; `c` and the column **+** open quick-add.
+  - `IssuePanel` saves fields on blur with `If-Match`. On 409 it shows a notice and reloads. Deletion is confirmed in the panel.
+  - `issues-api` polls `seq` every 5 s while visible. `issues-route` handles `#/issues/:n` (pushState plus an internal event). `board-order` holds the drop-position helpers and label colours.
+  - App, sidebar (Issues button) and top bar (breadcrumb) were adjusted. App's start-up no longer opens the first page when the address is an issues route.
+- **CLI:** `apps/cli/lotion.ts`, a testable `run(argv, io)` with `apps/cli/main.ts` and `bin/lotion` (a symlink-safe tsx wrapper).
+
 ## 2026-10-20T09:30:00+09:00 — 0.44.1 duplicate view switch removed
 
 Owner report: Meeting notes showed two pairs of Table / Feed tabs. The 0.38.0 toolbar layout switch duplicated the view tabs (most visibly in Meeting logs, which starts with a Feed and a Table view); it was removed from `DatabaseViewBar` together with its CSS. Feed views are added through the tab bar's "+" (Add view), as before.

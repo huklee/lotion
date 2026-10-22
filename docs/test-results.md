@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-10-22T11:50:00+09:00 — 0.45.0 Issues board and CLI
+
+Focused: `tests/unit/issues-model.test.ts` **12/12** (creation at the column end with a created note; validation; cross-column move with status note and `closedAt`; reorder without a note and no-op moves; renumbering after 80 moves into one gap; patch with label de-duplication; notes and authors; filters; drop position, optimistic move and route parsing). `tests/integration/issues.test.ts` **6/6** (token required; create/list/filter/move/note/PATCH with stale `If-Match` → 409/delete and persistence with numbers never reused; validation; 12 concurrent creates plus concurrent notes and moves all kept; CLI `new`/`ls`/`move`/`note -` from stdin/`show`/`--json` against a real server, errors with exit code 1). E2E `issues.spec.ts` **6/6** across Chromium, Firefox and WebKit (sidebar → Issues; `c` quick-add; drag to In progress saved; panel shows the status note; a note is added with ⌘/Ctrl+Enter; a move made through the API appears within one poll; Escape closes; deep link; title and label edits; a stale description edit is refused and reloaded; delete with confirmation).
+
+The first full run failed 4 sidebar drag tests (`navigation.spec.ts`) in every browser: the new Issues row left the page tree too short at 1280×720, so the dragged rows scrolled out of view. The sidebar's vertical spacing was tightened (workspace row 30→20 px, primary buttons 28→16 px); the same mix of specs then passed 66/66.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **275/275**; Playwright **319/319**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-20T09:40:00+09:00 — 0.44.1 duplicate view switch removed
 
 Focused: `database.spec.ts` and `summaries.spec.ts` **27/27** across Chromium, Firefox and WebKit; the plain-database scenario now checks that no layout switch exists and adds a Feed view from "+" (entries shown, no summary button) before returning to the Table tab. Remote CI results are recorded on the pull request.

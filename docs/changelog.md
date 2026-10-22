@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.45.0 — 2026-10-22 · [#65](https://github.com/huklee/lotion/pull/65)
+
+### Added
+
+- **Issues: a personal issue board** (sidebar → Issues, `#/issues`). One column per status — Backlog, Todo, In progress, Done — with cards you drag between columns and up or down inside a column.
+  - **New issue:** press **c** (or **+** on a column), type a title, Enter. The input stays open for the next one; Esc closes it.
+  - **Issue panel:** click a card (or open `#/issues/12`) to edit title, status, labels and a Markdown description beside the board. Changes save when you leave a field. If the issue was changed elsewhere in the meantime, your edit is refused and the issue reloads instead of overwriting it.
+  - **Status notes:** every issue keeps a thread of dated notes. Creating an issue and moving it to another status add a note automatically ("Backlog → In progress"); add your own with ⌘/Ctrl+Enter. Notes show who wrote them (you, `codex`, `claude`, …).
+  - **Live board:** an open board picks up changes made elsewhere (another device or the command line) within a few seconds.
+- **`lotion issue` command line for people and agents:** `ls`, `show`, `new`, `move`, `note`, with `--json` output and `--as <name>` for the author shown on notes. Run `bin/lotion issue --help`. Set `LOTION_URL` and `LOTION_TOKEN` (or `LOTION_TOKEN_FILE`).
+- Issues are stored in `issues.json` in the workspace data folder. Each change is saved for one issue at a time, so the board and the command line never overwrite each other. Issue numbers are never reused.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.44.1 — 2026-10-20 · [#64](https://github.com/huklee/lotion/pull/64)
 
 ### Fixed
