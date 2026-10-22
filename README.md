@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.47.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.48.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -102,6 +102,8 @@ Agents that speak MCP (Claude Code, Codex, …) can use the issue tools directly
 claude mcp add lotion-issues -e LOTION_AUTHOR=claude \
   -e LOTION_TOKEN_FILE=~/.config/lotion/token -- ~/Work/lotion/bin/lotion-mcp
 ```
+
+Issues and pages are connected: **Create issue** in any block's handle menu (⋮⋮) makes an issue from that block (meeting-log action items too), pages list their linked issues under the title, and the issue panel links pages and can move a long description into a page. The board menu (⋯) has board settings (columns and labels), Show archived and Markdown/JSON export.
 
 Changes by agents carry their name on the card, appear in the notification bell, and never silently overwrite what you are typing in an issue.
 

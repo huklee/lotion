@@ -6,6 +6,11 @@ import {
   IssueError,
   MAX_ISSUES,
   addNote,
+  archiveColumn,
+  issuesToMarkdown,
+  renameLabel,
+  setStatuses,
+  statusOf,
   createIssue,
   find,
   matches,
@@ -202,6 +207,51 @@ export class IssueStore {
       );
       return { state: IssueStore.replace(state, [issue]), result: issue };
     });
+  }
+
+  /** Board columns (rename, recolour, reorder, add, remove empty ones). */
+  setStatuses(input: unknown) {
+    return this.change((state) => {
+      const statuses = setStatuses(state.issues, input);
+      return { state: { ...state, statuses }, result: statuses };
+    });
+  }
+
+  renameLabel(from: string, to: string | null, author: string) {
+    return this.change((state) => {
+      const changed = renameLabel(state.issues, from, to, author, this.clock());
+      return {
+        state: IssueStore.replace(state, changed),
+        result: { changed: changed.length },
+      };
+    });
+  }
+
+  archiveColumn(status: string, author: string) {
+    return this.change((state) => {
+      statusOf(state.statuses, status);
+      const changed = archiveColumn(state.issues, status, author, this.clock());
+      return {
+        state: IssueStore.replace(state, changed),
+        result: { archived: changed.length },
+      };
+    });
+  }
+
+  async export(format: "json" | "md") {
+    await this.queue;
+    const state = await this.load();
+    return format === "json"
+      ? JSON.stringify(
+          { statuses: state.statuses, issues: state.issues },
+          null,
+          2,
+        )
+      : issuesToMarkdown(
+          state.issues,
+          state.statuses,
+          this.now().toISOString(),
+        );
   }
 
   remove(number: number) {

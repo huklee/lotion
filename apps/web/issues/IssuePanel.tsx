@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Trash2, X } from "lucide-react";
-import { ApiError } from "../api";
+import { Archive, FileText, Link2, Trash2, X } from "lucide-react";
+
+import { textToBlocks } from "../paste/text-blocks";
+import type { TreeNode } from "../../../packages/document-schema/index";
+import { ApiError, api } from "../api";
 import { pillStyle } from "../database-ui";
 import {
   PRIORITIES,
@@ -10,6 +13,15 @@ import {
 } from "../../../packages/issues/model";
 import { issuesApi } from "./issues-api";
 import { labelColor } from "./board-order";
+
+/** Pasted-text blocks carry no ids; a saved page needs one on every block. */
+function withIds<T extends { id?: string; children?: T[] }>(blocks: T[]): T[] {
+  return blocks.map((block) => ({
+    ...block,
+    id: block.id || crypto.randomUUID(),
+    children: withIds(block.children ?? []),
+  }));
+}
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString(undefined, {
@@ -42,6 +54,9 @@ export function IssuePanel({
   onChanged,
   onClose,
   onError,
+  pages = [],
+  openPage,
+  onPagesChanged,
 }: {
   number: number;
   statuses: IssueStatus[];
@@ -51,7 +66,12 @@ export function IssuePanel({
   onChanged: () => Promise<void>;
   onClose: () => void;
   onError: (error: unknown) => void;
+  pages?: TreeNode[];
+  openPage?: (id: string, blockId?: string) => void;
+  onPagesChanged?: () => void;
 }) {
+  const [linkQuery, setLinkQuery] = useState("");
+  const [linking, setLinking] = useState(false);
   const [issue, setIssue] = useState<Issue | null>(null);
   const [missing, setMissing] = useState(false);
   const [title, setTitle] = useState("");
@@ -168,7 +188,14 @@ export function IssuePanel({
   }, [onClose]);
 
   const save = async (
-    field: "title" | "labels" | "body" | "status" | "priority",
+    field:
+      | "title"
+      | "labels"
+      | "body"
+      | "status"
+      | "priority"
+      | "links"
+      | "archived",
     value: unknown,
   ) => {
     if (!issue || conflictRef.current) return;
@@ -335,8 +362,105 @@ export function IssuePanel({
             ))}
           </div>
         )}
+        <div className="issue-pages" aria-label="Linked pages">
+          <span className="issue-pages-label">Pages</span>
+          <div className="issue-pages-list">
+            {(issue.links ?? []).map((id) => {
+              const page = pages.find((p) => p.id === id);
+              return (
+                <span key={id} className="issue-page-chip">
+                  <button
+                    className="issue-page-open"
+                    disabled={!page || !openPage}
+                    onClick={() => openPage?.(id)}
+                  >
+                    <span aria-hidden="true">{page?.icon || "📄"}</span>
+                    {page ? page.title || "Untitled" : "Missing page"}
+                  </button>
+                  <button
+                    aria-label={`Unlink ${page?.title || "page"}`}
+                    onClick={() =>
+                      void save(
+                        "links",
+                        (issue.links ?? []).filter((l) => l !== id),
+                      )
+                    }
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              );
+            })}
+            {linking ? (
+              <div className="issue-link-picker">
+                <input
+                  autoFocus
+                  aria-label="Find a page to link"
+                  placeholder="Page title…"
+                  value={linkQuery}
+                  onChange={(event) => setLinkQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      event.stopPropagation();
+                      setLinking(false);
+                    }
+                  }}
+                />
+                <ul>
+                  {pages
+                    .filter(
+                      (p) =>
+                        !(issue.links ?? []).includes(p.id) &&
+                        (p.title || "Untitled")
+                          .toLowerCase()
+                          .includes(linkQuery.trim().toLowerCase()),
+                    )
+                    .slice(0, 6)
+                    .map((p) => (
+                      <li key={p.id}>
+                        <button
+                          onClick={() => {
+                            setLinking(false);
+                            setLinkQuery("");
+                            void save("links", [...(issue.links ?? []), p.id]);
+                          }}
+                        >
+                          <span aria-hidden="true">{p.icon || "📄"}</span>{" "}
+                          {p.title || "Untitled"}
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ) : (
+              <button
+                className="issue-link-add"
+                onClick={() => setLinking(true)}
+              >
+                <Link2 size={13} /> Link a page
+              </button>
+            )}
+          </div>
+        </div>
+        {issue.source && (
+          <button
+            className="issue-source"
+            disabled={!openPage}
+            onClick={() =>
+              openPage?.(issue.source!.pageId, issue.source!.blockId)
+            }
+          >
+            Made from a block in{" "}
+            <b>
+              {pages.find((p) => p.id === issue.source!.pageId)?.title ||
+                "a page"}
+            </b>
+          </button>
+        )}
         <div className="issue-dates">
           Created {when(issue.createdAt)} · Updated {when(issue.updatedAt)}
+          {issue.updatedBy ? ` by ${issue.updatedBy}` : ""}
+          {issue.archivedAt ? ` · Archived ${when(issue.archivedAt)}` : ""}
         </div>
       </div>
       <textarea
@@ -410,6 +534,52 @@ export function IssuePanel({
         </button>
       </form>
       <div className="issue-danger">
+        {issue.body.trim() && !confirmDelete && (
+          <button
+            title="Create a page with this description and link it"
+            onClick={async () => {
+              try {
+                const title = `#${issue.number} ${issue.title}`.slice(0, 200);
+                const doc = await api<{ id: string; revision: number }>(
+                  "/api/documents",
+                  {
+                    method: "POST",
+                    body: JSON.stringify({
+                      title,
+                      mutationId: crypto.randomUUID(),
+                    }),
+                  },
+                );
+                await api(`/api/documents/${doc.id}/content`, {
+                  method: "PUT",
+                  headers: { "If-Match": `"${doc.revision}"` },
+                  body: JSON.stringify({
+                    title,
+                    blocks: withIds(textToBlocks(issue.body)),
+                    mutationId: crypto.randomUUID(),
+                  }),
+                });
+                const next = await issuesApi.patch(number, issue.version, {
+                  links: [...(issue.links ?? []), doc.id],
+                  body: `The description moved to the page “${title}”.`,
+                });
+                dirty.current.delete("body");
+                show(next);
+                await onChanged();
+                onPagesChanged?.();
+              } catch (error) {
+                onError(error);
+              }
+            }}
+          >
+            <FileText size={14} /> Move description to a page
+          </button>
+        )}
+        {!confirmDelete && (
+          <button onClick={() => void save("archived", !issue.archivedAt)}>
+            <Archive size={14} /> {issue.archivedAt ? "Unarchive" : "Archive"}
+          </button>
+        )}
         {confirmDelete ? (
           <>
             <span>Delete #{issue.number} and its notes?</span>

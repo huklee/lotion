@@ -1,6 +1,6 @@
 # ADR-026: Personal issue tracker (Issues board, status notes, CLI)
 
-- **Status:** Accepted. Stage 1 (MVP) is in 0.45.0, stage 2 (keyboard) in 0.46.0, stage 3 (agents) in 0.47.0; stage 4 follows in its own release.
+- **Status:** Accepted and complete. Stage 1 (MVP) 0.45.0, stage 2 (keyboard) 0.46.0, stage 3 (agents) 0.47.0, stage 4 (Lotion integration) 0.48.0.
 - **Date:** 2026-10-22
 
 ## Context
@@ -81,6 +81,15 @@ Issues are a server-side store, not a document block.
 - **Authors:** every change records `updatedBy` (from `X-Lotion-Author`).
 - **Notifications:** the server adds an `issue.changed` notification (with the issue number) for changes by any author except `me`.
 - **Conflicts:** the panel compares an incoming version with its unsaved fields. On a real difference it blocks saving and asks: Keep mine re-saves with the new version, Use theirs discards the local text.
+
+## Stage 4 notes
+
+- **Data:** issues gain `links` (page ids), `source` (page and block of origin) and `archivedAt`. Older files are normalised on load.
+- **Filters:** `?page=` matches links and the source page. Archived issues are hidden unless `archived=include` or `only`.
+- **Endpoints:** `PUT /api/issues/config` (validated statuses; removing a column that still has issues is refused), `POST /api/issues/labels` (rename or delete), `POST /api/issues/archive` (a whole column), `GET /api/issues/export?format=md|json` (sent as an attachment).
+- **Create issue:** the editor learns its page through `BlockIssueContext`. ActiveDocument provides the page, and feed row editors provide the row page.
+- **Description to a page:** "Move description to a page" converts the Markdown with the paste engine's `textToBlocks` and adds block ids.
+- **Routing:** App's `openPage` now announces route changes, since `pushState` fires no `hashchange`; otherwise the issue route stayed active after opening a page.
 
 ## Consequences
 

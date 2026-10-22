@@ -38,6 +38,7 @@ Read
       --label <l>          Only issues with this label
       --priority <p>       Only this priority (none, low, medium, high, urgent)
       -q <text>            Title/body search
+      --archived           Include archived issues
   search <text>            Same as ls -q <text>
   show <n>                 One issue with its notes
   watch                    Print changes as they happen (Ctrl+C stops)
@@ -56,7 +57,11 @@ Change
   claim <n>                Move to In progress and note who took it
   close <n> / reopen <n>   Move to the last / first column
   note <n> <text|->        Add a status note; "-" reads stdin
+  archive <n> / unarchive <n>
+                           Hide from / return to the board
+  link <n> <page-id>       Link a Lotion page (unlink <n> <page-id> removes it)
   rm <n>                   Delete an issue and its notes
+  export                   Print the whole board (--format md or json)
 
 Options
   --json                   Print JSON (API objects)
@@ -81,6 +86,7 @@ const VALUE_FLAGS = new Set([
   "priority",
   "title",
   "interval",
+  "format",
 ]);
 
 export function parseArgs(argv: string[]): Parsed {
@@ -109,7 +115,8 @@ export function parseArgs(argv: string[]): Parsed {
       const value = match[2] ?? argv[++i];
       if (value === undefined) throw new CliError(`--${name} needs a value`);
       flags.set(name, value);
-    } else if (["json", "help"].includes(name)) flags.set(name, true);
+    } else if (["json", "help", "archived"].includes(name))
+      flags.set(name, true);
     else throw new CliError(`Unknown option: ${arg}`);
   }
   return { args, flags };
@@ -221,6 +228,7 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
           label: flag("label"),
           priority: flag("priority")?.toLowerCase(),
           q,
+          archived: flags.has("archived") ? "include" : undefined,
         });
         print(json ? result.issues : result, () => formatBoard(result));
         return 0;
@@ -350,6 +358,39 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
         if (!body?.trim()) throw new CliError("note needs text");
         const issue = await api.note(n, body);
         print(issue, () => `Noted on #${issue.number}`);
+        return 0;
+      }
+      case "archive":
+      case "unarchive": {
+        const n = number(rest[0]);
+        const issue = await api.patch(n, { archived: command === "archive" });
+        print(
+          issue,
+          () =>
+            `#${issue.number} ${issue.archivedAt ? "archived" : "back on the board"}`,
+        );
+        return 0;
+      }
+      case "link":
+      case "unlink": {
+        const n = number(rest[0]);
+        const page = rest[1]?.replace(/^.*#\/page\//, "").replace(/#.*$/, "");
+        if (!page) throw new CliError(`${command} needs a page id or link`);
+        const current = await api.get(n);
+        const links =
+          command === "link"
+            ? [...new Set([...(current.links ?? []), page])]
+            : (current.links ?? []).filter((l) => l !== page);
+        const issue = await api.patch(n, { links }, current.version);
+        print(
+          issue,
+          () => `#${issue.number} pages: ${issue.links.join(", ") || "(none)"}`,
+        );
+        return 0;
+      }
+      case "export": {
+        const format = flag("format") === "json" ? "json" : "md";
+        io.out(await api.exportText(format));
         return 0;
       }
       case "rm":

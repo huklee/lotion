@@ -505,3 +505,287 @@
   color: var(--bg);
   border-color: var(--accent);
 }
+/* stage 4: Lotion integration */
+.issues-stats {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.issues-stats + .issues-menu-wrap .issues-help,
+.issues-menu-wrap + .issues-help {
+  margin-left: 0;
+}
+.issues-menu-wrap {
+  position: relative;
+}
+.issues-menu {
+  position: absolute;
+  z-index: 30;
+  right: 0;
+  top: 32px;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  box-shadow: 0 10px 30px rgb(15 15 15 / 14%);
+}
+.issues-menu > button,
+.issues-menu > a {
+  justify-content: flex-start;
+  padding: 6px 10px;
+  border-radius: 5px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+}
+.issues-menu > button:hover,
+.issues-menu > a:hover {
+  background: var(--hover);
+}
+.issues-archive {
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.issues-archive:hover {
+  background: var(--hover);
+}
+.issues-archive + .issues-column-add {
+  margin-left: 0;
+}
+.issue-pages {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.issue-pages-label {
+  flex: 0 0 72px;
+  color: var(--muted);
+  padding-top: 3px;
+}
+.issue-pages-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+.issue-page-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.issue-page-chip button {
+  padding: 2px 6px;
+  font-size: 12.5px;
+  gap: 4px;
+}
+.issue-page-chip button:hover {
+  background: var(--hover);
+}
+.issue-link-add {
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 12.5px;
+  gap: 4px;
+}
+.issue-link-add:hover {
+  background: var(--hover);
+}
+.issue-link-picker {
+  width: 100%;
+}
+.issue-link-picker input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+.issue-link-picker ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+.issue-link-picker li button {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 13px;
+}
+.issue-link-picker li button:hover {
+  background: var(--hover);
+}
+.issue-source {
+  justify-content: flex-start;
+  padding: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: left;
+}
+.issue-source:hover b {
+  text-decoration: underline;
+}
+.issue-toast {
+  position: fixed;
+  z-index: 60;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 10px 8px 14px;
+  border-radius: 8px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgb(15 15 15 / 20%);
+}
+.issue-toast button {
+  padding: 2px 8px;
+  border-radius: 5px;
+  color: inherit;
+}
+.issue-toast button:hover {
+  background: rgb(255 255 255 / 15%);
+}
+.issue-toast.error {
+  background: #b4403a;
+  color: #fff;
+}
+.page-issues {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: -4px 0 14px;
+  color: var(--muted);
+}
+.page-issue {
+  max-width: 100%;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12.5px;
+  gap: 6px;
+}
+.page-issue:hover {
+  background: var(--hover);
+}
+.page-issue.archived {
+  opacity: 0.6;
+}
+.page-issue-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 260px;
+  color: var(--text);
+}
+.issue-settings {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  text-align: left;
+}
+.issue-settings h3 {
+  margin: 18px 0 6px;
+  font-size: 14px;
+}
+.issue-settings .muted {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.issue-settings-statuses,
+.issue-settings-labels {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.issue-settings-statuses li,
+.issue-settings-labels li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.issue-settings input,
+.issue-settings select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+.issue-settings li input {
+  flex: 1;
+  min-width: 0;
+}
+.issue-settings li button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+.issue-settings-labels li button:not([aria-label]) {
+  width: auto;
+  padding: 0 8px;
+}
+.issue-settings li button:hover:not(:disabled) {
+  background: var(--hover);
+}
+.issue-settings-row {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+.issue-settings-row button {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.issue-settings button.danger {
+  width: auto;
+  padding: 0 8px;
+  background: #c4554d;
+  color: #fff;
+}
+/* phones: one column per screen, swiped sideways */
+@media (max-width: 650px) {
+  .issues-header {
+    flex-wrap: wrap;
+  }
+  .issues-stats {
+    order: 5;
+    width: 100%;
+    margin-left: 0;
+  }
+  .issues-board {
+    scroll-snap-type: x mandatory;
+    gap: 10px;
+  }
+  .issues-column {
+    flex-basis: calc(100vw - 56px);
+    scroll-snap-align: start;
+  }
+}
+.issues-view.with-panel .issues-stats {
+  display: none;
+}
+.issues-view.with-panel .issues-menu-wrap {
+  margin-left: auto;
+}

@@ -6,12 +6,15 @@ import {
   useState,
   type DragEvent,
 } from "react";
-import { MessageSquare, Plus, X } from "lucide-react";
+import { MessageSquare, MoreHorizontal, Plus, X } from "lucide-react";
+import type { TreeNode } from "../../../packages/document-schema/index";
+import { IssueSettings } from "./IssueSettings";
 import { pillStyle } from "../database-ui";
 import {
   PRIORITIES,
   PRIORITY_NAMES,
   matches,
+  type IssueBoard,
   type IssueSummary,
 } from "../../../packages/issues/model";
 import { issuesApi, useIssueBoard } from "./issues-api";
@@ -54,15 +57,42 @@ export const isTyping = (target: EventTarget | null) =>
 const modalOpen = () =>
   !!document.querySelector('[role="dialog"][aria-modal="true"]');
 
+/** Open issues, in progress, and done in the last 7 days. */
+function IssueStats({ board }: { board: IssueBoard }) {
+  const last = board.statuses.at(-1)?.key;
+  const live = board.issues.filter((i) => !i.archivedAt);
+  const open = live.filter((i) => i.status !== last).length;
+  const doing = live.filter((i) => i.status === "doing").length;
+  const week = Date.now() - 7 * 86400_000;
+  const done = board.issues.filter(
+    (i) => i.closedAt && Date.parse(i.closedAt) >= week,
+  ).length;
+  return (
+    <span className="issues-stats" aria-label="Board summary">
+      {open} open{doing ? ` · ${doing} in progress` : ""} · {done} done this
+      week
+    </span>
+  );
+}
+
 /** The issue board: one column per status, cards dragged between them. */
 export function IssuesView({
   openNumber,
   onError,
+  pages = [],
+  openPage,
+  onPagesChanged,
 }: {
   openNumber: number | null;
   onError: (error: unknown) => void;
+  pages?: TreeNode[];
+  openPage?: (id: string, blockId?: string) => void;
+  onPagesChanged?: () => void;
 }) {
-  const { board, setBoard, reload } = useIssueBoard(onError);
+  const [showArchived, setShowArchived] = useState(false);
+  const [settings, setSettings] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const { board, setBoard, reload } = useIssueBoard(onError, showArchived);
   const [adding, setAdding] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [drag, setDrag] = useState<{
@@ -89,10 +119,11 @@ export function IssuesView({
             q: filter.q.trim() || undefined,
             label: filter.label || undefined,
             priority: filter.priority || undefined,
+            archived: showArchived ? "include" : undefined,
           },
         ),
       ),
-    [board, filter],
+    [board, filter, showArchived],
   );
   const layout: BoardColumns = useMemo(
     () =>
@@ -380,6 +411,51 @@ export function IssuesView({
               ? `${visible.length} of ${board.issues.length}`
               : board.issues.length}
           </span>
+          <IssueStats board={board} />
+          <div className="issues-menu-wrap">
+            <button
+              className="issues-help"
+              aria-label="Board menu"
+              aria-expanded={menu}
+              title="Board menu"
+              onClick={() => setMenu((open) => !open)}
+            >
+              <MoreHorizontal size={15} />
+            </button>
+            {menu && (
+              <div className="issues-menu" role="menu" aria-label="Board menu">
+                <button
+                  role="menuitem"
+                  onClick={() => {
+                    setMenu(false);
+                    setSettings(true);
+                  }}
+                >
+                  Board settings…
+                </button>
+                <button
+                  role="menuitemcheckbox"
+                  aria-checked={showArchived}
+                  onClick={() => {
+                    setMenu(false);
+                    setShowArchived((v) => !v);
+                  }}
+                >
+                  {showArchived ? "Hide archived" : "Show archived"}
+                </button>
+                <a role="menuitem" href="/api/issues/export?format=md" download>
+                  Export Markdown
+                </a>
+                <a
+                  role="menuitem"
+                  href="/api/issues/export?format=json"
+                  download
+                >
+                  Export JSON
+                </a>
+              </div>
+            )}
+          </div>
           <button
             className="issues-help"
             aria-label="Keyboard shortcuts"
@@ -507,11 +583,30 @@ export function IssuesView({
                 <div className="issues-column-head">
                   <span
                     className="issue-status-pill"
-                    style={pillStyle(STATUS_COLOR[status.color] ?? "gray")}
+                    style={pillStyle(
+                      STATUS_COLOR[status.color] ?? status.color,
+                    )}
                   >
                     {status.name}
                   </span>
                   <span className="issues-column-count">{items.length}</span>
+                  {status.key === board.statuses.at(-1)?.key &&
+                    items.some((i) => !i.archivedAt) && (
+                      <button
+                        className="issues-archive"
+                        title="Archive every issue in this column"
+                        onClick={async () => {
+                          try {
+                            await issuesApi.archiveColumn(status.key);
+                            await reload();
+                          } catch (error) {
+                            onError(error);
+                          }
+                        }}
+                      >
+                        Archive
+                      </button>
+                    )}
                   <button
                     className="issues-column-add"
                     aria-label={`New issue in ${status.name}`}
@@ -574,6 +669,19 @@ export function IssuesView({
             focusCard(openNumber);
           }}
           onError={onError}
+          pages={pages}
+          openPage={openPage}
+          onPagesChanged={onPagesChanged}
+        />
+      )}
+      {settings && (
+        <IssueSettings
+          statuses={board.statuses}
+          issues={board.issues}
+          onClose={() => setSettings(false)}
+          onSaved={async () => {
+            await reload();
+          }}
         />
       )}
     </section>

@@ -3,6 +3,7 @@ import type { Document } from "../../packages/document-schema/index";
 import Editor from "./Editor";
 import { RowPagesContext } from "./row-pages";
 import type { SaveCoordinator } from "./save-coordinator";
+import { BlockIssueContext } from "./issues/block-issue";
 
 /**
  * A row page edited inside a database feed. It shares the page's save coordinator
@@ -52,44 +53,52 @@ export function InlineRowEditor({ pageId }: { pageId: string }) {
   const c = coordinator;
   return (
     <div ref={box} className="lotion-feed-editor" data-row-page={pageId}>
-      <Editor
-        key={`${pageId}:${c.editorVersion}`}
-        initial={c.content}
-        theme={rowPages.theme}
-        formattingShortcuts={rowPages.formattingShortcuts}
-        pages={rowPages.pages}
-        onCreateSubpage={(title) => rowPages.createSubpage(pageId, title)}
-        onCopyBlockLink={(blockId) => rowPages.copyBlockLink(pageId, blockId)}
-        onOpenPage={rowPages.openPage}
-        onSummarizeBlocks={(blockIds) =>
-          void rowPages
-            .summarize({ pages: [{ id: pageId, blockIds }], parentId: pageId })
-            .catch(() => undefined)
-        }
-        onLinkPreview={(url, preview) =>
-          c.edit({
-            ...c.content,
-            linkPreviews: { ...c.content.linkPreviews, [url]: preview },
-          })
-        }
-        onChange={(blocks) => c.edit({ ...c.content, blocks })}
-        onBackgroundImage={(id, url, name) => {
-          let found = false;
-          const update = (blocks: Document["blocks"]): Document["blocks"] =>
-            blocks.map((block) => {
-              if (block.id === id) {
-                found = true;
-                return {
-                  ...block,
-                  props: { ...block.props, url, name, caption: "" },
-                };
-              }
-              return { ...block, children: update(block.children ?? []) };
-            });
-          const blocks = update(c.content.blocks);
-          if (found) c.edit({ ...c.content, blocks });
-        }}
-      />
+      {/* "Create issue" on a meeting's block links the meeting page, not the host */}
+      <BlockIssueContext.Provider
+        value={{ pageId, pageTitle: c.content.title }}
+      >
+        <Editor
+          key={`${pageId}:${c.editorVersion}`}
+          initial={c.content}
+          theme={rowPages.theme}
+          formattingShortcuts={rowPages.formattingShortcuts}
+          pages={rowPages.pages}
+          onCreateSubpage={(title) => rowPages.createSubpage(pageId, title)}
+          onCopyBlockLink={(blockId) => rowPages.copyBlockLink(pageId, blockId)}
+          onOpenPage={rowPages.openPage}
+          onSummarizeBlocks={(blockIds) =>
+            void rowPages
+              .summarize({
+                pages: [{ id: pageId, blockIds }],
+                parentId: pageId,
+              })
+              .catch(() => undefined)
+          }
+          onLinkPreview={(url, preview) =>
+            c.edit({
+              ...c.content,
+              linkPreviews: { ...c.content.linkPreviews, [url]: preview },
+            })
+          }
+          onChange={(blocks) => c.edit({ ...c.content, blocks })}
+          onBackgroundImage={(id, url, name) => {
+            let found = false;
+            const update = (blocks: Document["blocks"]): Document["blocks"] =>
+              blocks.map((block) => {
+                if (block.id === id) {
+                  found = true;
+                  return {
+                    ...block,
+                    props: { ...block.props, url, name, caption: "" },
+                  };
+                }
+                return { ...block, children: update(block.children ?? []) };
+              });
+            const blocks = update(c.content.blocks);
+            if (found) c.edit({ ...c.content, blocks });
+          }}
+        />
+      </BlockIssueContext.Provider>
     </div>
   );
 }

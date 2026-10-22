@@ -2,6 +2,35 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.48.0 — 2026-10-22
+
+### Added
+
+- **Create issue from any block:** block handle (⋮⋮) → **Create issue**. The block's first line becomes the title and its nested blocks the description. The issue is linked to the page and remembers the block.
+  - A toast offers **Open**.
+  - In a Meeting logs feed, it links the meeting's own page, so action items become issues in one click.
+- **Linked issues on pages:** a page shows its issues (linked, or made from one of its blocks) under the title, with their status. Click one to open it.
+- **Pages in the issue panel:**
+  - **Link a page** (search by title) and unlink with ×.
+  - Clicking a page opens it. "Made from a block in …" opens the page at that block.
+  - **Move description to a page** turns a long description into a real Lotion page (Markdown kept as blocks) and links it.
+- **Archive:**
+  - **Archive** on the Done column hides finished issues; **Archive** / **Unarchive** in the panel does the same for one issue.
+  - The board menu (⋯) has **Show archived**. The command line has `archive`, `unarchive` and `ls --archived`.
+- **Board settings** (⋯ → Board settings):
+  - **Columns:** rename, recolour, reorder, add, and remove empty ones. The last column counts as done.
+  - **Labels:** rename or remove everywhere.
+- **Export:** ⋯ → Export Markdown / Export JSON, or `lotion issue export [--format json]`.
+- **Summary line:** open, in progress, and done this week.
+- **Phones:** the board shows one column per screen and swipes sideways.
+- **Command line:** `link` / `unlink` a page (id or Lotion link).
+
+### Fixed
+
+- Opening a page from the issue board (for example a linked page) now leaves the board.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.47.0 — 2026-10-22 · [#67](https://github.com/huklee/lotion/pull/67)
 
 ### Added
