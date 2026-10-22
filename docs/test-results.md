@@ -21,6 +21,7 @@ Remote CI on #70:
 - One run failed only the known flake `block-selection.spec.ts:506` (WebKit).
 - One run was cancelled twice by the 20-minute job limit while installing Playwright browsers, before any test ran.
 - The third attempt of that run failed `issues.spec.ts` "issue panel edits…" (WebKit). This was a test race: when a refresh arrived between the external edit and the click, the empty-description button was already gone. The test now types first and the other writer saves before the field is left, so the prompt appears whichever side notices first. Afterwards it passed **48/48** (4 repeats, 3 browsers).
+- A rerun failed `issues-keyboard.spec.ts` again in Chromium: `m` focused the note box, then a late-finishing `x` move refocused the card. A new test delays the move response by 1.5 s. It failed in all 3 browsers before the fix (the board never takes focus from a text field) and passed in all 3 after it. With the fix the issue, keyboard and home-shortcut specs passed **108/108** (4 repeats, 8 workers).
 
 ## 2026-10-22T17:40:00+09:00 — 0.49.0 home, go-to shortcuts, Korean-layout shortcuts
 

@@ -147,6 +147,12 @@ export function IssuesView({
   // keyboard focus follows the focused card only when a key asked for it
   useEffect(() => {
     if (!wantFocus.current || focused === null) return;
+    // never pull focus out of a field you are typing in (the panel's note box
+    // after m, say) when an earlier move finishes late
+    if (isTyping(document.activeElement)) {
+      wantFocus.current = false;
+      return;
+    }
     const el = document.querySelector<HTMLElement>(
       `.issue-card[data-issue="${focused}"]`,
     );

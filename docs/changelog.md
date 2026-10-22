@@ -19,7 +19,7 @@ Versions are recorded in `package.json` and `package-lock.json`. Each release re
 
 ### Fixed
 
-- **e** and **m** opened the issue panel without focusing the title or note box when the issue took more than 3 seconds to load.
+- **e** and **m** opened the issue panel without focusing the title or note box when the issue took more than 3 seconds to load, or when a card moved just before with ⇧H/J/K/L or **x** finished saving afterwards.
 
 Verification is recorded in [test results](test-results.md).
 
