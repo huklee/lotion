@@ -32,6 +32,8 @@ export type IssueInput = {
   status?: string;
   labels?: string[];
   priority?: string;
+  links?: string[];
+  archived?: boolean;
 };
 
 export function issueClient({ env, fetch, author }: ClientOptions) {
@@ -99,6 +101,26 @@ export function issueClient({ env, fetch, author }: ClientOptions) {
       }),
     note: (n: number, text: string) =>
       call<Issue>("POST", `/api/issues/${n}/notes`, { text }),
+    exportText: async (format: "md" | "json") => {
+      const headers: Record<string, string> = { "X-Lotion-Author": author };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      let response: Response;
+      try {
+        response = await fetch(`${base}/api/issues/export?format=${format}`, {
+          headers,
+        });
+      } catch (error) {
+        throw new LotionError(
+          `Cannot reach Lotion at ${base} (${(error as Error).message})`,
+        );
+      }
+      if (!response.ok)
+        throw new LotionError(
+          `Export failed (HTTP ${response.status})`,
+          response.status,
+        );
+      return response.text();
+    },
     remove: (n: number) =>
       call<{ deleted: number }>("DELETE", `/api/issues/${n}`),
   };

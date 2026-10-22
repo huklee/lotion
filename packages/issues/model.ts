@@ -44,6 +44,12 @@ export type Issue = {
   status: string;
   labels: string[];
   priority: IssuePriority;
+  /** Lotion pages this issue is about (page ids). */
+  links: string[];
+  /** The block an issue was made from ("Create issue" in the block menu). */
+  source?: { pageId: string; blockId: string };
+  /** Archived issues are hidden from the board unless asked for. */
+  archivedAt: string | null;
   /** Position inside the status column, ascending. */
   rank: number;
   createdAt: string;
@@ -82,6 +88,12 @@ const labels = z
   .max(20)
   .transform((list) => [...new Set(list)]);
 
+const pageId = z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/, "Invalid page id");
+const links = z
+  .array(pageId)
+  .max(50)
+  .transform((list) => [...new Set(list)]);
+
 export const createIssueSchema = z
   .object({
     title: z.string().trim().min(1, "A title is required").max(300),
@@ -89,6 +101,8 @@ export const createIssueSchema = z
     status: z.string().max(40).optional(),
     labels: labels.default([]),
     priority: z.enum(PRIORITIES).default("none"),
+    links: links.default([]),
+    source: z.object({ pageId, blockId: pageId }).strict().optional(),
   })
   .strict();
 
@@ -99,6 +113,8 @@ export const patchIssueSchema = z
     status: z.string().max(40),
     labels,
     priority: z.enum(PRIORITIES),
+    links,
+    archived: z.boolean(),
   })
   .partial()
   .strict();
@@ -196,6 +212,9 @@ export function createIssue(
     status,
     labels: data.labels,
     priority: data.priority,
+    links: data.links,
+    ...(data.source ? { source: data.source } : {}),
+    archivedAt: null,
     rank: rankBetween(last?.rank, undefined) as number,
     createdAt: clock.now,
     updatedAt: clock.now,
@@ -324,6 +343,17 @@ export function patchIssue(
     next.labels = data.labels;
     edited = true;
   }
+  if (
+    data.links !== undefined &&
+    data.links.join("\n") !== (next.links ?? []).join("\n")
+  ) {
+    next.links = data.links;
+    edited = true;
+  }
+  if (data.archived !== undefined && data.archived !== !!next.archivedAt) {
+    next.archivedAt = data.archived ? clock.now : null;
+    edited = true;
+  }
   if (!edited) return moved === issue ? [] : result;
   return [
     moved === issue
@@ -385,18 +415,37 @@ export type IssueFilter = {
   label?: string;
   priority?: string;
   q?: string;
+  /** Issues linked to (or made from) this page. */
+  page?: string;
+  /** "include" lists archived issues too, "only" lists just them; default hides them. */
+  archived?: "include" | "only";
 };
 
-/** Older issues.json files have no priority. */
+/** Older issues.json files lack priority, links and archivedAt. */
 export function normalizeIssue(issue: Issue): Issue {
-  return PRIORITIES.includes(issue.priority)
-    ? issue
-    : { ...issue, priority: "none" };
+  return {
+    ...issue,
+    priority: PRIORITIES.includes(issue.priority) ? issue.priority : "none",
+    links: Array.isArray(issue.links) ? issue.links : [],
+    archivedAt: issue.archivedAt ?? null,
+  };
 }
 
 /** Case-insensitive filter used by the list API and the CLI. */
 export function matches(issue: Issue, filter: IssueFilter): boolean {
   if (filter.status && issue.status !== filter.status) return false;
+  if (
+    filter.archived === "only"
+      ? !issue.archivedAt
+      : !filter.archived && issue.archivedAt
+  )
+    return false;
+  if (
+    filter.page &&
+    !(issue.links ?? []).includes(filter.page) &&
+    issue.source?.pageId !== filter.page
+  )
+    return false;
   if (filter.priority && (issue.priority ?? "none") !== filter.priority)
     return false;
   if (
@@ -414,4 +463,122 @@ export function matches(issue: Issue, filter: IssueFilter): boolean {
       return false;
   }
   return true;
+}
+
+const STATUS_KEY = /^[a-z0-9_-]{1,40}$/;
+export const STATUS_COLORS = [
+  "gray",
+  "brown",
+  "orange",
+  "yellow",
+  "green",
+  "blue",
+  "purple",
+  "pink",
+  "red",
+] as const;
+
+export const statusesSchema = z
+  .array(
+    z
+      .object({
+        key: z.string().regex(STATUS_KEY, "Status keys are a-z, 0-9, _ and -"),
+        name: z.string().trim().min(1).max(40),
+        color: z.enum(STATUS_COLORS),
+      })
+      .strict(),
+  )
+  .min(2, "A board needs at least two statuses")
+  .max(12);
+
+/**
+ * New board columns (rename, recolour, reorder, add, remove). A status that
+ * still has issues cannot be removed; the last one is the "closed" column.
+ */
+export function setStatuses(issues: Issue[], input: unknown): IssueStatus[] {
+  const next = statusesSchema.parse(input);
+  const keys = new Set(next.map((s) => s.key));
+  if (keys.size !== next.length)
+    throw new IssueError(400, "Status keys must be unique");
+  const used = [...new Set(issues.map((i) => i.status))].filter(
+    (key) => !keys.has(key),
+  );
+  if (used.length)
+    throw new IssueError(
+      400,
+      `Move the issues out of ${used.join(", ")} before removing it`,
+    );
+  return next;
+}
+
+/** Renames a label on every issue, or removes it when `to` is null. */
+export function renameLabel(
+  issues: Issue[],
+  from: string,
+  to: string | null,
+  author: string,
+  clock: Clock,
+): Issue[] {
+  const target = to === null ? null : label.parse(to);
+  const key = from.trim().toLowerCase();
+  const changed: Issue[] = [];
+  for (const issue of issues) {
+    if (!issue.labels.some((l) => l.toLowerCase() === key)) continue;
+    const labels = [
+      ...new Set(
+        issue.labels.flatMap((l) =>
+          l.toLowerCase() === key ? (target === null ? [] : [target]) : [l],
+        ),
+      ),
+    ];
+    changed.push(touch(issue, clock, { labels }, author));
+  }
+  return changed;
+}
+
+/** Archives every unarchived issue of one column. */
+export function archiveColumn(
+  issues: Issue[],
+  status: string,
+  author: string,
+  clock: Clock,
+): Issue[] {
+  return issues
+    .filter((i) => i.status === status && !i.archivedAt)
+    .map((i) => touch(i, clock, { archivedAt: clock.now }, author));
+}
+
+/** A Markdown document of the board: one section per status, notes included. */
+export function issuesToMarkdown(
+  issues: Issue[],
+  statuses: IssueStatus[],
+  now: string,
+): string {
+  const lines = [
+    `# Issues`,
+    "",
+    `Exported ${now.slice(0, 16).replace("T", " ")}`,
+    "",
+  ];
+  for (const status of statuses) {
+    const items = column(issues, status.key);
+    if (!items.length) continue;
+    lines.push(`## ${status.name} (${items.length})`, "");
+    for (const i of items) {
+      const tags = [
+        i.priority !== "none" ? `priority: ${i.priority}` : "",
+        i.labels.length ? `labels: ${i.labels.join(", ")}` : "",
+        i.archivedAt ? "archived" : "",
+      ].filter(Boolean);
+      lines.push(`### #${i.number} ${i.title}`, "");
+      if (tags.length) lines.push(`_${tags.join(" · ")}_`, "");
+      if (i.body.trim()) lines.push(i.body.trim(), "");
+      for (const n of i.notes)
+        lines.push(
+          `- ${n.at.slice(0, 16).replace("T", " ")} **${n.author}**${n.kind === "note" ? "" : ` (${n.kind})`}: ${n.text.replaceAll("\n", " ")}`,
+        );
+      lines.push("");
+    }
+  }
+  return lines.join("\n");
 }

@@ -12,6 +12,8 @@ import { DocumentOutline } from "./DocumentOutline";
 import Editor from "./Editor";
 import { RowPagesContext } from "./row-pages";
 import { PageIconPicker } from "./PageIconPicker";
+import { BlockIssueContext } from "./issues/block-issue";
+import { PageIssues } from "./issues/PageIssues";
 
 type ActiveDocumentProps = {
   active: Document;
@@ -38,6 +40,7 @@ type ActiveDocumentProps = {
   onLinkPreview: (url: string, preview: LinkPreview) => void;
   onBlocksChange: (blocks: Block[]) => void;
   onBackgroundImage: (id: string, url: string, name: string) => void;
+  openIssue?: (number: number) => void;
 };
 
 export function ActiveDocument({
@@ -65,6 +68,7 @@ export function ActiveDocument({
   onLinkPreview,
   onBlocksChange,
   onBackgroundImage,
+  openIssue,
 }: ActiveDocumentProps) {
   const rowPages = useContext(RowPagesContext);
   // Live block list for the outline panel; the editor reports every change.
@@ -112,6 +116,7 @@ export function ActiveDocument({
           </span>
           <span className="meta-line" />
         </div>
+        {openIssue && <PageIssues pageId={active.id} onOpen={openIssue} />}
         <ConflictPanel
           coordinator={coordinator}
           title={title}
@@ -119,34 +124,38 @@ export function ActiveDocument({
           openPage={openPage}
           handleError={handleError}
         />
-        <Editor
-          onSummarizeBlocks={
-            rowPages
-              ? (blockIds) =>
-                  void rowPages
-                    .summarize({
-                      pages: [{ id: active.id, blockIds }],
-                      parentId: active.id,
-                    })
-                    .catch(() => undefined)
-              : undefined
-          }
-          initial={coordinator.content}
-          theme={theme}
-          formattingShortcuts={formattingShortcuts}
-          pages={pages}
-          onCreateSubpage={createSubpage}
-          onDuplicateRowPage={duplicateRowPage}
-          onTrashRowPage={trashRowPage}
-          onCopyBlockLink={copyBlockLink}
-          onOpenPage={(id) => void openPage(id)}
-          onLinkPreview={onLinkPreview}
-          onChange={(blocks) => {
-            setOutlineBlocks(blocks);
-            onBlocksChange(blocks);
-          }}
-          onBackgroundImage={onBackgroundImage}
-        />
+        <BlockIssueContext.Provider
+          value={{ pageId: active.id, pageTitle: title }}
+        >
+          <Editor
+            onSummarizeBlocks={
+              rowPages
+                ? (blockIds) =>
+                    void rowPages
+                      .summarize({
+                        pages: [{ id: active.id, blockIds }],
+                        parentId: active.id,
+                      })
+                      .catch(() => undefined)
+                : undefined
+            }
+            initial={coordinator.content}
+            theme={theme}
+            formattingShortcuts={formattingShortcuts}
+            pages={pages}
+            onCreateSubpage={createSubpage}
+            onDuplicateRowPage={duplicateRowPage}
+            onTrashRowPage={trashRowPage}
+            onCopyBlockLink={copyBlockLink}
+            onOpenPage={(id) => void openPage(id)}
+            onLinkPreview={onLinkPreview}
+            onChange={(blocks) => {
+              setOutlineBlocks(blocks);
+              onBlocksChange(blocks);
+            }}
+            onBackgroundImage={onBackgroundImage}
+          />
+        </BlockIssueContext.Provider>
         <div className="document-bottom">
           <span>✧</span> A place for ideas to become something.
         </div>

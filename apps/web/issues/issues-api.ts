@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { refreshNotifications } from "../NotificationBell";
-import type { Issue, IssueBoard } from "../../../packages/issues/model";
+import type {
+  Issue,
+  IssueBoard,
+  IssueStatus,
+} from "../../../packages/issues/model";
 
 const json = (method: string, body?: unknown, headers?: HeadersInit) => ({
   method,
@@ -10,11 +14,21 @@ const json = (method: string, body?: unknown, headers?: HeadersInit) => ({
 });
 
 export const issuesApi = {
-  board: () => api<IssueBoard>("/api/issues"),
+  board: (archived = false) =>
+    api<IssueBoard>(`/api/issues${archived ? "?archived=include" : ""}`),
+  forPage: (pageId: string) =>
+    api<IssueBoard>(
+      `/api/issues?${new URLSearchParams({ page: pageId, archived: "include" })}`,
+    ),
   seq: () => api<{ seq: number }>("/api/issues/seq"),
   get: (n: number) => api<Issue>(`/api/issues/${n}`),
-  create: (input: { title: string; status?: string }) =>
-    api<Issue>("/api/issues", json("POST", input)),
+  create: (input: {
+    title: string;
+    status?: string;
+    body?: string;
+    links?: string[];
+    source?: { pageId: string; blockId: string };
+  }) => api<Issue>("/api/issues", json("POST", input)),
   patch: (n: number, version: number, input: Record<string, unknown>) =>
     api<Issue>(
       `/api/issues/${n}`,
@@ -24,6 +38,15 @@ export const issuesApi = {
     api<Issue>(`/api/issues/${n}/move`, json("POST", { status, before })),
   note: (n: number, text: string) =>
     api<Issue>(`/api/issues/${n}/notes`, json("POST", { text })),
+  setStatuses: (statuses: IssueStatus[]) =>
+    api<{ statuses: IssueStatus[] }>(
+      "/api/issues/config",
+      json("PUT", { statuses }),
+    ),
+  renameLabel: (from: string, to: string | null) =>
+    api<{ changed: number }>("/api/issues/labels", json("POST", { from, to })),
+  archiveColumn: (status: string) =>
+    api<{ archived: number }>("/api/issues/archive", json("POST", { status })),
   remove: (n: number) =>
     api<{ deleted: number }>(`/api/issues/${n}`, json("DELETE")),
 };
@@ -35,21 +58,28 @@ export const POLL_MS = 5000;
  * every few seconds while the tab is visible), so changes made by the CLI or
  * another device appear without a reload.
  */
-export function useIssueBoard(onError: (error: unknown) => void) {
+export function useIssueBoard(
+  onError: (error: unknown) => void,
+  archived = false,
+) {
   const [board, setBoard] = useState<IssueBoard | null>(null);
   const seq = useRef(-1);
   const errorRef = useRef(onError);
   errorRef.current = onError;
   const reload = useCallback(async () => {
     try {
-      const next = await issuesApi.board();
+      const next = await issuesApi.board(archived);
+      // a slower, older answer (an overlapping poll) must not undo a newer board
+      if (next.seq < seq.current) return;
       seq.current = next.seq;
       setBoard(next);
     } catch (error) {
       errorRef.current(error);
     }
-  }, []);
+  }, [archived]);
   useEffect(() => {
+    // a different board (archived shown or not) starts from its own counter
+    seq.current = -1;
     void reload();
     let alive = true;
     const tick = async () => {

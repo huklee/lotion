@@ -299,3 +299,93 @@ describe("notifications for agent changes", () => {
     ]);
   });
 });
+
+describe("stage 4: links, archive, settings, export", () => {
+  it("API and CLI", async () => {
+    const api = issueClient({ env: env(), fetch, author: "me" });
+    await api.create({ title: "Linked", links: ["page-1"] });
+    await api.create({ title: "Done one", status: "done", labels: ["bug"] });
+    let r = await cli(["issue", "link", "2", "https://x/#/page/page-1"]);
+    expect(r.out).toBe("#2 pages: page-1");
+    expect(
+      (await api.board({ page: "page-1" })).issues.map((i) => i.number),
+    ).toEqual([1, 2]);
+    r = await cli(["issue", "unlink", "2", "page-1"]);
+    expect(r.out).toBe("#2 pages: (none)");
+
+    // archive the Done column: hidden from the board, listed with --archived
+    const auth = {
+      authorization: `Bearer ${TOKEN}`,
+      "content-type": "application/json",
+    };
+    const archived = await (
+      await fetch(`${address}/api/issues/archive`, {
+        method: "POST",
+        headers: auth,
+        body: JSON.stringify({ status: "done" }),
+      })
+    ).json();
+    expect(archived).toEqual({ archived: 1 });
+    expect((await api.board()).issues.map((i) => i.number)).toEqual([1]);
+    r = await cli(["issue", "ls", "--archived", "--json"]);
+    expect(JSON.parse(r.out).map((i: any) => i.number)).toEqual([1, 2]);
+    expect((await cli(["issue", "unarchive", "2"])).out).toBe(
+      "#2 back on the board",
+    );
+    expect((await cli(["issue", "archive", "2"])).out).toBe("#2 archived");
+
+    // statuses and labels
+    const statuses = await (
+      await fetch(`${address}/api/issues/config`, {
+        method: "PUT",
+        headers: auth,
+        body: JSON.stringify({
+          statuses: [
+            { key: "backlog", name: "Inbox", color: "gray" },
+            { key: "doing", name: "Doing", color: "blue" },
+            { key: "done", name: "Done", color: "green" },
+          ],
+        }),
+      })
+    ).json();
+    expect(statuses.statuses.map((s: any) => s.name)).toEqual([
+      "Inbox",
+      "Doing",
+      "Done",
+    ]);
+    const refused = await fetch(`${address}/api/issues/config`, {
+      method: "PUT",
+      headers: auth,
+      body: JSON.stringify({
+        statuses: [
+          { key: "doing", name: "Doing", color: "blue" },
+          { key: "done", name: "Done", color: "green" },
+        ],
+      }),
+    });
+    expect(refused.status).toBe(400);
+    const renamed = await (
+      await fetch(`${address}/api/issues/labels`, {
+        method: "POST",
+        headers: auth,
+        body: JSON.stringify({ from: "bug", to: "defect" }),
+      })
+    ).json();
+    expect(renamed).toEqual({ changed: 1 });
+
+    // export
+    r = await cli(["issue", "export"]);
+    expect(r.out).toContain("## Inbox (1)");
+    expect(r.out).toContain("_labels: defect · archived_");
+    const json = JSON.parse(
+      (await cli(["issue", "export", "--format", "json"])).out,
+    );
+    expect(json.issues).toHaveLength(2);
+    const download = await fetch(`${address}/api/issues/export?format=md`, {
+      headers: auth,
+    });
+    expect(download.headers.get("content-disposition")).toMatch(
+      /attachment; filename="lotion-issues-\d{4}-\d{2}-\d{2}\.md"/,
+    );
+  });
+});

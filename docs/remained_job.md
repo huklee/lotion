@@ -7,7 +7,7 @@ Historical completed work lives in the [implementation history](implementation-h
 - [x] Stage 1 MVP: issue store and API, board with drag between statuses, issue panel, status notes, live refresh, `lotion issue` CLI (0.45.0).
 - [x] Stage 2: keyboard-only use: hints, j/k/h/l, card moves, x/o/e/m/c, g i, ⌘K issue results and creation, filter bar, priority (0.46.0).
 - [x] Stage 3: agents: MCP server, CLI edit/label/claim/close/reopen/search/rm/watch, author badges, bell notifications for agent changes, Keep mine / Use theirs conflict prompt (0.47.0).
-- [ ] Stage 4: Lotion integration (page links, issues from blocks, archive, settings, export, mobile board).
+- [x] Stage 4: Lotion integration: page links both ways, Create issue from blocks (meeting action items included), description to a page, archive, column and label settings, Markdown/JSON export, summary line, phone board (0.48.0).
 
 ## Meeting databases and summaries — 2026-10-16 ([ADR-025](adr/025-meeting-databases-and-summaries.md), [progress](meeting-db-progress.md))
 

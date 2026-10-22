@@ -213,10 +213,53 @@ export async function createApp(
       status: text("status"),
       label: text("label"),
       priority: text("priority"),
+      page: text("page"),
+      archived:
+        q.archived === "only"
+          ? "only"
+          : q.archived === "include" || q.archived === "1"
+            ? "include"
+            : undefined,
       q: text("q"),
     });
   });
   app.get("/api/issues/seq", async () => ({ seq: await issues().seq() }));
+  app.put("/api/issues/config", async (req) => ({
+    statuses: await issues().setStatuses((req.body as any)?.statuses),
+  }));
+  app.post("/api/issues/labels", async (req) => {
+    const body = z
+      .object({
+        from: z.string().trim().min(1).max(40),
+        to: z.string().trim().min(1).max(40).nullable(),
+      })
+      .strict()
+      .parse(req.body ?? {});
+    return issues().renameLabel(body.from, body.to, author(req));
+  });
+  app.post("/api/issues/archive", async (req) => {
+    const body = z
+      .object({ status: z.string().max(40) })
+      .strict()
+      .parse(req.body ?? {});
+    return issues().archiveColumn(body.status, author(req));
+  });
+  app.get("/api/issues/export", async (req, reply) => {
+    const format = (req.query as any)?.format === "json" ? "json" : "md";
+    const stamp = new Date().toISOString().slice(0, 10);
+    reply
+      .header(
+        "Content-Type",
+        format === "json"
+          ? "application/json; charset=utf-8"
+          : "text/markdown; charset=utf-8",
+      )
+      .header(
+        "Content-Disposition",
+        `attachment; filename="lotion-issues-${stamp}.${format}"`,
+      );
+    return issues().export(format);
+  });
   // changes made by agents and scripts (any author but "me") appear in the bell
   const notifyIssue = (
     who: string,

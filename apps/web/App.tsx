@@ -9,6 +9,7 @@ import { TrashView } from "./TrashView";
 import { ChangesView } from "./ChangesView";
 import { IssuesView } from "./issues/IssuesView";
 import { issuesApi } from "./issues/issues-api";
+import { IssueCreatedToast } from "./issues/block-issue";
 import {
   goToIssues,
   parseIssueHash,
@@ -280,6 +281,8 @@ export default function App() {
           history.replaceState(null, "", replacementHash);
         else if (navigation === "push" && location.hash !== hash)
           history.pushState(null, "", hash);
+        // pushState fires no hashchange: let the issues route see the page
+        window.dispatchEvent(new Event("lotion:issues-route"));
         if (newId.current === id) {
           newId.current = null;
           setTimeout(() => {
@@ -833,11 +836,22 @@ export default function App() {
               <IssuesView
                 openNumber={issueRoute.number}
                 onError={handleError}
+                pages={visible}
+                openPage={(id, blockId) => {
+                  cancelFlash.current?.();
+                  cancelFlash.current = null;
+                  void openPage(id).then(() => {
+                    if (blockId)
+                      cancelFlash.current = flashBlockWhenRendered(blockId);
+                  });
+                }}
+                onPagesChanged={() => void refresh().catch(handleError)}
               />
             ) : active && coordinator ? (
               <ActiveDocument
                 key={`${active.id}:${active.revision}:${coordinator.editorVersion}`}
                 active={active}
+                openIssue={showIssues}
                 coordinator={coordinator}
                 title={title}
                 theme={theme}
@@ -953,6 +967,7 @@ export default function App() {
           openPage={(id) => void openPage(id)}
         />
       </RowPagesContext.Provider>
+      <IssueCreatedToast onOpen={showIssues} />
       <WorkspaceDialog
         openIssue={(number) => {
           setQuery("");

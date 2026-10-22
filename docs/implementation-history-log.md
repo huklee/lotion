@@ -1,5 +1,17 @@
 # Implementation history log
 
+## 2026-10-22T16:00:00+09:00 — 0.48.0 Lotion integration (stage 4 of ADR-026, last stage)
+
+- **Model:** `links`, `source`, `archivedAt` and their normalisation; `page` and `archived` filters; `setStatuses`, `renameLabel`, `archiveColumn`, `issuesToMarkdown`.
+- **Store and API:** `setStatuses`, `renameLabel`, `archiveColumn`, `export`, and routes for config, labels, archive and export.
+- **Web:**
+  - `block-issue.tsx` holds `BlockIssueContext`, `issueFromBlock` (title from the first line, nested blocks as a list, a "From …" line), `createIssueFromBlock` and `IssueCreatedToast` (success or error).
+  - `DragHandleMenu` gains **Create issue**. `PageIssues` sits under the page title. `IssueSettings` is the columns and labels dialog.
+  - Board: a menu (settings, show archived, Markdown/JSON export links), Archive on the last column, the summary line, and snap columns at ≤650 px.
+  - Panel: linked pages with a picker, source block navigation, move description to a page, and archive/unarchive.
+- **App:** passes pages, `openPage` (with block flash) and tree refresh to the board, mounts the toast, and `openPage` dispatches the issues-route event.
+- **CLI:** `archive`, `unarchive`, `link`, `unlink`, `export` and `ls --archived`.
+
 ## 2026-10-22T14:30:00+09:00 — 0.47.0 agents: MCP server, CLI, badges, notifications, conflicts (stage 3 of ADR-026)
 
 - **Shared client:** `apps/cli/issues-client.ts` holds the HTTP client and the `resolveStatus`, `workingStatus`, `editLabels` and `diffBoards` helpers. The CLI was rewritten on top of it, with `edit`, `label`, `claim`, `close`, `reopen`, `search`, `rm` and `watch` (abortable; Ctrl+C via `main.ts`).
