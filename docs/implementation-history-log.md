@@ -1,5 +1,13 @@
 # Implementation history log
 
+## 2026-10-22T23:50:00+09:00 — 0.50.0 Markdown in issues, fluid board columns
+
+- **Renderer:** `packages/markdown/render-html.ts` (`markdownToHtml`) reuses the static Markdown → Confluence converter's HTML output, which already escapes raw HTML and neutralises unsafe links. It adds `target="_blank" rel="noopener noreferrer"` to web links.
+- **Panel:** `IssuePanel` shows the description as rendered Markdown (a `region` named Description). A click outside links and checkboxes, or the ✎ button, switches to the textarea, and blur switches back. The textarea stays open while a conflict involves unsaved description text. Notes render the same way.
+- **Styles:** `.issue-markdown` styles live in `issues.css`; `white-space: pre-line` keeps single newlines.
+- **Columns:** `flex: 1 1 0; min-width: 240px`, phones keep one column per screen, and the old panel-open override was removed.
+- **Focus fix:** the panel's focus request no longer expires after 3 s. It applies to requests made when that panel opened, so a slow load under test load still focuses the title or note box (a CI-only failure of the keyboard spec).
+
 ## 2026-10-22T17:30:00+09:00 — 0.49.0 home, go-to shortcuts, Korean-layout shortcuts
 
 The owner asked for:

@@ -1,89 +1,85 @@
 {
- "notion": [
-  "heading 주간 회의",
-  "paragraph 이번 주 **핵심**은 [KB 연동](https://example.com/kb)입니다.",
-  "bulletListItem 검색 Phase 2",
-  "  bulletListItem KB 미팅 완료 (9/22)",
-  "  bulletListItem 설계 공유 예정 (~9/29)",
-  "bulletListItem AI Ops",
-  "checkListItem ☑ 매뉴얼 초안",
-  "checkListItem ☐ 공지",
-  "numberedListItem 첫째",
-  "numberedListItem 둘째"
- ],
- "gdocs": [
-  "heading 프로젝트 현황",
-  "paragraph **결론:** 일정은 _유지_합니다.",
-  "bulletListItem 백엔드",
-  "  bulletListItem API 설계 완료",
-  "  bulletListItem 부하 테스트 예정",
-  "bulletListItem 프런트엔드"
- ],
- "word": [
-  "paragraph **회의 결과**",
-  "bulletListItem 예산 확정",
-  "  bulletListItem 2027년 계획 포함",
-  "bulletListItem 채용 4건"
- ],
- "slack": [
-  "paragraph **배포 안내**",
-  "paragraph 오늘 _18시_에 배포합니다. 상세: [릴리스 노트](https://example.com/release)",
-  "bulletListItem 검색 개선",
-  "bulletListItem 버그 수정 3건"
- ],
- "chatgpt": [
-  "heading 요약",
-  "paragraph 핵심은 **캐시 적중률**입니다.",
-  "bulletListItem 원인",
-  "  bulletListItem TTL이 짧음",
-  "bulletListItem 해결: `ttl=600`",
-  "codeBlock npm run build⏎npm test",
-  "table 항목 | 값 / 적중률 | 92%"
- ],
- "web": [
-  "heading 설치",
-  "paragraph 먼저 `lotion`을 설치하고 [문서](https://example.com/docs)를 확인하세요.",
-  "quote 주의: Node 24 이상",
-  "bulletListItem macOS",
-  "bulletListItem Linux"
- ],
- "memo": [
-  "paragraph 검색",
-  "  paragraph Phase 2",
-  "    paragraph KB 미팅 완료 (9/22)",
-  "    paragraph 설계 반영 후 공유 예정 (~9/29)",
-  "  paragraph Phase 1 QA",
-  "    bulletListItem whitelist 논의 완료",
-  "    bulletListItem 기타 이슈 트래킹 중",
-  "paragraph AI Ops",
-  "  paragraph 매뉴얼 작성 (~9/28)"
- ],
- "markdown": [
-  "heading 릴리스 0.40",
-  "paragraph **변경 사항**",
-  "bulletListItem 세션 로그인",
-  "  bulletListItem 90일 유지",
-  "checkListItem ☑ 테스트 완료",
-  "codeBlock const ok = true;"
- ],
- "vscode": [
-  "codeBlock // paste:function greet() {⏎  return \"hi\";⏎}"
- ],
- "sheets": [
-  "table 담당 | 기한 / 민수 | 10/20 / 지영 | 10/22"
- ],
- "inline": [
-  "paragraph 앞 문장 자세한 내용은 **위키**의 [설계 문서](https://example.com/wiki)| 뒤 문장"
- ],
- "middle": [
-  "paragraph 앞부분첫째 줄",
-  "paragraph 둘째 줄",
-  "  paragraph 들여쓴 줄",
-  "paragraph |뒷부분"
- ],
- "into-list": [
-  "bulletListItem 장보기우유",
-  "bulletListItem 계란",
-  "bulletListItem 빵"
- ]
+  "notion": [
+    "heading 주간 회의",
+    "paragraph 이번 주 **핵심**은 [KB 연동](https://example.com/kb)입니다.",
+    "bulletListItem 검색 Phase 2",
+    "  bulletListItem KB 미팅 완료 (9/22)",
+    "  bulletListItem 설계 공유 예정 (~9/29)",
+    "bulletListItem AI Ops",
+    "checkListItem ☑ 매뉴얼 초안",
+    "checkListItem ☐ 공지",
+    "numberedListItem 첫째",
+    "numberedListItem 둘째"
+  ],
+  "gdocs": [
+    "heading 프로젝트 현황",
+    "paragraph **결론:** 일정은 _유지_합니다.",
+    "bulletListItem 백엔드",
+    "  bulletListItem API 설계 완료",
+    "  bulletListItem 부하 테스트 예정",
+    "bulletListItem 프런트엔드"
+  ],
+  "word": [
+    "paragraph **회의 결과**",
+    "bulletListItem 예산 확정",
+    "  bulletListItem 2027년 계획 포함",
+    "bulletListItem 채용 4건"
+  ],
+  "slack": [
+    "paragraph **배포 안내**",
+    "paragraph 오늘 _18시_에 배포합니다. 상세: [릴리스 노트](https://example.com/release)",
+    "bulletListItem 검색 개선",
+    "bulletListItem 버그 수정 3건"
+  ],
+  "chatgpt": [
+    "heading 요약",
+    "paragraph 핵심은 **캐시 적중률**입니다.",
+    "bulletListItem 원인",
+    "  bulletListItem TTL이 짧음",
+    "bulletListItem 해결: `ttl=600`",
+    "codeBlock npm run build⏎npm test",
+    "table 항목 | 값 / 적중률 | 92%"
+  ],
+  "web": [
+    "heading 설치",
+    "paragraph 먼저 `lotion`을 설치하고 [문서](https://example.com/docs)를 확인하세요.",
+    "quote 주의: Node 24 이상",
+    "bulletListItem macOS",
+    "bulletListItem Linux"
+  ],
+  "memo": [
+    "paragraph 검색",
+    "  paragraph Phase 2",
+    "    paragraph KB 미팅 완료 (9/22)",
+    "    paragraph 설계 반영 후 공유 예정 (~9/29)",
+    "  paragraph Phase 1 QA",
+    "    bulletListItem whitelist 논의 완료",
+    "    bulletListItem 기타 이슈 트래킹 중",
+    "paragraph AI Ops",
+    "  paragraph 매뉴얼 작성 (~9/28)"
+  ],
+  "markdown": [
+    "heading 릴리스 0.40",
+    "paragraph **변경 사항**",
+    "bulletListItem 세션 로그인",
+    "  bulletListItem 90일 유지",
+    "checkListItem ☑ 테스트 완료",
+    "codeBlock const ok = true;"
+  ],
+  "vscode": ["codeBlock // paste:function greet() {⏎  return \"hi\";⏎}"],
+  "sheets": ["table 담당 | 기한 / 민수 | 10/20 / 지영 | 10/22"],
+  "inline": [
+    "paragraph 앞 문장 자세한 내용은 **위키**의 [설계 문서](https://example.com/wiki)| 뒤 문장"
+  ],
+  "middle": [
+    "paragraph 앞부분첫째 줄",
+    "paragraph 둘째 줄",
+    "  paragraph 들여쓴 줄",
+    "paragraph |뒷부분"
+  ],
+  "into-list": [
+    "bulletListItem 장보기우유",
+    "bulletListItem 계란",
+    "bulletListItem 빵"
+  ]
 }

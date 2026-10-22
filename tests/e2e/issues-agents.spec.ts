@@ -53,6 +53,7 @@ test("an agent's change during your edit asks before overwriting; Keep mine save
   const panel = page.getByRole("complementary", {
     name: `Issue #${created.number}`,
   });
+  await panel.getByRole("button", { name: /Add a description/ }).click();
   const body = panel.getByRole("textbox", { name: "Description" });
   await body.fill("my steps");
   // the agent writes while the field is still being edited

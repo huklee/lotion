@@ -2,6 +2,27 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.50.0 — 2026-10-22
+
+### Added
+
+- **Issue descriptions and notes render Markdown.**
+  - **Supported:** headings, bold/italic/strike, inline code and code blocks, bullet, numbered and task lists, tables, quotes and links.
+  - **Line breaks:** a single line break stays a line break.
+  - **Links:** web links open in a new tab.
+  - **Safety:** raw HTML is shown as text and never run.
+  - **Editing:** click the description (or its ✎ button) to edit the Markdown source; leaving the field shows it rendered again. An empty description shows "Add a description".
+
+### Changed
+
+- **Board columns fill the window.** They share its width equally, down to 240 px each; on a narrower window the board scrolls sideways.
+
+### Fixed
+
+- **e** and **m** opened the issue panel without focusing the title or note box when the issue took more than 3 seconds to load.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.49.0 — 2026-10-22 · [#69](https://github.com/huklee/lotion/pull/69)
 
 ### Added
