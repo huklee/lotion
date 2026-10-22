@@ -7,6 +7,12 @@ import { ActiveDocument } from "./ActiveDocument";
 import { WorkspaceTopbar } from "./WorkspaceTopbar";
 import { TrashView } from "./TrashView";
 import { ChangesView } from "./ChangesView";
+import { IssuesView } from "./issues/IssuesView";
+import {
+  goToIssues,
+  parseIssueHash,
+  useIssueRoute,
+} from "./issues/issues-route";
 import { flashBlockWhenRendered } from "./block-flash";
 import { useWorkspaceTransfer } from "./use-workspace-transfer";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
@@ -144,10 +150,11 @@ export default function App() {
     searchReturnFocus = useRef<HTMLElement | null>(null),
     newId = useRef<string | null>(null);
   const coordinator = active ? coordinators.current.get(active.id) : undefined;
-  // on a phone, opening a page (or Home, Trash, Recent changes) shows the page view
+  const issueRoute = useIssueRoute();
+  // on a phone, opening a page (or Home, Trash, Recent changes, Issues) shows the page view
   useEffect(() => {
     setMobileView("page");
-  }, [active?.id, trash, changes]);
+  }, [active?.id, trash, changes, !!issueRoute]);
   const visible = useMemo(() => tree.filter((d) => !d.hidden), [tree]);
   const breadcrumbPages = useMemo(() => {
     if (!active) return [];
@@ -283,6 +290,7 @@ export default function App() {
           setChanges(true);
           return;
         }
+        if (parseIssueHash(location.hash)) return;
         const id =
           pageIdFromHash(location.hash) ?? nodes.find((n) => !n.hidden)?.id;
         if (id && location.hash !== "#/home") void openPage(id, "replace");
@@ -657,6 +665,7 @@ export default function App() {
         activeId={active?.id}
         trash={trash}
         changes={changes}
+        issues={!!issueRoute && !trash && !changes}
         visible={visible}
         favorites={favorites}
         collapsed={collapsed}
@@ -702,6 +711,16 @@ export default function App() {
           setSearch(false);
           void refresh().catch(handleError);
         }}
+        onIssues={() => {
+          setMobileView("page");
+          ++loadNumber.current;
+          setActive(null);
+          setTrash(false);
+          setChanges(false);
+          setSearch(false);
+          setIconPicker(false);
+          goToIssues(null);
+        }}
         onChanges={() => {
           setMobileView("page");
           ++loadNumber.current;
@@ -746,6 +765,7 @@ export default function App() {
             }
             trash={trash}
             changes={changes}
+            issues={!!issueRoute && !trash && !changes}
             breadcrumbPages={breadcrumbPages}
             title={title}
             openPage={openPage}
@@ -803,6 +823,11 @@ export default function App() {
               <TrashView
                 pages={tree}
                 onRestore={(id) => void mutate(id, "restore")}
+              />
+            ) : issueRoute ? (
+              <IssuesView
+                openNumber={issueRoute.number}
+                onError={handleError}
               />
             ) : active && coordinator ? (
               <ActiveDocument

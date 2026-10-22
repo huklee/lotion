@@ -7,6 +7,7 @@ import {
   Plus,
   ArrowUpFromLine,
   History,
+  SquareKanban,
   Trash2,
   Moon,
   Sun,
@@ -25,6 +26,7 @@ type WorkspaceSidebarProps = {
   activeId: string | undefined;
   trash: boolean;
   changes?: boolean;
+  issues?: boolean;
   visible: TreeNode[];
   favorites: string[];
   collapsed: Set<string>;
@@ -50,6 +52,7 @@ type WorkspaceSidebarProps = {
   onHome: () => void;
   onTrash: () => void;
   onChanges: () => void;
+  onIssues: () => void;
   /** Minimized to an icon rail. */
   mini: boolean;
   onToggleMini: () => void;
@@ -61,6 +64,7 @@ export function WorkspaceSidebar({
   activeId,
   trash,
   changes,
+  issues,
   visible,
   favorites,
   collapsed,
@@ -82,6 +86,7 @@ export function WorkspaceSidebar({
   onHome,
   onTrash,
   onChanges,
+  onIssues,
 }: WorkspaceSidebarProps) {
   const childrenByParent = useMemo(() => {
     const map = new Map<string | null, TreeNode[]>();
@@ -270,6 +275,14 @@ export function WorkspaceSidebar({
         <button title="Home" onClick={onHome}>
           <Home size={16} />
           <span className="label">Home</span>
+        </button>
+        <button
+          title="Issues"
+          onClick={onIssues}
+          aria-current={issues ? "page" : undefined}
+        >
+          <SquareKanban size={16} />
+          <span className="label">Issues</span>
         </button>
         {mini && (
           <button title="New page" onClick={() => void create()}>

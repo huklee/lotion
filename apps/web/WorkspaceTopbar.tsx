@@ -17,6 +17,7 @@ type WorkspaceTopbarProps = {
   setSidebar: (open: boolean) => void;
   trash: boolean;
   changes?: boolean;
+  issues?: boolean;
   breadcrumbPages: TreeNode[];
   title: string;
   openPage: (id: string) => Promise<void>;
@@ -37,6 +38,7 @@ export function WorkspaceTopbar({
   setSidebar,
   trash,
   changes,
+  issues,
   breadcrumbPages,
   title,
   openPage,
@@ -62,10 +64,12 @@ export function WorkspaceTopbar({
           <Menu size={17} />
         </button>
         <span className="muted">Workspace</span>
-        {trash || changes ? (
+        {trash || changes || issues ? (
           <>
             <span className="breadcrumb-slash">/</span>
-            <span>{trash ? "Trash" : "Recent changes"}</span>
+            <span>
+              {trash ? "Trash" : changes ? "Recent changes" : "Issues"}
+            </span>
           </>
         ) : breadcrumbPages.length ? (
           breadcrumbPages.map((page, index) => (

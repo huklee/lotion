@@ -6,6 +6,7 @@ import { SummaryService, bridgeChannels, bridgeNotifier } from "./summaries";
 import { NotificationService } from "./notifications";
 import { SessionStore } from "./sessions";
 import { FavoritesStore } from "./favorites";
+import { IssueStore } from "./issues";
 const host = process.env.HOST ?? "127.0.0.1";
 // Legacy environment aliases keep existing deployments pointed at their workspace.
 const token = process.env.LOTION_TOKEN ?? process.env.YESTION_TOKEN;
@@ -38,6 +39,7 @@ const app = await createApp(repo, {
   notifications,
   sessions: new SessionStore(dataDir),
   favorites: new FavoritesStore(dataDir),
+  issues: new IssueStore(dataDir),
 });
 await app.listen({ host, port: Number(process.env.PORT ?? 3001) });
 console.log(`Lotion is running at http://${host}:${process.env.PORT ?? 3001}`);
