@@ -13,10 +13,11 @@ import { IssueCreatedToast } from "./issues/block-issue";
 import {
   goToIssues,
   parseIssueHash,
-  useGoToIssuesShortcut,
+  announceRoute,
   useIssueRoute,
 } from "./issues/issues-route";
 import { flashBlockWhenRendered } from "./block-flash";
+import { useGoShortcuts } from "./use-go-shortcuts";
 import { useWorkspaceTransfer } from "./use-workspace-transfer";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
 import type { ImportMode, WorkspaceDialogKind } from "./workspace.types";
@@ -164,7 +165,29 @@ export default function App() {
     setIconPicker(false);
     goToIssues(number);
   }, []);
-  useGoToIssuesShortcut(showIssues);
+  const showHome = useCallback(() => {
+    setMobileView("page");
+    ++loadNumber.current;
+    setActive(null);
+    setTrash(false);
+    setChanges(false);
+    setSearch(false);
+    setIconPicker(false);
+    if (location.hash !== "#/home") history.pushState(null, "", "#/home");
+    announceRoute();
+  }, []);
+  const showChanges = useCallback(() => {
+    setMobileView("page");
+    ++loadNumber.current;
+    setActive(null);
+    setTrash(false);
+    setChanges(true);
+    setSearch(false);
+    setIconPicker(false);
+    if (location.hash !== "#/changes") history.pushState(null, "", "#/changes");
+    announceRoute();
+  }, []);
+  useGoShortcuts({ h: showHome, i: () => showIssues() });
   // on a phone, opening a page (or Home, Trash, Recent changes, Issues) shows the page view
   useEffect(() => {
     setMobileView("page");
@@ -282,7 +305,7 @@ export default function App() {
         else if (navigation === "push" && location.hash !== hash)
           history.pushState(null, "", hash);
         // pushState fires no hashchange: let the issues route see the page
-        window.dispatchEvent(new Event("lotion:issues-route"));
+        announceRoute();
         if (newId.current === id) {
           newId.current = null;
           setTimeout(() => {
@@ -710,16 +733,7 @@ export default function App() {
           setSearch(open);
         }}
         setDialog={setDialog}
-        onHome={() => {
-          setMobileView("page");
-          ++loadNumber.current;
-          setActive(null);
-          setTrash(false);
-          setChanges(false);
-          setSearch(false);
-          setIconPicker(false);
-          if (location.hash !== "#/home") history.pushState(null, "", "#/home");
-        }}
+        onHome={showHome}
         onTrash={() => {
           setMobileView("page");
           setTrash(true);
@@ -728,17 +742,7 @@ export default function App() {
           void refresh().catch(handleError);
         }}
         onIssues={showIssues}
-        onChanges={() => {
-          setMobileView("page");
-          ++loadNumber.current;
-          setActive(null);
-          setTrash(false);
-          setChanges(true);
-          setSearch(false);
-          setIconPicker(false);
-          if (location.hash !== "#/changes")
-            history.pushState(null, "", "#/changes");
-        }}
+        onChanges={showChanges}
       />
       <RowPagesContext.Provider
         value={{
@@ -944,6 +948,19 @@ export default function App() {
                 openPage={openPage}
                 onExport={() => setDialog("export")}
                 onImport={() => setDialog("import")}
+                openChange={(id, blockId) => {
+                  cancelFlash.current?.();
+                  cancelFlash.current = null;
+                  void openPage(id).then(() => {
+                    if (blockId)
+                      cancelFlash.current = flashBlockWhenRendered(blockId);
+                  });
+                }}
+                onOpenTrash={() => {
+                  setTrash(true);
+                  void refresh().catch(handleError);
+                }}
+                onShowChanges={showChanges}
               />
             )}
           </div>

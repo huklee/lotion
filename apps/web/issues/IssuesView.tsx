@@ -32,6 +32,7 @@ import {
   type BoardColumns,
 } from "./issue-keys";
 import { goToIssues } from "./issues-route";
+import { latinKey } from "../keyboard-layout";
 import { IssuePanel, type PanelFocus } from "./IssuePanel";
 import "./issues.css";
 
@@ -189,10 +190,11 @@ export function IssuesView({
       if (hints !== null) {
         event.preventDefault();
         event.stopPropagation();
+        const key = latinKey(event);
         if (event.key === "Escape") return setHints(null);
         if (event.key === "Backspace") return setHints(hints.slice(0, -1));
-        if (!/^[a-z]$/i.test(event.key)) return;
-        const typed = hints + event.key.toLowerCase();
+        if (!/^[a-z]$/i.test(key)) return;
+        const typed = hints + key.toLowerCase();
         const match = matchHint(labels, typed);
         if (!match) return setHints(null);
         if ("chosen" in match) {
@@ -203,7 +205,7 @@ export function IssuesView({
         } else setHints(typed);
         return;
       }
-      if (help && (event.key === "Escape" || event.key === "?")) {
+      if (help && (event.key === "Escape" || latinKey(event) === "?")) {
         event.preventDefault();
         event.stopPropagation();
         setHelp(false);
@@ -211,7 +213,7 @@ export function IssuesView({
       }
       const action = boardKey(
         {
-          key: event.key,
+          key: latinKey(event),
           shift: event.shiftKey,
           meta: event.metaKey,
           ctrl: event.ctrlKey,

@@ -1,5 +1,20 @@
 # Implementation history log
 
+## 2026-10-22T17:30:00+09:00 — 0.49.0 home, go-to shortcuts, Korean-layout shortcuts
+
+The owner asked for:
+- shortcuts that work while the keyboard is in Korean;
+- recent changes on Home;
+- shortcuts to Home and Issues;
+- the logo opening Home.
+
+What changed:
+- **Key reading:** `apps/web/keyboard-layout.ts` (`latinKey`) maps non-ASCII, `Process` and `Unidentified` keys to the US-layout character of their physical `code`, with Shift giving upper case and the shifted punctuation. The issue board's handler and hint typing use it.
+- **Go-to shortcuts:** `useGoToIssuesShortcut` became `use-go-shortcuts.ts` (`g` + letter, ignoring composition and text fields), with `h` for Home and `i` for Issues.
+- **App:** Home and Recent changes became the `showHome` and `showChanges` callbacks, shared by the sidebar, the shortcuts and Home's "See all". Both call `announceRoute()`; without it, `pushState` left the issue route active and the board stayed on screen.
+- **Logo:** the sidebar logo is now a button labelled "Lotion home".
+- **Home:** `ChangesView` exports `ChangeRow` and `HomeRecentChanges` (the latest 6 from `/api/changes`), and `WorkspaceHome` renders them between the page cards and the import tip.
+
 ## 2026-10-22T16:00:00+09:00 — 0.48.0 Lotion integration (stage 4 of ADR-026, last stage)
 
 - **Model:** `links`, `source`, `archivedAt` and their normalisation; `page` and `archived` filters; `setStatuses`, `renameLabel`, `archiveColumn`, `issuesToMarkdown`.

@@ -248,9 +248,14 @@ export function WorkspaceSidebar({
   return (
     <aside className={`sidebar${mini ? " mini" : ""}`}>
       <div className="workspace">
-        <div className="brand-mark">
+        <button
+          className="brand-mark"
+          aria-label="Lotion home"
+          title="Home (g h)"
+          onClick={onHome}
+        >
           l<span>.</span>
-        </div>
+        </button>
         <div>
           <strong>Lotion</strong>
           <span>Personal workspace</span>
@@ -272,12 +277,12 @@ export function WorkspaceSidebar({
           <span className="label">Search</span>
           <span className="keycap">⌘ K</span>
         </button>
-        <button title="Home" onClick={onHome}>
+        <button title="Home (g h)" onClick={onHome}>
           <Home size={16} />
           <span className="label">Home</span>
         </button>
         <button
-          title="Issues"
+          title="Issues (g i)"
           onClick={() => onIssues()}
           aria-current={issues ? "page" : undefined}
         >

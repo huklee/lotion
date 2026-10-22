@@ -123,6 +123,8 @@ a {
   line-height: 1;
   letter-spacing: -3px;
   padding-right: 3px;
+  flex: none;
+  cursor: pointer;
 }
 .brand-mark span {
   color: #c5d3ab;
@@ -3375,4 +3377,12 @@ kbd {
   .app.mobile .sidebar-mini-toggle {
     display: none;
   }
+}
+.home-recent {
+  margin-top: 34px;
+}
+.home-recent-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
 }

@@ -55,6 +55,83 @@ function timeLabel(iso: string) {
   });
 }
 
+/** One entry of the changes feed (also used by the Home page). */
+export function ChangeRow({
+  entry,
+  onOpen,
+  onOpenTrash,
+  day,
+}: {
+  entry: ChangeEntry;
+  onOpen: (id: string, blockId?: string) => void;
+  onOpenTrash: () => void;
+  /** Show the day next to the time (lists without day headings). */
+  day?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className="change-row"
+      data-change={`${entry.id}:${entry.toRevision}`}
+      onClick={() =>
+        entry.deletedNow ? onOpenTrash() : onOpen(entry.id, entry.blockId)
+      }
+      title={entry.deletedNow ? "In the trash — open Trash" : "Open page"}
+    >
+      <span className="change-icon" aria-hidden="true">
+        {entry.icon || <FileText size={16} />}
+      </span>
+      <span className="change-main">
+        <span className="change-title">
+          {entry.title || "Untitled"}
+          {entry.titleFrom !== undefined && entry.titleFrom !== entry.title && (
+            <span className="change-from">
+              {" "}
+              (was “{entry.titleFrom || "Untitled"}”)
+            </span>
+          )}
+        </span>
+        <span className="change-meta">
+          {entry.kinds.map((kind) => (
+            <span key={kind} className={`change-kind kind-${kind}`}>
+              {KIND_LABEL[kind]}
+            </span>
+          ))}
+          {(entry.added > 0 || entry.removed > 0 || entry.changed > 0) && (
+            <span
+              className="change-counts"
+              aria-label={`${entry.added} blocks added, ${entry.removed} removed, ${entry.changed} changed`}
+            >
+              {entry.added > 0 && (
+                <span className="count-add">+{entry.added}</span>
+              )}
+              {entry.removed > 0 && (
+                <span className="count-remove">−{entry.removed}</span>
+              )}
+              {entry.changed > 0 && (
+                <span className="count-change">~{entry.changed}</span>
+              )}
+            </span>
+          )}
+          {entry.edits > 1 && (
+            <span className="change-edits">{entry.edits} edits</span>
+          )}
+          {entry.deletedNow && <span className="change-edits">in trash</span>}
+        </span>
+        {entry.excerpt && (
+          <span className="change-excerpt">{entry.excerpt}</span>
+        )}
+      </span>
+      <time className="change-time" dateTime={entry.to}>
+        {day && `${dayLabel(entry.to)} `}
+        {entry.edits > 1 && timeLabel(entry.from) !== timeLabel(entry.to)
+          ? `${timeLabel(entry.from)}–${timeLabel(entry.to)}`
+          : timeLabel(entry.to)}
+      </time>
+    </button>
+  );
+}
+
 /** Workspace-wide feed of recent page changes, grouped by day, newest first. */
 export function ChangesView({
   onOpen,
@@ -120,81 +197,11 @@ export function ChangesView({
           <ul>
             {day.items.map((entry) => (
               <li key={`${entry.id}:${entry.toRevision}`}>
-                <button
-                  type="button"
-                  className="change-row"
-                  data-change={`${entry.id}:${entry.toRevision}`}
-                  onClick={() =>
-                    entry.deletedNow
-                      ? onOpenTrash()
-                      : onOpen(entry.id, entry.blockId)
-                  }
-                  title={
-                    entry.deletedNow ? "In the trash — open Trash" : "Open page"
-                  }
-                >
-                  <span className="change-icon" aria-hidden="true">
-                    {entry.icon || <FileText size={16} />}
-                  </span>
-                  <span className="change-main">
-                    <span className="change-title">
-                      {entry.title || "Untitled"}
-                      {entry.titleFrom !== undefined &&
-                        entry.titleFrom !== entry.title && (
-                          <span className="change-from">
-                            {" "}
-                            (was “{entry.titleFrom || "Untitled"}”)
-                          </span>
-                        )}
-                    </span>
-                    <span className="change-meta">
-                      {entry.kinds.map((kind) => (
-                        <span key={kind} className={`change-kind kind-${kind}`}>
-                          {KIND_LABEL[kind]}
-                        </span>
-                      ))}
-                      {(entry.added > 0 ||
-                        entry.removed > 0 ||
-                        entry.changed > 0) && (
-                        <span
-                          className="change-counts"
-                          aria-label={`${entry.added} blocks added, ${entry.removed} removed, ${entry.changed} changed`}
-                        >
-                          {entry.added > 0 && (
-                            <span className="count-add">+{entry.added}</span>
-                          )}
-                          {entry.removed > 0 && (
-                            <span className="count-remove">
-                              −{entry.removed}
-                            </span>
-                          )}
-                          {entry.changed > 0 && (
-                            <span className="count-change">
-                              ~{entry.changed}
-                            </span>
-                          )}
-                        </span>
-                      )}
-                      {entry.edits > 1 && (
-                        <span className="change-edits">
-                          {entry.edits} edits
-                        </span>
-                      )}
-                      {entry.deletedNow && (
-                        <span className="change-edits">in trash</span>
-                      )}
-                    </span>
-                    {entry.excerpt && (
-                      <span className="change-excerpt">{entry.excerpt}</span>
-                    )}
-                  </span>
-                  <time className="change-time" dateTime={entry.to}>
-                    {entry.edits > 1 &&
-                    timeLabel(entry.from) !== timeLabel(entry.to)
-                      ? `${timeLabel(entry.from)}–${timeLabel(entry.to)}`
-                      : timeLabel(entry.to)}
-                  </time>
-                </button>
+                <ChangeRow
+                  entry={entry}
+                  onOpen={onOpen}
+                  onOpenTrash={onOpenTrash}
+                />
               </li>
             ))}
           </ul>
@@ -212,6 +219,58 @@ export function ChangesView({
         >
           Show older changes
         </button>
+      )}
+    </section>
+  );
+}
+
+/** The latest few changes on the Home page, with a link to the full feed. */
+export function HomeRecentChanges({
+  onOpen,
+  onOpenTrash,
+  onShowAll,
+  limit = 6,
+}: {
+  onOpen: (id: string, blockId?: string) => void;
+  onOpenTrash: () => void;
+  onShowAll: () => void;
+  limit?: number;
+}) {
+  const [entries, setEntries] = useState<ChangeEntry[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api<{ changes: ChangeEntry[] }>(`/api/changes?limit=${limit}`)
+      .then((page) => alive && setEntries(page.changes))
+      .catch(() => alive && setEntries([]));
+    return () => {
+      alive = false;
+    };
+  }, [limit]);
+  return (
+    <section className="home-recent" aria-labelledby="home-recent-title">
+      <div className="home-section">
+        <h2 id="home-recent-title">Recent changes</h2>
+        <button className="quiet" onClick={onShowAll}>
+          See all
+        </button>
+      </div>
+      {entries === null ? (
+        <p className="empty-copy">Loading…</p>
+      ) : entries.length ? (
+        <ul className="home-recent-list">
+          {entries.map((entry) => (
+            <li key={`${entry.id}:${entry.toRevision}`}>
+              <ChangeRow
+                entry={entry}
+                onOpen={onOpen}
+                onOpenTrash={onOpenTrash}
+                day
+              />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="empty-copy">No changes yet. Edits will show up here.</p>
       )}
     </section>
   );

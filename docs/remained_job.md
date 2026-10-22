@@ -2,6 +2,10 @@
 
 Historical completed work lives in the [implementation history](implementation-history-log.md), [test results](test-results.md), and [changelog](changelog.md). The completed sequence remains visible below for review across its six incremental pull requests.
 
+## Completed user requests — 2026-10-22
+
+- [x] Issue board shortcuts work with Korean input; Home shows recent changes; g h / g i go to Home / Issues; the logo opens Home (0.49.0).
+
 ## Personal issue tracker — 2026-10-22 ([ADR-026](adr/026-personal-issue-tracker.md))
 
 - [x] Stage 1 MVP: issue store and API, board with drag between statuses, issue panel, status notes, live refresh, `lotion issue` CLI (0.45.0).
