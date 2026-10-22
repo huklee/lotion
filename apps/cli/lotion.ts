@@ -26,12 +26,14 @@ Commands
   ls                     List issues by status
       --status <s>       Only this status (key or name)
       --label <l>        Only issues with this label
+      --priority <p>     Only this priority (none, low, medium, high, urgent)
       -q <text>          Title/body search
   show <n>               One issue with its notes
   new <title>            Create an issue
       --body <text|->    Body (Markdown); "-" reads stdin
       --status <s>       Start in this status (default: first column)
       --label <a,b>      Labels, comma separated
+      --priority <p>     none, low, medium, high or urgent
   move <n> <status>      Move to a status column
       --before <m>       Place before issue #m (default: end of column)
   note <n> <text|->      Add a status note; "-" reads stdin
@@ -49,7 +51,15 @@ class CliError extends Error {}
 
 type Parsed = { args: string[]; flags: Map<string, string | true> };
 
-const VALUE_FLAGS = new Set(["status", "label", "q", "body", "before", "as"]);
+const VALUE_FLAGS = new Set([
+  "status",
+  "label",
+  "q",
+  "body",
+  "before",
+  "as",
+  "priority",
+]);
 
 export function parseArgs(argv: string[]): Parsed {
   const args: string[] = [];
@@ -146,7 +156,7 @@ export function formatBoard(board: IssueBoard): string {
     lines.push(`${status.name} (${status.key}) — ${items.length}`);
     for (const i of items)
       lines.push(
-        `  #${i.number}  ${i.title}${i.labels.length ? `  [${i.labels.join(", ")}]` : ""}${i.noteCount > 1 ? `  · ${i.noteCount - 1} note${i.noteCount > 2 ? "s" : ""}` : ""}`,
+        `  #${i.number}  ${i.title}${i.priority && i.priority !== "none" ? `  !${i.priority}` : ""}${i.labels.length ? `  [${i.labels.join(", ")}]` : ""}${i.noteCount > 1 ? `  · ${i.noteCount - 1} note${i.noteCount > 2 ? "s" : ""}` : ""}`,
       );
   }
   return lines.length ? lines.join("\n") : "No issues.";
@@ -157,7 +167,7 @@ export function formatIssue(issue: Issue, statuses: IssueStatus[]): string {
     statuses.find((s) => s.key === issue.status)?.name ?? issue.status;
   return [
     `#${issue.number}  ${issue.title}`,
-    `Status: ${status}${issue.labels.length ? `   Labels: ${issue.labels.join(", ")}` : ""}`,
+    `Status: ${status}${issue.priority && issue.priority !== "none" ? `   Priority: ${issue.priority}` : ""}${issue.labels.length ? `   Labels: ${issue.labels.join(", ")}` : ""}`,
     `Created ${time(issue.createdAt)}   Updated ${time(issue.updatedAt)}`,
     ...(issue.body.trim() ? ["", issue.body.trim()] : []),
     "",
@@ -197,7 +207,7 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
         const query = new URLSearchParams();
         if (typeof status === "string")
           query.set("status", resolveStatus(all.statuses, status));
-        for (const key of ["label", "q"] as const) {
+        for (const key of ["label", "q", "priority"] as const) {
           const value = flags.get(key);
           if (typeof value === "string") query.set(key, value);
         }
@@ -225,6 +235,9 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
         const status = flags.get("status");
         if (typeof status === "string")
           body.status = resolveStatus((await board()).statuses, status);
+        const priority = flags.get("priority");
+        if (typeof priority === "string")
+          body.priority = priority.toLowerCase();
         const labels = flags.get("label");
         if (typeof labels === "string")
           body.labels = labels

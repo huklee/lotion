@@ -8,9 +8,11 @@ import { WorkspaceTopbar } from "./WorkspaceTopbar";
 import { TrashView } from "./TrashView";
 import { ChangesView } from "./ChangesView";
 import { IssuesView } from "./issues/IssuesView";
+import { issuesApi } from "./issues/issues-api";
 import {
   goToIssues,
   parseIssueHash,
+  useGoToIssuesShortcut,
   useIssueRoute,
 } from "./issues/issues-route";
 import { flashBlockWhenRendered } from "./block-flash";
@@ -151,6 +153,17 @@ export default function App() {
     newId = useRef<string | null>(null);
   const coordinator = active ? coordinators.current.get(active.id) : undefined;
   const issueRoute = useIssueRoute();
+  const showIssues = useCallback((number: number | null = null) => {
+    setMobileView("page");
+    ++loadNumber.current;
+    setActive(null);
+    setTrash(false);
+    setChanges(false);
+    setSearch(false);
+    setIconPicker(false);
+    goToIssues(number);
+  }, []);
+  useGoToIssuesShortcut(showIssues);
   // on a phone, opening a page (or Home, Trash, Recent changes, Issues) shows the page view
   useEffect(() => {
     setMobileView("page");
@@ -711,16 +724,7 @@ export default function App() {
           setSearch(false);
           void refresh().catch(handleError);
         }}
-        onIssues={() => {
-          setMobileView("page");
-          ++loadNumber.current;
-          setActive(null);
-          setTrash(false);
-          setChanges(false);
-          setSearch(false);
-          setIconPicker(false);
-          goToIssues(null);
-        }}
+        onIssues={showIssues}
         onChanges={() => {
           setMobileView("page");
           ++loadNumber.current;
@@ -949,6 +953,19 @@ export default function App() {
         />
       </RowPagesContext.Provider>
       <WorkspaceDialog
+        openIssue={(number) => {
+          setQuery("");
+          showIssues(number);
+        }}
+        createIssue={(title) =>
+          void issuesApi
+            .create({ title })
+            .then((issue) => {
+              setQuery("");
+              showIssues(issue.number);
+            })
+            .catch(handleError)
+        }
         dialog={dialog}
         search={search}
         auth={auth}

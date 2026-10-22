@@ -278,7 +278,7 @@ export function WorkspaceSidebar({
         </button>
         <button
           title="Issues"
-          onClick={onIssues}
+          onClick={() => onIssues()}
           aria-current={issues ? "page" : undefined}
         >
           <SquareKanban size={16} />

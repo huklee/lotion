@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.45.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.46.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 
@@ -80,6 +80,8 @@ Mark a page with the top-bar star to add it to **Favorites** in the sidebar. Fav
 ## Issues
 
 Sidebar → **Issues** (`#/issues`) is a personal issue board: one column per status (Backlog, Todo, In progress, Done), cards dragged between columns, **c** for a new issue, and a side panel with the description, labels and a thread of status notes. Status changes are noted automatically.
+
+Everything works from the keyboard, Vimium style: **f** hints, **j/k/h/l** to move, **⇧H/⇧J/⇧K/⇧L** to move a card, **x** done, **o** open, **m** note, **/** filter, **?** for the full list, and **g i** to reach the board from anywhere. ⌘K also finds and creates issues.
 
 Agents and scripts use the command line against a running server:
 

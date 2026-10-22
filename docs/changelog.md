@@ -2,6 +2,24 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.46.0 — 2026-10-22
+
+### Added
+
+- **The issue board works from the keyboard alone (Vimium style).** Press **?** on the board for the list.
+  - **f** shows a letter on every card; type it to open that card.
+  - **j / k** move between cards, **h / l** between columns.
+  - **⇧J / ⇧K** move the card down or up. **⇧H / ⇧L** move it to the column on the left or right.
+  - **x** marks it done (again: back to the first column).
+  - **o** or Enter opens it, **e** edits the title, **m** adds a status note, **c** creates an issue in the current column.
+  - **Esc** closes the panel and returns to the card.
+- **g i** opens Issues from anywhere outside a text field.
+- **⌘/Ctrl K lists matching issues** below the page results, plus **New issue: "…"** to create one from what you typed.
+- **Filter bar** above the board: text (**/**), label and priority.
+- **Priority** per issue (none, low, medium, high, urgent), set in the issue panel and shown on the card. The command line has `--priority` on `new` and `ls`.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.45.0 — 2026-10-22 · [#65](https://github.com/huklee/lotion/pull/65)
 
 ### Added

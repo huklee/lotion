@@ -2,7 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Trash2, X } from "lucide-react";
 import { ApiError } from "../api";
 import { pillStyle } from "../database-ui";
-import type { Issue, IssueStatus } from "../../../packages/issues/model";
+import {
+  PRIORITIES,
+  PRIORITY_NAMES,
+  type Issue,
+  type IssueStatus,
+} from "../../../packages/issues/model";
 import { issuesApi } from "./issues-api";
 import { labelColor } from "./board-order";
 
@@ -25,11 +30,15 @@ const parseLabels = (text: string) =>
     ),
   ].slice(0, 20);
 
+/** A keyboard request to focus a field once the issue is shown. */
+export type PanelFocus = { field: "title" | "note"; at: number };
+
 /** One issue beside the board: fields saved on blur, and its status notes. */
 export function IssuePanel({
   number,
   statuses,
   seq,
+  focus,
   onChanged,
   onClose,
   onError,
@@ -38,6 +47,7 @@ export function IssuePanel({
   statuses: IssueStatus[];
   /** The board's change counter; a new value reloads the issue. */
   seq: number;
+  focus?: PanelFocus | null;
   onChanged: () => Promise<void>;
   onClose: () => void;
   onError: (error: unknown) => void;
@@ -52,6 +62,16 @@ export function IssuePanel({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const dirty = useRef(new Set<string>());
   const panel = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
+  const noteRef = useRef<HTMLTextAreaElement>(null);
+  const loaded = !!issue;
+
+  useEffect(() => {
+    if (!focus || !loaded || Date.now() - focus.at > 3000) return;
+    const el = focus.field === "title" ? titleRef.current : noteRef.current;
+    el?.focus();
+    if (focus.field === "title") el?.select();
+  }, [focus, loaded]);
 
   const show = useCallback((next: Issue) => {
     setIssue(next);
@@ -96,7 +116,7 @@ export function IssuePanel({
   }, [onClose]);
 
   const save = async (
-    field: "title" | "labels" | "body" | "status",
+    field: "title" | "labels" | "body" | "status" | "priority",
     value: unknown,
   ) => {
     if (!issue) return;
@@ -162,6 +182,7 @@ export function IssuePanel({
         </button>
       </div>
       <textarea
+        ref={titleRef}
         className="issue-title-input"
         aria-label="Title"
         rows={1}
@@ -202,6 +223,20 @@ export function IssuePanel({
             {statuses.map((s) => (
               <option key={s.key} value={s.key}>
                 {s.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Priority</span>
+          <select
+            aria-label="Priority"
+            value={issue.priority ?? "none"}
+            onChange={(event) => void save("priority", event.target.value)}
+          >
+            {PRIORITIES.map((p) => (
+              <option key={p} value={p}>
+                {PRIORITY_NAMES[p]}
               </option>
             ))}
           </select>
@@ -297,6 +332,7 @@ export function IssuePanel({
         }}
       >
         <textarea
+          ref={noteRef}
           aria-label="Add a status note"
           placeholder="Add a status note… (⌘/Ctrl+Enter)"
           value={note}

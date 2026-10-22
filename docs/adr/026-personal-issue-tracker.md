@@ -1,6 +1,6 @@
 # ADR-026: Personal issue tracker (Issues board, status notes, CLI)
 
-- **Status:** Accepted. Stage 1 (MVP) is in 0.45.0; stages 2–4 follow in their own releases.
+- **Status:** Accepted. Stage 1 (MVP) is in 0.45.0, stage 2 (keyboard) in 0.46.0; stages 3–4 follow in their own releases.
 - **Date:** 2026-10-22
 
 ## Context
@@ -64,6 +64,13 @@ Issues are a server-side store, not a document block.
    - Promotion of a long body to a page.
    - Archive of done issues, status and label settings, export.
    - A mobile board and simple statistics.
+
+## Stage 2 notes
+
+- **Keymap:** the key → action mapping is a pure module (`apps/web/issues/issue-keys.ts`) with unit tests. The board listens in the capture phase, so hint and help Escape handling runs before the panel closes; it ignores keys typed into fields, with modifiers, or while a modal dialog is open.
+- **Focus:** keyboard focus moves to a card only when a key asked for it, so a poll never steals focus from the panel.
+- **Hints:** single letters while there are at most 26 cards, otherwise two letters for every card.
+- **Data:** `priority` was added to issues; older `issues.json` entries are read as `none`.
 
 ## Consequences
 

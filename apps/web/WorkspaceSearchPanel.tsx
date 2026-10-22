@@ -7,6 +7,7 @@ import {
   type SearchResult,
 } from "../../packages/search/index";
 import { api } from "./api";
+import { IssueSearchResults } from "./issues/IssueSearchResults";
 
 type WorkspaceSearchPanelProps = {
   query: string;
@@ -14,6 +15,8 @@ type WorkspaceSearchPanelProps = {
   activeId?: string;
   activeContent?: Content;
   openResult: (result: SearchResult) => void;
+  openIssue?: (number: number) => void;
+  createIssue?: (title: string) => void;
 };
 
 const emptyResponse: SearchResponse = { query: "", total: 0, results: [] };
@@ -24,6 +27,8 @@ export function WorkspaceSearchPanel({
   activeId,
   activeContent,
   openResult,
+  openIssue,
+  createIssue,
 }: WorkspaceSearchPanelProps) {
   const [remote, setRemote] = useState<SearchResponse>(emptyResponse);
   const [loading, setLoading] = useState(false);
@@ -144,6 +149,13 @@ export function WorkspaceSearchPanel({
           <p>No matching titles or document content.</p>
         )}
       </div>
+      {openIssue && createIssue && (
+        <IssueSearchResults
+          query={query}
+          onOpen={openIssue}
+          onCreate={createIssue}
+        />
+      )}
     </>
   );
 }

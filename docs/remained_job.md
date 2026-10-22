@@ -5,7 +5,7 @@ Historical completed work lives in the [implementation history](implementation-h
 ## Personal issue tracker — 2026-10-22 ([ADR-026](adr/026-personal-issue-tracker.md))
 
 - [x] Stage 1 MVP: issue store and API, board with drag between statuses, issue panel, status notes, live refresh, `lotion issue` CLI (0.45.0).
-- [ ] Stage 2: keyboard-only use (hints, j/k/h/l, card moves, ⌘K, filters).
+- [x] Stage 2: keyboard-only use: hints, j/k/h/l, card moves, x/o/e/m/c, g i, ⌘K issue results and creation, filter bar, priority (0.46.0).
 - [ ] Stage 3: agents (MCP server, more CLI commands, author badges, notifications, conflict prompts).
 - [ ] Stage 4: Lotion integration (page links, issues from blocks, archive, settings, export, mobile board).
 
