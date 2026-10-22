@@ -1,5 +1,30 @@
 # Test results
 
+## 2026-10-22T16:10:00+09:00 — 0.48.0 Lotion integration
+
+Focused:
+- `tests/unit/issues-integration.test.ts` **7/7**:
+  - links and source with the page filter, and an invalid page id refused;
+  - column archive, hidden by default, `include`/`only`, unarchive, and normalisation of old data;
+  - statuses renamed, reordered and added; removing a used status refused, duplicate keys and a single status refused; `statusKey`;
+  - labels renamed and deleted everywhere;
+  - Markdown export;
+  - an issue from a block: title from the first line including a mention label, nested list body, and the empty-block title.
+- `tests/integration/issues-agents.test.ts` **7/7**, now with an API and CLI scenario:
+  - `link` from a Lotion URL, `?page=`, `unlink`;
+  - column archive, `ls --archived`, `unarchive` / `archive`;
+  - config PUT, and removal of a used column refused with 400;
+  - label rename;
+  - `export` in Markdown and JSON, and the attachment header.
+- E2E `issues-integration.spec.ts` **6/6** across Chromium, Firefox and WebKit:
+  - **From a block:** handle menu → Create issue on a checklist item with a nested step. The toast appears, and the page's Linked issues strip opens the issue, which carries the nested step and the page link.
+  - **Panel links:** a second page linked from the panel picker; Move description to a page leaves three links and a pointer text; "Made from a block in …" returns to the page at the block.
+  - **Board management:** Archive on Done hides the card; the export menu link; Show archived shows it again; a label renamed in Board settings; the summary line.
+  - The first run found that opening a page from the board kept showing the board (`pushState` fires no `hashchange`); fixed in App's `openPage`.
+- Phone board at 390 px reviewed in a screenshot: one column at a time, with the next one peeking in.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **297/297**; Playwright **339 passed, 1 failed**. The failure was WebKit `portability.spec.ts:7`, a known flake; it passed 36/36 when repeated 3×. Remote CI results are recorded on the pull request.
+
 ## 2026-10-22T14:40:00+09:00 — 0.47.0 agents: MCP server, CLI, badges, notifications, conflicts
 
 Focused:
