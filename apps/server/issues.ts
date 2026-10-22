@@ -9,11 +9,13 @@ import {
   createIssue,
   find,
   matches,
+  normalizeIssue,
   moveIssue,
   patchIssue,
   summarize,
   type Issue,
   type IssueBoard,
+  type IssueFilter,
   type IssueStatus,
 } from "../../packages/issues/model";
 
@@ -48,7 +50,9 @@ export class IssueStore {
     if (this.state) return this.state;
     try {
       const data = JSON.parse(await readFile(this.file, "utf8"));
-      const issues: Issue[] = Array.isArray(data?.issues) ? data.issues : [];
+      const issues: Issue[] = Array.isArray(data?.issues)
+        ? data.issues.map(normalizeIssue)
+        : [];
       this.state = {
         version: 1,
         next: Math.max(
@@ -105,9 +109,7 @@ export class IssueStore {
     };
   }
 
-  async board(
-    filter: { status?: string; label?: string; q?: string } = {},
-  ): Promise<IssueBoard> {
+  async board(filter: IssueFilter = {}): Promise<IssueBoard> {
     await this.queue;
     const state = await this.load();
     return {

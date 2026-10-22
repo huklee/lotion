@@ -212,6 +212,7 @@ export async function createApp(
     return issues().board({
       status: text("status"),
       label: text("label"),
+      priority: text("priority"),
       q: text("q"),
     });
   });

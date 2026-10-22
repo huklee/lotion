@@ -23,6 +23,10 @@ export function HelpPanel() {
         <span>Undo</span>
         <kbd>⌘ / Ctrl Z</kbd>
       </div>
+      <div className="shortcut-row">
+        <span>Go to Issues (then ? for board keys)</span>
+        <kbd>g i</kbd>
+      </div>
       <p>
         Drag in the editor’s left margin to select blocks. Use “Select section”
         to move a heading with its content. Drop images into your page or use

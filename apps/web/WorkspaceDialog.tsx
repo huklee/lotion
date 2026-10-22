@@ -38,6 +38,8 @@ type WorkspaceDialogProps = {
   activeId: string | undefined;
   activeContent?: Content;
   openSearchResult: (result: SearchResult) => void;
+  openIssue?: (number: number) => void;
+  createIssue?: (title: string) => void;
   title: string;
   copyPageMarkdown: () => Promise<void>;
   exportWorkspace: (rootId?: string, portable?: boolean) => Promise<void>;
@@ -112,6 +114,8 @@ export function WorkspaceDialog(props: WorkspaceDialogProps) {
             activeId={props.activeId}
             activeContent={props.activeContent}
             openResult={props.openSearchResult}
+            openIssue={props.openIssue}
+            createIssue={props.createIssue}
           />
         ) : dialog === "import" ? (
           <ImportPanel

@@ -15,6 +15,16 @@ export const DEFAULT_STATUSES: IssueStatus[] = [
   { key: "done", name: "Done", color: "green" },
 ];
 
+export const PRIORITIES = ["none", "low", "medium", "high", "urgent"] as const;
+export type IssuePriority = (typeof PRIORITIES)[number];
+export const PRIORITY_NAMES: Record<IssuePriority, string> = {
+  none: "No priority",
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  urgent: "Urgent",
+};
+
 export type NoteKind = "created" | "status" | "note";
 
 export type IssueNote = {
@@ -33,6 +43,7 @@ export type Issue = {
   body: string;
   status: string;
   labels: string[];
+  priority: IssuePriority;
   /** Position inside the status column, ascending. */
   rank: number;
   createdAt: string;
@@ -75,6 +86,7 @@ export const createIssueSchema = z
     body: z.string().max(100_000).default(""),
     status: z.string().max(40).optional(),
     labels: labels.default([]),
+    priority: z.enum(PRIORITIES).default("none"),
   })
   .strict();
 
@@ -84,6 +96,7 @@ export const patchIssueSchema = z
     body: z.string().max(100_000),
     status: z.string().max(40),
     labels,
+    priority: z.enum(PRIORITIES),
   })
   .partial()
   .strict();
@@ -180,6 +193,7 @@ export function createIssue(
     body: data.body,
     status,
     labels: data.labels,
+    priority: data.priority,
     rank: rankBetween(last?.rank, undefined) as number,
     createdAt: clock.now,
     updatedAt: clock.now,
@@ -262,7 +276,7 @@ export function moveIssue(
   return [moved, ...changed.values()];
 }
 
-/** Title, body, labels and (moved to the end of the column) status changes. */
+/** Title, body, labels, priority and (moved to the end of the column) status changes. */
 export function patchIssue(
   issues: Issue[],
   statuses: IssueStatus[],
@@ -291,6 +305,10 @@ export function patchIssue(
       next[key] = data[key];
       edited = true;
     }
+  if (data.priority !== undefined && data.priority !== next.priority) {
+    next.priority = data.priority;
+    edited = true;
+  }
   if (
     data.labels !== undefined &&
     data.labels.join("\n") !== next.labels.join("\n")
@@ -338,12 +356,25 @@ export function summarize(issue: Issue): IssueSummary {
   return { ...rest, noteCount: notes.length, lastNote: notes.at(-1) ?? null };
 }
 
+export type IssueFilter = {
+  status?: string;
+  label?: string;
+  priority?: string;
+  q?: string;
+};
+
+/** Older issues.json files have no priority. */
+export function normalizeIssue(issue: Issue): Issue {
+  return PRIORITIES.includes(issue.priority)
+    ? issue
+    : { ...issue, priority: "none" };
+}
+
 /** Case-insensitive filter used by the list API and the CLI. */
-export function matches(
-  issue: Issue,
-  filter: { status?: string; label?: string; q?: string },
-): boolean {
+export function matches(issue: Issue, filter: IssueFilter): boolean {
   if (filter.status && issue.status !== filter.status) return false;
+  if (filter.priority && (issue.priority ?? "none") !== filter.priority)
+    return false;
   if (
     filter.label &&
     !issue.labels.some((l) => l.toLowerCase() === filter.label!.toLowerCase())

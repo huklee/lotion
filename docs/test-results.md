@@ -1,5 +1,29 @@
 # Test results
 
+## 2026-10-22T13:10:00+09:00 — 0.46.0 keyboard-only Issues board
+
+Focused:
+- `tests/unit/issue-keys.test.ts` **9/9**:
+  - first-card start, j/k and arrows, h/l skipping empty columns;
+  - ⇧J/⇧K reorder and ⇧H/⇧L moves into an empty column;
+  - x to Done and back;
+  - open/edit/note/new/filter/hints/help; modifier keys ignored;
+  - single- and two-letter hints and hint matching;
+  - priority default, set, filter and normalisation of old data.
+- `tests/integration/issues.test.ts` **6/6**, now with `--priority` on `new` and `ls`.
+- E2E `issues-keyboard.spec.ts` **9/9** across Chromium, Firefox and WebKit:
+  - `/` filter then Enter focuses the first card; j, then ⇧K reorders and ⇧L moves to Todo with focus kept; x marks Done;
+  - m opens the panel with the note box focused, and the note is added; Esc twice closes the panel and refocuses the card; e focuses the title;
+  - f hints open a card;
+  - the priority set in the panel shows on the card and the priority filter narrows the board;
+  - `?` lists the shortcuts and Esc closes them;
+  - ⌘K lists an issue and opens it, and "New issue: …" creates one;
+  - `g i` from a page opens the board.
+
+  The first run found that closing the panel did not refocus a card that was already focused; fixed with an explicit focus request counter.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **284/284**; Playwright **328/328**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-22T11:50:00+09:00 — 0.45.0 Issues board and CLI
 
 Focused: `tests/unit/issues-model.test.ts` **12/12** (creation at the column end with a created note; validation; cross-column move with status note and `closedAt`; reorder without a note and no-op moves; renumbering after 80 moves into one gap; patch with label de-duplication; notes and authors; filters; drop position, optimistic move and route parsing). `tests/integration/issues.test.ts` **6/6** (token required; create/list/filter/move/note/PATCH with stale `If-Match` → 409/delete and persistence with numbers never reused; validation; 12 concurrent creates plus concurrent notes and moves all kept; CLI `new`/`ls`/`move`/`note -` from stdin/`show`/`--json` against a real server, errors with exit code 1). E2E `issues.spec.ts` **6/6** across Chromium, Firefox and WebKit (sidebar → Issues; `c` quick-add; drag to In progress saved; panel shows the status note; a note is added with ⌘/Ctrl+Enter; a move made through the API appears within one poll; Escape closes; deep link; title and label edits; a stale description edit is refused and reloaded; delete with confirmation).

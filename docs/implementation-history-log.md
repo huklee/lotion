@@ -1,5 +1,14 @@
 # Implementation history log
 
+## 2026-10-22T13:00:00+09:00 — 0.46.0 keyboard-only Issues board (stage 2 of ADR-026)
+
+The owner asked to continue through stages 1–4, merging each stage after its tests pass.
+
+- **Keymap:** `issue-keys.ts` covers board navigation, card moves (`J`/`K` inside a column; `H`/`L` across columns, including empty ones; `x` done or back), open/edit/note/new/filter/hints/help, Vimium-style hint labels and hint matching.
+- **Board:** `IssuesView` uses a capture-phase key handler, a focused-card state with explicit focus requests (a tick counter so closing the panel refocuses the same card), a hint overlay, a filter bar (text, label, priority) and a non-modal shortcuts dialog. `IssuePanel` gains a priority select and `focus` requests for title and note.
+- **App:** `useGoToIssuesShortcut` (`g i`), with the sidebar and the shortcut sharing one `showIssues` callback. The ⌘K palette renders `IssueSearchResults` (matching issues and "New issue"). The help panel mentions `g i`.
+- **Data, API and CLI:** `priority` in the model (Zod enum, default none, normalised on load) and the `priority` list filter in the API; the CLI accepts `--priority` on `new` and `ls`.
+
 ## 2026-10-22T11:30:00+09:00 — 0.45.0 Issues board and CLI (stage 1 of ADR-026)
 
 The owner chose to build a personal issue tracker into Lotion (direction B: a server-side store, not a database block) and approved four stages, MVP first.

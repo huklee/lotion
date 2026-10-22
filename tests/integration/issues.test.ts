@@ -228,6 +228,12 @@ describe("lotion issue CLI", () => {
 
     r = await cli("issue ls --status doing --json");
     expect(JSON.parse(r.out).map((i: any) => i.number)).toEqual([1]);
+
+    r = await cli("issue new Urgent --priority URGENT --json");
+    expect(JSON.parse(r.out).priority).toBe("urgent");
+    r = await cli("issue ls --priority urgent");
+    expect(r.out).toContain("#3  Urgent  !urgent");
+    expect(r.out).not.toContain("Fix paste");
   });
 
   it("reports errors with a non-zero exit code", async () => {
