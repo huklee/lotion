@@ -23,6 +23,8 @@ Focused:
   - The first run found that opening a page from the board kept showing the board (`pushState` fires no `hashchange`); fixed in App's `openPage`.
 - Phone board at 390 px reviewed in a screenshot: one column at a time, with the next one peeking in.
 
+Remote CI on #68 first failed only the known `portability.spec.ts:7` flake (Firefox). Its rerun then failed `issues-keyboard.spec.ts` (Chromium): a card lost focus after ⇧K because an overlapping poll reordered the cards again (moving a focused DOM node blurs it). Fixed: the card is refocused after the move settles, and board answers older than the current change counter are ignored. Afterwards `issues-keyboard.spec.ts` passed **45/45** (5 repeats, 6 workers).
+
 Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **297/297**; Playwright **339 passed, 1 failed**. The failure was WebKit `portability.spec.ts:7`, a known flake; it passed 36/36 when repeated 3×. Remote CI results are recorded on the pull request.
 
 ## 2026-10-22T14:40:00+09:00 — 0.47.0 agents: MCP server, CLI, badges, notifications, conflicts

@@ -28,6 +28,7 @@ Versions are recorded in `package.json` and `package-lock.json`. Each release re
 ### Fixed
 
 - Opening a page from the issue board (for example a linked page) now leaves the board.
+- A card moved with ⇧H/⇧J/⇧K/⇧L keeps keyboard focus even when a background refresh arrives at the same time; an older refresh no longer undoes a newer board.
 
 Verification is recorded in [test results](test-results.md).
 

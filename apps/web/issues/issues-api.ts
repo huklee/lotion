@@ -69,6 +69,8 @@ export function useIssueBoard(
   const reload = useCallback(async () => {
     try {
       const next = await issuesApi.board(archived);
+      // a slower, older answer (an overlapping poll) must not undo a newer board
+      if (next.seq < seq.current) return;
       seq.current = next.seq;
       setBoard(next);
     } catch (error) {
@@ -76,6 +78,8 @@ export function useIssueBoard(
     }
   }, [archived]);
   useEffect(() => {
+    // a different board (archived shown or not) starts from its own counter
+    seq.current = -1;
     void reload();
     let alive = true;
     const tick = async () => {

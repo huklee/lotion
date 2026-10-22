@@ -242,8 +242,12 @@ export function IssuesView({
           focusCard(action.number);
           break;
         case "move":
+          // moving a focused card's DOM node blurs it: focus it again once the
+          // board has settled
           wantFocus.current = true;
-          void move(action.number, action.status, action.before);
+          void move(action.number, action.status, action.before).then(() =>
+            focusCard(action.number),
+          );
           break;
         case "open":
           goToIssues(action.number);
