@@ -6,6 +6,7 @@ import {
   ArrowUpFromLine,
 } from "lucide-react";
 import type { TreeNode } from "../../packages/document-schema/index";
+import { HomeRecentChanges } from "./ChangesView";
 
 type WorkspaceHomeProps = {
   roots: TreeNode[];
@@ -14,6 +15,10 @@ type WorkspaceHomeProps = {
   openPage: (id: string) => Promise<void>;
   onExport: () => void;
   onImport: () => void;
+  /** Opens a page, at a block when given (recent changes). */
+  openChange: (id: string, blockId?: string) => void;
+  onOpenTrash: () => void;
+  onShowChanges: () => void;
 };
 export function WorkspaceHome({
   roots,
@@ -22,6 +27,9 @@ export function WorkspaceHome({
   openPage,
   onExport,
   onImport,
+  openChange,
+  onOpenTrash,
+  onShowChanges,
 }: WorkspaceHomeProps) {
   return (
     <section className="home-content">
@@ -77,6 +85,11 @@ export function WorkspaceHome({
           <span>Start something new</span>
         </button>
       </div>
+      <HomeRecentChanges
+        onOpen={openChange}
+        onOpenTrash={onOpenTrash}
+        onShowAll={onShowChanges}
+      />
       <div className="home-tip">
         <FolderOpen size={20} />
         <div>

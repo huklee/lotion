@@ -33,40 +33,10 @@ export function goToIssues(number?: number | null, replace = false) {
   const hash = issueHash(number);
   if (location.hash !== hash)
     history[replace ? "replaceState" : "pushState"](null, "", hash);
-  window.dispatchEvent(new Event("lotion:issues-route"));
+  announceRoute();
 }
 
-/** `g i` anywhere (outside text fields) opens the issue board. */
-export function useGoToIssuesShortcut(onGo: () => void) {
-  useEffect(() => {
-    let previous: { key: string; at: number } | null = null;
-    const onKey = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (
-        event.metaKey ||
-        event.ctrlKey ||
-        event.altKey ||
-        (target &&
-          (target.isContentEditable ||
-            ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)))
-      ) {
-        previous = null;
-        return;
-      }
-      const now = Date.now();
-      if (
-        event.key === "i" &&
-        previous?.key === "g" &&
-        now - previous.at < 1200
-      ) {
-        previous = null;
-        event.preventDefault();
-        onGo();
-        return;
-      }
-      previous = { key: event.key, at: now };
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onGo]);
+/** Call after any pushState/replaceState so useIssueRoute re-reads the address. */
+export function announceRoute() {
+  window.dispatchEvent(new Event("lotion:issues-route"));
 }

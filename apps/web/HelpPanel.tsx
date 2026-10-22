@@ -24,6 +24,10 @@ export function HelpPanel() {
         <kbd>⌘ / Ctrl Z</kbd>
       </div>
       <div className="shortcut-row">
+        <span>Go to Home</span>
+        <kbd>g h</kbd>
+      </div>
+      <div className="shortcut-row">
         <span>Go to Issues (then ? for board keys)</span>
         <kbd>g i</kbd>
       </div>

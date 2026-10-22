@@ -37,7 +37,7 @@ export const BOARD_SHORTCUTS: [keys: string, what: string][] = [
   ["c", "New issue in this column"],
   ["/", "Filter the board"],
   ["Esc", "Close the panel, hints or filter"],
-  ["g i", "Go to Issues from anywhere"],
+  ["g i / g h", "Go to Issues / Home from anywhere"],
   ["?", "These shortcuts"],
 ];
 

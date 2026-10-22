@@ -2,6 +2,21 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.49.0 — 2026-10-22 · [#69](https://github.com/huklee/lotion/pull/69)
+
+### Added
+
+- **Home shows recent changes:** the latest page edits, renames and moves with their day and time. A click opens the page at the edited block, and **See all** opens the full Recent changes view.
+- **Go-to shortcuts:** **g h** opens Home and **g i** opens Issues from anywhere outside a text field.
+- **The Lotion logo** (top left) opens Home.
+
+### Fixed
+
+- **Shortcuts work with the Korean keyboard.** Single-key shortcuts (the issue board's j/k/h/l, ⇧H/J/K/L, x, o, e, m, c, f, /, ? and the g-shortcuts) are read by physical key, so they no longer need switching to English input first.
+- Choosing Home or Recent changes while the issue board was open kept showing the board.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.48.0 — 2026-10-22 · [#68](https://github.com/huklee/lotion/pull/68)
 
 ### Added
