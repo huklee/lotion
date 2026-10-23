@@ -2,6 +2,29 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.52.0 — 2026-10-23
+
+### Added
+
+- **Select several issues and change them together.**
+  - **Selecting:** ⌘/Ctrl+click a card to add or remove it, ⇧+click to select a range, or use the checkbox that appears on a card. With the keyboard, **v** selects the focused card and **⇧V** selects every card shown (filters apply). **Esc** clears the selection.
+  - **Toolbar:** "N selected" with **Status**, **Priority**, **Labels**, **Archive** and **Delete**.
+  - **Keys:** with a selection, s, p, t, x, **a** (archive) and **Delete** apply to all of it.
+  - **Labels** takes `+add -remove`, for example `+sprint -ui`.
+  - **Delete** always asks first; Cancel is the default and 1 deletes.
+  - Each bulk change is saved as one change, status moves keep the cards' order and add status notes, and agents' bulk changes appear in the bell as one entry.
+- **a** archives the focused card when nothing is selected; pressing it again on an archived card unarchives it. **Delete** deletes the focused card after asking.
+- **Agents and the command line:**
+  - `lotion issue bulk 3,5,8-10 --status done --priority high --label +a,-b --archive | --unarchive | --delete`
+  - the MCP tool `bulk_update`
+  - `POST /api/issues/bulk`
+
+### Changed
+
+- ⌘/Ctrl+click on a card now selects it instead of following the link.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.51.0 — 2026-10-23 · [#71](https://github.com/huklee/lotion/pull/71)
 
 ### Added

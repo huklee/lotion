@@ -144,6 +144,24 @@ export const TOOLS = [
     },
   },
   {
+    name: "bulk_update",
+    description:
+      "One change to several issues at once: status, priority, add/remove labels, archive/unarchive, or delete (delete alone).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        numbers: { type: "array", items: num, minItems: 1 },
+        status,
+        priority,
+        add_labels: { type: "array", items: { type: "string" } },
+        remove_labels: { type: "array", items: { type: "string" } },
+        archived: { type: "boolean" },
+        delete: { type: "boolean" },
+      },
+      required: ["numbers"],
+    },
+  },
+  {
     name: "close_issue",
     description:
       "Move an issue to the last column (Done), with an optional closing note.",
@@ -237,6 +255,27 @@ export function createMcpServer(
         const target = workingStatus(await known());
         if ((await api.get(n)).status !== target) await api.move(n, target);
         return api.note(n, `Claimed by ${author}`);
+      }
+      case "bulk_update": {
+        const numbers = Array.isArray(args.numbers)
+          ? (args.numbers as unknown[]).map(Number)
+          : [];
+        const s = str(args, "status");
+        return api.bulk({
+          numbers,
+          ...(s ? { status: resolveStatus(await known(), s) } : {}),
+          ...(str(args, "priority") ? { priority: str(args, "priority") } : {}),
+          ...(list(args, "add_labels")
+            ? { addLabels: list(args, "add_labels") }
+            : {}),
+          ...(list(args, "remove_labels")
+            ? { removeLabels: list(args, "remove_labels") }
+            : {}),
+          ...(typeof args.archived === "boolean"
+            ? { archived: args.archived }
+            : {}),
+          ...(args.delete === true ? { delete: true as const } : {}),
+        });
       }
       case "close_issue": {
         const n = int(args, "number");

@@ -10,6 +10,7 @@ import { MessageSquare, MoreHorizontal, Plus, X } from "lucide-react";
 import type { TreeNode } from "../../../packages/document-schema/index";
 import { IssueSettings } from "./IssueSettings";
 import { KeyPicker } from "./KeyPicker";
+import { BulkBar, BulkLabels } from "./BulkBar";
 import { pillStyle } from "../database-ui";
 import {
   PRIORITIES,
@@ -192,10 +193,60 @@ export function IssuesView({
     [hintOrder, controls],
   );
   const [picker, setPicker] = useState<{
-    kind: "status" | "priority";
-    number: number;
+    kind: "status" | "priority" | "labels" | "delete";
+    /** One issue, or the selection. */
+    numbers: number[];
     anchor: { left: number; top: number } | null;
   } | null>(null);
+  // several issues selected at once (⌘/Ctrl-click, ⇧-click, v, ⇧V)
+  const [selectedRaw, setSelected] = useState<Set<number>>(() => new Set());
+  const selectAnchor = useRef<number | null>(null);
+  const selected = useMemo(() => {
+    const shown = new Set(hintOrder);
+    return new Set([...selectedRaw].filter((n) => shown.has(n)));
+  }, [selectedRaw, hintOrder]);
+  const toggleSelect = (n: number) => {
+    selectAnchor.current = n;
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(n)) next.delete(n);
+      else next.add(n);
+      return next;
+    });
+  };
+  const selectRange = (n: number) => {
+    const from = hintOrder.indexOf(selectAnchor.current ?? n);
+    const to = hintOrder.indexOf(n);
+    if (from < 0 || to < 0) return toggleSelect(n);
+    const [a, b] = from < to ? [from, to] : [to, from];
+    setSelected(
+      (current) => new Set([...current, ...hintOrder.slice(a, b + 1)]),
+    );
+  };
+  const cardAnchor = (n: number) => {
+    const rect = document
+      .querySelector<HTMLElement>(`.issue-card[data-issue="${n}"]`)
+      ?.getBoundingClientRect();
+    return rect ? { left: rect.left, top: rect.bottom + 4 } : null;
+  };
+  /** The selection when there is one, otherwise just this issue. */
+  const targets = (n: number) => (selected.size ? [...selected] : [n]);
+  const runBulk = async (
+    input: Omit<Parameters<typeof issuesApi.bulk>[0], "numbers">,
+    numbers: number[],
+  ) => {
+    try {
+      const result = await issuesApi.bulk({ numbers, ...input });
+      if (result.deleted.length) {
+        setSelected(new Set());
+        if (openNumber !== null && result.deleted.includes(openNumber))
+          goToIssues(null);
+      }
+    } catch (error) {
+      onError(error);
+    }
+    await reload();
+  };
   const allLabels = useMemo(
     () =>
       [...new Set((board?.issues ?? []).flatMap((i) => i.labels))].sort(
@@ -283,6 +334,29 @@ export function IssuesView({
         setHelp(false);
         return;
       }
+      if (selected.size && event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        setSelected(new Set());
+        return;
+      }
+      if (
+        selected.size &&
+        latinKey(event) === "x" &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey
+      ) {
+        // x on a selection: all done, or all back to the first column
+        event.preventDefault();
+        const last = board.statuses.at(-1)!.key;
+        const all = [...selected];
+        const allDone = board.issues
+          .filter((i) => selected.has(i.number))
+          .every((i) => i.status === last);
+        void runBulk({ status: allDone ? board.statuses[0].key : last }, all);
+        return;
+      }
       const action = boardKey(
         {
           key: latinKey(event),
@@ -315,21 +389,40 @@ export function IssuesView({
           setHints("");
           break;
         case "status":
-        case "priority": {
-          const el = document.querySelector<HTMLElement>(
-            `.issue-card[data-issue="${action.number}"]`,
-          );
-          const rect = el?.getBoundingClientRect();
+        case "priority":
+        case "delete":
           setPicker({
             kind: action.type,
-            number: action.number,
-            anchor: rect ? { left: rect.left, top: rect.bottom + 4 } : null,
+            numbers: targets(action.number),
+            anchor: cardAnchor(action.number),
           });
           break;
-        }
         case "labels":
-          goToIssues(action.number);
-          setPanelFocus({ field: "labels", at: Date.now() });
+          if (selected.size)
+            setPicker({
+              kind: "labels",
+              numbers: [...selected],
+              anchor: cardAnchor(action.number),
+            });
+          else {
+            goToIssues(action.number);
+            setPanelFocus({ field: "labels", at: Date.now() });
+          }
+          break;
+        case "archive": {
+          const numbers = targets(action.number);
+          const allArchived = board.issues
+            .filter((i) => numbers.includes(i.number))
+            .every((i) => i.archivedAt);
+          void runBulk({ archived: !allArchived }, numbers);
+          if (!allArchived) setSelected(new Set());
+          break;
+        }
+        case "select":
+          toggleSelect(action.number);
+          break;
+        case "selectAll":
+          setSelected(new Set(hintOrder));
           break;
         case "new":
           setAdding(action.status);
@@ -378,6 +471,7 @@ export function IssuesView({
     focused,
     openNumber,
     picker,
+    selected,
     move,
   ]);
 
@@ -446,7 +540,8 @@ export function IssuesView({
           <div className="issue-drop-line" aria-hidden="true" />
         )}
         <a
-          className={`issue-card${openNumber === issue.number ? " open" : ""}${drag?.number === issue.number ? " dragging" : ""}${focused === issue.number ? " focused" : ""}`}
+          aria-selected={selected.size ? selected.has(issue.number) : undefined}
+          className={`issue-card${selected.has(issue.number) ? " selected" : ""}${openNumber === issue.number ? " open" : ""}${drag?.number === issue.number ? " dragging" : ""}${focused === issue.number ? " focused" : ""}`}
           href={`#/issues/${issue.number}`}
           data-issue={issue.number}
           draggable
@@ -465,8 +560,10 @@ export function IssuesView({
           }}
           onDragEnd={() => setDrag(null)}
           onClick={(event) => {
-            if (event.metaKey || event.ctrlKey || event.shiftKey) return;
             event.preventDefault();
+            if (event.metaKey || event.ctrlKey)
+              return toggleSelect(issue.number);
+            if (event.shiftKey) return selectRange(issue.number);
             setFocused(issue.number);
             goToIssues(issue.number);
           }}
@@ -477,6 +574,20 @@ export function IssuesView({
               {hint.slice((hints ?? "").length)}
             </span>
           )}
+          <span
+            role="checkbox"
+            aria-checked={selected.has(issue.number)}
+            aria-label={`Select #${issue.number}`}
+            className="issue-select"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              if (event.shiftKey) selectRange(issue.number);
+              else toggleSelect(issue.number);
+            }}
+          >
+            {selected.has(issue.number) ? "✓" : ""}
+          </span>
           <span className="issue-card-title">{issue.title}</span>
           <span className="issue-card-meta">
             <span className="issue-number">#{issue.number}</span>
@@ -521,7 +632,9 @@ export function IssuesView({
   };
 
   return (
-    <section className={`issues-view${openNumber ? " with-panel" : ""}`}>
+    <section
+      className={`issues-view${openNumber ? " with-panel" : ""}${selected.size ? " selecting" : ""}`}
+    >
       <div className="issues-main">
         <header className="issues-header">
           <h1>Issues</h1>
@@ -811,56 +924,105 @@ export function IssuesView({
         })}
       {picker &&
         (() => {
-          const target = board.issues.find((i) => i.number === picker.number);
-          if (!target) return null;
+          const { numbers } = picker;
+          const many = numbers.length > 1;
+          const chosen = board.issues.filter((i) => numbers.includes(i.number));
+          if (!chosen.length) return null;
+          const name = many ? `${numbers.length} issues` : `#${numbers[0]}`;
           const close = () => {
             setPicker(null);
-            focusCard(picker.number);
+            if (!many) focusCard(numbers[0]);
           };
+          const common = <T,>(get: (i: IssueSummary) => T) =>
+            chosen.every((i) => get(i) === get(chosen[0]))
+              ? String(get(chosen[0]))
+              : "";
+          if (picker.kind === "labels")
+            return (
+              <BulkLabels
+                count={numbers.length}
+                anchor={picker.anchor}
+                onClose={close}
+                onApply={(edits) => {
+                  close();
+                  void runBulk(
+                    { addLabels: edits.add, removeLabels: edits.remove },
+                    numbers,
+                  );
+                }}
+              />
+            );
+          if (picker.kind === "delete")
+            return (
+              <KeyPicker
+                title={`Delete ${name} and ${many ? "their" : "its"} notes?`}
+                options={[
+                  { value: "delete", label: `Delete ${name}`, color: "red" },
+                  { value: "cancel", label: "Cancel" },
+                ]}
+                current="cancel"
+                anchor={picker.anchor}
+                onClose={close}
+                onChoose={(value) => {
+                  close();
+                  if (value === "delete")
+                    void runBulk({ delete: true }, numbers);
+                }}
+              />
+            );
           return picker.kind === "status" ? (
             <KeyPicker
-              title={`Status of #${picker.number}`}
+              title={`Status of ${name}`}
               options={board.statuses.map((s) => ({
                 value: s.key,
                 label: s.name,
                 color: STATUS_COLOR[s.color] ?? s.color,
               }))}
-              current={target.status}
+              current={common((i) => i.status)}
               anchor={picker.anchor}
               onClose={close}
               onChoose={(status) => {
                 close();
-                if (status !== target.status)
-                  void move(picker.number, status, null).then(() =>
-                    focusCard(picker.number),
+                if (many) void runBulk({ status }, numbers);
+                else if (status !== chosen[0].status)
+                  void move(numbers[0], status, null).then(() =>
+                    focusCard(numbers[0]),
                   );
               }}
             />
           ) : (
             <KeyPicker
-              title={`Priority of #${picker.number}`}
+              title={`Priority of ${name}`}
               options={PRIORITIES.map((p) => ({
                 value: p,
                 label: PRIORITY_NAMES[p],
                 color: p === "none" ? undefined : PRIORITY_COLOR[p],
               }))}
               firstNumber={0}
-              current={target.priority ?? "none"}
+              current={common((i) => i.priority ?? "none")}
               anchor={picker.anchor}
               onClose={close}
-              onChoose={async (priority) => {
+              onChoose={(priority) => {
                 close();
-                if (priority === (target.priority ?? "none")) return;
-                try {
-                  await issuesApi.set(picker.number, { priority });
-                } catch (error) {
-                  onError(error);
-                }
-                await reload();
+                void runBulk({ priority }, numbers);
               }}
             />
           );
         })()}
+      {selected.size > 0 && (
+        <BulkBar
+          count={selected.size}
+          onClear={() => setSelected(new Set())}
+          onAction={(action, rect) => {
+            const numbers = [...selected];
+            const anchor = { left: rect.left, top: rect.top - 8 };
+            if (action === "archive") {
+              void runBulk({ archived: true }, numbers);
+              setSelected(new Set());
+            } else setPicker({ kind: action, numbers, anchor });
+          }}
+        />
+      )}
       {settings && (
         <IssueSettings
           statuses={board.statuses}

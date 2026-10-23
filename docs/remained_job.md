@@ -4,6 +4,7 @@ Historical completed work lives in the [implementation history](implementation-h
 
 ## Completed user requests — 2026-10-22
 
+- [x] Select several issues and change status, priority, labels, archive or delete them together (0.52.0).
 - [x] Keyboard shortcuts for description (d), status (s), priority (p) and labels (t); hints on every control (0.51.0).
 - [x] Issue descriptions (and notes) render Markdown; board columns fill the window with a minimum width and scroll when narrower (0.50.0).
 - [x] Issue board shortcuts work with Korean input; Home shows recent changes; g h / g i go to Home / Issues; the logo opens Home (0.49.0).

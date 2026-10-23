@@ -6,6 +6,7 @@ import {
   IssueError,
   MAX_ISSUES,
   addNote,
+  bulkIssues,
   archiveColumn,
   issuesToMarkdown,
   renameLabel,
@@ -252,6 +253,25 @@ export class IssueStore {
           state.statuses,
           this.now().toISOString(),
         );
+  }
+
+  /** One change to many issues, saved as one write. */
+  bulk(input: unknown, author: string) {
+    return this.change((state) => {
+      const result = bulkIssues(
+        state.issues,
+        state.statuses,
+        input as any,
+        author,
+        this.clock(),
+      );
+      if (!result.changed.length && !result.deleted.length)
+        return { state, result: { changed: [], deleted: [] } };
+      return {
+        state: { ...state, issues: result.issues },
+        result: { changed: result.changed, deleted: result.deleted },
+      };
+    });
   }
 
   remove(number: number) {

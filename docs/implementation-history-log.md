@@ -1,5 +1,18 @@
 # Implementation history log
 
+## 2026-10-23T03:30:00+09:00 — 0.52.0 multi-select and bulk changes
+
+- **Model:**
+  - `bulkSchema` takes 1–500 numbers and one change (status, priority, addLabels/removeLabels, archived), or delete alone.
+  - `bulkIssues` applies status moves in board order, so cards keep their order, with status notes; it skips issues that would not change and returns the numbers changed (in numeric order) or deleted.
+- **Store and API:** `IssueStore.bulk` saves everything as one write. `POST /api/issues/bulk` adds a single bell notification for non-`me` authors.
+- **Clients:** `issueClient.bulk` and `parseNumbers` (lists and ranges), the CLI `bulk` command and the MCP `bulk_update` tool.
+- **Board:**
+  - Selection is a `Set`, kept only for cards still shown. ⌘/Ctrl+click toggles, ⇧+click selects a range in board order from the last toggled card, and each card has a checkbox.
+  - Keys: `v` selects, `⇧V` selects all shown, Esc clears.
+  - s, p and t open bulk menus (`KeyPicker`, or `BulkLabels` with `+a -b`); x marks all done or back; a archives; Delete asks through a `KeyPicker` whose default is Cancel.
+  - `BulkBar` is the bottom toolbar.
+
 ## 2026-10-23T02:00:00+09:00 — 0.51.0 keyboard editing of issue fields, hints on every control
 
 - **Keymap:** `issue-keys.ts` adds `d` (description), `s` (status), `p` (priority) and `t` (labels). With no card focused, board keys act on the issue open in the panel.

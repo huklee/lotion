@@ -582,3 +582,112 @@ export function issuesToMarkdown(
   }
   return lines.join("\n");
 }
+
+export const bulkSchema = z
+  .object({
+    numbers: z.array(z.number().int().positive()).min(1).max(500),
+    status: z.string().max(40).optional(),
+    priority: z.enum(PRIORITIES).optional(),
+    addLabels: labels.optional(),
+    removeLabels: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
+    archived: z.boolean().optional(),
+    delete: z.literal(true).optional(),
+  })
+  .strict()
+  .refine(
+    (b) =>
+      b.delete
+        ? b.status === undefined &&
+          b.priority === undefined &&
+          !b.addLabels &&
+          !b.removeLabels &&
+          b.archived === undefined
+        : b.status !== undefined ||
+          b.priority !== undefined ||
+          !!b.addLabels?.length ||
+          !!b.removeLabels?.length ||
+          b.archived !== undefined,
+    "Give one change (status, priority, labels, archived) or delete alone",
+  );
+
+/**
+ * One change applied to several issues at once (the board's selection, or an
+ * agent). Status changes keep the issues' board order and add status notes.
+ * Returns the full new issue list plus what changed and what was deleted.
+ */
+export function bulkIssues(
+  issues: Issue[],
+  statuses: IssueStatus[],
+  input: z.input<typeof bulkSchema>,
+  author: string,
+  clock: Clock,
+): { issues: Issue[]; changed: number[]; deleted: number[] } {
+  const data = bulkSchema.parse(input);
+  const wanted = [...new Set(data.numbers)];
+  for (const n of wanted) find(issues, n);
+  if (data.delete) {
+    const gone = new Set(wanted);
+    return {
+      issues: issues.filter((i) => !gone.has(i.number)),
+      changed: [],
+      deleted: wanted,
+    };
+  }
+  if (data.status !== undefined) statusOf(statuses, data.status);
+  // board order: by column, then rank, so moved issues keep their order
+  const order = new Map(
+    statuses.flatMap((s) => column(issues, s.key)).map((i, k) => [i.number, k]),
+  );
+  wanted.sort((a, b) => (order.get(a) ?? 0) - (order.get(b) ?? 0));
+  let list = issues;
+  const replace = (changed: Issue[]) => {
+    const byNumber = new Map(changed.map((i) => [i.number, i]));
+    list = list.map((i) => byNumber.get(i.number) ?? i);
+  };
+  const changed = new Set<number>();
+  for (const n of wanted) {
+    if (data.status !== undefined && find(list, n).status !== data.status) {
+      const moved = moveIssue(
+        list,
+        statuses,
+        n,
+        { status: data.status },
+        author,
+        clock,
+      );
+      replace(moved);
+      if (moved.length) changed.add(n);
+    }
+    const issue = find(list, n);
+    const fields: Partial<Issue> = {};
+    if (data.priority !== undefined && data.priority !== issue.priority)
+      fields.priority = data.priority;
+    if (data.addLabels?.length || data.removeLabels?.length) {
+      const drop = new Set(
+        (data.removeLabels ?? []).map((l) => l.toLowerCase()),
+      );
+      const next = [
+        ...new Set([
+          ...issue.labels.filter((l) => !drop.has(l.toLowerCase())),
+          ...(data.addLabels ?? []).filter(
+            (l) =>
+              !drop.has(l.toLowerCase()) &&
+              !issue.labels.some((x) => x.toLowerCase() === l.toLowerCase()),
+          ),
+        ]),
+      ].slice(0, 20);
+      if (next.join("\n") !== issue.labels.join("\n")) fields.labels = next;
+    }
+    if (data.archived !== undefined && data.archived !== !!issue.archivedAt)
+      fields.archivedAt = data.archived ? clock.now : null;
+    if (Object.keys(fields).length) {
+      replace([touch(issue, clock, fields, author)]);
+      changed.add(n);
+    }
+  }
+  return {
+    issues: list,
+    changed: [...changed].sort((a, b) => a - b),
+    deleted: [],
+  };
+}
