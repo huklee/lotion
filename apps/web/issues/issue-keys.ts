@@ -19,20 +19,28 @@ export type BoardAction =
   | { type: "open"; number: number }
   | { type: "edit"; number: number }
   | { type: "note"; number: number }
+  | { type: "description"; number: number }
+  | { type: "status"; number: number }
+  | { type: "priority"; number: number }
+  | { type: "labels"; number: number }
   | { type: "new"; status: string }
   | { type: "filter" }
   | { type: "hints" }
   | { type: "help" };
 
 export const BOARD_SHORTCUTS: [keys: string, what: string][] = [
-  ["f", "Show hints; type one to open that card"],
+  ["f", "Hints on every card, button and field; type one to use it"],
   ["j / k", "Next / previous card"],
   ["h / l", "Card in the column to the left / right"],
   ["⇧J / ⇧K", "Move the card down / up"],
   ["⇧H / ⇧L", "Move the card to the left / right column"],
+  ["s", "Set the status (1, 2, … or j/k and Enter)"],
+  ["p", "Set the priority (0 none … 4 urgent)"],
+  ["t", "Edit the labels"],
   ["x", "Mark done (again: back to the first column)"],
   ["o / Enter", "Open the card"],
   ["e", "Edit the title"],
+  ["d", "Edit the description (⌘/Ctrl+Enter saves)"],
   ["m", "Add a status note"],
   ["c", "New issue in this column"],
   ["/", "Filter the board"],
@@ -155,6 +163,14 @@ export function boardKey(
       return { type: "edit", number };
     case "m":
       return { type: "note", number };
+    case "d":
+      return { type: "description", number };
+    case "s":
+      return { type: "status", number };
+    case "p":
+      return { type: "priority", number };
+    case "t":
+      return { type: "labels", number };
   }
   return null;
 }

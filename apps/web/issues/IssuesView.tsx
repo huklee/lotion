@@ -9,6 +9,7 @@ import {
 import { MessageSquare, MoreHorizontal, Plus, X } from "lucide-react";
 import type { TreeNode } from "../../../packages/document-schema/index";
 import { IssueSettings } from "./IssueSettings";
+import { KeyPicker } from "./KeyPicker";
 import { pillStyle } from "../database-ui";
 import {
   PRIORITIES,
@@ -57,6 +58,53 @@ export const isTyping = (target: EventTarget | null) =>
 
 const modalOpen = () =>
   !!document.querySelector('[role="dialog"][aria-modal="true"]');
+
+/** Buttons, links and fields of the issue view that are on screen now. */
+function visibleControls() {
+  const root = document.querySelector(".issues-view");
+  if (!root) return [];
+  return [
+    ...root.querySelectorAll<HTMLElement>(
+      "button, a[href], input, select, textarea, [role='button']",
+    ),
+  ]
+    .filter((el) => {
+      if (el.closest(".issue-card") || (el as HTMLButtonElement).disabled)
+        return false;
+      const r = el.getBoundingClientRect();
+      return (
+        r.width > 0 &&
+        r.height > 0 &&
+        r.bottom > 0 &&
+        r.right > 0 &&
+        r.top < window.innerHeight &&
+        r.left < window.innerWidth
+      );
+    })
+    .map((el) => {
+      const r = el.getBoundingClientRect();
+      return { el, left: r.left, top: r.top };
+    });
+}
+
+/** What choosing a hint does: fields get focus (a select opens), others click. */
+function activate(el: HTMLElement | undefined) {
+  if (!el) return;
+  if (el instanceof HTMLSelectElement) {
+    el.focus();
+    try {
+      el.showPicker?.();
+    } catch {
+      // showPicker needs a user gesture in some browsers; focus is enough
+    }
+    return;
+  }
+  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+    el.focus();
+    return;
+  }
+  el.click();
+}
 
 /** Open issues, in progress, and done in the last 7 days. */
 function IssueStats({ board }: { board: IssueBoard }) {
@@ -135,7 +183,19 @@ export function IssuesView({
     [board, visible],
   );
   const hintOrder = useMemo(() => layout.flatMap((c) => c.numbers), [layout]);
-  const labels = useMemo(() => hintLabels(hintOrder.length), [hintOrder]);
+  // hints cover every card, then every other control on screen (Vimium style)
+  const [controls, setControls] = useState<
+    { el: HTMLElement; left: number; top: number }[]
+  >([]);
+  const labels = useMemo(
+    () => hintLabels(hintOrder.length + controls.length),
+    [hintOrder, controls],
+  );
+  const [picker, setPicker] = useState<{
+    kind: "status" | "priority";
+    number: number;
+    anchor: { left: number; top: number } | null;
+  } | null>(null);
   const allLabels = useMemo(
     () =>
       [...new Set((board?.issues ?? []).flatMap((i) => i.labels))].sort(
@@ -192,22 +252,28 @@ export function IssuesView({
   // handled before the issue panel's own Escape (which closes the panel)
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (!board || isTyping(event.target) || modalOpen()) return;
+      if (!board || picker || isTyping(event.target) || modalOpen()) return;
       if (hints !== null) {
         event.preventDefault();
         event.stopPropagation();
         const key = latinKey(event);
-        if (event.key === "Escape") return setHints(null);
+        const stop = () => {
+          setHints(null);
+          setControls([]);
+        };
+        if (event.key === "Escape") return stop();
         if (event.key === "Backspace") return setHints(hints.slice(0, -1));
         if (!/^[a-z]$/i.test(key)) return;
         const typed = hints + key.toLowerCase();
         const match = matchHint(labels, typed);
-        if (!match) return setHints(null);
+        if (!match) return stop();
         if ("chosen" in match) {
-          setHints(null);
-          const number = hintOrder[match.chosen];
-          focusCard(number);
-          goToIssues(number);
+          stop();
+          if (match.chosen < hintOrder.length) {
+            const number = hintOrder[match.chosen];
+            focusCard(number);
+            goToIssues(number);
+          } else activate(controls[match.chosen - hintOrder.length]?.el);
         } else setHints(typed);
         return;
       }
@@ -226,7 +292,12 @@ export function IssuesView({
           alt: event.altKey,
         },
         layout,
-        focused !== null && hintOrder.includes(focused) ? focused : null,
+        // with no card focused, keys act on the issue open in the panel
+        focused !== null && hintOrder.includes(focused)
+          ? focused
+          : openNumber !== null && hintOrder.includes(openNumber)
+            ? openNumber
+            : null,
       );
       if (!action) return;
       // Enter on a focused link already opens it; let o / Enter share one path
@@ -240,7 +311,25 @@ export function IssuesView({
           filterInput.current?.select();
           break;
         case "hints":
-          if (hintOrder.length) setHints("");
+          setControls(visibleControls());
+          setHints("");
+          break;
+        case "status":
+        case "priority": {
+          const el = document.querySelector<HTMLElement>(
+            `.issue-card[data-issue="${action.number}"]`,
+          );
+          const rect = el?.getBoundingClientRect();
+          setPicker({
+            kind: action.type,
+            number: action.number,
+            anchor: rect ? { left: rect.left, top: rect.bottom + 4 } : null,
+          });
+          break;
+        }
+        case "labels":
+          goToIssues(action.number);
+          setPanelFocus({ field: "labels", at: Date.now() });
           break;
         case "new":
           setAdding(action.status);
@@ -262,9 +351,15 @@ export function IssuesView({
           break;
         case "edit":
         case "note":
+        case "description":
           goToIssues(action.number);
           setPanelFocus({
-            field: action.type === "edit" ? "title" : "note",
+            field:
+              action.type === "edit"
+                ? "title"
+                : action.type === "note"
+                  ? "note"
+                  : "description",
             at: Date.now(),
           });
           break;
@@ -272,7 +367,19 @@ export function IssuesView({
     };
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
-  }, [board, hints, help, labels, hintOrder, layout, focused, move]);
+  }, [
+    board,
+    hints,
+    help,
+    labels,
+    hintOrder,
+    controls,
+    layout,
+    focused,
+    openNumber,
+    picker,
+    move,
+  ]);
 
   if (!board)
     return (
@@ -686,6 +793,74 @@ export function IssuesView({
           onPagesChanged={onPagesChanged}
         />
       )}
+      {hints !== null &&
+        controls.map((control, i) => {
+          const label = labels[hintOrder.length + i];
+          if (!label?.startsWith(hints)) return null;
+          return (
+            <span
+              key={label}
+              className="issue-hint control"
+              data-hint={label}
+              style={{ left: control.left - 6, top: control.top - 8 }}
+            >
+              <b>{hints}</b>
+              {label.slice(hints.length)}
+            </span>
+          );
+        })}
+      {picker &&
+        (() => {
+          const target = board.issues.find((i) => i.number === picker.number);
+          if (!target) return null;
+          const close = () => {
+            setPicker(null);
+            focusCard(picker.number);
+          };
+          return picker.kind === "status" ? (
+            <KeyPicker
+              title={`Status of #${picker.number}`}
+              options={board.statuses.map((s) => ({
+                value: s.key,
+                label: s.name,
+                color: STATUS_COLOR[s.color] ?? s.color,
+              }))}
+              current={target.status}
+              anchor={picker.anchor}
+              onClose={close}
+              onChoose={(status) => {
+                close();
+                if (status !== target.status)
+                  void move(picker.number, status, null).then(() =>
+                    focusCard(picker.number),
+                  );
+              }}
+            />
+          ) : (
+            <KeyPicker
+              title={`Priority of #${picker.number}`}
+              options={PRIORITIES.map((p) => ({
+                value: p,
+                label: PRIORITY_NAMES[p],
+                color: p === "none" ? undefined : PRIORITY_COLOR[p],
+              }))}
+              firstNumber={0}
+              current={target.priority ?? "none"}
+              anchor={picker.anchor}
+              onClose={close}
+              onChoose={async (priority) => {
+                close();
+                if (priority === (target.priority ?? "none")) return;
+                try {
+                  await issuesApi.set(picker.number, { priority });
+                } catch (error) {
+                  onError(error);
+                }
+                await reload();
+              }}
+            />
+          );
+        })()}
       {settings && (
         <IssueSettings
           statuses={board.statuses}

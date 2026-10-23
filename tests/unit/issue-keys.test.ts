@@ -98,6 +98,11 @@ describe("board keys", () => {
     expect(key("Enter", 4)).toEqual({ type: "open", number: 4 });
     expect(key("e", 4)).toEqual({ type: "edit", number: 4 });
     expect(key("m", 4)).toEqual({ type: "note", number: 4 });
+    expect(key("d", 4)).toEqual({ type: "description", number: 4 });
+    expect(key("s", 4)).toEqual({ type: "status", number: 4 });
+    expect(key("p", 4)).toEqual({ type: "priority", number: 4 });
+    expect(key("t", 4)).toEqual({ type: "labels", number: 4 });
+    expect(key("s", null)).toBeNull();
     expect(key("c", 4)).toEqual({ type: "new", status: "doing" });
     expect(key("c", null)).toEqual({ type: "new", status: "backlog" });
     expect(key("/", null)).toEqual({ type: "filter" });

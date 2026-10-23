@@ -891,7 +891,10 @@
   text-underline-offset: 2px;
 }
 .issue-markdown code {
-  font: 12.5px ui-monospace, SFMono-Regular, monospace;
+  font:
+    12.5px ui-monospace,
+    SFMono-Regular,
+    monospace;
   padding: 1px 4px;
   border-radius: 4px;
   background: var(--card);
@@ -951,4 +954,62 @@
 .issue-note-text.issue-markdown p:last-child,
 .issue-note-text.issue-markdown ul:last-child {
   margin-bottom: 0;
+}
+/* hints on controls (fixed over the page) and the keyboard picker */
+.issue-hint.control {
+  position: fixed;
+  z-index: 70;
+  pointer-events: none;
+}
+.key-picker {
+  position: fixed;
+  z-index: 80;
+  left: 50%;
+  top: 30%;
+  min-width: 220px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  box-shadow: 0 12px 32px rgb(15 15 15 / 18%);
+  font-size: 13px;
+}
+.key-picker-title {
+  padding: 4px 8px 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.key-picker ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.key-picker li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.key-picker li.active {
+  background: var(--hover);
+}
+.key-picker kbd {
+  font: 11px ui-monospace, SFMono-Regular, monospace;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 5px;
+  background: var(--card);
+}
+.key-picker-label {
+  border-radius: 4px;
+  padding: 0 7px;
+  line-height: 20px;
+}
+.key-picker-current {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11.5px;
 }
