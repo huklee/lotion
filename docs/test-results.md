@@ -1,5 +1,28 @@
 # Test results
 
+## 2026-10-23T03:40:00+09:00 — 0.52.0 multi-select and bulk changes
+
+Focused:
+- `tests/unit/issues-bulk.test.ts` **5/5**:
+  - a bulk status move keeps board order and adds status notes;
+  - priority, label add/remove and archive, with unchanged issues skipped;
+  - delete alone, plus validation (delete with other changes, no change, empty, unknown issue or status);
+  - `parseNumbers` lists and ranges, `parseLabelEdits`;
+  - the v / ⇧V / a / Delete / Backspace keys.
+- `tests/integration/issues-agents.test.ts` **8/8**, now with bulk:
+  - status, priority and labels by codex in one write (`seq` +1);
+  - CLI `bulk 1-2 --label -sprint,+cli`, `bulk 3 4 --archive`, and the delete-with-status refusal;
+  - MCP `bulk_update`, CLI `--delete --json`, and 404 for an unknown issue;
+  - one bell notification per bulk change.
+- E2E `issues-bulk.spec.ts` **6/6** across Chromium, Firefox and WebKit:
+  - **Mouse:** ⌘/Ctrl+click and ⇧+click ranges without opening a card, and ⌘/Ctrl+click to drop one. The toolbar sets status with 4, priority with 3 and labels with `+bulk` on the selection only. The card checkbox toggles, and Esc clears.
+  - **Keyboard:** v, j, v selects two; s and 2 moves both; x marks them done.
+  - **Delete and archive:** ⇧V selects all; Delete then Enter cancels (the default); a archives and clears; with Show archived, ⇧V, Delete and 1 deletes all three (404 afterwards).
+- After rebasing on main (with v0.51.0), the issue e2e specs passed 48/48 and integration 83/83.
+- The bulk status menu and toolbar were reviewed in a screenshot.
+
+Full `npm run check` before the rebase: ESLint, strict TypeScript and the production build passed; Vitest **306/306**; Playwright **367/367**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-23T02:10:00+09:00 — 0.51.0 keyboard editing of issue fields, hints on every control
 
 Focused:
