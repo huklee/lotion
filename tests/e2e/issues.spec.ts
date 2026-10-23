@@ -27,6 +27,10 @@ test("issue board: create with c, drag to another status, notes, and CLI/API cha
   ).toBeVisible();
   await input.press("Escape");
   const number = Number(await card.getAttribute("data-issue"));
+  // other tests in this worker fill the shared board: show only this card so
+  // the drag never has to travel past a long column
+  await page.getByRole("textbox", { name: "Filter issues" }).fill(title);
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
 
   // drag to In progress
   const doing = page.getByRole("listitem", { name: "In progress" });

@@ -1,5 +1,12 @@
 # Implementation history log
 
+## 2026-10-23T02:00:00+09:00 — 0.51.0 keyboard editing of issue fields, hints on every control
+
+- **Keymap:** `issue-keys.ts` adds `d` (description), `s` (status), `p` (priority) and `t` (labels). With no card focused, board keys act on the issue open in the panel.
+- **Menus:** `KeyPicker.tsx` is a small menu with number keys, j/k/arrows, Enter and Esc. It listens in the capture phase, and the board's handler stands aside while it is open. Status uses the move endpoint (status note included). Priority uses a new version-less `issuesApi.set`.
+- **Panel:** focus requests now cover `description` (opens the editor, cursor at the end) and `labels`. The description editor saves with ⌘/Ctrl+Enter.
+- **Hints:** `visibleControls()` collects on-screen buttons, links and fields outside the cards. Their hints are fixed-position labels allocated after the cards'. `activate()` focuses fields, opens selects with `showPicker` where allowed, and clicks everything else.
+
 ## 2026-10-22T23:50:00+09:00 — 0.50.0 Markdown in issues, fluid board columns
 
 - **Renderer:** `packages/markdown/render-html.ts` (`markdownToHtml`) reuses the static Markdown → Confluence converter's HTML output, which already escapes raw HTML and neutralises unsafe links. It adds `target="_blank" rel="noopener noreferrer"` to web links.

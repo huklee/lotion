@@ -34,6 +34,9 @@ export const issuesApi = {
       `/api/issues/${n}`,
       json("PATCH", input, { "If-Match": `"${version}"` }),
     ),
+  /** A change without a version check (status/priority from the keyboard). */
+  set: (n: number, input: Record<string, unknown>) =>
+    api<Issue>(`/api/issues/${n}`, json("PATCH", input)),
   move: (n: number, status: string, before: number | null) =>
     api<Issue>(`/api/issues/${n}/move`, json("POST", { status, before })),
   note: (n: number, text: string) =>

@@ -179,3 +179,106 @@ test("a slow keyboard move never pulls focus out of the note box", async ({
   await page.waitForTimeout(800);
   await expect(note).toBeFocused();
 });
+
+test("d edits the description; ⌘/Ctrl+Enter saves it; keys act on the open issue", async ({
+  page,
+}) => {
+  const { numbers } = await setup(page, 1);
+  const [a] = numbers;
+  await expect(card(page, a)).toBeFocused();
+  await page.keyboard.press("d");
+  await expect(page).toHaveURL(new RegExp(`#/issues/${a}$`));
+  const panel = page.getByRole("complementary", { name: `Issue #${a}` });
+  const source = panel.getByRole("textbox", { name: "Description" });
+  await expect(source).toBeFocused();
+  await page.keyboard.type("**from the keyboard**");
+  await page.keyboard.press("ControlOrMeta+Enter");
+  const view = panel.getByRole("region", { name: "Description" });
+  await expect(view.locator("strong")).toHaveText("from the keyboard");
+  await expect
+    .poll(async () => (await issue(page, a)).body)
+    .toBe("**from the keyboard**");
+
+  // opened by address, no card focused: d edits the open issue, the cursor
+  // goes after the existing text, Esc leaves without losing it
+  await page.goto(`/#/issues/${a}`);
+  await expect(view).toBeVisible();
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await page.keyboard.press("d");
+  await expect(source).toBeFocused();
+  await page.keyboard.type(" and more");
+  await page.keyboard.press("Escape");
+  await expect(view).toContainText("from the keyboard and more");
+});
+
+test("s and p set status and priority from menus; t edits labels; hints reach every control", async ({
+  page,
+}) => {
+  const { numbers } = await setup(page, 1);
+  const [a] = numbers;
+  await expect(card(page, a)).toBeFocused();
+
+  // s → 3 (In progress), with the number key
+  await page.keyboard.press("s");
+  const statusMenu = page.getByRole("dialog", { name: `Status of #${a}` });
+  await expect(statusMenu).toBeVisible();
+  await page.keyboard.press("3");
+  await expect(statusMenu).toBeHidden();
+  await expect.poll(async () => (await issue(page, a)).status).toBe("doing");
+  await expect(card(page, a)).toBeFocused();
+
+  // s → j j Enter moves the highlight from the current status
+  await page.keyboard.press("s");
+  await page.keyboard.press("j");
+  await page.keyboard.press("Enter");
+  await expect.poll(async () => (await issue(page, a)).status).toBe("done");
+
+  // p → 4 (urgent); Esc on the menu changes nothing
+  await card(page, a).focus();
+  await page.keyboard.press("p");
+  await page.keyboard.press("4");
+  await expect.poll(async () => (await issue(page, a)).priority).toBe("urgent");
+  await expect(card(page, a)).toContainText("Urgent");
+  await page.keyboard.press("p");
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("dialog", { name: `Priority of #${a}` }),
+  ).toBeHidden();
+  expect((await issue(page, a)).priority).toBe("urgent");
+
+  // t → the labels field of the open issue
+  await page.keyboard.press("t");
+  const panel = page.getByRole("complementary", { name: `Issue #${a}` });
+  const labelsBox = panel.getByRole("textbox", { name: "Labels" });
+  await expect(labelsBox).toBeFocused();
+  await page.keyboard.type("kbd");
+  await page.keyboard.press("Enter");
+  await expect.poll(async () => (await issue(page, a)).labels).toEqual(["kbd"]);
+
+  // f → hints on panel controls too: pick the "Close issue" button
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await page.keyboard.press("f");
+  const close = await panel
+    .getByRole("button", { name: "Close issue" })
+    .boundingBox();
+  const hints = page.locator(".issue-hint.control");
+  await expect(hints.first()).toBeVisible();
+  const label = await hints.evaluateAll(
+    (spans, box) =>
+      spans
+        .map((s) => ({
+          label: s.getAttribute("data-hint")!,
+          r: s.getBoundingClientRect(),
+        }))
+        .find(
+          ({ r }) =>
+            Math.abs(r.left + 6 - box!.x) < 2 &&
+            Math.abs(r.top + 8 - box!.y) < 2,
+        )?.label,
+    close,
+  );
+  expect(label).toBeTruthy();
+  await page.keyboard.type(label!);
+  await expect(panel).toBeHidden();
+  await expect(page).toHaveURL(/#\/issues$/);
+});

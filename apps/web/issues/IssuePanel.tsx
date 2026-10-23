@@ -44,7 +44,10 @@ const parseLabels = (text: string) =>
   ].slice(0, 20);
 
 /** A keyboard request to focus a field once the issue is shown. */
-export type PanelFocus = { field: "title" | "note"; at: number };
+export type PanelFocus = {
+  field: "title" | "note" | "description" | "labels";
+  at: number;
+};
 
 /** One issue beside the board: fields saved on blur, and its status notes. */
 export function IssuePanel({
@@ -92,6 +95,7 @@ export function IssuePanel({
   const panel = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
+  const labelsRef = useRef<HTMLInputElement>(null);
   const loaded = !!issue;
   const openedAt = useRef(Date.now());
   const bodyHtml = useMemo(() => markdownToHtml(body), [body]);
@@ -100,7 +104,17 @@ export function IssuePanel({
     // only a request made for this panel (just before it opened), however
     // long the issue takes to load; older requests belong to earlier panels
     if (!focus || !loaded || focus.at < openedAt.current - 1000) return;
-    const el = focus.field === "title" ? titleRef.current : noteRef.current;
+    if (focus.field === "description") {
+      // the editor mounts focused, with the cursor after the text
+      setEditingBody(true);
+      return;
+    }
+    const el =
+      focus.field === "title"
+        ? titleRef.current
+        : focus.field === "labels"
+          ? labelsRef.current
+          : noteRef.current;
     el?.focus();
     if (focus.field === "title") el?.select();
   }, [focus, loaded]);
@@ -334,6 +348,7 @@ export function IssuePanel({
         <label>
           <span>Labels</span>
           <input
+            ref={labelsRef}
             aria-label="Labels"
             placeholder="bug, idea"
             value={labels}
@@ -473,6 +488,17 @@ export function IssuePanel({
       {editingBody || (conflict && dirty.current.has("body")) ? (
         <textarea
           autoFocus
+          onFocus={(event) => {
+            const end = event.currentTarget.value.length;
+            event.currentTarget.setSelectionRange(end, end);
+          }}
+          onKeyDown={(event) => {
+            // ⌘/Ctrl+Enter saves and shows the rendered description
+            if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+          }}
           className="issue-body"
           aria-label="Description"
           placeholder="Description (Markdown)…"

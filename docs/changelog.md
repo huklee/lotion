@@ -2,6 +2,19 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.51.0 — 2026-10-23 · [#71](https://github.com/huklee/lotion/pull/71)
+
+### Added
+
+- **Edit an issue entirely from the keyboard.** These keys act on the focused card, or on the issue open in the panel:
+  - **d** edits the description. The cursor goes after the text, **⌘/Ctrl+Enter** saves, and Esc leaves.
+  - **s** opens a status menu: press the number, or move with j/k and choose with Enter.
+  - **p** opens a priority menu: 0 none, 1 low, 2 medium, 3 high, 4 urgent.
+  - **t** jumps to the labels field.
+- **Hints reach every control.** **f** now labels every visible button, link and field (panel, filter bar, menus) as well as the cards. Typing a hint clicks a button, focuses a field, or opens a select.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.50.0 — 2026-10-22 · [#70](https://github.com/huklee/lotion/pull/70)
 
 ### Added
