@@ -1,5 +1,19 @@
 # Test results
 
+## 2026-10-23T02:10:00+09:00 — 0.51.0 keyboard editing of issue fields, hints on every control
+
+Focused:
+- `tests/unit/issue-keys.test.ts` **9/9**, with d/s/p/t.
+- E2E `issues-keyboard.spec.ts` **18/18** across Chromium, Firefox and WebKit:
+  - **d:** opens the description editor focused; typed Markdown is saved with ⌘/Ctrl+Enter and renders.
+  - **d with no card focused:** on an issue opened by address, d edits it with the cursor after the text, and Esc keeps the edit.
+  - **s:** 3 sets In progress with focus kept on the card; j and Enter move to the next status.
+  - **p:** 4 sets Urgent (shown on the card), and Esc changes nothing.
+  - **t:** focuses the labels field, and Enter saves the label.
+  - **f:** labels the panel's Close button, and typing that hint closes the panel.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **300/300**; Playwright **360 passed, 1 failed**. The failure was the known `block-selection.spec.ts:983` Chromium clipboard flake, which passed 3/3 when repeated. Remote CI results are recorded on the pull request.
+
 ## 2026-10-22T23:55:00+09:00 — 0.50.0 Markdown in issues, fluid board columns
 
 Focused:
