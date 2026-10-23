@@ -12,7 +12,9 @@ Focused:
   - **t:** focuses the labels field, and Enter saves the label.
   - **f:** labels the panel's Close button, and typing that hint closes the panel.
 
-Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **300/300**; Playwright **360 passed, 1 failed**. The failure was the known `block-selection.spec.ts:983` Chromium clipboard flake, which passed 3/3 when repeated. Remote CI results are recorded on the pull request.
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **300/300**; Playwright **360 passed, 1 failed**. The failure was the known `block-selection.spec.ts:983` Chromium clipboard flake, which passed 3/3 when repeated.
+
+Remote CI on #71 failed the drag test in `issues.spec.ts` (Chromium). Other tests in the worker had filled the shared Backlog, so the dragged card started far below the target column. The test now filters the board to its own card before dragging. The issue and keyboard specs passed **60/60** (2 repeats). Remote CI results are recorded on the pull request.
 
 ## 2026-10-22T23:55:00+09:00 — 0.50.0 Markdown in issues, fluid board columns
 
