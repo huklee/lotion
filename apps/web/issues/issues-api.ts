@@ -50,6 +50,19 @@ export const issuesApi = {
     api<{ changed: number }>("/api/issues/labels", json("POST", { from, to })),
   archiveColumn: (status: string) =>
     api<{ archived: number }>("/api/issues/archive", json("POST", { status })),
+  bulk: (input: {
+    numbers: number[];
+    status?: string;
+    priority?: string;
+    addLabels?: string[];
+    removeLabels?: string[];
+    archived?: boolean;
+    delete?: true;
+  }) =>
+    api<{ changed: number[]; deleted: number[] }>(
+      "/api/issues/bulk",
+      json("POST", input),
+    ),
   remove: (n: number) =>
     api<{ deleted: number }>(`/api/issues/${n}`, json("DELETE")),
 };

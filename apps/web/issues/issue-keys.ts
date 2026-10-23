@@ -23,6 +23,10 @@ export type BoardAction =
   | { type: "status"; number: number }
   | { type: "priority"; number: number }
   | { type: "labels"; number: number }
+  | { type: "archive"; number: number }
+  | { type: "delete"; number: number }
+  | { type: "select"; number: number }
+  | { type: "selectAll" }
   | { type: "new"; status: string }
   | { type: "filter" }
   | { type: "hints" }
@@ -43,8 +47,11 @@ export const BOARD_SHORTCUTS: [keys: string, what: string][] = [
   ["d", "Edit the description (⌘/Ctrl+Enter saves)"],
   ["m", "Add a status note"],
   ["c", "New issue in this column"],
+  ["v / ⇧V", "Select the card / every card shown (⌘-click, ⇧-click)"],
+  ["a", "Archive (the selection, or this card)"],
+  ["Delete", "Delete (asks first)"],
   ["/", "Filter the board"],
-  ["Esc", "Close the panel, hints or filter"],
+  ["Esc", "Clear the selection, or close the panel, hints or filter"],
   ["g i / g h", "Go to Issues / Home from anywhere"],
   ["?", "These shortcuts"],
 ];
@@ -90,6 +97,8 @@ export function boardKey(
       return { type: "filter" };
     case "f":
       return { type: "hints" };
+    case "V":
+      return { type: "selectAll" };
     case "c":
       return {
         type: "new",
@@ -171,6 +180,13 @@ export function boardKey(
       return { type: "priority", number };
     case "t":
       return { type: "labels", number };
+    case "a":
+      return { type: "archive", number };
+    case "Delete":
+    case "Backspace":
+      return { type: "delete", number };
+    case "v":
+      return { type: "select", number };
   }
   return null;
 }

@@ -9,6 +9,7 @@ import {
   diffBoards,
   editLabels,
   issueClient,
+  parseNumbers,
   resolveStatus,
   workingStatus,
   type IssueInput,
@@ -61,6 +62,8 @@ Change
                            Hide from / return to the board
   link <n> <page-id>       Link a Lotion page (unlink <n> <page-id> removes it)
   rm <n>                   Delete an issue and its notes
+  bulk <n,n,a-b>           One change to several issues:
+      --status <s> --priority <p> --label <+a,-b> --archive | --unarchive | --delete
   export                   Print the whole board (--format md or json)
 
 Options
@@ -115,7 +118,11 @@ export function parseArgs(argv: string[]): Parsed {
       const value = match[2] ?? argv[++i];
       if (value === undefined) throw new CliError(`--${name} needs a value`);
       flags.set(name, value);
-    } else if (["json", "help", "archived"].includes(name))
+    } else if (
+      ["json", "help", "archived", "archive", "unarchive", "delete"].includes(
+        name,
+      )
+    )
       flags.set(name, true);
     else throw new CliError(`Unknown option: ${arg}`);
   }
@@ -391,6 +398,43 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
       case "export": {
         const format = flag("format") === "json" ? "json" : "md";
         io.out(await api.exportText(format));
+        return 0;
+      }
+      case "bulk": {
+        if (!rest.length) throw new CliError("bulk needs issue numbers");
+        const numbers = parseNumbers(rest.join(" "));
+        const input: Parameters<typeof api.bulk>[0] = { numbers };
+        const status = flag("status");
+        if (status)
+          input.status = resolveStatus((await api.board()).statuses, status);
+        const priority = flag("priority");
+        if (priority) input.priority = priority.toLowerCase();
+        const labels = flag("label");
+        if (labels) {
+          const parts = labels
+            .split(",")
+            .map((l) => l.trim())
+            .filter(Boolean);
+          const add = parts
+            .filter((l) => !l.startsWith("-"))
+            .map((l) => l.replace(/^\+/, ""));
+          const remove = parts
+            .filter((l) => l.startsWith("-"))
+            .map((l) => l.slice(1));
+          if (add.length) input.addLabels = add;
+          if (remove.length) input.removeLabels = remove;
+        }
+        if (flags.has("archive")) input.archived = true;
+        if (flags.has("unarchive")) input.archived = false;
+        if (flags.has("delete")) input.delete = true;
+        const result = await api.bulk(input);
+        print(result, () =>
+          result.deleted.length
+            ? `Deleted ${result.deleted.map((n) => `#${n}`).join(", ")}`
+            : result.changed.length
+              ? `Changed ${result.changed.map((n) => `#${n}`).join(", ")}`
+              : "Nothing to change",
+        );
         return 0;
       }
       case "rm":

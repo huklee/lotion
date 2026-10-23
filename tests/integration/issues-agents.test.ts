@@ -389,3 +389,80 @@ describe("stage 4: links, archive, settings, export", () => {
     );
   });
 });
+
+describe("bulk changes over the API, CLI and MCP", () => {
+  it("changes and deletes several issues in one write", async () => {
+    const codex = issueClient({ env: env(), fetch, author: "codex" });
+    const me = issueClient({ env: env(), fetch, author: "me" });
+    for (const title of ["one", "two", "three", "four"])
+      await me.create({ title });
+    const seq = (await me.seq()).seq;
+    const result = await codex.bulk({
+      numbers: [1, 2, 3],
+      status: "doing",
+      priority: "high",
+      addLabels: ["sprint"],
+    });
+    expect(result).toEqual({ changed: [1, 2, 3], deleted: [] });
+    expect((await me.seq()).seq).toBe(seq + 1);
+    const board = await me.board();
+    expect(
+      board.issues
+        .filter((i) => i.status === "doing")
+        .map((i) => [i.number, i.priority, i.labels, i.updatedBy]),
+    ).toEqual([
+      [1, "high", ["sprint"], "codex"],
+      [2, "high", ["sprint"], "codex"],
+      [3, "high", ["sprint"], "codex"],
+    ]);
+
+    let r = await cli(["issue", "bulk", "1-2", "--label", "-sprint,+cli"]);
+    expect(r.out).toBe("Changed #1, #2");
+    r = await cli(["issue", "bulk", "3", "4", "--archive"]);
+    expect(r.out).toBe("Changed #3, #4");
+    r = await cli(["issue", "bulk", "1", "--delete", "--status", "done"]);
+    expect(r.code).toBe(1);
+    expect(r.err).toContain("delete alone");
+
+    const { handle } = createMcpServer(codex, "codex", "test");
+    const call = await handle({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: {
+        name: "bulk_update",
+        arguments: { numbers: [1, 2], status: "Done", remove_labels: ["cli"] },
+      },
+    });
+    expect(JSON.parse((call as any).result.content[0].text)).toEqual({
+      changed: [1, 2],
+      deleted: [],
+    });
+    r = await cli(["issue", "bulk", "#1,#2", "--delete", "--json"]);
+    expect(JSON.parse(r.out)).toEqual({ changed: [], deleted: [1, 2] });
+    expect(
+      (await me.board({ archived: "include" })).issues.map((i) => i.number),
+    ).toEqual([3, 4]);
+    expect(
+      await (
+        await fetch(`${address}/api/issues/bulk`, {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${TOKEN}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ numbers: [99], priority: "low" }),
+        })
+      ).status,
+    ).toBe(404);
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const { items } = await notifications.list(30);
+    expect(
+      items.some((n: any) => n.detail === "codex changed #1, #2, #3"),
+    ).toBe(true);
+    expect(
+      items.some((n: any) => n.detail?.startsWith("cli deleted #1, #2")),
+    ).toBe(true);
+  });
+});

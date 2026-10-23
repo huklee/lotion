@@ -237,6 +237,26 @@ export async function createApp(
       .parse(req.body ?? {});
     return issues().renameLabel(body.from, body.to, author(req));
   });
+  app.post("/api/issues/bulk", async (req) => {
+    const who = author(req);
+    const result = await issues().bulk(req.body ?? {}, who);
+    const count = result.changed.length + result.deleted.length;
+    if (count && who !== "me" && options.notifications)
+      void options.notifications
+        .add({
+          kind: "issue.changed",
+          title: `${count} issue${count === 1 ? "" : "s"}`,
+          detail: `${who} ${result.deleted.length ? "deleted" : "changed"} ${[
+            ...result.changed,
+            ...result.deleted,
+          ]
+            .slice(0, 12)
+            .map((n) => `#${n}`)
+            .join(", ")}`.slice(0, 500),
+        })
+        .catch(() => undefined);
+    return result;
+  });
   app.post("/api/issues/archive", async (req) => {
     const body = z
       .object({ status: z.string().max(40) })

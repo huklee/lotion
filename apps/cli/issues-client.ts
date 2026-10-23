@@ -121,12 +121,45 @@ export function issueClient({ env, fetch, author }: ClientOptions) {
         );
       return response.text();
     },
+    bulk: (input: {
+      numbers: number[];
+      status?: string;
+      priority?: string;
+      addLabels?: string[];
+      removeLabels?: string[];
+      archived?: boolean;
+      delete?: true;
+    }) =>
+      call<{ changed: number[]; deleted: number[] }>(
+        "POST",
+        "/api/issues/bulk",
+        input,
+      ),
     remove: (n: number) =>
       call<{ deleted: number }>("DELETE", `/api/issues/${n}`),
   };
 }
 
 export type IssueClient = ReturnType<typeof issueClient>;
+
+/** "3,5,8-10" or "#3 #5" → [3, 5, 8, 9, 10]. */
+export function parseNumbers(text: string): number[] {
+  const out: number[] = [];
+  for (const part of text.split(/[\s,]+/).filter(Boolean)) {
+    const range = /^#?(\d+)-#?(\d+)$/.exec(part);
+    if (range) {
+      const [a, b] = [Number(range[1]), Number(range[2])].sort((x, y) => x - y);
+      if (b - a > 500) throw new LotionError(`Range ${part} is too long`, 400);
+      for (let n = a; n <= b; n++) out.push(n);
+      continue;
+    }
+    const n = Number(part.replace(/^#/, ""));
+    if (!Number.isSafeInteger(n) || n < 1)
+      throw new LotionError(`Not an issue number: ${part}`, 400);
+    out.push(n);
+  }
+  return [...new Set(out)];
+}
 
 /** A status by key or name, case-insensitive. */
 export function resolveStatus(statuses: IssueStatus[], value: string): string {
