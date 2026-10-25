@@ -1,5 +1,25 @@
 # Test results
 
+## 2026-10-26T00:10:00+09:00 — 0.53.0 description checkboxes, editable notes, Enter for notes
+
+Focused:
+- `tests/unit/render-html.test.ts` **2/2**:
+  - task items carry the classes and `.task-text`;
+  - interactive boxes are numbered in document order (nested, numbered and `*` lists), and nested text stays outside its parent's span;
+  - `toggleTask` flips exactly the right marker each time, ignores `[ ]` in plain text, and leaves out-of-range or same-state toggles unchanged.
+
+  The Confluence tests are unchanged and pass.
+- `tests/integration/issues.test.ts` **7/7**: a note edited by claude keeps its author and gains `editedBy` / `editedAt`. Editing or deleting the automatic note, empty text, or an unknown note is refused (400 / 404), and delete works.
+- E2E `issues.spec.ts` across Chromium, Firefox and WebKit:
+  - **Checkboxes:** ticking the first task strikes only its own text (the nested step stays unstruck), opens no editor, and saves `- [x]`; unticking a done task saves `- [ ]`.
+  - **Adding notes:** Shift+Enter keeps a line break and Enter adds the note.
+  - **Editing notes:** a written note is edited with Enter (rendered bold, "edited"); Esc cancels without closing the panel; delete asks first; the Created entry has no buttons.
+  - Earlier note tests switched from ⌘/Ctrl+Enter to Enter.
+  - The issue e2e specs passed **54/54**.
+- Checkbox colour, strike-through and nested indentation were reviewed in a screenshot.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **308/308**; Playwright **372 passed, 1 failed**. The failure was the known WebKit `portability.spec.ts:7` flake, which passed 3/3 when repeated. Remote CI results are recorded on the pull request.
+
 ## 2026-10-23T03:40:00+09:00 — 0.52.0 multi-select and bulk changes
 
 Focused:

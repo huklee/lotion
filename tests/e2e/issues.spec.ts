@@ -57,7 +57,7 @@ test("issue board: create with c, drag to another status, notes, and CLI/API cha
   );
   const note = panel.getByRole("textbox", { name: "Add a status note" });
   await note.fill("원인 찾음, 수정 중");
-  await note.press("ControlOrMeta+Enter");
+  await note.press("Enter");
   await expect(panel.getByRole("list", { name: "Status notes" })).toContainText(
     "원인 찾음, 수정 중",
   );
@@ -196,7 +196,7 @@ test("descriptions and notes render Markdown; click to edit the source", async (
   // notes render Markdown too
   const note = panel.getByRole("textbox", { name: "Add a status note" });
   await note.fill("**done**: `npm test` green");
-  await note.press("ControlOrMeta+Enter");
+  await note.press("Enter");
   const notes = panel.getByRole("list", { name: "Status notes" });
   await expect(notes.locator("strong")).toHaveText("done");
   await expect(notes.locator("code")).toHaveText("npm test");
@@ -226,4 +226,140 @@ test("columns share the window width and scroll sideways when it is too narrow",
   const narrow = await widths();
   expect(Math.min(...narrow)).toBeGreaterThanOrEqual(239.5);
   expect(await board.evaluate((b) => b.scrollWidth > b.clientWidth)).toBe(true);
+});
+
+test("description checkboxes tick in place and strike the item; Enter adds a note, Shift+Enter breaks the line", async ({
+  page,
+}) => {
+  const created = await (
+    await page.request.post("/api/issues", {
+      data: {
+        title: `Tasks ${randomUUID().slice(0, 6)}`,
+        body: "Checklist\n\n- [ ] write the test\n  - [ ] nested step\n- [x] read the code",
+      },
+    })
+  ).json();
+  await page.goto(`/#/issues/${created.number}`);
+  const panel = page.getByRole("complementary", {
+    name: `Issue #${created.number}`,
+  });
+  const view = panel.getByRole("region", { name: "Description" });
+  const boxes = view.locator('input[type="checkbox"]');
+  await expect(boxes).toHaveCount(3);
+  await expect(boxes.nth(2)).toBeChecked();
+  await expect(
+    view.locator("li.task-item.checked > .task-text").first(),
+  ).toHaveCSS("text-decoration-line", "line-through");
+
+  // tick the first: it is struck at once, the nested step is not, and the
+  // Markdown source is saved; no editor opens
+  await boxes.nth(0).click();
+  await expect(boxes.nth(0)).toBeChecked();
+  const first = view.locator("li.task-item").first();
+  await expect(first).toHaveClass(/checked/);
+  await expect(first.locator("> .task-text")).toHaveCSS(
+    "text-decoration-line",
+    "line-through",
+  );
+  await expect(first.locator("li.task-item .task-text")).toHaveCSS(
+    "text-decoration-line",
+    "none",
+  );
+  await expect(panel.getByRole("textbox", { name: "Description" })).toHaveCount(
+    0,
+  );
+  await expect
+    .poll(
+      async () =>
+        (await (await page.request.get(`/api/issues/${created.number}`)).json())
+          .body,
+    )
+    .toBe(
+      "Checklist\n\n- [x] write the test\n  - [ ] nested step\n- [x] read the code",
+    );
+
+  // untick the done one
+  await boxes.nth(2).click();
+  await expect(boxes.nth(2)).not.toBeChecked();
+  await expect
+    .poll(
+      async () =>
+        (await (await page.request.get(`/api/issues/${created.number}`)).json())
+          .body,
+    )
+    .toContain("- [ ] read the code");
+
+  // notes: Shift+Enter is a new line, Enter adds
+  const note = panel.getByRole("textbox", { name: "Add a status note" });
+  await note.click();
+  await page.keyboard.type("line one");
+  await page.keyboard.press("Shift+Enter");
+  await page.keyboard.type("line two");
+  await expect(note).toHaveValue("line one\nline two");
+  await page.keyboard.press("Enter");
+  await expect(note).toHaveValue("");
+  await expect(panel.getByRole("list", { name: "Status notes" })).toContainText(
+    "line two",
+  );
+  const notes = (
+    await (await page.request.get(`/api/issues/${created.number}`)).json()
+  ).notes;
+  expect(notes.at(-1).text).toBe("line one\nline two");
+});
+
+test("written status notes can be edited and deleted; automatic ones cannot", async ({
+  page,
+}) => {
+  const created = await (
+    await page.request.post("/api/issues", {
+      data: { title: `Edit notes ${randomUUID().slice(0, 6)}` },
+    })
+  ).json();
+  await page.request.post(`/api/issues/${created.number}/notes`, {
+    data: { text: "first draft" },
+  });
+  await page.goto(`/#/issues/${created.number}`);
+  const panel = page.getByRole("complementary", {
+    name: `Issue #${created.number}`,
+  });
+  const notes = panel.getByRole("list", { name: "Status notes" });
+  const written = notes.locator(".issue-note.kind-note");
+  await expect(written).toContainText("first draft");
+  // the automatic "Created" entry has no edit button
+  await expect(
+    notes.locator(".issue-note.kind-created").getByRole("button"),
+  ).toHaveCount(0);
+
+  await written.hover();
+  await written.getByRole("button", { name: "Edit note" }).click();
+  const box = written.getByRole("textbox", { name: "Edit note text" });
+  await expect(box).toBeFocused();
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.type("**final** text");
+  await page.keyboard.press("Enter");
+  await expect(written.locator("strong")).toHaveText("final");
+  await expect(written).toContainText("edited");
+
+  // Esc cancels an edit and keeps the panel open
+  await written.hover();
+  await written.getByRole("button", { name: "Edit note" }).click();
+  await page.keyboard.type(" discarded");
+  await page.keyboard.press("Escape");
+  await expect(panel).toBeVisible();
+  await expect(written).not.toContainText("discarded");
+  expect(
+    (
+      await (await page.request.get(`/api/issues/${created.number}`)).json()
+    ).notes.at(-1).text,
+  ).toBe("**final** text");
+
+  // delete asks first
+  await written.hover();
+  await written.getByRole("button", { name: "Delete note" }).click();
+  await written.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(notes.locator(".issue-note.kind-note")).toHaveCount(0);
+  expect(
+    (await (await page.request.get(`/api/issues/${created.number}`)).json())
+      .notes,
+  ).toHaveLength(1);
 });

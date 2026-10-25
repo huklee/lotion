@@ -63,6 +63,10 @@ export const issuesApi = {
       "/api/issues/bulk",
       json("POST", input),
     ),
+  editNote: (n: number, id: string, text: string) =>
+    api<Issue>(`/api/issues/${n}/notes/${id}`, json("PATCH", { text })),
+  deleteNote: (n: number, id: string) =>
+    api<Issue>(`/api/issues/${n}/notes/${id}`, json("DELETE")),
   remove: (n: number) =>
     api<{ deleted: number }>(`/api/issues/${n}`, json("DELETE")),
 };

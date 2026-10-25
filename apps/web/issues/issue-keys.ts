@@ -45,7 +45,7 @@ export const BOARD_SHORTCUTS: [keys: string, what: string][] = [
   ["o / Enter", "Open the card"],
   ["e", "Edit the title"],
   ["d", "Edit the description (⌘/Ctrl+Enter saves)"],
-  ["m", "Add a status note"],
+  ["m", "Add a status note (Enter adds it)"],
   ["c", "New issue in this column"],
   ["v / ⇧V", "Select the card / every card shown (⌘-click, ⇧-click)"],
   ["a", "Archive (the selection, or this card)"],

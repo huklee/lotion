@@ -1097,3 +1097,97 @@
   background: var(--bg);
   color: var(--text);
 }
+/* task lists: tick in place, done items struck through */
+.issue-markdown li.task-item input[data-task] {
+  cursor: pointer;
+}
+.issue-markdown li.task-item.checked > .task-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+/* a done task should be obvious at a glance: a clear green tick */
+.issue-markdown {
+  --task-done: #2f9e44;
+}
+:is([data-theme="dark"], [data-theme="black"]) .issue-markdown {
+  --task-done: #51cf66;
+}
+.issue-markdown ul.task-list input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--task-done);
+  vertical-align: -2px;
+}
+/* editing written notes */
+.issue-note-actions {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 2px;
+  opacity: 0;
+}
+.issue-note:hover .issue-note-actions,
+.issue-note-actions:focus-within {
+  opacity: 1;
+}
+.issue-note-actions button {
+  width: 24px;
+  height: 22px;
+  border-radius: 5px;
+  color: var(--muted);
+}
+.issue-note-actions button:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.issue-note-edited {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-style: italic;
+}
+.issue-note-editor textarea {
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: 13.5px/1.5 var(--workspace-font);
+  resize: vertical;
+}
+.issue-note-editor-actions,
+.issue-note-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12.5px;
+}
+.issue-note-confirm {
+  justify-content: flex-start;
+  color: var(--muted);
+}
+.issue-note-editor-actions button,
+.issue-note-confirm button {
+  padding: 2px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.issue-note-editor-actions button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+.issue-note-confirm button.danger {
+  background: #c4554d;
+  border-color: #c4554d;
+  color: #fff;
+}
+.issue-markdown li ul,
+.issue-markdown li ol {
+  margin: 2px 0 0;
+}
+.issue-markdown li ul.task-list {
+  padding-left: 22px;
+}

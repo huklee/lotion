@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Archive, FileText, Link2, Pencil, Trash2, X } from "lucide-react";
-import { markdownToHtml } from "../../../packages/markdown/render-html";
+import {
+  markdownToHtml,
+  toggleTask,
+} from "../../../packages/markdown/render-html";
 
 import { textToBlocks } from "../paste/text-blocks";
 import type { TreeNode } from "../../../packages/document-schema/index";
@@ -13,6 +16,7 @@ import {
   type IssueStatus,
 } from "../../../packages/issues/model";
 import { issuesApi } from "./issues-api";
+import { IssueNoteItem, enterSubmits } from "./IssueNoteItem";
 import { labelColor } from "./board-order";
 
 /** Pasted-text blocks carry no ids; a saved page needs one on every block. */
@@ -98,7 +102,10 @@ export function IssuePanel({
   const labelsRef = useRef<HTMLInputElement>(null);
   const loaded = !!issue;
   const openedAt = useRef(Date.now());
-  const bodyHtml = useMemo(() => markdownToHtml(body), [body]);
+  const bodyHtml = useMemo(
+    () => markdownToHtml(body, { interactiveTasks: true }),
+    [body],
+  );
 
   useEffect(() => {
     // only a request made for this panel (just before it opened), however
@@ -524,6 +531,20 @@ export function IssuePanel({
             title="Click to edit"
             onClick={(event) => {
               // links and checkboxes inside the description keep their own clicks
+              const box = (
+                event.target as HTMLElement
+              ).closest<HTMLInputElement>("input[data-task]");
+              if (box) {
+                // a checkbox in the description: flip that item in the Markdown
+                // source and save; the rendered list follows the new text
+                event.preventDefault();
+                const next = toggleTask(body, Number(box.dataset.task));
+                if (next === body) return;
+                dirty.current.add("body");
+                setBody(next);
+                void save("body", next);
+                return;
+              }
               if ((event.target as HTMLElement).closest("a, input")) return;
               setEditingBody(true);
             }}
@@ -548,25 +569,30 @@ export function IssuePanel({
       <h2 className="issue-notes-title">Status notes</h2>
       <ol className="issue-notes" aria-label="Status notes">
         {issue.notes.map((n) => (
-          <li key={n.id} className={`issue-note kind-${n.kind}`}>
-            <div className="issue-note-head">
-              <b
-                className={`issue-author-name${n.author !== "me" ? " agent" : ""}`}
-              >
-                {n.author}
-              </b>
-              <time dateTime={n.at}>{when(n.at)}</time>
-              {n.kind !== "note" && (
-                <span className="issue-note-kind">{n.text}</span>
-              )}
-            </div>
-            {n.kind === "note" && (
-              <div
-                className="issue-note-text issue-markdown"
-                dangerouslySetInnerHTML={{ __html: markdownToHtml(n.text) }}
-              />
-            )}
-          </li>
+          <IssueNoteItem
+            key={n.id}
+            note={n}
+            onSave={async (text) => {
+              try {
+                show(await issuesApi.editNote(number, n.id, text));
+                await onChanged();
+                return true;
+              } catch (error) {
+                onError(error);
+                return false;
+              }
+            }}
+            onDelete={async () => {
+              try {
+                show(await issuesApi.deleteNote(number, n.id));
+                await onChanged();
+                return true;
+              } catch (error) {
+                onError(error);
+                return false;
+              }
+            }}
+          />
         ))}
       </ol>
       <form
@@ -587,15 +613,13 @@ export function IssuePanel({
         <textarea
           ref={noteRef}
           aria-label="Add a status note"
-          placeholder="Add a status note… (⌘/Ctrl+Enter)"
+          placeholder="Add a status note… (Enter adds, Shift+Enter for a new line)"
           value={note}
           rows={2}
           onChange={(event) => setNote(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-              event.preventDefault();
-              event.currentTarget.form?.requestSubmit();
-            }
+            const form = event.currentTarget.form;
+            enterSubmits(event, () => form?.requestSubmit());
           }}
         />
         <button type="submit" disabled={!note.trim()}>
