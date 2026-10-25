@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.53.0 — 2026-10-25
+
+### Added
+
+- **Tick checkboxes in a description.** Clicking a task in a rendered description checks or unchecks it at once: the item is struck through and the description's `[ ]` / `[x]` is saved. Only that item changes; nested items keep their own state.
+- **Edit and delete status notes.** Hover a note you (or an agent) wrote for ✎ Edit and 🗑 Delete. An edited note shows "edited", and delete asks first. The automatic "Created" and status-change entries stay as they are.
+
+### Changed
+
+- **Add a status note with Enter**; **Shift+Enter** starts a new line. ⌘/Ctrl+Enter, which clashed with other shortcuts, no longer adds notes. Enter is ignored while Korean input is still composing a character.
+- **Done tasks stand out:** checked boxes are a clear green (a lighter green in dark themes) and slightly larger, and nested task lists are indented.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.52.0 — 2026-10-23 · [#72](https://github.com/huklee/lotion/pull/72)
 
 ### Added

@@ -135,6 +135,45 @@ describe("issues API", () => {
     ).toBe(3);
   });
 
+  it("edits and deletes written notes, never automatic ones", async () => {
+    await call("POST", "/api/issues", { title: "Notes" });
+    const noted = (
+      await call("POST", "/api/issues/1/notes", { text: "first try" })
+    ).json();
+    const [created, written] = noted.notes;
+    const edited = await call(
+      "PATCH",
+      `/api/issues/1/notes/${written.id}`,
+      { text: "second try" },
+      { "x-lotion-author": "claude" },
+    );
+    expect(edited.statusCode).toBe(200);
+    expect(edited.json().notes[1]).toMatchObject({
+      id: written.id,
+      text: "second try",
+      author: "me",
+      editedBy: "claude",
+    });
+    expect(edited.json().notes[1].editedAt).toBeTruthy();
+    expect(
+      (await call("PATCH", `/api/issues/1/notes/${created.id}`, { text: "x" }))
+        .statusCode,
+    ).toBe(400);
+    expect(
+      (await call("PATCH", `/api/issues/1/notes/${written.id}`, { text: " " }))
+        .statusCode,
+    ).toBe(400);
+    expect(
+      (await call("PATCH", "/api/issues/1/notes/missing", { text: "x" }))
+        .statusCode,
+    ).toBe(404);
+    const after = await call("DELETE", `/api/issues/1/notes/${written.id}`);
+    expect(after.json().notes.map((n: any) => n.kind)).toEqual(["created"]);
+    expect(
+      (await call("DELETE", `/api/issues/1/notes/${created.id}`)).statusCode,
+    ).toBe(400);
+  });
+
   it("validates input", async () => {
     expect((await call("POST", "/api/issues", { title: "" })).statusCode).toBe(
       400,

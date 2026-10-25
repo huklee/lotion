@@ -1,5 +1,15 @@
 # Implementation history log
 
+## 2026-10-25T23:55:00+09:00 — 0.53.0 description checkboxes, editable notes, Enter for notes
+
+- **Renderer:** `markdownToHtml` adds `task-item` / `checked` classes and wraps each task's own text in `.task-text`, so a strike-through does not reach nested items. With `interactiveTasks` the boxes are enabled and numbered with `data-task`. The Confluence converter's output is unchanged.
+- **Toggling:** `toggleTask(markdown, index)` finds the task list items with remark (GFM) and rewrites only that item's marker, using its source position. The panel flips it on click and saves through the usual `save("body")` path, so conflicts still raise the Keep mine / Use theirs prompt.
+- **Notes:**
+  - The model gains `editNote` and `deleteNote` (written notes only; `editedAt` / `editedBy`), with `PATCH|DELETE /api/issues/:n/notes/:id`.
+  - `IssueNoteItem.tsx` renders a note with edit, delete-with-confirm, and an inline editor; Esc stays inside the note.
+  - The shared `enterSubmits` helper (Enter submits, Shift+Enter breaks the line, ignored during IME composition) replaces ⌘/Ctrl+Enter for notes.
+- **Styles:** the checkbox colour is `--task-done` (#2f9e44, or #51cf66 in dark themes) through `accent-color`.
+
 ## 2026-10-23T03:30:00+09:00 — 0.52.0 multi-select and bulk changes
 
 - **Model:**

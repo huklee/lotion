@@ -6,6 +6,8 @@ import {
   IssueError,
   MAX_ISSUES,
   addNote,
+  deleteNote,
+  editNote,
   bulkIssues,
   archiveColumn,
   issuesToMarkdown,
@@ -271,6 +273,31 @@ export class IssueStore {
         state: { ...state, issues: result.issues },
         result: { changed: result.changed, deleted: result.deleted },
       };
+    });
+  }
+
+  editNote(number: number, id: string, input: unknown, author: string) {
+    return this.change((state) => {
+      const before = find(state.issues, number);
+      const issue = editNote(
+        state.issues,
+        number,
+        id,
+        input as any,
+        author,
+        this.clock(),
+      );
+      return {
+        state: issue === before ? state : IssueStore.replace(state, [issue]),
+        result: issue,
+      };
+    });
+  }
+
+  deleteNote(number: number, id: string, author: string) {
+    return this.change((state) => {
+      const issue = deleteNote(state.issues, number, id, author, this.clock());
+      return { state: IssueStore.replace(state, [issue]), result: issue };
     });
   }
 

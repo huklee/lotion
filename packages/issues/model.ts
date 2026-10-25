@@ -35,6 +35,9 @@ export type IssueNote = {
   text: string;
   from?: string;
   to?: string;
+  /** Set when a written note was changed afterwards. */
+  editedAt?: string;
+  editedBy?: string;
 };
 
 export type Issue = {
@@ -380,6 +383,59 @@ export function addNote(
         -MAX_NOTES,
       ),
     },
+    author,
+  );
+}
+
+/** A written note (not an automatic created/status entry) of one issue. */
+function writtenNote(issue: Issue, id: string): IssueNote {
+  const found = issue.notes.find((n) => n.id === id);
+  if (!found)
+    throw new IssueError(404, `Note ${id} not found on #${issue.number}`);
+  if (found.kind !== "note")
+    throw new IssueError(400, "Automatic notes cannot be changed");
+  return found;
+}
+
+/** Changes the text of a written note; it is marked as edited. */
+export function editNote(
+  issues: Issue[],
+  number: number,
+  id: string,
+  input: z.input<typeof noteSchema>,
+  author: string,
+  clock: Clock,
+): Issue {
+  const { text } = noteSchema.parse(input);
+  const issue = find(issues, number);
+  const target = writtenNote(issue, id);
+  if (target.text === text) return issue;
+  return touch(
+    issue,
+    clock,
+    {
+      notes: issue.notes.map((n) =>
+        n.id === id ? { ...n, text, editedAt: clock.now, editedBy: author } : n,
+      ),
+    },
+    author,
+  );
+}
+
+/** Removes a written note. */
+export function deleteNote(
+  issues: Issue[],
+  number: number,
+  id: string,
+  author: string,
+  clock: Clock,
+): Issue {
+  const issue = find(issues, number);
+  writtenNote(issue, id);
+  return touch(
+    issue,
+    clock,
+    { notes: issue.notes.filter((n) => n.id !== id) },
     author,
   );
 }

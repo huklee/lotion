@@ -65,7 +65,7 @@ test("board keys: filter, j/k focus, ⇧K reorder, ⇧L and x move, m adds a not
   const note = panel.getByRole("textbox", { name: "Add a status note" });
   await expect(note).toBeFocused();
   await page.keyboard.type("키보드로 기록");
-  await page.keyboard.press("ControlOrMeta+Enter");
+  await page.keyboard.press("Enter");
   await expect(panel.getByRole("list", { name: "Status notes" })).toContainText(
     "키보드로 기록",
   );

@@ -347,6 +347,23 @@ export async function createApp(
     reply.code(201);
     return issue;
   });
+  const noteId = (req: any) => {
+    const value = String(req.params.note ?? "");
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(value))
+      throw new AppError(400, "Invalid note id");
+    return value;
+  };
+  app.patch("/api/issues/:number/notes/:note", async (req) =>
+    issues().editNote(
+      issueNumber(req),
+      noteId(req),
+      req.body ?? {},
+      author(req),
+    ),
+  );
+  app.delete("/api/issues/:number/notes/:note", async (req) =>
+    issues().deleteNote(issueNumber(req), noteId(req), author(req)),
+  );
   app.delete("/api/issues/:number", async (req) =>
     issues().remove(issueNumber(req)),
   );
