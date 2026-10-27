@@ -1192,11 +1192,40 @@
   padding-left: 22px;
 }
 /* Focus now (set by hand, or due within 24 h): a red border, and by default a
-   red dot circling it once per --focus-cycle (Control panel → Focus now effect) */
+   red dot circling it once per --focus-cycle (Control panel → Focus now effect).
+   One clock for all cards: the board (.focus-clock) animates the angle and the
+   glow, and every card in focus draws from those inherited values, so all dots
+   are at the same angle and a newly focused card joins in step at once. */
 @property --focus-angle {
   syntax: "<angle>";
-  inherits: false;
+  inherits: true;
   initial-value: 0deg;
+}
+@property --focus-glow {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+:root[data-focus-effect="orbit"] .focus-clock:has(.focus-now),
+:root:not([data-focus-effect]) .focus-clock:has(.focus-now) {
+  animation: focus-orbit var(--focus-cycle, 6s) linear infinite;
+}
+:root[data-focus-effect="pulse"] .focus-clock:has(.focus-now) {
+  animation: focus-glow var(--focus-cycle, 6s) ease-in-out infinite;
+}
+@keyframes focus-orbit {
+  to {
+    --focus-angle: 360deg;
+  }
+}
+@keyframes focus-glow {
+  0%,
+  100% {
+    --focus-glow: 0;
+  }
+  50% {
+    --focus-glow: 1;
+  }
 }
 .issue-card.focus-now {
   --focus-red: #e03131;
@@ -1221,7 +1250,7 @@
   pointer-events: none;
   opacity: 0;
 }
-/* orbit: a short bright arc (the "dot") with a soft tail, running around */
+/* orbit: a short bright arc (the "dot") with a soft tail, at the board's angle */
 :root[data-focus-effect="orbit"] .issue-card.focus-now::after,
 :root:not([data-focus-effect]) .issue-card.focus-now::after {
   opacity: 1;
@@ -1240,33 +1269,20 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   filter: drop-shadow(0 0 3px var(--focus-red));
-  animation: focus-orbit var(--focus-cycle, 6s) linear infinite;
 }
-@keyframes focus-orbit {
-  to {
-    --focus-angle: 360deg;
-  }
-}
-/* pulse: the red glow breathes */
+/* pulse: the red glow breathes, following the board's glow value */
 :root[data-focus-effect="pulse"] .issue-card.focus-now {
-  animation: focus-pulse var(--focus-cycle, 6s) ease-in-out infinite;
-}
-@keyframes focus-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 1px var(--focus-red),
-      0 0 0 0 color-mix(in srgb, var(--focus-red) 0%, transparent);
-  }
-  50% {
-    box-shadow:
-      0 0 0 1px var(--focus-red),
-      0 0 12px 3px color-mix(in srgb, var(--focus-red) 45%, transparent);
-  }
+  box-shadow:
+    0 0 0 1px var(--focus-red),
+    0 0 calc(var(--focus-glow) * 12px) calc(var(--focus-glow) * 3px)
+      color-mix(
+        in srgb,
+        var(--focus-red) calc(var(--focus-glow) * 45%),
+        transparent
+      );
 }
 @media (prefers-reduced-motion: reduce) {
-  .issue-card.focus-now,
-  .issue-card.focus-now::after {
+  .focus-clock {
     animation: none !important;
   }
   .issue-card.focus-now::after {

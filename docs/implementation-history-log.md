@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-10-27T12:30:00+09:00 — 0.54.2 one clock for all Focus now effects
+
+The owner saw a newly focused issue start its lap from the beginning. 0.54.1 aligned per-card CSS animations from JavaScript after each render (`startTime = 0`). That depends on render timing, and on the browser listing pseudo-element animations in `document.getAnimations()`. Now a single animation on the board (`.focus-clock`, also on the Control panel sample) animates inheritable custom properties: `--focus-angle` for orbit, `--focus-glow` for pulse. Each card's ring and glow only read them, so a card that comes into focus shows the board's current angle in its first frame. The animation runs only while the board has a card in focus (`:has(.focus-now)`). `syncFocusAnimations` was removed.
+
 ## 2026-10-27T11:30:00+09:00 — 0.54.1 Focus now animations in step
 
 The owner found several dots circling at different angles dizzying. Each card's CSS animation began when the card was rendered. `syncFocusAnimations()` (in `focus-effect.tsx`) sets `startTime = 0` on every `focus-orbit` / `focus-pulse` animation through `document.getAnimations()`, so all run from the document timeline's origin. The board calls it after every render, and the Control panel calls it after changing the effect or speed.

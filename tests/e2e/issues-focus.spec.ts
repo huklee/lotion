@@ -41,11 +41,16 @@ test("Focus now with n and the panel; due within 24 h is in focus; done clears i
     "border-top-color",
     "rgb(224, 49, 49)",
   );
+  // one clock on the board drives every card's dot
+  const board = page.locator(".issues-board");
+  expect(await board.evaluate((el) => getComputedStyle(el).animationName)).toBe(
+    "focus-orbit",
+  );
   expect(
     await card(page, soon).evaluate(
-      (el) => getComputedStyle(el, "::after").animationName,
+      (el) => getComputedStyle(el, "::after").opacity,
     ),
-  ).toBe("focus-orbit");
+  ).toBe("1");
 
   // n turns Focus now on for the focused card, and off again
   await card(page, plain).focus();
@@ -115,15 +120,12 @@ test("Focus several at once from the toolbar; the effect follows the Control pan
     "pulse",
   );
   await page.keyboard.press("Escape");
+  const board = page.locator(".issues-board");
+  expect(await board.evaluate((el) => getComputedStyle(el).animationName)).toBe(
+    "focus-glow",
+  );
   expect(
-    await card(page, plain).evaluate(
-      (el) => getComputedStyle(el).animationName,
-    ),
-  ).toBe("focus-pulse");
-  expect(
-    await card(page, plain).evaluate(
-      (el) => getComputedStyle(el).animationDuration,
-    ),
+    await board.evaluate((el) => getComputedStyle(el).animationDuration),
   ).toBe("3s");
   await page.getByRole("button", { name: "Control panel" }).click();
   await dialog
@@ -136,44 +138,46 @@ test("Focus several at once from the toolbar; the effect follows the Control pan
     "off",
   );
   await page.getByRole("textbox", { name: "Filter issues" }).fill("");
+  expect(await board.evaluate((el) => getComputedStyle(el).animationName)).toBe(
+    "none",
+  );
   expect(
     await card(page, plain).evaluate(
-      (el) => getComputedStyle(el).animationName,
+      (el) => getComputedStyle(el, "::after").opacity,
     ),
-  ).toBe("none");
-  expect(
-    await card(page, plain).evaluate(
-      (el) => getComputedStyle(el, "::after").animationName,
-    ),
-  ).toBe("none");
+  ).toBe("0");
   await expect(card(page, plain)).toHaveCSS(
     "border-top-color",
     "rgb(224, 49, 49)",
   );
 });
 
-test("dots of several cards in focus move together, whenever focus was turned on", async ({
+test("dots of several cards in focus move together; a newly focused card joins at the same angle", async ({
   page,
 }) => {
   const { plain, later } = await setup(page);
   await card(page, plain).focus();
   await page.keyboard.press("n");
   await expect(card(page, plain)).toHaveAttribute("data-focus", "manual");
-  await page.waitForTimeout(1300); // the second card is focused much later
+  await page.waitForTimeout(1300); // the first dot has gone round a good way
+  // watch every frame from the key press on
+  await page.evaluate(
+    `(() => { window.frames = []; const t0 = performance.now();
+      const angle = (n) => { const el = document.querySelector('.issue-card[data-issue="' + n + '"]');
+        return el && el.classList.contains("focus-now") ? parseFloat(getComputedStyle(el, "::after").getPropertyValue("--focus-angle")) : null; };
+      const tick = () => { window.frames.push([angle(${plain}), angle(${later})]);
+        if (performance.now() - t0 < 1500) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick); })()`,
+  );
   await card(page, later).focus();
   await page.keyboard.press("n");
   await expect(card(page, later)).toHaveAttribute("data-focus", "manual");
-  const phases = async () =>
-    page.evaluate(() =>
-      document
-        .getAnimations()
-        .filter((a) => (a as CSSAnimation).animationName === "focus-orbit")
-        .map((a) => Number(a.currentTime) % 6000),
-    );
-  await expect
-    .poll(async () => {
-      const p = await phases();
-      return p.length >= 3 && Math.max(...p) - Math.min(...p) < 50;
-    })
-    .toBe(true);
+  await page.waitForTimeout(1600);
+  const frames = (await page.evaluate("window.frames")) as (number | null)[][];
+  const both = frames.filter(([a, b]) => a !== null && b !== null);
+  expect(both.length).toBeGreaterThan(5);
+  // from its very first frame the new dot is where the first one is (it did
+  // not start over at 0°), and they stay together
+  for (const [a, b] of both) expect(Math.abs(a! - b!)).toBeLessThan(0.5);
+  expect(both[0][0]).toBeGreaterThan(30);
 });

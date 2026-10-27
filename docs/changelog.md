@@ -2,6 +2,14 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.54.2 — 2026-10-27 · [#76](https://github.com/huklee/lotion/pull/76)
+
+### Fixed
+
+- **A newly focused issue joins the others in step.** Turning on Focus now for another issue could start its dot from the beginning of the lap instead of where the other dots were. All dots now follow one clock on the board, so a new one appears at the same angle from its first frame, in every browser. The same applies to the pulse effect and to the sample in the Control panel.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.54.1 — 2026-10-27 · [#75](https://github.com/huklee/lotion/pull/75)
 
 ### Fixed
