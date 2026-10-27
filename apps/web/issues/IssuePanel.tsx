@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
+  CalendarDays,
   Crosshair,
   FileText,
   Link2,
@@ -26,6 +27,7 @@ import {
   type IssueStatus,
 } from "../../../packages/issues/model";
 import { issuesApi } from "./issues-api";
+import { DatePicker } from "../DatePicker";
 import { IssueNoteItem, enterSubmits } from "./IssueNoteItem";
 import { labelColor } from "./board-order";
 
@@ -97,6 +99,7 @@ export function IssuePanel({
   onPagesChanged?: () => void;
 }) {
   const [linkQuery, setLinkQuery] = useState("");
+  const [pickingDue, setPickingDue] = useState(false);
   /** The description shows rendered Markdown until you click to edit it. */
   const [editingBody, setEditingBody] = useState(false);
   const [linking, setLinking] = useState(false);
@@ -374,18 +377,26 @@ export function IssuePanel({
             ))}
           </select>
         </label>
-        <label>
+        <div className="issue-due-row">
           <span>Deadline</span>
-          <input
-            type="datetime-local"
+          <button
+            className={`issue-due-button${issue.due ? "" : " empty"}`}
             aria-label="Deadline"
-            value={localInput(issue.due)}
-            onChange={(event) => {
-              // a half-typed date gives ""; clearing is the × button's job
-              if (event.target.value)
-                void save("due", new Date(event.target.value).toISOString());
-            }}
-          />
+            title="Pick a date and time"
+            onClick={() => setPickingDue(true)}
+          >
+            <CalendarDays size={13} />
+            {issue.due
+              ? new Date(issue.due).toLocaleString(undefined, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  weekday: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "Set deadline"}
+          </button>
           {issue.due && (
             <button
               className="issue-due-clear"
@@ -399,7 +410,34 @@ export function IssuePanel({
               <X size={13} />
             </button>
           )}
-        </label>
+        </div>
+        {pickingDue && (
+          <DatePicker
+            title="Set deadline"
+            confirmLabel="Set deadline"
+            withTime
+            initial={issue.due ? localInput(issue.due).slice(0, 10) : undefined}
+            initialTime={
+              issue.due ? localInput(issue.due).slice(11, 16) : "23:59"
+            }
+            onCancel={() => setPickingDue(false)}
+            onClear={
+              issue.due
+                ? () => {
+                    setPickingDue(false);
+                    void save("due", null);
+                  }
+                : undefined
+            }
+            onInsert={(date, time) => {
+              setPickingDue(false);
+              void save(
+                "due",
+                new Date(`${date}T${time ?? "23:59"}`).toISOString(),
+              );
+            }}
+          />
+        )}
         <div className="issue-focus-row">
           <span>Focus</span>
           <button

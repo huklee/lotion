@@ -1,5 +1,10 @@
 # Implementation history log
 
+## 2026-10-27T16:00:00+09:00 — 0.55.0 deadline calendar
+
+- **`DatePicker`:** gains optional `initial`, `withTime` / `initialTime` (a time field, Today / Tomorrow / Next week shortcuts, and the time passed to `onInsert` as a second argument), `onClear`, `title` and `confirmLabel`. Its defaults keep the @date mention dialog unchanged.
+- **`IssuePanel`:** the deadline `datetime-local` input became a button showing the deadline, which opens the dialog ("Set deadline"). The local date and time are converted to ISO on confirm.
+
 ## 2026-10-27T12:30:00+09:00 — 0.54.2 one clock for all Focus now effects
 
 The owner saw a newly focused issue start its lap from the beginning. 0.54.1 aligned per-card CSS animations from JavaScript after each render (`startTime = 0`). That depends on render timing, and on the browser listing pseudo-element animations in `document.getAnimations()`. Now a single animation on the board (`.focus-clock`, also on the Control panel sample) animates inheritable custom properties: `--focus-angle` for orbit, `--focus-glow` for pulse. Each card's ring and glow only read them, so a card that comes into focus shows the board's current angle in its first frame. The animation runs only while the board has a card in focus (`:has(.focus-now)`). `syncFocusAnimations` was removed.
