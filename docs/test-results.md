@@ -9,7 +9,7 @@ Focused: `issues-focus.spec.ts` and `calendar.spec.ts` **15/15** across Chromium
 
 The first run exposed only a test selector that also matched "Clear deadline" (now exact).
 
-Full `npm run check`: FULLCHECK.
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **315/315**; Playwright **382/382**. Remote CI results are recorded on the pull request.
 
 ## 2026-10-27T12:35:00+09:00 — 0.54.2 one clock for all Focus now effects
 
