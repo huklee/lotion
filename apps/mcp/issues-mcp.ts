@@ -2,6 +2,7 @@ import type { IssueStatus } from "../../packages/issues/model";
 import {
   LotionError,
   editLabels,
+  parseDue,
   resolveStatus,
   workingStatus,
   type IssueClient,
@@ -39,6 +40,15 @@ const status = {
   type: "string",
   description:
     "Status key or name, e.g. backlog, todo, doing / In progress, done",
+};
+const due = {
+  type: ["string", "null"],
+  description:
+    'Deadline: ISO date-time, "2026-10-30" (end of day), "2026-10-30 18:00", "+2d", or null / "none" to clear. Within 24 h of it the issue shows as Focus now.',
+};
+const focus = {
+  type: "boolean",
+  description: "Focus now: highlight the issue until it is done",
 };
 const priority = {
   type: "string",
@@ -84,6 +94,8 @@ export const TOOLS = [
         status,
         labels: { type: "array", items: { type: "string" } },
         priority,
+        due,
+        focus,
       },
       required: ["title"],
     },
@@ -103,6 +115,8 @@ export const TOOLS = [
         remove_labels: { type: "array", items: { type: "string" } },
         priority,
         status,
+        due,
+        focus,
       },
       required: ["number"],
     },
@@ -156,6 +170,8 @@ export const TOOLS = [
         add_labels: { type: "array", items: { type: "string" } },
         remove_labels: { type: "array", items: { type: "string" } },
         archived: { type: "boolean" },
+        due,
+        focus,
         delete: { type: "boolean" },
       },
       required: ["numbers"],
@@ -172,6 +188,9 @@ export const TOOLS = [
     },
   },
 ] as const;
+
+const dueArg = (value: unknown) =>
+  value === null || value === "" ? null : parseDue(String(value));
 
 function str(args: Json, key: string): string | undefined {
   const value = args[key];
@@ -215,6 +234,8 @@ export function createMcpServer(
         const labels = list(args, "labels");
         if (labels) input.labels = editLabels([], labels);
         if (str(args, "priority")) input.priority = str(args, "priority");
+        if (args.due !== undefined) input.due = dueArg(args.due);
+        if (typeof args.focus === "boolean") input.focus = args.focus;
         return api.create(input);
       }
       case "update_issue": {
@@ -235,6 +256,8 @@ export function createMcpServer(
             ...remove.map((l) => `-${l}`),
           ]);
         }
+        if (args.due !== undefined) input.due = dueArg(args.due);
+        if (typeof args.focus === "boolean") input.focus = args.focus;
         if (!Object.keys(input).length)
           throw new LotionError("Nothing to update", 400);
         return api.patch(n, input);
@@ -271,6 +294,8 @@ export function createMcpServer(
           ...(list(args, "remove_labels")
             ? { removeLabels: list(args, "remove_labels") }
             : {}),
+          ...(args.due !== undefined ? { due: dueArg(args.due) } : {}),
+          ...(typeof args.focus === "boolean" ? { focus: args.focus } : {}),
           ...(typeof args.archived === "boolean"
             ? { archived: args.archived }
             : {}),

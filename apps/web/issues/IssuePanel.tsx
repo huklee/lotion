@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Archive, FileText, Link2, Pencil, Trash2, X } from "lucide-react";
+import {
+  Archive,
+  Crosshair,
+  FileText,
+  Link2,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
 import {
   markdownToHtml,
   toggleTask,
@@ -12,12 +20,22 @@ import { pillStyle } from "../database-ui";
 import {
   PRIORITIES,
   PRIORITY_NAMES,
+  dueLabel,
+  focusState,
   type Issue,
   type IssueStatus,
 } from "../../../packages/issues/model";
 import { issuesApi } from "./issues-api";
 import { IssueNoteItem, enterSubmits } from "./IssueNoteItem";
 import { labelColor } from "./board-order";
+
+/** An ISO date-time as the value of a datetime-local field (local time). */
+function localInput(iso: string | null | undefined) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 /** Pasted-text blocks carry no ids; a saved page needs one on every block. */
 function withIds<T extends { id?: string; children?: T[] }>(blocks: T[]): T[] {
@@ -223,7 +241,9 @@ export function IssuePanel({
       | "status"
       | "priority"
       | "links"
-      | "archived",
+      | "archived"
+      | "focus"
+      | "due",
     value: unknown,
   ) => {
     if (!issue || conflictRef.current) return;
@@ -273,6 +293,8 @@ export function IssuePanel({
       </aside>
     );
 
+  const inFocus = focusState(issue, statuses, Date.now());
+  const isLastStatus = issue.status === statuses.at(-1)?.key;
   return (
     <aside className="issue-panel" aria-label={`Issue #${number}`} ref={panel}>
       <div className="issue-panel-top">
@@ -352,6 +374,56 @@ export function IssuePanel({
             ))}
           </select>
         </label>
+        <label>
+          <span>Deadline</span>
+          <input
+            type="datetime-local"
+            aria-label="Deadline"
+            value={localInput(issue.due)}
+            onChange={(event) => {
+              // a half-typed date gives ""; clearing is the × button's job
+              if (event.target.value)
+                void save("due", new Date(event.target.value).toISOString());
+            }}
+          />
+          {issue.due && (
+            <button
+              className="issue-due-clear"
+              aria-label="Clear deadline"
+              title="Clear deadline"
+              onClick={(event) => {
+                event.preventDefault();
+                void save("due", null);
+              }}
+            >
+              <X size={13} />
+            </button>
+          )}
+        </label>
+        <div className="issue-focus-row">
+          <span>Focus</span>
+          <button
+            className={`issue-focus-toggle${issue.focusedAt ? " on" : ""}`}
+            aria-pressed={!!issue.focusedAt}
+            disabled={isLastStatus}
+            title={
+              isLastStatus
+                ? "Done issues are not in focus"
+                : "Focus now (n): highlight this issue until it is done"
+            }
+            onClick={() => void save("focus", !issue.focusedAt)}
+          >
+            <Crosshair size={13} /> Focus now
+          </button>
+          {inFocus.reason === "due" && (
+            <span className="issue-focus-auto" role="status">
+              {inFocus.overdue
+                ? `Overdue by ${dueLabel(inFocus.dueIn!).replace(/ overdue$/, "")}`
+                : `Due ${dueLabel(inFocus.dueIn!)}`}{" "}
+              — in focus automatically
+            </span>
+          )}
+        </div>
         <label>
           <span>Labels</span>
           <input

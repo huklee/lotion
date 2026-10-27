@@ -57,6 +57,8 @@ export const issuesApi = {
     addLabels?: string[];
     removeLabels?: string[];
     archived?: boolean;
+    focus?: boolean;
+    due?: string | null;
     delete?: true;
   }) =>
     api<{ changed: number[]; deleted: number[] }>(

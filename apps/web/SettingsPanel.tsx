@@ -1,3 +1,4 @@
+import { FocusEffectSettings } from "./issues/focus-effect";
 import type {
   Dispatch,
   SetStateAction,
@@ -171,6 +172,7 @@ export function SettingsPanel({
             <option value="wide">Wide</option>
           </select>
         </label>
+        <FocusEffectSettings />
         <label className="settings-row settings-toggle">
           <span>
             Open sidebar on startup

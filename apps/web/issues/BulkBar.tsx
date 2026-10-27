@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Archive, Tag, Trash2, X } from "lucide-react";
+import { Archive, Crosshair, Tag, Trash2, X } from "lucide-react";
 
 export type BulkAction =
-  "status" | "priority" | "labels" | "archive" | "delete";
+  "status" | "priority" | "labels" | "focus" | "archive" | "delete";
 
 /** The toolbar shown while several issues are selected. */
 export function BulkBar({
@@ -37,6 +37,7 @@ export function BulkBar({
       {button("status", "Status", "s")}
       {button("priority", "Priority", "p")}
       {button("labels", "Labels", "t", <Tag size={13} />)}
+      {button("focus", "Focus", "n", <Crosshair size={13} />)}
       {button("archive", "Archive", "a", <Archive size={13} />)}
       {button("delete", "Delete", "Del", <Trash2 size={13} />)}
       <button

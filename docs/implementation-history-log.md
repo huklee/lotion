@@ -1,5 +1,21 @@
 # Implementation history log
 
+## 2026-10-27T10:30:00+09:00 — 0.54.0 Focus now and deadlines
+
+- **Model:**
+  - Issues gain `focusedAt` (set by hand, cleared by any move into the last column, and refused while done) and `due` (an ISO date-time, normalised to UTC).
+  - Create, patch and bulk accept `focus` and `due`.
+  - Pure helpers: `focusState(issue, statuses, now)` returns manual / due-within-24 h / overdue and never applies to done issues; `dueLabel` formats the time left.
+  - Focus from a deadline is derived, not stored, so it follows deadline edits and time without a background job.
+- **Board:**
+  - A 30-second clock re-evaluates focus as time passes.
+  - Cards carry `focus-now` / `overdue` and `data-focus`, plus a deadline badge.
+  - `n` toggles focus on the selection or the focused card; the bulk toolbar has a Focus button; the summary line counts issues in focus.
+- **Panel:** a `datetime-local` Deadline field with a clear button, and a Focus now toggle (disabled when done) with an "in focus automatically" notice.
+- **Effect:** `.issue-card.focus-now::after` draws a conic-gradient ring masked to the border, rotated through an `@property --focus-angle`; `pulse` animates the box-shadow instead.
+- **Preferences:** `focus-effect.tsx` stores the effect (orbit / pulse / off) and speed (9 s / 6 s / 3 s) in localStorage and applies them as `data-focus-effect` and `--focus-cycle` on the root. Its Control panel component is self-contained and has a sample card. `prefers-reduced-motion` stops the animation.
+- **Clients:** the CLI has `parseDue` (date = 23:59 local, date and time, ISO, +Nd/h/m, none), `focus` / `unfocus`, `--due` / `--focus` / `--unfocus`, `ls --focus` and ⚑ markers. The MCP tools take `due` / `focus`.
+
 ## 2026-10-25T23:55:00+09:00 — 0.53.0 description checkboxes, editable notes, Enter for notes
 
 - **Renderer:** `markdownToHtml` adds `task-item` / `checked` classes and wraps each task's own text in `.task-text`, so a strike-through does not reach nested items. With `interactiveTasks` the boxes are enabled and numbered with `data-task`. The Confluence converter's output is unchanged.

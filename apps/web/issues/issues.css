@@ -1191,3 +1191,158 @@
 .issue-markdown li ul.task-list {
   padding-left: 22px;
 }
+/* Focus now (set by hand, or due within 24 h): a red border, and by default a
+   red dot circling it once per --focus-cycle (Control panel → Focus now effect) */
+@property --focus-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.issue-card.focus-now {
+  --focus-red: #e03131;
+  border-color: var(--focus-red);
+  box-shadow:
+    0 0 0 1px var(--focus-red),
+    0 1px 2px rgb(15 15 15 / 5%);
+}
+:is([data-theme="dark"], [data-theme="black"]) .issue-card.focus-now {
+  --focus-red: #ff6b6b;
+}
+.issue-card.focus-now.overdue {
+  --focus-red: #c92a2a;
+  background: color-mix(in srgb, #e03131 6%, var(--bg));
+}
+.issue-card.focus-now::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 9px;
+  padding: 3px;
+  pointer-events: none;
+  opacity: 0;
+}
+/* orbit: a short bright arc (the "dot") with a soft tail, running around */
+:root[data-focus-effect="orbit"] .issue-card.focus-now::after,
+:root:not([data-focus-effect]) .issue-card.focus-now::after {
+  opacity: 1;
+  background: conic-gradient(
+    from var(--focus-angle),
+    transparent 0deg,
+    transparent 300deg,
+    color-mix(in srgb, var(--focus-red) 35%, transparent) 335deg,
+    var(--focus-red) 352deg,
+    #fff 356deg,
+    var(--focus-red) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  filter: drop-shadow(0 0 3px var(--focus-red));
+  animation: focus-orbit var(--focus-cycle, 6s) linear infinite;
+}
+@keyframes focus-orbit {
+  to {
+    --focus-angle: 360deg;
+  }
+}
+/* pulse: the red glow breathes */
+:root[data-focus-effect="pulse"] .issue-card.focus-now {
+  animation: focus-pulse var(--focus-cycle, 6s) ease-in-out infinite;
+}
+@keyframes focus-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px var(--focus-red),
+      0 0 0 0 color-mix(in srgb, var(--focus-red) 0%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px var(--focus-red),
+      0 0 12px 3px color-mix(in srgb, var(--focus-red) 45%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .issue-card.focus-now,
+  .issue-card.focus-now::after {
+    animation: none !important;
+  }
+  .issue-card.focus-now::after {
+    opacity: 0 !important;
+  }
+}
+.issue-due {
+  border-radius: 4px;
+  padding: 0 6px;
+  font-size: 11.5px;
+  line-height: 18px;
+  background: var(--soft);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.issue-due.soon {
+  background: color-mix(in srgb, #e03131 14%, var(--bg));
+  color: #c92a2a;
+  font-weight: 600;
+}
+.issue-due.overdue {
+  background: #e03131;
+  color: #fff;
+  font-weight: 600;
+}
+.issue-props input[type="datetime-local"] {
+  flex: 1;
+  min-width: 0;
+}
+.issue-due-clear {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  color: var(--muted);
+}
+.issue-due-clear:hover {
+  background: var(--hover);
+}
+.issue-focus-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.issue-focus-row > span:first-child {
+  width: 72px;
+  color: var(--muted);
+}
+.issue-focus-toggle {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12.5px;
+  gap: 5px;
+}
+.issue-focus-toggle:hover:not(:disabled) {
+  background: var(--hover);
+}
+.issue-focus-toggle.on {
+  border-color: #e03131;
+  background: #e03131;
+  color: #fff;
+}
+.issue-focus-auto {
+  font-size: 12px;
+  color: #c92a2a;
+}
+.focus-sample-row {
+  justify-content: flex-start;
+}
+.focus-sample {
+  display: block;
+  position: relative;
+  width: 240px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+}

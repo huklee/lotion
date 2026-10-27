@@ -1,14 +1,17 @@
-import type {
-  Issue,
-  IssueBoard,
-  IssueNote,
-  IssueStatus,
+import {
+  dueLabel,
+  focusState,
+  type Issue,
+  type IssueBoard,
+  type IssueNote,
+  type IssueStatus,
 } from "../../packages/issues/model";
 import {
   LotionError,
   diffBoards,
   editLabels,
   issueClient,
+  parseDue,
   parseNumbers,
   resolveStatus,
   workingStatus,
@@ -40,6 +43,7 @@ Read
       --priority <p>       Only this priority (none, low, medium, high, urgent)
       -q <text>            Title/body search
       --archived           Include archived issues
+      --focus              Only issues in focus (Focus now, or due within 24 h)
   search <text>            Same as ls -q <text>
   show <n>                 One issue with its notes
   watch                    Print changes as they happen (Ctrl+C stops)
@@ -51,7 +55,10 @@ Change
       --status <s>         Start in this status (default: first column)
       --label <a,b>        Labels, comma separated
       --priority <p>       none, low, medium, high or urgent
-  edit <n>                 Change --title, --body, --label (replaces) or --priority
+      --due <when>         Deadline: 2026-10-30, "2026-10-30 18:00", +2d, +5h
+  edit <n>                 Change --title, --body, --label (replaces), --priority or --due (none clears)
+  focus <n…> / unfocus <n…>
+                           Turn Focus now on / off
   label <n> <+a|-b>...     Add (+) or remove (-) labels
   move <n> <status>        Move to a status column
       --before <m>         Place before issue #m (default: end of column)
@@ -63,7 +70,8 @@ Change
   link <n> <page-id>       Link a Lotion page (unlink <n> <page-id> removes it)
   rm <n>                   Delete an issue and its notes
   bulk <n,n,a-b>           One change to several issues:
-      --status <s> --priority <p> --label <+a,-b> --archive | --unarchive | --delete
+      --status <s> --priority <p> --label <+a,-b> --due <when> --focus | --unfocus
+      --archive | --unarchive | --delete
   export                   Print the whole board (--format md or json)
 
 Options
@@ -90,6 +98,7 @@ const VALUE_FLAGS = new Set([
   "title",
   "interval",
   "format",
+  "due",
 ]);
 
 export function parseArgs(argv: string[]): Parsed {
@@ -119,9 +128,16 @@ export function parseArgs(argv: string[]): Parsed {
       if (value === undefined) throw new CliError(`--${name} needs a value`);
       flags.set(name, value);
     } else if (
-      ["json", "help", "archived", "archive", "unarchive", "delete"].includes(
-        name,
-      )
+      [
+        "json",
+        "help",
+        "archived",
+        "archive",
+        "unarchive",
+        "delete",
+        "focus",
+        "unfocus",
+      ].includes(name)
     )
       flags.set(name, true);
     else throw new CliError(`Unknown option: ${arg}`);
@@ -142,6 +158,21 @@ function formatNote(note: IssueNote) {
   return `  ${time(note.at)}  ${note.author}  ${note.kind === "note" ? "" : `[${note.kind}] `}${note.text.replaceAll("\n", "\n    ")}`;
 }
 
+/** "⚑ " for issues in focus, and the deadline after the title. */
+function focusMark(
+  i: Pick<Issue, "status" | "focusedAt" | "due">,
+  statuses: IssueStatus[],
+) {
+  return focusState(i, statuses, Date.now()).focused ? "⚑ " : "";
+}
+function dueText(
+  i: Pick<Issue, "status" | "focusedAt" | "due">,
+  statuses: IssueStatus[],
+) {
+  const state = focusState(i, statuses, Date.now());
+  return state.dueIn === null ? "" : `  (due ${dueLabel(state.dueIn)})`;
+}
+
 export function formatBoard(board: IssueBoard): string {
   const lines: string[] = [];
   for (const status of board.statuses) {
@@ -152,7 +183,7 @@ export function formatBoard(board: IssueBoard): string {
     lines.push(`${status.name} (${status.key}) — ${items.length}`);
     for (const i of items)
       lines.push(
-        `  #${i.number}  ${i.title}${i.priority && i.priority !== "none" ? `  !${i.priority}` : ""}${i.labels.length ? `  [${i.labels.join(", ")}]` : ""}${i.noteCount > 1 ? `  · ${i.noteCount - 1} note${i.noteCount > 2 ? "s" : ""}` : ""}`,
+        `  #${i.number}  ${focusMark(i, board.statuses)}${i.title}${i.priority && i.priority !== "none" ? `  !${i.priority}` : ""}${i.labels.length ? `  [${i.labels.join(", ")}]` : ""}${dueText(i, board.statuses)}${i.noteCount > 1 ? `  · ${i.noteCount - 1} note${i.noteCount > 2 ? "s" : ""}` : ""}`,
       );
   }
   return lines.length ? lines.join("\n") : "No issues.";
@@ -164,6 +195,11 @@ export function formatIssue(issue: Issue, statuses: IssueStatus[]): string {
   return [
     `#${issue.number}  ${issue.title}`,
     `Status: ${status}${issue.priority && issue.priority !== "none" ? `   Priority: ${issue.priority}` : ""}${issue.labels.length ? `   Labels: ${issue.labels.join(", ")}` : ""}`,
+    ...(issue.due || issue.focusedAt
+      ? [
+          `${focusState(issue, statuses, Date.now()).focused ? "Focus now" : ""}${issue.due ? `${focusState(issue, statuses, Date.now()).focused ? "   " : ""}Due ${time(new Date(issue.due).toISOString())} (${dueLabel(Date.parse(issue.due) - Date.now())})` : ""}`,
+        ]
+      : []),
     `Created ${time(issue.createdAt)}   Updated ${time(issue.updatedAt)}${issue.updatedBy ? ` by ${issue.updatedBy}` : ""}`,
     ...(issue.body.trim() ? ["", issue.body.trim()] : []),
     "",
@@ -237,6 +273,10 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
           q,
           archived: flags.has("archived") ? "include" : undefined,
         });
+        if (flags.has("focus"))
+          result.issues = result.issues.filter(
+            (i) => focusState(i, result.statuses, Date.now()).focused,
+          );
         print(json ? result.issues : result, () => formatBoard(result));
         return 0;
       }
@@ -262,6 +302,9 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
         if (priority) input.priority = priority.toLowerCase();
         const labels = flag("label");
         if (labels !== undefined) input.labels = editLabels([], [labels]);
+        const due = flag("due");
+        if (due !== undefined) input.due = parseDue(due);
+        if (flags.has("focus")) input.focus = true;
         const issue = await api.create(input);
         print(issue, () => `Created #${issue.number}  ${issue.title}`);
         return 0;
@@ -281,9 +324,13 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
           const all = await api.board();
           input.status = resolveStatus(all.statuses, flag("status")!);
         }
+        const due = flag("due");
+        if (due !== undefined) input.due = parseDue(due);
+        if (flags.has("focus")) input.focus = true;
+        if (flags.has("unfocus")) input.focus = false;
         if (!Object.keys(input).length)
           throw new CliError(
-            "edit needs --title, --body, --label, --priority or --status",
+            "edit needs --title, --body, --label, --priority, --status, --due or --focus",
           );
         const issue = await api.patch(n, input);
         print(issue, () => `Updated #${issue.number}  ${issue.title}`);
@@ -400,6 +447,18 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
         io.out(await api.exportText(format));
         return 0;
       }
+      case "focus":
+      case "unfocus": {
+        if (!rest.length) throw new CliError(`${command} needs issue numbers`);
+        const numbers = parseNumbers(rest.join(" "));
+        const result = await api.bulk({ numbers, focus: command === "focus" });
+        print(result, () =>
+          result.changed.length
+            ? `${command === "focus" ? "Focus now on" : "Focus now off"}: ${result.changed.map((n) => `#${n}`).join(", ")}`
+            : "Nothing to change",
+        );
+        return 0;
+      }
       case "bulk": {
         if (!rest.length) throw new CliError("bulk needs issue numbers");
         const numbers = parseNumbers(rest.join(" "));
@@ -424,6 +483,10 @@ export async function run(argv: string[], io: CliIO): Promise<number> {
           if (add.length) input.addLabels = add;
           if (remove.length) input.removeLabels = remove;
         }
+        const due = flag("due");
+        if (due !== undefined) input.due = parseDue(due);
+        if (flags.has("focus")) input.focus = true;
+        if (flags.has("unfocus")) input.focus = false;
         if (flags.has("archive")) input.archived = true;
         if (flags.has("unarchive")) input.archived = false;
         if (flags.has("delete")) input.delete = true;
