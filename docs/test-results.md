@@ -1,5 +1,28 @@
 # Test results
 
+## 2026-10-27T10:40:00+09:00 — 0.54.0 Focus now and deadlines
+
+Focused:
+- `tests/unit/issues-focus.test.ts` **6/6**:
+  - **`focusState`:** manual focus; due in 5 h; 25 h away (not yet, then in focus 2 h later); overdue; done is never in focus.
+  - **`dueLabel`.**
+  - **Patching:** focus / due, an invalid date-time refused, a move to Done clears focus, and focus refused while done.
+  - **Bulk and old data:** bulk focus + due; old data normalises to unset.
+  - **Parsing and keys:** `parseDue` (date = 23:59 local, date and time, +2d / +5h, none, ISO, invalid); `n`.
+- `tests/integration/issues-agents.test.ts` **9/9**, now with:
+  - CLI `--due +5h`, `focus 3`, `ls --focus` (⚑ and "due in 5h", the 3-day issue left out), and `show` with "Focus now   Due … (in 5h)";
+  - MCP `update_issue` with focus and `due: null`;
+  - `edit --due none`, `unfocus 2,3`, focus cleared on Done, and an invalid `--due`.
+- E2E `issues-focus.spec.ts` **6/6** across Chromium, Firefox and WebKit:
+  - **Deadlines:** due in 5 h is in focus (`data-focus="due"`, red border, the `::after` running `focus-orbit`); 3 days away is not.
+  - **Toggling:** `n` toggles manual focus; the panel toggle turns it on, a status change to Done turns it off and disables the toggle.
+  - **Deadline field:** a deadline 2 h ahead shows "in focus automatically"; clearing it ends focus.
+  - **Bulk and Control panel:** the toolbar focuses two selected issues. Control panel pulse + fast gives `focus-pulse` at 3 s; off (kept after reload) leaves no animation and keeps the red border.
+- Board and panel reviewed in screenshots (manual focus, due in 5 h, overdue, 3 days away, done).
+- The new commit check (`~/.claude/hooks/commit-sensitive-check.py`) was run on this change: nothing found.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **315/315**; Playwright **379/379**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-26T00:10:00+09:00 — 0.53.0 description checkboxes, editable notes, Enter for notes
 
 Focused:
