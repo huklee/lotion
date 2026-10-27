@@ -1,5 +1,9 @@
 # Implementation history log
 
+## 2026-10-27T11:30:00+09:00 — 0.54.1 Focus now animations in step
+
+The owner found several dots circling at different angles dizzying. Each card's CSS animation began when the card was rendered. `syncFocusAnimations()` (in `focus-effect.tsx`) sets `startTime = 0` on every `focus-orbit` / `focus-pulse` animation through `document.getAnimations()`, so all run from the document timeline's origin. The board calls it after every render, and the Control panel calls it after changing the effect or speed.
+
 ## 2026-10-27T10:30:00+09:00 — 0.54.0 Focus now and deadlines
 
 - **Model:**

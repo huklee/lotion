@@ -151,3 +151,29 @@ test("Focus several at once from the toolbar; the effect follows the Control pan
     "rgb(224, 49, 49)",
   );
 });
+
+test("dots of several cards in focus move together, whenever focus was turned on", async ({
+  page,
+}) => {
+  const { plain, later } = await setup(page);
+  await card(page, plain).focus();
+  await page.keyboard.press("n");
+  await expect(card(page, plain)).toHaveAttribute("data-focus", "manual");
+  await page.waitForTimeout(1300); // the second card is focused much later
+  await card(page, later).focus();
+  await page.keyboard.press("n");
+  await expect(card(page, later)).toHaveAttribute("data-focus", "manual");
+  const phases = async () =>
+    page.evaluate(() =>
+      document
+        .getAnimations()
+        .filter((a) => (a as CSSAnimation).animationName === "focus-orbit")
+        .map((a) => Number(a.currentTime) % 6000),
+    );
+  await expect
+    .poll(async () => {
+      const p = await phases();
+      return p.length >= 3 && Math.max(...p) - Math.min(...p) < 50;
+    })
+    .toBe(true);
+});

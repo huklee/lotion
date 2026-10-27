@@ -57,6 +57,8 @@ export function setFocusPreference(change: {
   }
   applyFocusEffect(next);
   window.dispatchEvent(new Event(CHANGED));
+  // a new effect or speed restarts the animations: line them up again
+  requestAnimationFrame(syncFocusAnimations);
 }
 
 const EFFECT_NAMES: Record<FocusEffect, string> = {
@@ -122,4 +124,21 @@ export function FocusEffectSettings() {
       </div>
     </>
   );
+}
+
+const FOCUS_ANIMATIONS = new Set(["focus-orbit", "focus-pulse"]);
+
+/**
+ * Every card in focus runs its own CSS animation, started whenever the card
+ * appeared, so the dots ran at different angles. Pinning them all to the same
+ * start time (the document timeline's origin) keeps every dot at the same angle
+ * and every pulse in step, whenever focus was turned on.
+ */
+export function syncFocusAnimations() {
+  if (typeof document.getAnimations !== "function") return;
+  for (const animation of document.getAnimations()) {
+    const name = (animation as CSSAnimation).animationName;
+    if (FOCUS_ANIMATIONS.has(name) && animation.startTime !== 0)
+      animation.startTime = 0;
+  }
 }
