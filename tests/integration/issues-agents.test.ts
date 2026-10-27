@@ -466,3 +466,48 @@ describe("bulk changes over the API, CLI and MCP", () => {
     ).toBe(true);
   });
 });
+
+describe("Focus now and deadlines over the API, CLI and MCP", () => {
+  it("sets, lists and clears focus and deadlines", async () => {
+    let r = await cli(["issue", "new", "Talk draft", "--due", "+5h"]);
+    expect(r.out).toBe("Created #1  Talk draft");
+    await cli(["issue", "new", "Later", "--due", "+3d"]);
+    await cli(["issue", "new", "Plain"]);
+    r = await cli(["issue", "focus", "3"]);
+    expect(r.out).toBe("Focus now on: #3");
+    r = await cli(["issue", "ls", "--focus"]);
+    expect(r.out).toContain("#1  ⚑ Talk draft");
+    expect(r.out).toContain("(due in 5h)");
+    expect(r.out).toContain("#3  ⚑ Plain");
+    expect(r.out).not.toContain("Later");
+    r = await cli(["issue", "show", "1"]);
+    expect(r.out).toMatch(/Focus now {3}Due .* \(in 5h\)/);
+
+    const api = issueClient({ env: env(), fetch, author: "claude" });
+    const { handle } = createMcpServer(api, "claude", "test");
+    const call = await handle({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: {
+        name: "update_issue",
+        arguments: { number: 2, focus: true, due: null },
+      },
+    });
+    const two = JSON.parse((call as any).result.content[0].text);
+    expect(two.due).toBeNull();
+    expect(two.focusedAt).toBeTruthy();
+
+    r = await cli(["issue", "edit", "1", "--due", "none"]);
+    expect(r.code).toBe(0);
+    expect((await api.get(1)).due).toBeNull();
+    r = await cli(["issue", "unfocus", "2,3"]);
+    expect(r.out).toBe("Focus now off: #2, #3");
+    await api.patch(3, { focus: true });
+    await api.move(3, "done");
+    expect((await api.get(3)).focusedAt).toBeNull();
+    r = await cli(["issue", "new", "Bad", "--due", "someday"]);
+    expect(r).toMatchObject({ code: 1 });
+    expect(r.err).toContain("Not a deadline");
+  });
+});

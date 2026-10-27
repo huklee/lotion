@@ -34,6 +34,8 @@ export type IssueInput = {
   priority?: string;
   links?: string[];
   archived?: boolean;
+  focus?: boolean;
+  due?: string | null;
 };
 
 export function issueClient({ env, fetch, author }: ClientOptions) {
@@ -128,6 +130,8 @@ export function issueClient({ env, fetch, author }: ClientOptions) {
       addLabels?: string[];
       removeLabels?: string[];
       archived?: boolean;
+      focus?: boolean;
+      due?: string | null;
       delete?: true;
     }) =>
       call<{ changed: number[]; deleted: number[] }>(
@@ -141,6 +145,48 @@ export function issueClient({ env, fetch, author }: ClientOptions) {
 }
 
 export type IssueClient = ReturnType<typeof issueClient>;
+
+/**
+ * A deadline from the command line, in local time: "2026-10-30" (end of that
+ * day), "2026-10-30 18:00", an ISO date-time, "+2d" / "+5h" / "+30m", or
+ * "none" to clear it.
+ */
+export function parseDue(text: string, now = new Date()): string | null {
+  const value = text.trim();
+  if (/^(none|clear|-)$/i.test(value)) return null;
+  const rel = /^\+(\d+)\s*([dhm])$/i.exec(value);
+  if (rel) {
+    const unit = { d: 86400000, h: 3600000, m: 60000 }[
+      rel[2].toLowerCase() as "d" | "h" | "m"
+    ];
+    return new Date(now.getTime() + Number(rel[1]) * unit).toISOString();
+  }
+  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (day)
+    return new Date(
+      Number(day[1]),
+      Number(day[2]) - 1,
+      Number(day[3]),
+      23,
+      59,
+    ).toISOString();
+  const local = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})$/.exec(value);
+  if (local)
+    return new Date(
+      Number(local[1]),
+      Number(local[2]) - 1,
+      Number(local[3]),
+      Number(local[4]),
+      Number(local[5]),
+    ).toISOString();
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed))
+    throw new LotionError(
+      `Not a deadline: "${text}". Use 2026-10-30, "2026-10-30 18:00", +2d or none`,
+      400,
+    );
+  return new Date(parsed).toISOString();
+}
 
 /** "3,5,8-10" or "#3 #5" → [3, 5, 8, 9, 10]. */
 export function parseNumbers(text: string): number[] {

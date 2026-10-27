@@ -1,6 +1,6 @@
 # Lotion
 
-Current version: **0.53.0**. See the [version history and added features](docs/changelog.md).
+Current version: **0.54.0**. See the [version history and added features](docs/changelog.md).
 
 Release workflow: [version management guide](docs/versioning.md).
 

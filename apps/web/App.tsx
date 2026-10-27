@@ -10,6 +10,7 @@ import { ChangesView } from "./ChangesView";
 import { IssuesView } from "./issues/IssuesView";
 import { issuesApi } from "./issues/issues-api";
 import { IssueCreatedToast } from "./issues/block-issue";
+import { applyFocusEffect } from "./issues/focus-effect";
 import {
   goToIssues,
   parseIssueHash,
@@ -188,6 +189,7 @@ export default function App() {
     announceRoute();
   }, []);
   useGoShortcuts({ h: showHome, i: () => showIssues() });
+  useEffect(() => applyFocusEffect(), []);
   // on a phone, opening a page (or Home, Trash, Recent changes, Issues) shows the page view
   useEffect(() => {
     setMobileView("page");

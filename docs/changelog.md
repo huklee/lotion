@@ -2,6 +2,30 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.54.0 — 2026-10-27 · [#74](https://github.com/huklee/lotion/pull/74)
+
+### Added
+
+- **Focus now.** Mark any number of issues as Focus now, from:
+  - **n** on the board (the focused card or the whole selection), or the **Focus** button in the selection toolbar;
+  - the **Focus now** button in the issue panel;
+  - `lotion issue focus 3 5` / `unfocus`, `--focus` on `new` and `edit`;
+  - `focus` on the MCP tools.
+
+  An issue in focus gets a red border with a red dot slowly circling it, until it reaches Done, which turns Focus now off.
+- **Deadlines.**
+  - Where to set one: the issue panel's **Deadline** field (× clears it), `--due 2026-10-30`, `"2026-10-30 18:00"`, `+2d`, `+5h` or `none` on the command line, or `due` on the MCP tools and in bulk.
+  - On cards: "Due in 3d", red within 24 hours, and "Overdue 3h" on a red badge once passed.
+  - **Within 24 hours of the deadline (or past it) the issue is in focus automatically.** That ends when it is done or the deadline moves later.
+- **Control panel → Focus now effect:**
+  - styles: a red dot circling the border (default), a pulsing red glow, or a red border only;
+  - speeds: slow, normal or fast, with a live sample.
+
+  With the system's "reduce motion" setting the animation stays off.
+- The board's summary line counts the issues in focus. `lotion issue ls --focus` lists only them, and listings mark them with ⚑.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.53.0 — 2026-10-25 · [#73](https://github.com/huklee/lotion/pull/73)
 
 ### Added

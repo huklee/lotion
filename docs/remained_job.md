@@ -4,6 +4,7 @@ Historical completed work lives in the [implementation history](implementation-h
 
 ## Completed user requests — 2026-10-22
 
+- [x] Focus now (several issues, red border with an orbiting dot until done, effect settings) and deadlines with automatic focus within 24 h (0.54.0).
 - [x] Description checkboxes tick in place with strike-through and a clear colour; status notes are editable; Enter adds a note (0.53.0).
 - [x] Select several issues and change status, priority, labels, archive or delete them together (0.52.0).
 - [x] Keyboard shortcuts for description (d), status (s), priority (p) and labels (t); hints on every control (0.51.0).

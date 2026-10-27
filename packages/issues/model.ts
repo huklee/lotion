@@ -53,6 +53,10 @@ export type Issue = {
   source?: { pageId: string; blockId: string };
   /** Archived issues are hidden from the board unless asked for. */
   archivedAt: string | null;
+  /** "Focus now": set by hand, cleared when the issue reaches the last column. */
+  focusedAt: string | null;
+  /** Deadline (ISO date-time). Within 24 h of it the issue is in focus too. */
+  due: string | null;
   /** Position inside the status column, ascending. */
   rank: number;
   createdAt: string;
@@ -91,6 +95,9 @@ const labels = z
   .max(20)
   .transform((list) => [...new Set(list)]);
 
+const dueSchema = z
+  .string()
+  .datetime({ offset: true, message: "Deadline must be an ISO date-time" });
 const pageId = z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/, "Invalid page id");
 const links = z
   .array(pageId)
@@ -105,6 +112,8 @@ export const createIssueSchema = z
     labels: labels.default([]),
     priority: z.enum(PRIORITIES).default("none"),
     links: links.default([]),
+    focus: z.boolean().optional(),
+    due: dueSchema.nullable().optional(),
     source: z.object({ pageId, blockId: pageId }).strict().optional(),
   })
   .strict();
@@ -118,6 +127,8 @@ export const patchIssueSchema = z
     priority: z.enum(PRIORITIES),
     links,
     archived: z.boolean(),
+    focus: z.boolean(),
+    due: dueSchema.nullable(),
   })
   .partial()
   .strict();
@@ -218,6 +229,8 @@ export function createIssue(
     links: data.links,
     ...(data.source ? { source: data.source } : {}),
     archivedAt: null,
+    focusedAt: data.focus ? clock.now : null,
+    due: data.due ? new Date(data.due).toISOString() : null,
     rank: rankBetween(last?.rank, undefined) as number,
     createdAt: clock.now,
     updatedAt: clock.now,
@@ -288,6 +301,11 @@ export function moveIssue(
           ? clock.now
           : null
         : issue.closedAt,
+      // done: no longer something to focus on
+      focusedAt:
+        statusChanged && isDone(statuses, status)
+          ? null
+          : (issue.focusedAt ?? null),
       notes: statusChanged
         ? [
             ...issue.notes,
@@ -356,6 +374,18 @@ export function patchIssue(
   if (data.archived !== undefined && data.archived !== !!next.archivedAt) {
     next.archivedAt = data.archived ? clock.now : null;
     edited = true;
+  }
+  if (data.focus !== undefined && data.focus !== !!next.focusedAt) {
+    next.focusedAt =
+      data.focus && !isDone(statuses, next.status) ? clock.now : null;
+    edited = next.focusedAt !== (moved.focusedAt ?? null) || edited;
+  }
+  if (data.due !== undefined) {
+    const due = data.due ? new Date(data.due).toISOString() : null;
+    if (due !== (next.due ?? null)) {
+      next.due = due;
+      edited = true;
+    }
   }
   if (!edited) return moved === issue ? [] : result;
   return [
@@ -484,6 +514,8 @@ export function normalizeIssue(issue: Issue): Issue {
     priority: PRIORITIES.includes(issue.priority) ? issue.priority : "none",
     links: Array.isArray(issue.links) ? issue.links : [],
     archivedAt: issue.archivedAt ?? null,
+    focusedAt: issue.focusedAt ?? null,
+    due: issue.due ?? null,
   };
 }
 
@@ -647,6 +679,8 @@ export const bulkSchema = z
     addLabels: labels.optional(),
     removeLabels: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
     archived: z.boolean().optional(),
+    focus: z.boolean().optional(),
+    due: dueSchema.nullable().optional(),
     delete: z.literal(true).optional(),
   })
   .strict()
@@ -657,13 +691,17 @@ export const bulkSchema = z
           b.priority === undefined &&
           !b.addLabels &&
           !b.removeLabels &&
-          b.archived === undefined
+          b.archived === undefined &&
+          b.focus === undefined &&
+          b.due === undefined
         : b.status !== undefined ||
           b.priority !== undefined ||
           !!b.addLabels?.length ||
           !!b.removeLabels?.length ||
-          b.archived !== undefined,
-    "Give one change (status, priority, labels, archived) or delete alone",
+          b.archived !== undefined ||
+          b.focus !== undefined ||
+          b.due !== undefined,
+    "Give one change (status, priority, labels, archived, focus, due) or delete alone",
   );
 
 /**
@@ -736,6 +774,17 @@ export function bulkIssues(
     }
     if (data.archived !== undefined && data.archived !== !!issue.archivedAt)
       fields.archivedAt = data.archived ? clock.now : null;
+    if (data.focus !== undefined) {
+      const focusedAt =
+        data.focus && !isDone(statuses, issue.status)
+          ? (issue.focusedAt ?? clock.now)
+          : null;
+      if (focusedAt !== (issue.focusedAt ?? null)) fields.focusedAt = focusedAt;
+    }
+    if (data.due !== undefined) {
+      const due = data.due ? new Date(data.due).toISOString() : null;
+      if (due !== (issue.due ?? null)) fields.due = due;
+    }
     if (Object.keys(fields).length) {
       replace([touch(issue, clock, fields, author)]);
       changed.add(n);
@@ -746,4 +795,49 @@ export function bulkIssues(
     changed: [...changed].sort((a, b) => a - b),
     deleted: [],
   };
+}
+
+export const DUE_SOON_MS = 24 * 60 * 60 * 1000;
+
+export type FocusState = {
+  /** Shown with the Focus now effect. */
+  focused: boolean;
+  /** Why: set by hand, or the deadline is within 24 h (or past). */
+  reason: "manual" | "due" | null;
+  /** Milliseconds left until the deadline (negative when overdue). */
+  dueIn: number | null;
+  overdue: boolean;
+};
+
+/**
+ * Whether an issue is "in focus" right now: Focus now was set by hand, or its
+ * deadline is less than 24 hours away (or past) — never once it is done.
+ */
+export function focusState(
+  issue: Pick<Issue, "status" | "focusedAt" | "due">,
+  statuses: IssueStatus[],
+  now: number,
+): FocusState {
+  const done = isDone(statuses, issue.status);
+  const dueIn = issue.due ? Date.parse(issue.due) - now : null;
+  const overdue = !done && dueIn !== null && dueIn < 0;
+  if (done) return { focused: false, reason: null, dueIn, overdue: false };
+  if (issue.focusedAt)
+    return { focused: true, reason: "manual", dueIn, overdue };
+  if (dueIn !== null && dueIn <= DUE_SOON_MS)
+    return { focused: true, reason: "due", dueIn, overdue };
+  return { focused: false, reason: null, dueIn, overdue };
+}
+
+/** "in 5h", "in 3d", "2h ago" for a deadline. */
+export function dueLabel(dueIn: number): string {
+  const abs = Math.abs(dueIn);
+  const minutes = Math.round(abs / 60000);
+  const text =
+    minutes < 60
+      ? `${Math.max(1, minutes)}m`
+      : minutes < 48 * 60
+        ? `${Math.round(minutes / 60)}h`
+        : `${Math.round(minutes / 1440)}d`;
+  return dueIn < 0 ? `${text} overdue` : `in ${text}`;
 }

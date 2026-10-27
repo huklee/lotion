@@ -24,6 +24,7 @@ export type BoardAction =
   | { type: "priority"; number: number }
   | { type: "labels"; number: number }
   | { type: "archive"; number: number }
+  | { type: "focusNow"; number: number }
   | { type: "delete"; number: number }
   | { type: "select"; number: number }
   | { type: "selectAll" }
@@ -48,6 +49,7 @@ export const BOARD_SHORTCUTS: [keys: string, what: string][] = [
   ["m", "Add a status note (Enter adds it)"],
   ["c", "New issue in this column"],
   ["v / ⇧V", "Select the card / every card shown (⌘-click, ⇧-click)"],
+  ["n", "Focus now on / off (the selection, or this card)"],
   ["a", "Archive (the selection, or this card)"],
   ["Delete", "Delete (asks first)"],
   ["/", "Filter the board"],
@@ -182,6 +184,8 @@ export function boardKey(
       return { type: "labels", number };
     case "a":
       return { type: "archive", number };
+    case "n":
+      return { type: "focusNow", number };
     case "Delete":
     case "Backspace":
       return { type: "delete", number };

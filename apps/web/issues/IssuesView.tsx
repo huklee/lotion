@@ -13,8 +13,11 @@ import { KeyPicker } from "./KeyPicker";
 import { BulkBar, BulkLabels } from "./BulkBar";
 import { pillStyle } from "../database-ui";
 import {
+  DUE_SOON_MS,
   PRIORITIES,
   PRIORITY_NAMES,
+  dueLabel,
+  focusState,
   matches,
   type IssueBoard,
   type IssueSummary,
@@ -108,19 +111,22 @@ function activate(el: HTMLElement | undefined) {
 }
 
 /** Open issues, in progress, and done in the last 7 days. */
-function IssueStats({ board }: { board: IssueBoard }) {
+function IssueStats({ board, now }: { board: IssueBoard; now: number }) {
   const last = board.statuses.at(-1)?.key;
   const live = board.issues.filter((i) => !i.archivedAt);
   const open = live.filter((i) => i.status !== last).length;
   const doing = live.filter((i) => i.status === "doing").length;
+  const inFocus = live.filter(
+    (i) => focusState(i, board.statuses, now).focused,
+  ).length;
   const week = Date.now() - 7 * 86400_000;
   const done = board.issues.filter(
     (i) => i.closedAt && Date.parse(i.closedAt) >= week,
   ).length;
   return (
     <span className="issues-stats" aria-label="Board summary">
-      {open} open{doing ? ` · ${doing} in progress` : ""} · {done} done this
-      week
+      {open} open{doing ? ` · ${doing} in progress` : ""}
+      {inFocus ? ` · ${inFocus} in focus` : ""} · {done} done this week
     </span>
   );
 }
@@ -140,6 +146,12 @@ export function IssuesView({
   onPagesChanged?: () => void;
 }) {
   const [showArchived, setShowArchived] = useState(false);
+  // deadlines move into focus as time passes: re-evaluate every half minute
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [settings, setSettings] = useState(false);
   const [menu, setMenu] = useState(false);
   const { board, setBoard, reload } = useIssueBoard(onError, showArchived);
@@ -228,6 +240,13 @@ export function IssuesView({
       .querySelector<HTMLElement>(`.issue-card[data-issue="${n}"]`)
       ?.getBoundingClientRect();
     return rect ? { left: rect.left, top: rect.bottom + 4 } : null;
+  };
+  /** Focus now on for all of them, or off when every one already has it. */
+  const toggleFocus = (numbers: number[]) => {
+    const allOn = (board?.issues ?? [])
+      .filter((i) => numbers.includes(i.number))
+      .every((i) => i.focusedAt);
+    void runBulk({ focus: !allOn }, numbers);
   };
   /** The selection when there is one, otherwise just this issue. */
   const targets = (n: number) => (selected.size ? [...selected] : [n]);
@@ -418,6 +437,9 @@ export function IssuesView({
           if (!allArchived) setSelected(new Set());
           break;
         }
+        case "focusNow":
+          toggleFocus(targets(action.number));
+          break;
         case "select":
           toggleSelect(action.number);
           break;
@@ -534,6 +556,7 @@ export function IssuesView({
   const card = (issue: IssueSummary) => {
     const hint =
       hints !== null ? labels[hintOrder.indexOf(issue.number)] : undefined;
+    const focus = focusState(issue, board.statuses, now);
     return (
       <div key={issue.number}>
         {drag?.before === issue.number && drag.number !== issue.number && (
@@ -541,7 +564,15 @@ export function IssuesView({
         )}
         <a
           aria-selected={selected.size ? selected.has(issue.number) : undefined}
-          className={`issue-card${selected.has(issue.number) ? " selected" : ""}${openNumber === issue.number ? " open" : ""}${drag?.number === issue.number ? " dragging" : ""}${focused === issue.number ? " focused" : ""}`}
+          className={`issue-card${selected.has(issue.number) ? " selected" : ""}${openNumber === issue.number ? " open" : ""}${drag?.number === issue.number ? " dragging" : ""}${focused === issue.number ? " focused" : ""}${focus.focused ? " focus-now" : ""}${focus.overdue ? " overdue" : ""}`}
+          data-focus={focus.reason ?? undefined}
+          title={
+            focus.reason === "manual"
+              ? "Focus now"
+              : focus.reason === "due"
+                ? "In focus: the deadline is within 24 hours"
+                : undefined
+          }
           href={`#/issues/${issue.number}`}
           data-issue={issue.number}
           draggable
@@ -608,6 +639,15 @@ export function IssuesView({
                 {label}
               </span>
             ))}
+            {focus.dueIn !== null && (
+              <span
+                className={`issue-due${focus.overdue ? " overdue" : focus.dueIn <= DUE_SOON_MS ? " soon" : ""}`}
+                title={`Due ${new Date(issue.due!).toLocaleString()}`}
+              >
+                {focus.overdue ? "Overdue " : "Due "}
+                {dueLabel(focus.dueIn).replace(/ overdue$/, "")}
+              </span>
+            )}
             {issue.updatedBy && issue.updatedBy !== "me" && (
               <span
                 className="issue-author"
@@ -643,7 +683,7 @@ export function IssuesView({
               ? `${visible.length} of ${board.issues.length}`
               : board.issues.length}
           </span>
-          <IssueStats board={board} />
+          <IssueStats board={board} now={now} />
           <div className="issues-menu-wrap">
             <button
               className="issues-help"
@@ -1016,7 +1056,8 @@ export function IssuesView({
           onAction={(action, rect) => {
             const numbers = [...selected];
             const anchor = { left: rect.left, top: rect.top - 8 };
-            if (action === "archive") {
+            if (action === "focus") toggleFocus(numbers);
+            else if (action === "archive") {
               void runBulk({ archived: true }, numbers);
               setSelected(new Set());
             } else setPicker({ kind: action, numbers, anchor });
