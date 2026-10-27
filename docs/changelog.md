@@ -2,6 +2,14 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.54.1 — 2026-10-27 · [#75](https://github.com/huklee/lotion/pull/75)
+
+### Fixed
+
+- **Focus now dots move together.** With several issues in focus, each red dot started where its card first appeared, so they circled at different angles. Now all dots stay at the same angle (and pulses beat together), whenever focus was turned on or the effect was changed.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.54.0 — 2026-10-27 · [#74](https://github.com/huklee/lotion/pull/74)
 
 ### Added

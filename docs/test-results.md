@@ -1,5 +1,11 @@
 # Test results
 
+## 2026-10-27T11:35:00+09:00 — 0.54.1 Focus now animations in step
+
+Focused: a new case in `issues-focus.spec.ts` focuses one card, then a second 1.3 s later, and checks that all `focus-orbit` animations are within 50 ms of the same phase. It failed in Chromium without the fix and passes in Chromium, Firefox and WebKit with it. The file passed 9/9.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **315/315**; Playwright **382/382**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-27T10:40:00+09:00 — 0.54.0 Focus now and deadlines
 
 Focused:
