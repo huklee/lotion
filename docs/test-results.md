@@ -8,7 +8,7 @@ Focused: `issues-focus.spec.ts` **9/9** across Chromium, Firefox and WebKit.
 
 The automated case does not reproduce the owner's report against 0.54.1; the change removes the timing and browser dependency rather than a measured failure.
 
-Full `npm run check`: FULLCHECK.
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **315/315**; Playwright **382/382**. Remote CI results are recorded on the pull request.
 
 ## 2026-10-27T11:35:00+09:00 — 0.54.1 Focus now animations in step
 
