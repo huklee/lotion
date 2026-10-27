@@ -10,7 +10,6 @@ import { MessageSquare, MoreHorizontal, Plus, X } from "lucide-react";
 import type { TreeNode } from "../../../packages/document-schema/index";
 import { IssueSettings } from "./IssueSettings";
 import { KeyPicker } from "./KeyPicker";
-import { syncFocusAnimations } from "./focus-effect";
 import { BulkBar, BulkLabels } from "./BulkBar";
 import { pillStyle } from "../database-ui";
 import {
@@ -147,8 +146,6 @@ export function IssuesView({
   onPagesChanged?: () => void;
 }) {
   const [showArchived, setShowArchived] = useState(false);
-  // cards that just came into focus join the others at the same angle
-  useEffect(() => syncFocusAnimations());
   // deadlines move into focus as time passes: re-evaluate every half minute
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -835,7 +832,7 @@ export function IssuesView({
           </div>
         )}
         <div
-          className={`issues-board${hints !== null ? " hinting" : ""}`}
+          className={`issues-board focus-clock${hints !== null ? " hinting" : ""}`}
           role="list"
           aria-label="Issue board"
         >

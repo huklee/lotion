@@ -1,5 +1,15 @@
 # Test results
 
+## 2026-10-27T12:35:00+09:00 — 0.54.2 one clock for all Focus now effects
+
+Focused: `issues-focus.spec.ts` **9/9** across Chromium, Firefox and WebKit.
+- The board, not each card, runs `focus-orbit`, or `focus-glow` at 3 s for pulse + fast, and `none` when off; the card ring is visible or hidden accordingly.
+- **Stricter sync case:** after one card has run for 1.3 s, a second is focused. In every frame from the key press, both cards' `--focus-angle` differ by less than 0.5°, and the new card's first frame is not near 0°.
+
+The automated case does not reproduce the owner's report against 0.54.1; the change removes the timing and browser dependency rather than a measured failure.
+
+Full `npm run check`: FULLCHECK.
+
 ## 2026-10-27T11:35:00+09:00 — 0.54.1 Focus now animations in step
 
 Focused: a new case in `issues-focus.spec.ts` focuses one card, then a second 1.3 s later, and checks that all `focus-orbit` animations are within 50 ms of the same phase. It failed in Chromium without the fix and passes in Chromium, Firefox and WebKit with it. The file passed 9/9.
