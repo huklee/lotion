@@ -1227,18 +1227,27 @@
     --focus-glow: 1;
   }
 }
+/* blue: Focus now set by hand; red: the deadline is within 24 h (or past),
+   which wins when both apply */
 .issue-card.focus-now {
-  --focus-red: #e03131;
-  border-color: var(--focus-red);
+  --focus-color: #1c7ed6;
+  border-color: var(--focus-color);
   box-shadow:
-    0 0 0 1px var(--focus-red),
+    0 0 0 1px var(--focus-color),
     0 1px 2px rgb(15 15 15 / 5%);
 }
+.issue-card.focus-now[data-focus="due"] {
+  --focus-color: #e03131;
+}
 :is([data-theme="dark"], [data-theme="black"]) .issue-card.focus-now {
-  --focus-red: #ff6b6b;
+  --focus-color: #4dabf7;
+}
+:is([data-theme="dark"], [data-theme="black"])
+  .issue-card.focus-now[data-focus="due"] {
+  --focus-color: #ff6b6b;
 }
 .issue-card.focus-now.overdue {
-  --focus-red: #c92a2a;
+  --focus-color: #c92a2a;
   background: color-mix(in srgb, #e03131 6%, var(--bg));
 }
 .issue-card.focus-now::after {
@@ -1258,26 +1267,26 @@
     from var(--focus-angle),
     transparent 0deg,
     transparent 300deg,
-    color-mix(in srgb, var(--focus-red) 35%, transparent) 335deg,
-    var(--focus-red) 352deg,
+    color-mix(in srgb, var(--focus-color) 35%, transparent) 335deg,
+    var(--focus-color) 352deg,
     #fff 356deg,
-    var(--focus-red) 360deg
+    var(--focus-color) 360deg
   );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  filter: drop-shadow(0 0 3px var(--focus-red));
+  filter: drop-shadow(0 0 3px var(--focus-color));
 }
 /* pulse: the red glow breathes, following the board's glow value */
 :root[data-focus-effect="pulse"] .issue-card.focus-now {
   box-shadow:
-    0 0 0 1px var(--focus-red),
+    0 0 0 1px var(--focus-color),
     0 0 calc(var(--focus-glow) * 12px) calc(var(--focus-glow) * 3px)
       color-mix(
         in srgb,
-        var(--focus-red) calc(var(--focus-glow) * 45%),
+        var(--focus-color) calc(var(--focus-glow) * 45%),
         transparent
       );
 }
@@ -1352,11 +1361,13 @@
 }
 .focus-sample-row {
   justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 .focus-sample {
   display: block;
   position: relative;
-  width: 240px;
+  width: 200px;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 7px;

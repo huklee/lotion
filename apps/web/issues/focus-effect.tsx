@@ -119,8 +119,11 @@ export function FocusEffectSettings() {
         className="settings-row focus-sample-row focus-clock"
         aria-hidden="true"
       >
-        <span className="issue-card focus-now focus-sample">
-          <span className="issue-card-title">Sample issue in focus</span>
+        <span className="issue-card focus-now focus-sample" data-focus="manual">
+          <span className="issue-card-title">Focus now (blue)</span>
+        </span>
+        <span className="issue-card focus-now focus-sample" data-focus="due">
+          <span className="issue-card-title">Due within 24 h (red)</span>
         </span>
       </div>
     </>

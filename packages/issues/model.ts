@@ -804,6 +804,8 @@ export type FocusState = {
   focused: boolean;
   /** Why: set by hand, or the deadline is within 24 h (or past). */
   reason: "manual" | "due" | null;
+  /** Focus now was also set by hand (the deadline may still decide the colour). */
+  manual: boolean;
   /** Milliseconds left until the deadline (negative when overdue). */
   dueIn: number | null;
   overdue: boolean;
@@ -811,7 +813,8 @@ export type FocusState = {
 
 /**
  * Whether an issue is "in focus" right now: Focus now was set by hand, or its
- * deadline is less than 24 hours away (or past) — never once it is done.
+ * deadline is less than 24 hours away (or past) — never once it is done. When
+ * both apply the reason is "due": the deadline decides (shown in red).
  */
 export function focusState(
   issue: Pick<Issue, "status" | "focusedAt" | "due">,
@@ -821,12 +824,21 @@ export function focusState(
   const done = isDone(statuses, issue.status);
   const dueIn = issue.due ? Date.parse(issue.due) - now : null;
   const overdue = !done && dueIn !== null && dueIn < 0;
-  if (done) return { focused: false, reason: null, dueIn, overdue: false };
-  if (issue.focusedAt)
-    return { focused: true, reason: "manual", dueIn, overdue };
+  const manual = !!issue.focusedAt;
+  if (done)
+    return {
+      focused: false,
+      reason: null,
+      manual: false,
+      dueIn,
+      overdue: false,
+    };
+  // a deadline within 24 h (or past) wins over Focus now set by hand
   if (dueIn !== null && dueIn <= DUE_SOON_MS)
-    return { focused: true, reason: "due", dueIn, overdue };
-  return { focused: false, reason: null, dueIn, overdue };
+    return { focused: true, reason: "due", manual, dueIn, overdue };
+  if (manual)
+    return { focused: true, reason: "manual", manual, dueIn, overdue };
+  return { focused: false, reason: null, manual, dueIn, overdue };
 }
 
 /** "in 5h", "in 3d", "2h ago" for a deadline. */
