@@ -1362,3 +1362,26 @@
   border-radius: 7px;
   background: var(--bg);
 }
+/* deadline: a button opening the calendar */
+.issue-due-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.issue-due-row > span:first-child {
+  width: 72px;
+  color: var(--muted);
+}
+.issue-due-button {
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  color: var(--text);
+}
+.issue-due-button.empty {
+  color: var(--muted);
+}
+.issue-due-button:hover {
+  background: var(--hover);
+}

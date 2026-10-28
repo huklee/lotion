@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.55.0 — 2026-10-27 · [#77](https://github.com/huklee/lotion/pull/77)
+
+### Changed
+
+- **Pick deadlines with the mouse.** The issue panel's Deadline is now a button that opens Lotion's calendar (the one behind @date). The calendar has:
+  - a month grid to click a day, opening on the current deadline;
+  - **Today**, **Tomorrow** and **Next week** shortcuts;
+  - a time field (23:59 by default);
+  - **Clear** and **Set deadline**.
+
+  Enter confirms. The × next to the deadline still clears it.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.54.2 — 2026-10-27 · [#76](https://github.com/huklee/lotion/pull/76)
 
 ### Fixed

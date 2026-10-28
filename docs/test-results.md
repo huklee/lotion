@@ -1,5 +1,16 @@
 # Test results
 
+## 2026-10-27T16:05:00+09:00 — 0.55.0 deadline calendar
+
+Focused: `issues-focus.spec.ts` and `calendar.spec.ts` **15/15** across Chromium, Firefox and WebKit.
+- **Picking with the mouse:** the Deadline button opens "Set deadline"; clicking the day 2 h ahead (moving to the next month if needed) and typing its time saves within a minute of the target and puts the issue in focus automatically.
+- **Tomorrow** with 23:59 saves tomorrow at 23:59, and **Clear** removes the deadline.
+- The @date mention calendar tests are unchanged and pass.
+
+The first run exposed only a test selector that also matched "Clear deadline" (now exact).
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **315/315**; Playwright **382/382**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-27T12:35:00+09:00 — 0.54.2 one clock for all Focus now effects
 
 Focused: `issues-focus.spec.ts` **9/9** across Chromium, Firefox and WebKit.

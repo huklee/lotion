@@ -3386,3 +3386,17 @@ kbd {
   margin: 10px 0 0;
   padding: 0;
 }
+.calendar-quick {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.calendar-quick button {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12.5px;
+}
+.calendar-quick button:hover {
+  background: var(--hover);
+}

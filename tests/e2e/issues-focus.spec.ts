@@ -78,18 +78,65 @@ test("Focus now with n and the panel; due within 24 h is in focus; done clears i
   const plainPanel = page.getByRole("complementary", {
     name: `Issue #${plain}`,
   });
+  // pick the deadline with the mouse: the calendar dialog, a day, a time
   const inTwoHours = new Date(Date.now() + 2 * 3600_000);
   const pad = (n: number) => String(n).padStart(2, "0");
+  const day = `${inTwoHours.getFullYear()}-${pad(inTwoHours.getMonth() + 1)}-${pad(inTwoHours.getDate())}`;
   await plainPanel
-    .getByLabel("Deadline")
-    .fill(
-      `${inTwoHours.getFullYear()}-${pad(inTwoHours.getMonth() + 1)}-${pad(inTwoHours.getDate())}T${pad(inTwoHours.getHours())}:${pad(inTwoHours.getMinutes())}`,
-    );
+    .getByRole("button", { name: "Deadline", exact: true })
+    .click();
+  const picker = page.getByRole("dialog", { name: "Set deadline" });
+  await expect(picker).toBeVisible();
+  if (inTwoHours.getMonth() !== new Date().getMonth())
+    await picker.getByRole("button", { name: "Next month" }).click();
+  await picker.getByRole("button", { name: day, exact: true }).click();
+  await picker
+    .getByLabel("Time")
+    .fill(`${pad(inTwoHours.getHours())}:${pad(inTwoHours.getMinutes())}`);
+  await picker
+    .getByRole("button", { name: "Set deadline", exact: true })
+    .click();
+  await expect(picker).toBeHidden();
   await expect(plainPanel.getByRole("status")).toContainText(
     "in focus automatically",
   );
   await expect(card(page, plain)).toHaveAttribute("data-focus", "due");
-  await plainPanel.getByRole("button", { name: "Clear deadline" }).click();
+  const saved = (await (await page.request.get(`/api/issues/${plain}`)).json())
+    .due;
+  expect(Math.abs(Date.parse(saved) - inTwoHours.getTime())).toBeLessThan(
+    60_000,
+  );
+
+  // quick choice: Tomorrow (23:59 kept from the field) — more than 24 h? not
+  // necessarily, so just check the date moved to tomorrow
+  await plainPanel
+    .getByRole("button", { name: "Deadline", exact: true })
+    .click();
+  await picker.getByRole("button", { name: "Tomorrow" }).click();
+  await picker.getByLabel("Time").fill("23:59");
+  await picker
+    .getByRole("button", { name: "Set deadline", exact: true })
+    .click();
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  await expect
+    .poll(async () => {
+      const due = (
+        await (await page.request.get(`/api/issues/${plain}`)).json()
+      ).due;
+      const d = new Date(due);
+      return `${d.getDate()} ${d.getHours()}:${d.getMinutes()}`;
+    })
+    .toBe(`${tomorrow.getDate()} 23:59`);
+
+  // Clear in the dialog removes it
+  await plainPanel
+    .getByRole("button", { name: "Deadline", exact: true })
+    .click();
+  await picker.getByRole("button", { name: "Clear", exact: true }).click();
+  await expect(
+    plainPanel.getByRole("button", { name: "Deadline", exact: true }),
+  ).toHaveText(/Set deadline/);
   await expect(card(page, plain)).not.toHaveClass(/focus-now/);
 });
 
