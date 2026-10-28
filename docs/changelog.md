@@ -2,7 +2,7 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
-## 0.55.0 — 2026-10-27
+## 0.55.0 — 2026-10-27 · [#77](https://github.com/huklee/lotion/pull/77)
 
 ### Changed
 
