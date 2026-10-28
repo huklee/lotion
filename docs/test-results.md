@@ -7,7 +7,7 @@ Focused:
 - `issues-focus.spec.ts` **9/9** across Chromium, Firefox and WebKit: a card focused with `n` has a blue border (`rgb(28, 126, 214)`). Giving it a deadline 3 h away turns it to `data-focus="due"` with a red border, and removing the deadline returns it to blue. The Control panel "off" case expects blue for a manual card.
 - Board screenshot reviewed: manual (blue), manual + due in 5 h (red), overdue (red, shaded), due in 3 days (no focus).
 
-Full `npm run check`: FULLCHECK.
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **315/315**; Playwright **382/382**. Remote CI results are recorded on the pull request.
 
 ## 2026-10-27T16:05:00+09:00 — 0.55.0 deadline calendar
 
