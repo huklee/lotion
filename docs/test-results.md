@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-10-28T16:10:00+09:00 — 0.57.0 issues in focus on top
+
+Focused:
+- `tests/unit/issues-focus.test.ts`: `boardColumn` puts overdue and due-within-24 h issues first (soonest first), then manual focus in rank order, then the rest; 30 h later a 48 h deadline joins the top; done issues never sort into another column.
+- `issues-focus.spec.ts` **12/12** across Chromium, Firefox and WebKit, including the new case: a due-in-5 h issue is on top; Focus now with `n` puts an issue next; a 2 h deadline goes first; ending focus returns cards to board order.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **316/316**; Playwright **385/385**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-28T10:05:00+09:00 — 0.56.0 focus colours by reason
 
 Focused:

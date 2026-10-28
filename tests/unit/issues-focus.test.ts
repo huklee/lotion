@@ -11,6 +11,7 @@ import {
 } from "../../packages/issues/model";
 import { parseDue } from "../../apps/cli/issues-client";
 import { boardKey } from "../../apps/web/issues/issue-keys";
+import { boardColumn } from "../../apps/web/issues/board-order";
 
 const NOW = Date.parse("2026-10-27T09:00:00.000Z");
 const clock = { now: new Date(NOW).toISOString(), id: () => "n" };
@@ -156,6 +157,38 @@ describe("focus and deadline changes", () => {
       focusedAt: null,
       due: null,
     });
+  });
+});
+
+describe("board order", () => {
+  it("puts issues in focus on top: due soonest first, then by hand, then the rest", () => {
+    const issue = (number: number, rank: number, extra: any = {}) => ({
+      ...make(),
+      number,
+      rank,
+      ...extra,
+    });
+    const issues = [
+      issue(1, 1),
+      issue(2, 2, { focusedAt: clock.now }),
+      issue(3, 3, { due: new Date(NOW + 20 * H).toISOString() }),
+      issue(4, 4, { due: new Date(NOW + 2 * H).toISOString() }),
+      issue(5, 5, { due: new Date(NOW + 48 * H).toISOString() }),
+      issue(6, 6, { focusedAt: clock.now }),
+      issue(7, 0.5, { due: new Date(NOW - H).toISOString() }), // overdue
+      issue(8, 7, { status: "done", focusedAt: clock.now }),
+    ];
+    const order = (now: number) =>
+      boardColumn(issues, "backlog", DEFAULT_STATUSES, now).map(
+        (i) => i.number,
+      );
+    expect(order(NOW)).toEqual([7, 4, 3, 2, 6, 1, 5]);
+    // two days later the 48 h deadline is close too and joins the top
+    expect(order(NOW + 30 * H)).toEqual([7, 4, 3, 5, 2, 6, 1]);
+    // done issues are in their own column, never on top of this one
+    expect(
+      boardColumn(issues, "done", DEFAULT_STATUSES, NOW).map((i) => i.number),
+    ).toEqual([8]);
   });
 });
 

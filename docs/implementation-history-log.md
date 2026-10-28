@@ -1,5 +1,10 @@
 # Implementation history log
 
+## 2026-10-28T16:10:00+09:00 — 0.57.0 issues in focus on top
+
+- **`boardColumn`** (`apps/web/issues/board-order.ts`): a column as shown, sorted by focus group (`focusState` reason `due`, then `manual`, then none), deadline ascending within `due`, and rank otherwise. The board's layout (hints, j/k) and rendering use it with the board clock (`now`, every 30 s), so a deadline crossing 24 h moves the card up.
+- **Ranks unchanged:** `columnIssues`, `applyLocalMove` and the server's `moveIssue` still order by rank, so a drop "before X" places the card before X in rank order. No data migration.
+
 ## 2026-10-28T10:00:00+09:00 — 0.56.0 focus colours by reason
 
 - **Model:** `focusState` checks the deadline before manual focus, so `reason` is `"due"` whenever the deadline is within 24 h or past, and a new `manual` flag still says whether Focus now was set by hand.
