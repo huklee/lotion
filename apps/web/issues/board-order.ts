@@ -1,10 +1,40 @@
-import type { IssueSummary } from "../../../packages/issues/model";
+import {
+  focusState,
+  type IssueStatus,
+  type IssueSummary,
+} from "../../../packages/issues/model";
 
 /** Issues of one status in board order. */
 export function columnIssues(issues: IssueSummary[], status: string) {
   return issues
     .filter((i) => i.status === status)
     .sort((a, b) => a.rank - b.rank || a.number - b.number);
+}
+
+/**
+ * A column as shown on the board: issues in focus first — a deadline within
+ * 24 h (or past), soonest first, then Focus now set by hand, in board order —
+ * then the rest in board order. Ranks are untouched: moves still place an
+ * issue by rank (see applyLocalMove), and it leaves the top once its focus ends.
+ */
+export function boardColumn(
+  issues: IssueSummary[],
+  status: string,
+  statuses: IssueStatus[],
+  now: number,
+) {
+  const group = new Map(
+    issues.map((i) => {
+      const { reason } = focusState(i, statuses, now);
+      return [i.number, reason === "due" ? 0 : reason === "manual" ? 1 : 2];
+    }),
+  );
+  const deadline = (i: IssueSummary) =>
+    group.get(i.number) === 0 && i.due ? Date.parse(i.due) : 0;
+  return columnIssues(issues, status).sort(
+    (a, b) =>
+      group.get(a.number)! - group.get(b.number)! || deadline(a) - deadline(b),
+  );
 }
 
 /**

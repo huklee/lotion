@@ -248,3 +248,29 @@ test("dots of several cards in focus move together; a newly focused card joins a
   for (const [a, b] of both) expect(Math.abs(a! - b!)).toBeLessThan(0.5);
   expect(both[0][0]).toBeGreaterThan(30);
 });
+
+test("issues in focus move to the top of their column", async ({ page }) => {
+  const { plain, soon, later } = await setup(page);
+  const order = () =>
+    page
+      .locator(".issue-card")
+      .evaluateAll((cards) =>
+        cards.map((c) => Number((c as HTMLElement).dataset.issue)),
+      );
+  // created plain, soon, later: the deadline within 24 h is already on top
+  await expect.poll(order).toEqual([soon, plain, later]);
+  // Focus now by hand: after the deadline issues, above the rest
+  await card(page, later).focus();
+  await page.keyboard.press("n");
+  await expect.poll(order).toEqual([soon, later, plain]);
+  // a sooner deadline goes first
+  await page.request.patch(`/api/issues/${plain}`, {
+    data: { due: new Date(Date.now() + 2 * 3600_000).toISOString() },
+  });
+  await expect.poll(order, { timeout: 12000 }).toEqual([plain, soon, later]);
+  // focus ends: back to its place in board order
+  await card(page, later).focus();
+  await page.keyboard.press("n");
+  await page.request.patch(`/api/issues/${plain}`, { data: { due: null } });
+  await expect.poll(order, { timeout: 12000 }).toEqual([soon, plain, later]);
+});

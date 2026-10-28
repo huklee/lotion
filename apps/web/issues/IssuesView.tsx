@@ -25,7 +25,7 @@ import {
 import { issuesApi, useIssueBoard } from "./issues-api";
 import {
   applyLocalMove,
-  columnIssues,
+  boardColumn,
   dropTarget,
   labelColor,
 } from "./board-order";
@@ -191,9 +191,11 @@ export function IssuesView({
     () =>
       (board?.statuses ?? []).map((s) => ({
         status: s.key,
-        numbers: columnIssues(visible, s.key).map((i) => i.number),
+        numbers: boardColumn(visible, s.key, board!.statuses, now).map(
+          (i) => i.number,
+        ),
       })),
-    [board, visible],
+    [board, visible, now],
   );
   const hintOrder = useMemo(() => layout.flatMap((c) => c.numbers), [layout]);
   // hints cover every card, then every other control on screen (Vimium style)
@@ -839,7 +841,7 @@ export function IssuesView({
           aria-label="Issue board"
         >
           {board.statuses.map((status) => {
-            const items = columnIssues(visible, status.key);
+            const items = boardColumn(visible, status.key, board.statuses, now);
             return (
               <div
                 key={status.key}

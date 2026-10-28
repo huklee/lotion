@@ -2,6 +2,19 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.57.0 — 2026-10-28
+
+### Changed
+
+- **Issues in focus come first.** In every column of the board, issues in focus are shown at the top:
+  - first, deadlines within 24 hours or already past, soonest first (red);
+  - then Focus now set by hand, in board order (blue);
+  - then everything else, in board order.
+
+  An issue moves up as soon as it comes into focus (including when its deadline gets within 24 hours) and returns to its place when focus ends. Keyboard navigation follows the order shown. The stored board order is unchanged, so dragging still places a card among the others as before.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.56.0 — 2026-10-28 · [#78](https://github.com/huklee/lotion/pull/78)
 
 ### Changed
