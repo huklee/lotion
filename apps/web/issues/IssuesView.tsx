@@ -570,7 +570,9 @@ export function IssuesView({
             focus.reason === "manual"
               ? "Focus now"
               : focus.reason === "due"
-                ? "In focus: the deadline is within 24 hours"
+                ? focus.overdue
+                  ? "In focus: the deadline has passed"
+                  : "In focus: the deadline is within 24 hours"
                 : undefined
           }
           href={`#/issues/${issue.number}`}

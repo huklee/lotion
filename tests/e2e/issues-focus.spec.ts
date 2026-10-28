@@ -56,6 +56,26 @@ test("Focus now with n and the panel; due within 24 h is in focus; done clears i
   await card(page, plain).focus();
   await page.keyboard.press("n");
   await expect(card(page, plain)).toHaveAttribute("data-focus", "manual");
+  // set by hand: blue; a deadline within 24 h on the same issue: red wins
+  await expect(card(page, plain)).toHaveCSS(
+    "border-top-color",
+    "rgb(28, 126, 214)",
+  );
+  await page.request.patch(`/api/issues/${plain}`, {
+    data: { due: new Date(Date.now() + 3 * 3600_000).toISOString() },
+  });
+  await expect(card(page, plain)).toHaveAttribute("data-focus", "due", {
+    timeout: 12000,
+  });
+  await expect(card(page, plain)).toHaveCSS(
+    "border-top-color",
+    "rgb(224, 49, 49)",
+  );
+  await page.request.patch(`/api/issues/${plain}`, { data: { due: null } });
+  await expect(card(page, plain)).toHaveAttribute("data-focus", "manual", {
+    timeout: 12000,
+  });
+  await card(page, plain).focus();
   await page.keyboard.press("n");
   await expect(card(page, plain)).not.toHaveClass(/focus-now/);
 
@@ -195,7 +215,7 @@ test("Focus several at once from the toolbar; the effect follows the Control pan
   ).toBe("0");
   await expect(card(page, plain)).toHaveCSS(
     "border-top-color",
-    "rgb(224, 49, 49)",
+    "rgb(28, 126, 214)",
   );
 });
 

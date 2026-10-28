@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-10-28T10:00:00+09:00 — 0.56.0 focus colours by reason
+
+- **Model:** `focusState` checks the deadline before manual focus, so `reason` is `"due"` whenever the deadline is within 24 h or past, and a new `manual` flag still says whether Focus now was set by hand.
+- **Styles:** `.issue-card.focus-now` uses `--focus-color` (renamed from `--focus-red`). It is blue `#1c7ed6` (dark `#4dabf7`) by default and red `#e03131` (dark `#ff6b6b`) for `[data-focus="due"]`; overdue stays `#c92a2a`. The ring, dot and pulse read the same variable.
+- **Control panel:** shows a blue and a red sample.
+
 ## 2026-10-27T16:00:00+09:00 — 0.55.0 deadline calendar
 
 - **`DatePicker`:** gains optional `initial`, `withTime` / `initialTime` (a time field, Today / Tomorrow / Next week shortcuts, and the time passed to `onInsert` as a second argument), `onClear`, `title` and `confirmLabel`. Its defaults keep the @date mention dialog unchanged.

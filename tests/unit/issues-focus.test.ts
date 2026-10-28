@@ -36,6 +36,24 @@ describe("focus state", () => {
       reason: "due",
       overdue: false,
     });
+    // both: the deadline wins (shown red), and manual focus is still reported
+    const both = make({
+      focus: true,
+      due: new Date(NOW + 5 * H).toISOString(),
+    });
+    expect(focusState(both, DEFAULT_STATUSES, NOW)).toMatchObject({
+      focused: true,
+      reason: "due",
+      manual: true,
+    });
+    const manualFar = make({
+      focus: true,
+      due: new Date(NOW + 48 * H).toISOString(),
+    });
+    expect(focusState(manualFar, DEFAULT_STATUSES, NOW)).toMatchObject({
+      reason: "manual",
+      manual: true,
+    });
     const later = make({ due: new Date(NOW + 25 * H).toISOString() });
     expect(focusState(later, DEFAULT_STATUSES, NOW).focused).toBe(false);
     // the same issue comes into focus as time passes

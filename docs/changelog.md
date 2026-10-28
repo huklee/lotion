@@ -2,6 +2,16 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.56.0 — 2026-10-28 · [#78](https://github.com/huklee/lotion/pull/78)
+
+### Changed
+
+- **Focus colours tell why an issue is in focus.**
+  - **Blue:** Focus now set by hand.
+  - **Red:** the deadline is within 24 hours or already past.
+  - **Both apply:** the deadline wins and the issue shows red.
+  - The border, the circling dot and the pulse all follow the colour. The Control panel shows a sample of each.
+
 ## 0.55.0 — 2026-10-27 · [#77](https://github.com/huklee/lotion/pull/77)
 
 ### Changed
