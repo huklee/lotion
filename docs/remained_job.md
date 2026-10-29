@@ -4,6 +4,7 @@ Historical completed work lives in the [implementation history](implementation-h
 
 ## Completed user requests — 2026-10-22
 
+- [x] +1d / +7d buttons next to the issue deadline; archived cards are dashed and listed only with Show archived (0.58.0).
 - [x] Issues in focus (Focus now, or a deadline within 24 h) are shown at the top of their column (0.57.0).
 - [x] Focus now by hand is blue, a deadline within 24 h is red, and the deadline wins (0.56.0).
 - [x] Deadlines are picked with the mouse in the calendar dialog (0.55.0).

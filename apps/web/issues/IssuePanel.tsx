@@ -22,6 +22,7 @@ import {
   PRIORITIES,
   PRIORITY_NAMES,
   dueLabel,
+  shiftDue,
   focusState,
   type Issue,
   type IssueStatus,
@@ -397,6 +398,24 @@ export function IssuePanel({
                 })
               : "Set deadline"}
           </button>
+          {([1, 7] as const).map((days) => (
+            <button
+              key={days}
+              className="issue-due-shift"
+              aria-label={`Deadline +${days}d`}
+              title={
+                issue.due
+                  ? `Move the deadline ${days === 1 ? "a day" : "a week"} later`
+                  : `Deadline ${days === 1 ? "tomorrow" : "in a week"} at 23:59`
+              }
+              onClick={(event) => {
+                event.preventDefault();
+                void save("due", shiftDue(issue.due, days, Date.now()));
+              }}
+            >
+              +{days}d
+            </button>
+          ))}
           {issue.due && (
             <button
               className="issue-due-clear"

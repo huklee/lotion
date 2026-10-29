@@ -119,6 +119,13 @@
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+/* archived (listed only with Show archived): dashed and dimmed */
+.issue-card.archived {
+  border-style: dashed;
+  border-color: var(--muted);
+  box-shadow: none;
+  opacity: 0.7;
+}
 .issue-card.dragging {
   opacity: 0.45;
 }
@@ -1388,6 +1395,18 @@
   gap: 6px;
   padding: 4px 8px;
   border-radius: 5px;
+  color: var(--text);
+}
+.issue-due-shift {
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.issue-due-shift:hover {
+  background: var(--hover);
   color: var(--text);
 }
 .issue-due-button.empty {
