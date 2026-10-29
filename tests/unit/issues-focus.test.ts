@@ -8,6 +8,7 @@ import {
   moveIssue,
   normalizeIssue,
   patchIssue,
+  shiftDue,
 } from "../../packages/issues/model";
 import { parseDue } from "../../apps/cli/issues-client";
 import { boardKey } from "../../apps/web/issues/issue-keys";
@@ -157,6 +158,32 @@ describe("focus and deadline changes", () => {
       focusedAt: null,
       due: null,
     });
+  });
+});
+
+describe("deadline shortcuts and archive", () => {
+  it("moves a deadline by whole days, or starts from today 23:59", () => {
+    const due = "2026-10-27T10:30:00.000Z";
+    expect(shiftDue(due, 1, NOW)).toBe("2026-10-28T10:30:00.000Z");
+    expect(shiftDue(due, 7, NOW)).toBe("2026-11-03T10:30:00.000Z");
+    const fresh = new Date(shiftDue(null, 1, NOW));
+    const today = new Date(NOW);
+    expect([fresh.getHours(), fresh.getMinutes()]).toEqual([23, 59]);
+    expect(fresh.getDate()).toBe(
+      new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + 1,
+      ).getDate(),
+    );
+  });
+  it("never puts an archived issue in focus", () => {
+    const issue = make({ focus: true, due: new Date(NOW + H).toISOString() });
+    expect(focusState(issue, DEFAULT_STATUSES, NOW).focused).toBe(true);
+    expect(
+      focusState({ ...issue, archivedAt: clock.now }, DEFAULT_STATUSES, NOW)
+        .focused,
+    ).toBe(false);
   });
 });
 

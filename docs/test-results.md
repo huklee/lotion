@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-10-29T17:30:00+09:00 — 0.58.0 deadline shortcuts and dashed archived cards
+
+Focused:
+- `tests/unit/issues-focus.test.ts`: `shiftDue` moves a deadline by 1 and 7 days keeping its time, and starts from tomorrow 23:59 without one; an archived issue with Focus now and a 1 h deadline is not in focus.
+- `issues-focus.spec.ts` **15/15** across Chromium, Firefox and WebKit, including the new case: +1d on an issue without a deadline sets tomorrow 23:59, then +7d and +1d move it by 7 and 1 days; an archived card disappears, shows with Show archived with a dashed border (others solid), and hides again.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **318/318**; Playwright **388/388**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-28T16:10:00+09:00 — 0.57.0 issues in focus on top
 
 Focused:

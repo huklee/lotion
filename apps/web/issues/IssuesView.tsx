@@ -566,7 +566,7 @@ export function IssuesView({
         )}
         <a
           aria-selected={selected.size ? selected.has(issue.number) : undefined}
-          className={`issue-card${selected.has(issue.number) ? " selected" : ""}${openNumber === issue.number ? " open" : ""}${drag?.number === issue.number ? " dragging" : ""}${focused === issue.number ? " focused" : ""}${focus.focused ? " focus-now" : ""}${focus.overdue ? " overdue" : ""}`}
+          className={`issue-card${selected.has(issue.number) ? " selected" : ""}${openNumber === issue.number ? " open" : ""}${drag?.number === issue.number ? " dragging" : ""}${focused === issue.number ? " focused" : ""}${focus.focused ? " focus-now" : ""}${focus.overdue ? " overdue" : ""}${issue.archivedAt ? " archived" : ""}`}
           data-focus={focus.reason ?? undefined}
           title={
             focus.reason === "manual"

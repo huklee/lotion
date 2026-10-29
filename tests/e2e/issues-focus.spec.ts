@@ -274,3 +274,54 @@ test("issues in focus move to the top of their column", async ({ page }) => {
   await page.request.patch(`/api/issues/${plain}`, { data: { due: null } });
   await expect.poll(order, { timeout: 12000 }).toEqual([soon, plain, later]);
 });
+
+test("+1d and +7d move the deadline; archived cards are dashed and only shown on request", async ({
+  page,
+}) => {
+  const { plain, later } = await setup(page);
+  const due = async (n: number) =>
+    (await (await page.request.get(`/api/issues/${n}`)).json()).due as
+      string | null;
+  // no deadline yet: +1d sets tomorrow at 23:59
+  await card(page, plain).click();
+  const panel = page.getByRole("complementary", { name: `Issue #${plain}` });
+  await panel.getByRole("button", { name: "Deadline +1d" }).click();
+  await expect.poll(() => due(plain)).not.toBeNull();
+  const first = new Date((await due(plain))!);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  expect([first.getDate(), first.getHours(), first.getMinutes()]).toEqual([
+    tomorrow.getDate(),
+    23,
+    59,
+  ]);
+  // +7d and +1d move it from there, keeping the time
+  await panel.getByRole("button", { name: "Deadline +7d" }).click();
+  await expect
+    .poll(async () => Date.parse((await due(plain))!) - first.getTime())
+    .toBe(7 * 86400_000);
+  await panel.getByRole("button", { name: "Deadline +1d" }).click();
+  await expect
+    .poll(async () => new Date((await due(plain))!).getDate())
+    .toBe(new Date(first.getTime() + 8 * 86400_000).getDate());
+  // the panel shows the moved deadline (time format follows the browser locale)
+  await expect(
+    panel.getByRole("button", { name: "Deadline", exact: true }),
+  ).toContainText(/23:59|11:59\s?PM/);
+
+  // archived: hidden from the board until Show archived, then dashed
+  await page.keyboard.press("Escape");
+  await page.request.patch(`/api/issues/${later}`, {
+    data: { archived: true },
+  });
+  await expect(card(page, later)).toHaveCount(0, { timeout: 12000 });
+  await page.getByRole("button", { name: "Board menu" }).click();
+  await page.getByRole("menuitemcheckbox", { name: "Show archived" }).click();
+  await expect(card(page, later)).toBeVisible();
+  await expect(card(page, later)).toHaveClass(/archived/);
+  await expect(card(page, later)).toHaveCSS("border-top-style", "dashed");
+  await expect(card(page, plain)).toHaveCSS("border-top-style", "solid");
+  await page.getByRole("button", { name: "Board menu" }).click();
+  await page.getByRole("menuitemcheckbox", { name: "Hide archived" }).click();
+  await expect(card(page, later)).toHaveCount(0);
+});

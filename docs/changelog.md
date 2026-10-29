@@ -2,6 +2,19 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.58.0 — 2026-10-29 · [#80](https://github.com/huklee/lotion/pull/80)
+
+### Added
+
+- **+1d / +7d next to the deadline.** In the issue panel, two buttons move the deadline a day or a week later, keeping its time. Without a deadline they set one for tomorrow or in a week, at 23:59.
+
+### Changed
+
+- **Archived issues look archived.** With Show archived on, archived cards have a dashed, dimmed border. They are still listed only when Show archived is on.
+- Archived issues are never in focus (no Focus now effect, not sorted to the top).
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.57.0 — 2026-10-28 · [#79](https://github.com/huklee/lotion/pull/79)
 
 ### Changed

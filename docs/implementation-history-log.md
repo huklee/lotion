@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-10-29T17:30:00+09:00 — 0.58.0 deadline shortcuts and dashed archived cards
+
+- **`shiftDue(due, days, now)`** (`packages/issues/model.ts`): moves the deadline by whole local days (`setDate`, so the clock time survives DST); without one it starts from today 23:59. The panel's `+1d` / `+7d` buttons (`.issue-due-shift`) save the result through the usual patch.
+- **Archived cards:** `.issue-card.archived` (dashed `--muted` border, no shadow, opacity 0.7). Board filtering is unchanged: archived issues are loaded and listed only with Show archived.
+- **`focusState`** accepts `archivedAt` and treats an archived issue like a done one, so it never gets the focus ring or the top of its column.
+
 ## 2026-10-28T16:10:00+09:00 — 0.57.0 issues in focus on top
 
 - **`boardColumn`** (`apps/web/issues/board-order.ts`): a column as shown, sorted by focus group (`focusState` reason `due`, then `manual`, then none), deadline ascending within `due`, and rank otherwise. The board's layout (hints, j/k) and rendering use it with the board clock (`now`, every 30 s), so a deadline crossing 24 h moves the card up.

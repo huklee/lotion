@@ -817,11 +817,14 @@ export type FocusState = {
  * both apply the reason is "due": the deadline decides (shown in red).
  */
 export function focusState(
-  issue: Pick<Issue, "status" | "focusedAt" | "due">,
+  issue: Pick<Issue, "status" | "focusedAt" | "due"> & {
+    archivedAt?: string | null;
+  },
   statuses: IssueStatus[],
   now: number,
 ): FocusState {
-  const done = isDone(statuses, issue.status);
+  // archived issues are out of the way: never in focus
+  const done = isDone(statuses, issue.status) || !!issue.archivedAt;
   const dueIn = issue.due ? Date.parse(issue.due) - now : null;
   const overdue = !done && dueIn !== null && dueIn < 0;
   const manual = !!issue.focusedAt;
@@ -839,6 +842,21 @@ export function focusState(
   if (manual)
     return { focused: true, reason: "manual", manual, dueIn, overdue };
   return { focused: false, reason: null, manual, dueIn, overdue };
+}
+
+/**
+ * The deadline moved by whole days (local time, so the clock time stays the
+ * same across DST). Without a deadline, counts from today at 23:59.
+ */
+export function shiftDue(
+  due: string | null | undefined,
+  days: number,
+  now: number,
+): string {
+  const base = due ? new Date(due) : new Date(now);
+  if (!due) base.setHours(23, 59, 0, 0);
+  base.setDate(base.getDate() + days);
+  return base.toISOString();
 }
 
 /** "in 5h", "in 3d", "2h ago" for a deadline. */
