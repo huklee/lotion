@@ -28,6 +28,36 @@ export function removeBlocksPreservingHierarchy(
   return remove(blocks);
 }
 
+/**
+ * Removes the selected blocks together with everything nested under them —
+ * what a block selection highlights, copies and moves. Other blocks keep their
+ * place and indentation.
+ */
+export function removeBlockSubtrees(
+  blocks: Block[],
+  selected: readonly string[],
+): Block[] {
+  const ids = new Set(selected);
+  const remove = (items: Block[]): Block[] => {
+    let changed = false;
+    const result: Block[] = [];
+    for (const block of items) {
+      if (ids.has(block.id)) {
+        changed = true;
+        continue;
+      }
+      const originalChildren = block.children ?? [];
+      const children = remove(originalChildren);
+      if (children !== originalChildren) {
+        changed = true;
+        result.push({ ...block, children });
+      } else result.push(block);
+    }
+    return changed ? result : items;
+  };
+  return remove(blocks);
+}
+
 /** `selected` plus every descendant of those blocks, in document order. */
 export function withDescendants(
   blocks: Block[],

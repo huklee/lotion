@@ -7,7 +7,7 @@ import {
   type RefObject,
 } from "react";
 import type { Block } from "../../packages/document-schema/index";
-import { removeBlocksPreservingHierarchy } from "../../packages/editor-adapter/movement";
+import { removeBlockSubtrees } from "../../packages/editor-adapter/movement";
 import { editorSchema } from "./editor-schema";
 import {
   rectangleFromPoints,
@@ -49,7 +49,9 @@ export function useBlockSelection({
 
   const deleteSelected = useCallback(() => {
     const current = editor.document as unknown as Block[];
-    const next = removeBlocksPreservingHierarchy(current, selected);
+    // a selected block goes with its nested blocks: they are highlighted with
+    // it, and copy/cut/move take them too
+    const next = removeBlockSubtrees(current, selected);
     if (next !== current) {
       const replacement = (next.length
         ? next

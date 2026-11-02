@@ -1,5 +1,10 @@
 # Implementation history log
 
+## 2026-11-02T10:40:00+09:00 — 0.58.2 delete and cut take nested blocks
+
+- **Cause:** `deleteSelected` (`use-block-selection.ts`) used `removeBlocksPreservingHierarchy`, which drops only the selected ids and lifts their unselected children. The selection overlay measures each selected block's outer element, which includes its nested blocks, and the lasso hit-tests only each block's own row; so nested rows were highlighted but not selected, and Backspace/Cut lifted them.
+- **Fix:** new `removeBlockSubtrees` (`packages/editor-adapter/movement.ts`) removes selected blocks with their whole subtree; `deleteSelected` (Backspace, Cut, keyboard cut) uses it, in line with `selectedBlockSubtrees` (copy) and `moveBlocks` (drag). `DragHandleMenu` Delete keeps `removeBlocksPreservingHierarchy`.
+
 ## 2026-11-02T09:50:00+09:00 — 0.58.1 formatting kept when pasting several blocks
 
 - **Cause:** the editor's paste handler always took over and built blocks from `text/html` through `cleanClipboardHtml`, which drops colours and other styles (meant for HTML from other apps). BlockNote's lossless `blocknote/html` flavour from a text selection was ignored. Copy selected blocks wrote Markdown only, so outside the tab's remembered payload the styles were gone.
