@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { Block } from "../../packages/document-schema/index";
 import {
   rememberSelectedBlockClipboard,
@@ -137,4 +137,29 @@ it("keeps the in-memory copy usable when session storage is unavailable", () => 
   expect(selectedBlocksFromClipboard("available", unavailable)?.[0].type).toBe(
     "paragraph",
   );
+});
+
+describe("Lotion's own clipboard HTML", () => {
+  const data = (flavours: Record<string, string>) => ({
+    getData: (type: string) => flavours[type] ?? "",
+  });
+  it("prefers BlockNote's internal flavour, then block HTML Lotion wrote", async () => {
+    const { lotionClipboardHtml } =
+      await import("../../apps/web/selected-block-clipboard");
+    expect(
+      lotionClipboardHtml(
+        data({ "blocknote/html": "<p>x</p>", "text/html": "<p>y</p>" }),
+      ),
+    ).toBe("<p>x</p>");
+    const own =
+      '<div class="bn-block-group" data-node-type="blockGroup"><p>y</p></div>';
+    expect(lotionClipboardHtml(data({ "text/html": own }))).toBe(own);
+    // HTML from other apps is cleaned by the normal paste path instead
+    expect(
+      lotionClipboardHtml(
+        data({ "text/html": "<p style='color:red'>web</p>" }),
+      ),
+    ).toBe("");
+    expect(lotionClipboardHtml(data({ "text/plain": "text" }))).toBe("");
+  });
 });

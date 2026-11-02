@@ -19,6 +19,7 @@ import { structuredBlocksFromClipboard } from "./structured-block-paste";
 import { pasteV2 } from "./paste/paste-v2";
 import { getPasteEngine } from "./paste/engine-choice";
 import {
+  lotionClipboardHtml,
   rememberSelectedBlockClipboard,
   selectedBlocksFromClipboard,
 } from "./selected-block-clipboard";
@@ -402,7 +403,19 @@ export default function Editor({
       if (!blocks.length) return;
       try {
         const markdown = toMarkdown(blocks).markdown;
-        await navigator.clipboard.writeText(markdown);
+        // Markdown for other apps, plus the blocks as HTML so formatting
+        // (underline, colours, highlights) survives a paste in another tab
+        const html = editor.blocksToFullHTML(blocks as never) as string;
+        if (typeof ClipboardItem !== "undefined" && navigator.clipboard.write)
+          await navigator.clipboard
+            .write([
+              new ClipboardItem({
+                "text/plain": new Blob([markdown], { type: "text/plain" }),
+                "text/html": new Blob([html], { type: "text/html" }),
+              }),
+            ])
+            .catch(() => navigator.clipboard.writeText(markdown));
+        else await navigator.clipboard.writeText(markdown);
         rememberSelectedBlockClipboard(markdown, blocks);
         if (cut) deleteSelected();
       } catch (error) {
@@ -788,6 +801,16 @@ export default function Editor({
             type: "mermaid",
             props: { code },
           });
+          return;
+        }
+        // Copied in Lotion (a selection over several blocks, or selected
+        // blocks in another tab): paste it as is, formatting included. Blocks
+        // remembered by this tab's Copy selected blocks still go first.
+        const ownHtml = lotionClipboardHtml(event.clipboardData);
+        if (ownHtml && !selectedBlocksFromClipboard(raw)) {
+          event.preventDefault();
+          event.stopPropagation();
+          editor.pasteHTML(ownHtml, true);
           return;
         }
         if (!/^https?:\/\/\S+$/i.test(value) && getPasteEngine() === "v2") {

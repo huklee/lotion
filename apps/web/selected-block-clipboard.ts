@@ -88,3 +88,20 @@ export function selectedBlocksFromClipboard(
     ? blocks
     : null;
 }
+
+/**
+ * HTML on the clipboard that Lotion's own editor produced, which keeps every
+ * inline style (underline, colours, highlights…) and can be pasted as is:
+ * BlockNote's internal flavour from a text selection, or the block HTML that
+ * Copy selected blocks writes. Empty when the clipboard came from elsewhere.
+ */
+export function lotionClipboardHtml(
+  data: Pick<DataTransfer, "getData">,
+): string {
+  const internal = data.getData("blocknote/html");
+  if (internal) return internal;
+  const html = data.getData("text/html");
+  return /data-node-type="blockGroup"|class="bn-block-group"/.test(html)
+    ? html
+    : "";
+}

@@ -1,5 +1,16 @@
 # Test results
 
+## 2026-11-02T09:50:00+09:00 — 0.58.1 formatting kept when pasting several blocks
+
+Focused:
+- New `tests/e2e/paste-styles.spec.ts`: two blocks with underline, a red highlight, red bold text and strike-through.
+  - A text selection over both, copied and pasted, keeps every style (Chromium, Firefox, WebKit). It failed before the fix: the highlight and colours were lost.
+  - Selected blocks copied with Cmd/Ctrl+C and pasted in a new tab keep every style (Chromium, real clipboard). It failed before: underline was lost.
+- `tests/unit/selected-block-clipboard.test.ts` **5/5**: Lotion's own clipboard HTML is recognised; HTML from other apps is not.
+- Clipboard-related suites (`clipboard`, `block-selection`, `paste-lab`, `diagrams`, `paste-styles`): **106 passed**, 17 skipped (real-clipboard cases outside Chromium).
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **319/319**; Playwright **392/392**. Remote CI results are recorded on the pull request.
+
 ## 2026-10-29T17:30:00+09:00 — 0.58.0 deadline shortcuts and dashed archived cards
 
 Focused:
