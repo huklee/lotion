@@ -1,5 +1,11 @@
 # Implementation history log
 
+## 2026-11-02T09:50:00+09:00 — 0.58.1 formatting kept when pasting several blocks
+
+- **Cause:** the editor's paste handler always took over and built blocks from `text/html` through `cleanClipboardHtml`, which drops colours and other styles (meant for HTML from other apps). BlockNote's lossless `blocknote/html` flavour from a text selection was ignored. Copy selected blocks wrote Markdown only, so outside the tab's remembered payload the styles were gone.
+- **Paste:** `lotionClipboardHtml` (`selected-block-clipboard.ts`) returns `blocknote/html`, or `text/html` that carries BlockNote's block group markup. If present (and the tab's remembered selected-block payload does not match), the editor calls `editor.pasteHTML(html, true)`, BlockNote's internal (lossless) parse. Mermaid detection and the remembered payload still go first; other HTML and text keep the existing engines.
+- **Copy selected blocks:** writes a `ClipboardItem` with `text/plain` (Markdown, as before) and `text/html` (`editor.blocksToFullHTML`), falling back to `writeText` where `ClipboardItem` is missing or refused.
+
 ## 2026-10-29T17:30:00+09:00 — 0.58.0 deadline shortcuts and dashed archived cards
 
 - **`shiftDue(due, days, now)`** (`packages/issues/model.ts`): moves the deadline by whole local days (`setDate`, so the clock time survives DST); without one it starts from today 23:59. The panel's `+1d` / `+7d` buttons (`.issue-due-shift`) save the result through the usual patch.

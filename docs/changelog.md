@@ -2,6 +2,18 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.58.1 — 2026-11-02 · [#81](https://github.com/huklee/lotion/pull/81)
+
+### Fixed
+
+- **Pasting several blocks keeps their formatting.** Underline, text colours, highlights, strike-through and other inline styles were lost when more than one block was copied and pasted:
+  - a text selection over several blocks;
+  - selected blocks (Copy selected blocks or Cmd/Ctrl+C), pasted in another tab or after the tab's memory was gone.
+
+  Both now paste exactly as copied. Pasting into other apps still gives Markdown, and content from other apps is still cleaned to match the page.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.58.0 — 2026-10-29 · [#80](https://github.com/huklee/lotion/pull/80)
 
 ### Added
