@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import {
   moveBlocks,
+  removeBlockSubtrees,
   removeBlocksPreservingHierarchy,
   withDescendants,
   selectedBlockSubtrees,
@@ -126,4 +127,26 @@ it("deleting a selected parent keeps its unselected children in its place", () =
     "g1",
     "c2",
   ]);
+});
+
+it("removes selected blocks with everything nested under them", () => {
+  const leaf = (id: string, children: any[] = []) =>
+    ({ id, type: "bulletListItem", props: {}, content: [], children }) as any;
+  const doc = [
+    leaf("a", [leaf("a1"), leaf("a2", [leaf("a2a")])]),
+    leaf("b"),
+    leaf("c", [leaf("c1")]),
+  ];
+  const ids = (blocks: any[]): string[] =>
+    blocks.flatMap((b) => [b.id, ...ids(b.children ?? [])]);
+  expect(ids(removeBlockSubtrees(doc, ["a", "b"]))).toEqual(["c", "c1"]);
+  // a nested selection takes its own subtree only; siblings keep their place
+  expect(ids(removeBlockSubtrees(doc, ["a2"]))).toEqual([
+    "a",
+    "a1",
+    "b",
+    "c",
+    "c1",
+  ]);
+  expect(removeBlockSubtrees(doc, ["missing"])).toBe(doc);
 });

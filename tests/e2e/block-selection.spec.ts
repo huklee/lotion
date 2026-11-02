@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { test, expect, type Page } from "./fixtures";
 import { seed } from "./helpers";
 
 test("section selection moves a complete section and undo restores it", async ({
@@ -1054,7 +1054,7 @@ test("real Chromium clipboard survives reload before selected-block paste", asyn
   expect(JSON.stringify(saved.blocks)).not.toContain("real-copy-target");
 });
 
-test("deleting a selected parent keeps its unselected nested blocks (Backspace and the handle menu)", async ({
+test("Backspace on a selected parent deletes its nested blocks; the handle menu keeps them", async ({
   page,
 }) => {
   await seed(page, "Delete keeps children", [
@@ -1104,12 +1104,10 @@ test("deleting a selected parent keeps its unselected nested blocks (Backspace a
     page.getByRole("toolbar", { name: "Selected blocks" }),
   ).toContainText("1 selected");
   await page.keyboard.press("Backspace");
+  // the selection highlights the parent with its nested block: both go
   await expect(page.getByText("Parent one")).toHaveCount(0);
-  await expect(page.getByText("Child of one")).toBeVisible();
-  // the child moved up to the top level
-  await expect(
-    page.locator('.bn-editor > .bn-block-group > [data-id="p1-child"]'),
-  ).toHaveCount(1);
+  await expect(page.getByText("Child of one")).toHaveCount(0);
+  await expect(page.getByText("Parent two")).toBeVisible();
 
   // handle menu → Delete on the second parent
   await page.locator('[data-id="p2"] .bn-inline-content').first().hover();
@@ -1121,4 +1119,134 @@ test("deleting a selected parent keeps its unselected nested blocks (Backspace a
     page.locator('.bn-editor > .bn-block-group > [data-id="p2-child"]'),
   ).toHaveCount(1);
   await expect(page.getByText("Tail")).toBeVisible();
+});
+
+const nestedBullets = [
+  {
+    id: "nb-a",
+    type: "bulletListItem",
+    content: [{ type: "text", text: "Bullet A", styles: {} }],
+    children: [
+      {
+        id: "nb-a1",
+        type: "bulletListItem",
+        content: [{ type: "text", text: "Nested A1", styles: {} }],
+      },
+      {
+        id: "nb-a2",
+        type: "bulletListItem",
+        content: [{ type: "text", text: "Nested A2", styles: {} }],
+        children: [
+          {
+            id: "nb-a2a",
+            type: "bulletListItem",
+            content: [{ type: "text", text: "Deep A2a", styles: {} }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "nb-b",
+    type: "bulletListItem",
+    content: [{ type: "text", text: "Bullet B", styles: {} }],
+  },
+  {
+    id: "nb-tail",
+    type: "paragraph",
+    content: [{ type: "text", text: "Tail stays", styles: {} }],
+  },
+];
+
+/**
+ * Lasso from the left margin down to bullet B, ending left of where the nested
+ * rows' text starts: the top-level rows are hit, the nested ones are only
+ * highlighted with their parent.
+ */
+async function selectDownTheMargin(page: Page) {
+  const gutter = (await page.locator(".selection-gutter").boundingBox())!;
+  const a = (await page
+    .locator('[data-id="nb-a"] > .bn-block > .bn-block-content')
+    .first()
+    .boundingBox())!;
+  const nested = (await page
+    .locator('[data-id="nb-a1"] > .bn-block > .bn-block-content')
+    .first()
+    .boundingBox())!;
+  const b = (await page.locator('[data-id="nb-b"]').first().boundingBox())!;
+  await page.mouse.move(gutter.x + 4, a.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(Math.max(a.x + 12, nested.x - 4), b.y + 4, {
+    steps: 12,
+  });
+  await page.mouse.up();
+  await expect(
+    page.getByRole("toolbar", { name: "Selected blocks" }),
+  ).toBeVisible();
+}
+
+async function expectNestedBulletsGone(page: Page) {
+  for (const text of [
+    "Bullet A",
+    "Nested A1",
+    "Nested A2",
+    "Deep A2a",
+    "Bullet B",
+  ])
+    await expect(
+      page.locator(".tiptap").getByText(text, { exact: true }),
+    ).toHaveCount(0);
+  await expect(page.getByText("Tail stays")).toBeVisible();
+  // nothing was lifted up a level instead of being deleted
+  await expect(
+    page.locator('[data-content-type="bulletListItem"]'),
+  ).toHaveCount(0);
+}
+
+test("Backspace on selected nested bullets deletes everything highlighted, nested lines included", async ({
+  page,
+}) => {
+  await seed(page, "Delete nested bullets", nestedBullets);
+  await selectDownTheMargin(page);
+  await page.keyboard.press("Backspace");
+  await expectNestedBulletsGone(page);
+  // undo brings the whole structure back, still nested
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(
+    page.locator(".tiptap").getByText("Deep A2a", { exact: true }),
+  ).toHaveCount(1);
+  await expect(
+    page.locator('[data-id="nb-a2"] [data-id="nb-a2a"]').first(),
+  ).toBeVisible();
+});
+
+test("cutting selected nested bullets removes everything it copied", async ({
+  page,
+}) => {
+  await seed(page, "Cut nested bullets", nestedBullets);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          (window as any).cutText = text;
+        },
+      },
+    });
+  });
+  await selectDownTheMargin(page);
+  await page.keyboard.press("ControlOrMeta+x");
+  await expect
+    .poll(() => page.evaluate(() => (window as any).cutText ?? ""))
+    .toContain("Deep A2a");
+  const copied: string = await page.evaluate(() => (window as any).cutText);
+  for (const text of [
+    "Bullet A",
+    "Nested A1",
+    "Nested A2",
+    "Deep A2a",
+    "Bullet B",
+  ])
+    expect(copied).toContain(text);
+  await expectNestedBulletsGone(page);
 });

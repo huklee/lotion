@@ -2,6 +2,15 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.58.2 — 2026-11-02
+
+### Fixed
+
+- **Deleting or cutting selected blocks removes everything highlighted.** A selected block is highlighted together with the blocks nested under it, but Backspace and Cut removed only the selected block itself and moved its nested lines up a level. Selecting nested bullets and deleting them therefore left some lines behind, dedented. Now the selected blocks go together with everything nested under them, matching what is highlighted, copied and moved; undo restores them.
+- The ⋮⋮ handle menu's **Delete** (one block, without a block selection) still keeps the block's nested lines.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.58.1 — 2026-11-02 · [#81](https://github.com/huklee/lotion/pull/81)
 
 ### Fixed

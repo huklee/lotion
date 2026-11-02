@@ -1,5 +1,17 @@
 # Test results
 
+## 2026-11-02T10:40:00+09:00 — 0.58.2 delete and cut take nested blocks
+
+Focused:
+- `tests/unit/movement.test.ts` **16/16**: `removeBlockSubtrees` removes selected blocks with their subtrees and leaves siblings in place.
+- `tests/e2e/block-selection.spec.ts` **52 passed**, 2 skipped (real-clipboard cases outside Chromium), across Chromium, Firefox and WebKit. New cases (nested bullets A › A1, A2 › A2a, then B; lasso from the margin to B):
+  - Backspace removes all of them, with no bullet lifted a level; undo restores the nesting.
+  - Cut copies all five lines and removes all of them.
+  - Both failed on the previous build: "Nested A1" was left behind.
+- The handle-menu test now expects Backspace on a selected parent to remove its nested block, and the handle menu's Delete to keep it.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **320/320**; Playwright **398/398**. Remote CI results are recorded on the pull request.
+
 ## 2026-11-02T09:50:00+09:00 — 0.58.1 formatting kept when pasting several blocks
 
 Focused:
