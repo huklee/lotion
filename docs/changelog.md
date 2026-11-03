@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.58.3 — 2026-11-03
+
+### Fixed
+
+- **Color shortcuts work on every keyboard.** Shortcuts for the text and background color presets (Control panel → Formatting) were recorded and matched by the character a key types. Some therefore could not be recorded or did nothing:
+  - with ⌥ (Option) on a Mac, where ⌥R types "®";
+  - with Shift+digits, where Shift+2 types "@";
+  - with Korean input, where R types "ㄱ".
+
+  They now follow the physical key, like the issue board's shortcuts. Shortcuts already saved keep working.
+- **A shortcut changed in the Control panel applies in other open tabs** right away, without reloading them.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.58.2 — 2026-11-02 · [#82](https://github.com/huklee/lotion/pull/82)
 
 ### Fixed

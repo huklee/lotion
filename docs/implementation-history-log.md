@@ -1,5 +1,10 @@
 # Implementation history log
 
+## 2026-11-03T10:00:00+09:00 — 0.58.3 color shortcuts by physical key
+
+- **Cause:** `shortcutFromKeyboardEvent` (`format-shortcuts.ts`) built the shortcut from `event.key`, used both when recording in the Control panel and when matching in the editor. ⌥ on macOS, Shift+digits and Korean IME change `key` ("®", "@", "ㄱ"/"Process"), so those combinations returned null (not recordable) or never matched. Preferences were read once per tab, so another open tab kept the old shortcuts.
+- **Fix:** `shortcutKey` takes letters and digits from `code` (`KeyR`, `Digit2`, `Numpad2`, `Enter`/`NumpadEnter`) and falls back to `key` without a code. The stored format (`Mod+Alt+R`) is unchanged. `useWorkspacePreferences` listens to `storage` events for `lotion-formatting-shortcuts`.
+
 ## 2026-11-02T10:40:00+09:00 — 0.58.2 delete and cut take nested blocks
 
 - **Cause:** `deleteSelected` (`use-block-selection.ts`) used `removeBlocksPreservingHierarchy`, which drops only the selected ids and lifts their unselected children. The selection overlay measures each selected block's outer element, which includes its nested blocks, and the lasso hit-tests only each block's own row; so nested rows were highlighted but not selected, and Backspace/Cut lifted them.

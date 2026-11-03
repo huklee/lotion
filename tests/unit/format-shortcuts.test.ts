@@ -54,3 +54,42 @@ it("keeps each shortcut unique when an assignment changes", () => {
   expect(repeated.colorPresets.red).toBe("");
   expect(repeated.repeatLast).toBe("Mod+Shift+H");
 });
+
+it("records and matches by physical key on Mac Option, Shift+digit, Korean input and the numpad", () => {
+  const mod = { metaKey: true, ctrlKey: false, altKey: false, shiftKey: false };
+  // ⌥R on a Mac types "®"
+  expect(
+    shortcutFromKeyboardEvent({ ...mod, altKey: true, key: "®", code: "KeyR" }),
+  ).toBe("Mod+Alt+R");
+  // Shift+2 types "@"
+  expect(
+    shortcutFromKeyboardEvent({
+      ...mod,
+      shiftKey: true,
+      key: "@",
+      code: "Digit2",
+    }),
+  ).toBe("Mod+Shift+2");
+  // Korean (두벌식) input types "ㄱ" for R, or "Process" while composing
+  expect(shortcutFromKeyboardEvent({ ...mod, key: "ㄱ", code: "KeyR" })).toBe(
+    "Mod+R",
+  );
+  expect(
+    shortcutFromKeyboardEvent({ ...mod, key: "Process", code: "KeyR" }),
+  ).toBe("Mod+R");
+  expect(shortcutFromKeyboardEvent({ ...mod, key: "3", code: "Numpad3" })).toBe(
+    "Mod+3",
+  );
+  // without a code (old browsers, synthetic events) the key still works
+  expect(shortcutFromKeyboardEvent({ ...mod, key: "b" })).toBe("Mod+B");
+  // keys that are not letters, digits or Enter are not shortcuts
+  expect(
+    shortcutFromKeyboardEvent({ ...mod, key: "/", code: "Slash" }),
+  ).toBeNull();
+  expect(
+    matchesFormattingShortcut(
+      { ...mod, altKey: true, key: "ㅔ", code: "KeyP" },
+      "Mod+Alt+P",
+    ),
+  ).toBe(true);
+});
