@@ -1,5 +1,17 @@
 # Test results
 
+## 2026-11-03T10:00:00+09:00 — 0.58.3 color shortcuts by physical key
+
+Focused:
+- `tests/unit/format-shortcuts.test.ts` **4/4**, including ⌥R ("®" / `KeyR`), Shift+2 ("@" / `Digit2`), Korean "ㄱ" and "Process" for R, numpad digits, and the no-`code` fallback.
+- `tests/e2e/settings.spec.ts` **27/27** across Chromium, Firefox and WebKit. New cases:
+  - Shortcuts recorded in the Control panel apply without a reload. A second preset replaces both colors, repeat-last reapplies the last preset, and Default clears both.
+  - Keydowns with a Mac ⌥ character, Shift+digit and Korean characters apply the red, green and purple presets. This failed before the fix.
+  - A shortcut assigned in one tab works in another open tab. This failed without the storage listener.
+- `tests/e2e/paste-styles.spec.ts` (0.58.1): the other-tab case now captures what Copy writes instead of using the shared system clipboard. A full run had collided with another real-clipboard test running at the same time. It also runs in Firefox and WebKit now: **6/6**.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **321/321**; Playwright **409/409**. Remote CI results are recorded on the pull request.
+
 ## 2026-11-02T10:40:00+09:00 — 0.58.2 delete and cut take nested blocks
 
 Focused:

@@ -4,6 +4,7 @@ Historical completed work lives in the [implementation history](implementation-h
 
 ## Completed user requests — 2026-10-22
 
+- [x] Color (text and background) shortcuts work with ⌥ on a Mac, Shift+digits and Korean input, and apply in every open tab (0.58.3).
 - [x] Backspace and cut on selected blocks remove their nested blocks too, instead of lifting them a level (0.58.2).
 - [x] Copying and pasting several blocks keeps underline, colours, highlights and other inline formatting (0.58.1).
 - [x] +1d / +7d buttons next to the issue deadline; archived cards are dashed and listed only with Show archived (0.58.0).

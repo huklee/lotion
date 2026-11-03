@@ -107,10 +107,25 @@ test("a text selection over several blocks pastes with its formatting", async ({
 test("selected blocks paste with their formatting in another tab", async ({
   page,
   context,
-  browserName,
 }) => {
-  test.skip(browserName !== "chromium", "Uses the real browser clipboard");
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  // capture what Copy writes instead of using the shared system clipboard,
+  // which other tests running at the same time may overwrite
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          (window as any).copied = { "text/plain": text };
+        },
+        write: async (items: ClipboardItem[]) => {
+          const out: Record<string, string> = {};
+          for (const type of items[0].types)
+            out[type] = await (await items[0].getType(type)).text();
+          (window as any).copied = out;
+        },
+      },
+    });
+  });
   await seed(page, "Paste styles blocks", styled);
   const gutter = (await page.locator(".selection-gutter").boundingBox())!;
   const first = (await page
@@ -130,12 +145,26 @@ test("selected blocks paste with their formatting in another tab", async ({
   ).toContainText("2 selected");
   await page.keyboard.press("ControlOrMeta+c");
   await expect
-    .poll(() => page.evaluate(() => navigator.clipboard.readText()))
-    .toContain("underlined");
-  // a fresh tab has none of this tab's memory: only the system clipboard
+    .poll(() => page.evaluate(() => Object.keys((window as any).copied ?? {})))
+    .toContain("text/html");
+  const copied: Record<string, string> = await page.evaluate(
+    () => (window as any).copied,
+  );
+  expect(copied["text/plain"]).toContain("underlined");
+  // a fresh tab has none of this tab's memory: only what was on the clipboard
   const other = await context.newPage();
   await other.goto(page.url());
   await other.locator('[data-id="target"] .bn-inline-content').click();
-  await other.keyboard.press("ControlOrMeta+v");
+  await other.locator(".tiptap").evaluate((root, data) => {
+    const transfer = new DataTransfer();
+    for (const [type, value] of Object.entries(data))
+      transfer.setData(type, value);
+    const event = new ClipboardEvent("paste", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, "clipboardData", { value: transfer });
+    root.dispatchEvent(event);
+  }, copied);
   await expectStylesCopied(other);
 });

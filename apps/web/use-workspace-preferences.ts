@@ -71,6 +71,15 @@ export function useWorkspacePreferences() {
       JSON.stringify(formattingShortcuts),
     );
   }, [formattingShortcuts]);
+  // shortcuts changed in another tab apply here too, without a reload
+  useEffect(() => {
+    const changed = (event: StorageEvent) => {
+      if (event.key === "lotion-formatting-shortcuts")
+        setFormattingShortcuts(readFormattingShortcuts(localStorage));
+    };
+    window.addEventListener("storage", changed);
+    return () => window.removeEventListener("storage", changed);
+  }, []);
   useEffect(() => {
     const media = matchMedia("(prefers-color-scheme: dark)");
     const changed = () => setSystemDark(media.matches);

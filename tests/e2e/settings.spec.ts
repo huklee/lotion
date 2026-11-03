@@ -415,3 +415,155 @@ test("top-right wide page toggle switches and remembers the page width", async (
   await page.getByRole("button", { name: "Wide page" }).click();
   await expect(html).toHaveAttribute("data-page-width", "comfortable");
 });
+
+test("color shortcuts recorded in the control panel apply, switch and clear colours", async ({
+  page,
+}) => {
+  await seed(page, "Shortcut colours", [
+    {
+      id: "shortcut-colours",
+      type: "paragraph",
+      content: [{ type: "text", text: "Alpha Beta Gamma", styles: {} }],
+    },
+  ]);
+  // record Red = Mod+Shift+1 and Blue = Mod+Alt+B in the control panel
+  await page
+    .getByRole("button", { name: "Control panel", exact: true })
+    .click();
+  const panel = page.getByRole("dialog", { name: "Control panel" });
+  await panel.getByLabel("Red preset shortcut").focus();
+  await page.keyboard.press("ControlOrMeta+Shift+1");
+  await expect(panel.getByLabel("Red preset shortcut")).not.toHaveValue("");
+  await panel.getByLabel("Blue preset shortcut").focus();
+  await page.keyboard.press("ControlOrMeta+Alt+B");
+  await expect(panel.getByLabel("Blue preset shortcut")).not.toHaveValue("");
+  await panel.getByLabel("Default colors shortcut").focus();
+  await page.keyboard.press("ControlOrMeta+Alt+0");
+  await expect(panel.getByLabel("Default colors shortcut")).not.toHaveValue("");
+  await panel.getByRole("button", { name: "Close dialog" }).click();
+  await expect(panel).toBeHidden();
+
+  const line = page.locator('[data-id="shortcut-colours"] .bn-inline-content');
+  const colour = (word: string, kind: string, value: string) =>
+    line
+      .locator(`[data-style-type="${kind}"][data-value="${value}"]`)
+      .filter({ hasText: word });
+  // applies without a reload
+  await selectInlineWord(line, "Alpha");
+  await page.keyboard.press("ControlOrMeta+Shift+1");
+  await expect(colour("Alpha", "textColor", "red")).toHaveCount(1);
+  await expect(colour("Alpha", "backgroundColor", "red")).toHaveCount(1);
+  // another preset on the same word replaces both colours
+  await selectInlineWord(line, "Alpha");
+  await page.keyboard.press("ControlOrMeta+Alt+B");
+  await expect(colour("Alpha", "textColor", "blue")).toHaveCount(1);
+  await expect(colour("Alpha", "backgroundColor", "blue")).toHaveCount(1);
+  await expect(colour("Alpha", "textColor", "red")).toHaveCount(0);
+  // repeat last applies the last preset (blue) elsewhere
+  await selectInlineWord(line, "Gamma");
+  await page.keyboard.press("ControlOrMeta+Shift+H");
+  await expect(colour("Gamma", "textColor", "blue")).toHaveCount(1);
+  // Default clears both colours
+  await selectInlineWord(line, "Alpha");
+  await page.keyboard.press("ControlOrMeta+Alt+0");
+  await expect(
+    line.locator("[data-style-type]").filter({ hasText: "Alpha" }),
+  ).toHaveCount(0);
+  await expect(colour("Gamma", "backgroundColor", "blue")).toHaveCount(1);
+});
+
+test("color shortcuts match the physical key on Mac Option, Shift+digit and Korean input", async ({
+  page,
+}) => {
+  await seed(page, "Shortcut keys", [
+    {
+      id: "shortcut-keys",
+      type: "paragraph",
+      content: [{ type: "text", text: "One Two Three", styles: {} }],
+    },
+  ]);
+  await page.evaluate(() =>
+    localStorage.setItem(
+      "lotion-formatting-shortcuts",
+      JSON.stringify({
+        colorPresets: {
+          red: "Mod+Alt+R",
+          green: "Mod+Shift+2",
+          purple: "Mod+Alt+P",
+        },
+        repeatLast: "Mod+Shift+H",
+      }),
+    ),
+  );
+  await page.reload();
+  const line = page.locator('[data-id="shortcut-keys"] .bn-inline-content');
+  type Press = {
+    key: string;
+    code: string;
+    altKey?: boolean;
+    shiftKey?: boolean;
+  };
+  const press = (init: Press) =>
+    line.evaluate((el, init) => {
+      const mac = navigator.platform.includes("Mac");
+      el.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          metaKey: mac,
+          ctrlKey: !mac,
+          ...init,
+        }),
+      );
+    }, init);
+  // ⌥ on a Mac turns R into "®"
+  await selectInlineWord(line, "One");
+  await press({ key: "®", code: "KeyR", altKey: true });
+  await expect(
+    line.locator('[data-style-type="textColor"][data-value="red"]'),
+  ).toContainText("One");
+  // Shift+2 reports "@"
+  await selectInlineWord(line, "Two");
+  await press({ key: "@", code: "Digit2", shiftKey: true });
+  await expect(
+    line.locator('[data-style-type="textColor"][data-value="green"]'),
+  ).toContainText("Two");
+  // Korean input reports "ㅔ" for P
+  await selectInlineWord(line, "Three");
+  await press({ key: "ㅔ", code: "KeyP", altKey: true });
+  await expect(
+    line.locator('[data-style-type="textColor"][data-value="purple"]'),
+  ).toContainText("Three");
+});
+
+test("a color shortcut changed in one tab works in an open tab without a reload", async ({
+  page,
+  context,
+}) => {
+  await seed(page, "Shortcut tabs", [
+    {
+      id: "shortcut-tabs",
+      type: "paragraph",
+      content: [{ type: "text", text: "Other tab word", styles: {} }],
+    },
+  ]);
+  const other = await context.newPage();
+  await other.goto(page.url());
+  const line = other.locator('[data-id="shortcut-tabs"] .bn-inline-content');
+  await expect(line).toContainText("Other tab word");
+  // assign Orange = Mod+Alt+O in the first tab
+  await page
+    .getByRole("button", { name: "Control panel", exact: true })
+    .click();
+  const panel = page.getByRole("dialog", { name: "Control panel" });
+  await panel.getByLabel("Orange preset shortcut").focus();
+  await page.keyboard.press("ControlOrMeta+Alt+O");
+  await expect(panel.getByLabel("Orange preset shortcut")).not.toHaveValue("");
+  // the second tab, untouched since it loaded, uses it
+  await other.bringToFront();
+  await selectInlineWord(line, "word");
+  await other.keyboard.press("ControlOrMeta+Alt+O");
+  await expect(
+    line.locator('[data-style-type="textColor"][data-value="orange"]'),
+  ).toContainText("word");
+});
