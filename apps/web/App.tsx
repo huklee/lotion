@@ -24,7 +24,7 @@ import { WorkspaceSidebar } from "./WorkspaceSidebar";
 import type { ImportMode, WorkspaceDialogKind } from "./workspace.types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { set } from "idb-keyval";
-import { readSetting, readDraft, writeDraft } from "./storage-compat";
+import { readDraft, writeDraft } from "./storage-compat";
 import { X } from "lucide-react";
 import type { Document, TreeNode } from "../../packages/document-schema/index";
 import { api, ApiError, startSession, upgradeLegacyToken } from "./api";
@@ -34,7 +34,6 @@ import { InlineRowEditor } from "./InlineRowEditor";
 import { VersionButton } from "./VersionPanel";
 import { refreshNotifications } from "./NotificationBell";
 import { SummaryToasts, useSummaryJobs } from "./summaries";
-import { readBoolean } from "./preferences";
 import {
   blockIdFromHash,
   directBlockUrl,
@@ -44,23 +43,18 @@ import {
 import { applicationFavicon, pageFavicon, setFavicon } from "./favicon";
 import type { SearchResult } from "../../packages/search/index";
 import { matchShortcut } from "./keyboard-layout";
+import { prefs } from "./browser-prefs";
 
-const sessionId = readSetting(sessionStorage, "session") ?? crypto.randomUUID();
-sessionStorage.setItem("lotion-session", sessionId);
+const sessionId = prefs.get("session", "session") ?? crypto.randomUUID();
+prefs.set("session", sessionId, "session");
 const draftKey = (id: string) => `lotion-draft:${sessionId}:${id}`;
 /** Favorites kept by an older version in this browser; uploaded to the server once. */
-const favoritesKey = "lotion-favorites";
 function readLocalFavorites(): string[] {
-  try {
-    const value: unknown = JSON.parse(
-      localStorage.getItem(favoritesKey) ?? "[]",
-    );
-    return Array.isArray(value)
+  return prefs.json<string[]>("favorites", [], (value) =>
+    Array.isArray(value)
       ? [...new Set(value.filter((id): id is string => typeof id === "string"))]
-      : [];
-  } catch {
-    return [];
-  }
+      : null,
+  );
 }
 export default function App() {
   const {
@@ -82,20 +76,12 @@ export default function App() {
   const isMobile = useMediaQuery("(max-width: 650px)");
   const [mobileView, setMobileView] = useState<"page" | "tree">("page");
   // The left panel can be minimized to an icon rail (remembered in this browser).
-  const [sidebarMini, setSidebarMini] = useState(() => {
-    try {
-      return localStorage.getItem("lotion-sidebar-mini") === "1";
-    } catch {
-      return false;
-    }
-  });
+  const [sidebarMini, setSidebarMini] = useState(
+    () => prefs.get("sidebar-mini") === "1",
+  );
   const toggleSidebarMini = () =>
     setSidebarMini((mini) => {
-      try {
-        localStorage.setItem("lotion-sidebar-mini", mini ? "0" : "1");
-      } catch {
-        /* per-browser convenience */
-      }
+      prefs.set("sidebar-mini", mini ? "0" : "1");
       return !mini;
     });
   // Favorites are shared by every browser and device (stored on the server).
@@ -108,11 +94,7 @@ export default function App() {
         await api(`/api/favorites/${encodeURIComponent(id)}`, {
           method: "PUT",
         }).catch(() => undefined);
-      try {
-        localStorage.removeItem(favoritesKey);
-      } catch {
-        /* nothing to clean up */
-      }
+      prefs.remove("favorites");
     }
     const { ids } = await api<{ ids: string[] }>("/api/favorites");
     setFavorites(ids);
@@ -140,7 +122,7 @@ export default function App() {
     cancelFlash = useRef<(() => void) | null>(null),
     [collapsed, setCollapsed] = useState<Set<string>>(new Set()),
     [sidebar, setSidebar] = useState(() =>
-      readBoolean(localStorage, "sidebar-on-start", true),
+      prefs.bool("sidebar-on-start", true),
     ),
     [dialog, setDialog] = useState<WorkspaceDialogKind | null>(null),
     [importMode, setImportMode] = useState<ImportMode>("auto"),

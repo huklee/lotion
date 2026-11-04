@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { prefs } from "../browser-prefs";
 
 /**
  * How issues in focus (Focus now, or a deadline within 24 h) are drawn. A
@@ -10,28 +11,15 @@ export type FocusEffect = (typeof FOCUS_EFFECTS)[number];
 export const FOCUS_SPEEDS = ["slow", "normal", "fast"] as const;
 export type FocusSpeed = (typeof FOCUS_SPEEDS)[number];
 
-const EFFECT_KEY = "lotion-focus-effect";
-const SPEED_KEY = "lotion-focus-speed";
+const EFFECT_PREF = "focus-effect";
+const SPEED_PREF = "focus-speed";
 const SECONDS: Record<FocusSpeed, number> = { slow: 9, normal: 6, fast: 3 };
 const CHANGED = "lotion:focus-effect";
 
-function read<T extends string>(
-  key: string,
-  choices: readonly T[],
-  fallback: T,
-): T {
-  try {
-    const value = localStorage.getItem(key);
-    return choices.includes(value as T) ? (value as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 export function focusPreference() {
   return {
-    effect: read(EFFECT_KEY, FOCUS_EFFECTS, "orbit"),
-    speed: read(SPEED_KEY, FOCUS_SPEEDS, "normal"),
+    effect: prefs.choice(EFFECT_PREF, FOCUS_EFFECTS, "orbit"),
+    speed: prefs.choice(SPEED_PREF, FOCUS_SPEEDS, "normal"),
   };
 }
 
@@ -49,12 +37,8 @@ export function setFocusPreference(change: {
   speed?: FocusSpeed;
 }) {
   const next = { ...(current ?? focusPreference()), ...change };
-  try {
-    localStorage.setItem(EFFECT_KEY, next.effect);
-    localStorage.setItem(SPEED_KEY, next.speed);
-  } catch {
-    // private window: the choice lasts for this page only
-  }
+  prefs.set(EFFECT_PREF, next.effect);
+  prefs.set(SPEED_PREF, next.speed);
   applyFocusEffect(next);
   window.dispatchEvent(new Event(CHANGED));
 }

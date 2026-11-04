@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.58.5 — 2026-11-04
+
+### Fixed
+
+- **Lotion opens when the browser refuses site storage.** Some private windows, and browsers set to block site data, make every storage access fail. With that, the workspace did not load at all (no editor). Now the workspace loads and works normally:
+  - documents load, edit and save as usual;
+  - preference changes (theme, page width…) apply for that page, but cannot be remembered.
+
+### Changed
+
+- Browser preferences (theme, fonts, page width, sidebar, shortcuts, last database view, focus effect, paste engine, seen version, session) are read and written through one module, `browser-prefs.ts`. Saved settings keep their names, including the migration from the old `yestion-` names.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.58.4 — 2026-11-04 · [#84](https://github.com/huklee/lotion/pull/84)
 
 ### Fixed

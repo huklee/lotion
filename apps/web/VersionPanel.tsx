@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { prefs } from "./browser-prefs";
 import changelogSource from "../../docs/changelog.md?raw";
 import {
   compareVersions,
@@ -11,16 +12,12 @@ import {
 
 const REPO = "https://github.com/huklee/lotion";
 const DOCS = `${REPO}/blob/main/docs/`;
-const SEEN_KEY = "lotion-seen-version";
+const SEEN = "seen-version";
 
 export const APP_VERSION = __LOTION_VERSION__;
 
 function readSeen(): string {
-  try {
-    return localStorage.getItem(SEEN_KEY) ?? "";
-  } catch {
-    return "";
-  }
+  return prefs.get(SEEN) ?? "";
 }
 
 function Inline({ text }: { text: string }) {
@@ -86,11 +83,7 @@ export function VersionButton() {
 
   useEffect(() => {
     if (!open) return;
-    try {
-      localStorage.setItem(SEEN_KEY, APP_VERSION);
-    } catch {
-      /* the dot simply stays */
-    }
+    prefs.set(SEEN, APP_VERSION);
     setSeen(APP_VERSION);
     const key = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);

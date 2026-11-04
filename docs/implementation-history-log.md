@@ -1,5 +1,18 @@
 # Implementation history log
 
+## 2026-11-04T11:30:00+09:00 — 0.58.5 refactoring C-2: one module for browser preferences
+
+- **`apps/web/browser-prefs.ts`:**
+  - `safeStorage(area)` is a Storage wrapper that never throws. It uses the browser's storage when allowed; values the browser refuses to store (blocked, full quota) are kept in page memory. That memory is cleared by a later successful write or a removal, so it never shadows another tab's changes.
+  - `prefs.get/set/remove/choice/bool/json/setJson` take names without the `lotion-` prefix, and `readSetting` still migrates `yestion-` keys.
+- **Moved off direct `localStorage`/`sessionStorage`:**
+  - `App.tsx`: session id at module load, sidebar-mini, local favorites, sidebar-on-start;
+  - `use-workspace-preferences.ts`: all reads and writes, and the cross-tab `storage` listener;
+  - `DatabaseBlock` (last view), `VersionPanel` (seen version), `issues/focus-effect`, `paste/engine-choice`;
+  - `api.ts` (session token) and `Editor.tsx` (token check, last color style).
+- **Unchanged:** `selected-block-clipboard.ts` (it already guards its own access) and the IndexedDB draft code in `storage-compat.ts`.
+- **Cause of the crash:** module-level `sessionStorage` access in `App.tsx`, and unguarded `readChoice(localStorage, …)` in `useWorkspacePreferences`, threw when storage access was refused.
+
 ## 2026-11-04T10:00:00+09:00 — 0.58.4 refactoring C-1: modifier shortcuts by physical key
 
 - **`keyboard-layout.ts`:**
