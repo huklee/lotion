@@ -1,3 +1,4 @@
+import { documentBlocks } from "./editor-blocks";
 import { prefs } from "./browser-prefs";
 import {
   createContext,
@@ -63,7 +64,7 @@ function pageId(href: string) {
  */
 function linkAtPageEnd(editor: any, page: Document) {
   try {
-    const blocks = editor.document as any[];
+    const blocks = documentBlocks(editor);
     const last = blocks[blocks.length - 1];
     const link = {
       type: "paragraph",

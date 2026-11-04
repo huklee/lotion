@@ -1,5 +1,24 @@
 # Implementation history log
 
+## 2026-11-05T10:00:00+09:00 — 0.58.6 refactoring C-3: typed editor adapter
+
+- **`apps/web/editor-blocks.ts`:**
+  - types: `LotionEditor`, `EditorBlocks`/`EditorBlock` (what `replaceBlocks` accepts);
+  - conversions: `documentBlocks(editor)`, `toEditorBlocks`, `toEditorBlock`, `fromEditorBlock`;
+  - `EMPTY_DOCUMENT` (frozen) and `replaceDocument(editor, blocks)`.
+
+  These are the only casts between `packages/document-schema` `Block` and BlockNote's schema-generic block types, which describe the same JSON but cannot be assigned to each other.
+- **Callers:**
+  - `Editor.tsx`: 8 `editor.document as unknown as Block[]`, 2 structured-paste replacements, the move `replaceBlocks`, `initialContent`, `blockToNode`;
+  - `use-block-selection.ts`, which also loses its local `ReplacementBlocks` type;
+  - `DragHandleMenu.tsx`: Delete, Create issue;
+  - `DatabaseBlock.tsx`.
+- **Left as they are:**
+  - casts on new partial blocks without ids (`use-editor-suggestions.tsx`) and on inline content;
+  - `merge-content.ts`, `App.tsx` `webkitdirectory`;
+  - the paste engines (part of refactoring A).
+- **Counts in `apps/web`:** `as unknown as` 15 → 5 (3 of them in the adapter) and `as any` 16 → 11.
+
 ## 2026-11-04T11:30:00+09:00 — 0.58.5 refactoring C-2: one module for browser preferences
 
 - **`apps/web/browser-prefs.ts`:**

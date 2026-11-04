@@ -12,8 +12,12 @@ import {
 } from "@blocknote/react";
 import { SideMenuExtension } from "@blocknote/core/extensions";
 import { useContext, type ReactNode } from "react";
-import type { Block } from "../../packages/document-schema/index";
 import { removeBlocksPreservingHierarchy } from "../../packages/editor-adapter/movement";
+import {
+  documentBlocks,
+  fromEditorBlock,
+  replaceDocument,
+} from "./editor-blocks";
 import { BlockIssueContext, createIssueFromBlock } from "./issues/block-issue";
 
 /** "Create issue": an issue titled by the block, linked back to it. */
@@ -31,7 +35,7 @@ function CreateIssueItem() {
       className="bn-menu-item"
       onClick={() => {
         const current = editor.getBlock(block.id) ?? block;
-        void createIssueFromBlock(current as any, page);
+        void createIssueFromBlock(fromEditorBlock(current), page);
       }}
     >
       Create issue
@@ -61,16 +65,13 @@ function DeleteKeepingChildren({ children }: { children: ReactNode }) {
           selection && selection.some((b) => b.id === block.id)
             ? selection
             : [block];
-        const current = editor.document as unknown as Block[];
+        const current = documentBlocks(editor);
         const next = removeBlocksPreservingHierarchy(
           current,
           targets.map((b) => b.id),
         );
         if (next === current) return;
-        editor.replaceBlocks(
-          editor.document,
-          (next.length ? next : [{ type: "paragraph" }]) as any,
-        );
+        replaceDocument(editor, next);
       }}
     >
       {children}

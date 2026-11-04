@@ -1,5 +1,13 @@
 # Test results
 
+## 2026-11-05T10:00:00+09:00 — 0.58.6 refactoring C-3: typed editor adapter
+
+Focused:
+- New `tests/unit/editor-blocks.test.ts` with `movement.test.ts`: **19/19**. The adapter passes blocks through unchanged, `replaceDocument` replaces the whole document, and an empty result becomes one empty paragraph (a frozen constant).
+- Editor-related e2e suites (`block-selection`, `editor-blocks`, `database`, `clipboard`, `paste-styles`, `issues-integration`): **118 passed**, 2 skipped (real-clipboard cases outside Chromium), across Chromium, Firefox and WebKit. They cover delete/cut/move of selected blocks, handle-menu Delete and Create issue, structured paste, and databases.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **333/333**; Playwright **418/418**. Remote CI results are recorded on the pull request.
+
 ## 2026-11-04T11:30:00+09:00 — 0.58.5 refactoring C-2: one module for browser preferences
 
 Focused:
