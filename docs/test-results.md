@@ -1,5 +1,21 @@
 # Test results
 
+## 2026-11-04T11:30:00+09:00 — 0.58.5 refactoring C-2: one module for browser preferences
+
+Focused:
+- New `tests/unit/browser-prefs.test.ts`, with `preferences`, `storage-compat` and `format-shortcuts`: **15/15**. The new cases cover:
+  - `lotion-` keys and `yestion-` migration;
+  - choice, boolean and JSON validation;
+  - blocked storage, which never throws and keeps values for the page;
+  - refused writes (full quota, then denied);
+  - no stale page copy after another tab clears a key;
+  - session and local values kept apart.
+- New `tests/e2e/blocked-storage.spec.ts` **3/3** across Chromium, Firefox and WebKit. Every Storage method throws SecurityError, and the test checks the block is in effect. The document loads, edits and saves, and page width and theme changes apply, with no storage errors on the page.
+  - On the previous code the editor never rendered.
+- Existing settings and legacy-rename tests (`settings.spec.ts`) pass unchanged as part of the full check.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **330/330**; Playwright **418/418**. Remote CI results are recorded on the pull request.
+
 ## 2026-11-04T10:00:00+09:00 — 0.58.4 refactoring C-1: modifier shortcuts by physical key
 
 Focused:

@@ -7,6 +7,7 @@ import { EditorInteractionOverlays } from "./EditorInteractionOverlays";
 import { LotionSideMenu } from "./DragHandleMenu";
 import { handleBackspace } from "./backspace";
 import { matchShortcut } from "./keyboard-layout";
+import { prefs, safeStorage } from "./browser-prefs";
 import {
   FormattingToolbarController,
   SuggestionMenuController,
@@ -209,10 +210,7 @@ export default function Editor({
     initialContent: normalizedInitial.content.blocks as any,
     uploadFile: upload,
     resolveFileUrl: async (url) => {
-      if (
-        !url.startsWith("/api/assets/") ||
-        !sessionStorage.getItem("lotion-token")
-      )
+      if (!url.startsWith("/api/assets/") || !prefs.get("token", "session"))
         return url;
       const response = await fetch(url, { headers: authHeaders() });
       if (!response.ok) throw new Error("Attachment unavailable");
@@ -223,7 +221,7 @@ export default function Editor({
   });
   const objectUrls = useRef<string[]>([]);
   const lastColorStyle = useRef<AppliedColorPreset | null>(
-    readLastColorStyle(sessionStorage),
+    readLastColorStyle(safeStorage("session")),
   );
   const mounted = useRef(true);
   const host = useRef<HTMLDivElement>(null);
@@ -258,7 +256,7 @@ export default function Editor({
   const [uploadState, setUploadState] = useState("");
   const rememberColorStyle = useCallback((style: AppliedColorPreset) => {
     lastColorStyle.current = style;
-    writeLastColorStyle(sessionStorage, style);
+    writeLastColorStyle(safeStorage("session"), style);
   }, []);
   const applyColorStyle = useCallback(
     (style: AppliedColorPreset) => {

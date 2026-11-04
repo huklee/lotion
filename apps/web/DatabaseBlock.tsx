@@ -1,3 +1,4 @@
+import { prefs } from "./browser-prefs";
 import {
   createContext,
   useCallback,
@@ -109,23 +110,15 @@ export function DatabaseBlock({ block, editor }: { block: any; editor: any }) {
       return [defaultView()];
     }
   }, [block.props.views, state.columns]);
-  const viewKey = `lotion-database-view:${block.id}`;
-  const [activeId, setActiveId] = useState<string>(() => {
-    try {
-      return localStorage.getItem(viewKey) ?? "";
-    } catch {
-      return "";
-    }
-  });
+  const viewPref = `database-view:${block.id}`;
+  const [activeId, setActiveId] = useState<string>(
+    () => prefs.get(viewPref) ?? "",
+  );
   const active: DatabaseView =
     views.find((view) => view.id === activeId) ?? views[0];
   const selectView = (id: string) => {
     setActiveId(id);
-    try {
-      localStorage.setItem(viewKey, id);
-    } catch {
-      /* per-viewer convenience only */
-    }
+    prefs.set(viewPref, id);
   };
   const section = useRef<HTMLElement>(null);
   // Clicks on the database's own controls (tabs, menus, feed entries) must not reach

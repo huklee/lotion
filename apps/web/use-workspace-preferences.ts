@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  readBoolean,
-  readChoice,
   type ThemeMode,
   type EditorFont,
   type PageWidth,
@@ -10,11 +8,11 @@ import {
 } from "./preferences";
 import { readFormattingShortcuts } from "./format-shortcuts";
 import { applyColorPalette, type ColorScheme } from "./color-palette";
+import { prefs, safeStorage } from "./browser-prefs";
 
 export function useWorkspacePreferences() {
   const [themeMode, setThemeMode] = useState<ThemeMode>(
-    readChoice<ThemeMode>(
-      localStorage,
+    prefs.choice<ThemeMode>(
       "theme",
       ["system", "light", "dark", "black"],
       "system",
@@ -24,29 +22,19 @@ export function useWorkspacePreferences() {
     matchMedia("(prefers-color-scheme: dark)").matches,
   );
   const [sidebarOnStart, setSidebarOnStart] = useState(() =>
-    readBoolean(localStorage, "sidebar-on-start", true),
+    prefs.bool("sidebar-on-start", true),
   );
   const [editorFont, setEditorFont] = useState<EditorFont>(() =>
-    readChoice(localStorage, "editor-font", editorFonts, "dm-sans"),
+    prefs.choice("editor-font", editorFonts, "dm-sans"),
   );
   const [editorTextSize, setEditorTextSize] = useState<EditorTextSize>(() =>
-    readChoice(
-      localStorage,
-      "editor-text-size",
-      ["small", "medium", "large"],
-      "medium",
-    ),
+    prefs.choice("editor-text-size", ["small", "medium", "large"], "medium"),
   );
   const [pageWidth, setPageWidth] = useState<PageWidth>(() =>
-    readChoice(
-      localStorage,
-      "page-width",
-      ["comfortable", "wide"],
-      "comfortable",
-    ),
+    prefs.choice("page-width", ["comfortable", "wide"], "comfortable"),
   );
   const [formattingShortcuts, setFormattingShortcuts] = useState(() =>
-    readFormattingShortcuts(localStorage),
+    readFormattingShortcuts(safeStorage()),
   );
   const colorScheme: ColorScheme =
     themeMode === "system" ? (systemDark ? "dark" : "light") : themeMode;
@@ -54,28 +42,25 @@ export function useWorkspacePreferences() {
   useEffect(() => {
     document.documentElement.dataset.theme = colorScheme;
     applyColorPalette(document.documentElement, colorScheme);
-    localStorage.setItem("lotion-theme", themeMode);
+    prefs.set("theme", themeMode);
   }, [colorScheme, themeMode]);
   useEffect(() => {
     document.documentElement.dataset.editorFont = editorFont;
     document.documentElement.dataset.editorTextSize = editorTextSize;
     document.documentElement.dataset.pageWidth = pageWidth;
-    localStorage.setItem("lotion-editor-font", editorFont);
-    localStorage.setItem("lotion-editor-text-size", editorTextSize);
-    localStorage.setItem("lotion-page-width", pageWidth);
-    localStorage.setItem("lotion-sidebar-on-start", String(sidebarOnStart));
+    prefs.set("editor-font", editorFont);
+    prefs.set("editor-text-size", editorTextSize);
+    prefs.set("page-width", pageWidth);
+    prefs.set("sidebar-on-start", String(sidebarOnStart));
   }, [editorFont, editorTextSize, pageWidth, sidebarOnStart]);
   useEffect(() => {
-    localStorage.setItem(
-      "lotion-formatting-shortcuts",
-      JSON.stringify(formattingShortcuts),
-    );
+    prefs.setJson("formatting-shortcuts", formattingShortcuts);
   }, [formattingShortcuts]);
   // shortcuts changed in another tab apply here too, without a reload
   useEffect(() => {
     const changed = (event: StorageEvent) => {
       if (event.key === "lotion-formatting-shortcuts")
-        setFormattingShortcuts(readFormattingShortcuts(localStorage));
+        setFormattingShortcuts(readFormattingShortcuts(safeStorage()));
     };
     window.addEventListener("storage", changed);
     return () => window.removeEventListener("storage", changed);
