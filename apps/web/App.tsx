@@ -43,6 +43,7 @@ import {
 } from "./block-links";
 import { applicationFavicon, pageFavicon, setFavicon } from "./favicon";
 import type { SearchResult } from "../../packages/search/index";
+import { matchShortcut } from "./keyboard-layout";
 
 const sessionId = readSetting(sessionStorage, "session") ?? crypto.randomUUID();
 sessionStorage.setItem("lotion-session", sessionId);
@@ -533,7 +534,7 @@ export default function App() {
   }
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if (matchShortcut(e, "Mod+K")) {
         e.preventDefault();
         setSearch((open) => {
           if (!open)
@@ -542,7 +543,7 @@ export default function App() {
           return !open;
         });
       }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+      if (matchShortcut(e, "Mod+S")) {
         e.preventDefault();
         for (const c of coordinators.current.values()) void c.flush();
       }

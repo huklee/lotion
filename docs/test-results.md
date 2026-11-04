@@ -1,5 +1,20 @@
 # Test results
 
+## 2026-11-04T10:00:00+09:00 — 0.58.4 refactoring C-1: modifier shortcuts by physical key
+
+Focused:
+- `tests/unit/keyboard-layout.test.ts`, `format-shortcuts.test.ts`, `issue-keys.test.ts`: **18/18**. New cases cover:
+  - `physicalKey`: Korean, ⌥, "Process", Shift+digit, numpad, punctuation, NumpadEnter, arrows, no code;
+  - `shortcutOf`;
+  - `matchShortcut`: exact modifiers, several specs, spec order, unknown modifier names.
+- New `tests/e2e/shortcuts-korean.spec.ts` **6/6** across Chromium, Firefox and WebKit. With Korean keydowns:
+  - ⌘S saves and ⌘K opens search, while ⌘⇧K does not toggle it;
+  - ⌘C and ⌘X on selected blocks copy and cut.
+
+  Both cases failed on the previous build.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **324/324**; Playwright **415/415**. Remote CI results are recorded on the pull request.
+
 ## 2026-11-03T10:00:00+09:00 — 0.58.3 color shortcuts by physical key
 
 Focused:

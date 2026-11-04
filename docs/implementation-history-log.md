@@ -1,5 +1,19 @@
 # Implementation history log
 
+## 2026-11-04T10:00:00+09:00 — 0.58.4 refactoring C-1: modifier shortcuts by physical key
+
+- **`keyboard-layout.ts`:**
+  - `physicalKey(event)`: letters and digits from `code` (`KeyR` → R, `Digit2`/`Numpad2` → 2), the unshifted mark for punctuation codes, `NumpadEnter` → Enter, named keys as they are, and a `key` fallback without a code.
+  - `shortcutOf(event)`: builds a "Mod+Alt+Shift+K" string.
+  - `matchShortcut(event, ...specs)`: exact modifiers, order-insensitive spec, case-insensitive key.
+  - `latinKey` stays for single-key commands that care about the typed character (issue board, g-shortcuts).
+- **`format-shortcuts.ts`:** its private `shortcutKey` is replaced by `physicalKey`/`shortcutOf`; stored shortcuts are unchanged.
+- **Call sites moved from `event.key` checks:**
+  - App: ⌘K, ⌘S
+  - Editor: ⌘Z twice, ⌘C/⌘X on selected blocks, ⌘Enter on checklists, ⌥⇧↑/↓
+  - IssuePanel: ⌘Enter
+- **Unchanged:** plain named-key checks (Escape, Enter, arrows, Backspace, Tab), which do not depend on the layout.
+
 ## 2026-11-03T10:00:00+09:00 — 0.58.3 color shortcuts by physical key
 
 - **Cause:** `shortcutFromKeyboardEvent` (`format-shortcuts.ts`) built the shortcut from `event.key`, used both when recording in the Control panel and when matching in the editor. ⌥ on macOS, Shift+digits and Korean IME change `key` ("®", "@", "ㄱ"/"Process"), so those combinations returned null (not recordable) or never matched. Preferences were read once per tab, so another open tab kept the old shortcuts.
