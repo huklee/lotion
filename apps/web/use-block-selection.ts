@@ -6,9 +6,9 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from "react";
-import type { Block } from "../../packages/document-schema/index";
 import { removeBlockSubtrees } from "../../packages/editor-adapter/movement";
 import { editorSchema } from "./editor-schema";
+import { documentBlocks, replaceDocument } from "./editor-blocks";
 import {
   rectangleFromPoints,
   rectanglesIntersect,
@@ -18,7 +18,6 @@ import {
 import type { ViewportBlockBox } from "./editor-overlays.types";
 
 type LotionEditor = typeof editorSchema.BlockNoteEditor;
-type ReplacementBlocks = Parameters<LotionEditor["replaceBlocks"]>[1];
 
 type UseBlockSelectionOptions = {
   editor: LotionEditor;
@@ -48,16 +47,11 @@ export function useBlockSelection({
   const selectionDragActive = useRef(false);
 
   const deleteSelected = useCallback(() => {
-    const current = editor.document as unknown as Block[];
+    const current = documentBlocks(editor);
     // a selected block goes with its nested blocks: they are highlighted with
     // it, and copy/cut/move take them too
     const next = removeBlockSubtrees(current, selected);
-    if (next !== current) {
-      const replacement = (next.length
-        ? next
-        : [{ type: "paragraph" }]) as unknown as ReplacementBlocks;
-      editor.replaceBlocks(editor.document, replacement);
-    }
+    if (next !== current) replaceDocument(editor, next);
     setSelected([]);
     editor.focus();
   }, [editor, selected]);

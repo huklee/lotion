@@ -2,6 +2,14 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.58.6 — 2026-11-05
+
+### Changed
+
+- **Internal: one typed place converts between saved blocks and the editor's.** No visible change. The block conversions that were spread over the editor, block selection, the handle menu and databases now go through `editor-blocks.ts`. This includes replacing the whole document, which keeps one empty paragraph when everything is removed. Casts that hid type errors in those files drop from 31 to 14 in `apps/web`.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.58.5 — 2026-11-04 · [#85](https://github.com/huklee/lotion/pull/85)
 
 ### Fixed

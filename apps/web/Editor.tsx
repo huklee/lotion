@@ -9,6 +9,12 @@ import { handleBackspace } from "./backspace";
 import { matchShortcut } from "./keyboard-layout";
 import { prefs, safeStorage } from "./browser-prefs";
 import {
+  documentBlocks,
+  replaceDocument,
+  toEditorBlock,
+  toEditorBlocks,
+} from "./editor-blocks";
+import {
   FormattingToolbarController,
   SuggestionMenuController,
   useCreateBlockNote,
@@ -85,10 +91,6 @@ import {
   writeLastColorStyle,
   type AppliedColorPreset,
 } from "./last-color-style";
-
-type EditorReplacementBlocks = Parameters<
-  (typeof editorSchema.BlockNoteEditor)["replaceBlocks"]
->[1];
 
 function pageIdFromHref(href: string): string | null {
   const direct = pageIdFromHash(href);
@@ -207,7 +209,7 @@ export default function Editor({
         },
       }),
     ],
-    initialContent: normalizedInitial.content.blocks as any,
+    initialContent: toEditorBlocks(normalizedInitial.content.blocks),
     uploadFile: upload,
     resolveFileUrl: async (url) => {
       if (!url.startsWith("/api/assets/") || !prefs.get("token", "session"))
@@ -329,7 +331,7 @@ export default function Editor({
   useEffect(() => {
     if (normalizedInitial.changed && !migrationSent.current) {
       migrationSent.current = true;
-      onChange(editor.document as unknown as Block[]);
+      onChange(documentBlocks(editor));
     }
   }, [editor, normalizedInitial.changed, onChange]);
   const pendingUploads = useRef(new Set<string>());
@@ -369,16 +371,16 @@ export default function Editor({
     return () => window.removeEventListener("keydown", undo, true);
   });
   function applyMove(target: string, side: "before" | "after") {
-    const blocks = editor.document as unknown as Block[];
+    const blocks = documentBlocks(editor);
     const next = moveBlocks(blocks, selected, target, side);
     if (next !== blocks) {
-      editor.transact(() => editor.replaceBlocks(editor.document, next as any));
+      editor.transact(() => replaceDocument(editor, next));
       requestAnimationFrame(() => editor.focus());
     }
     setSelected([]);
   }
   function directionalMove(direction: "up" | "down") {
-    const blocks = editor.document as unknown as Block[];
+    const blocks = documentBlocks(editor);
     const indices = blocks
       .map((b, i) => (selected.includes(b.id) ? i : -1))
       .filter((i) => i >= 0);
@@ -391,10 +393,7 @@ export default function Editor({
   }
   const copySelectedBlocks = useCallback(
     async (cut: boolean) => {
-      const blocks = selectedBlockSubtrees(
-        editor.document as unknown as Block[],
-        selected,
-      );
+      const blocks = selectedBlockSubtrees(documentBlocks(editor), selected);
       if (!blocks.length) return;
       try {
         const markdown = toMarkdown(blocks).markdown;
@@ -497,10 +496,7 @@ export default function Editor({
         (event.target as HTMLElement).closest("input, textarea, select")
       )
         return;
-      const ids = checklistIdsInSubtrees(
-        editor.document as unknown as Block[],
-        selected,
-      );
+      const ids = checklistIdsInSubtrees(documentBlocks(editor), selected);
       if (!toggleChecklists(ids)) return;
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -855,13 +851,10 @@ export default function Editor({
                 (!Array.isArray(current.content) ||
                   current.content.length === 0)
               )
-                editor.replaceBlocks(
-                  [current],
-                  structured as unknown as EditorReplacementBlocks,
-                );
+                editor.replaceBlocks([current], toEditorBlocks(structured));
               else
                 editor.insertBlocks(
-                  structured as unknown as EditorReplacementBlocks,
+                  toEditorBlocks(structured),
                   current,
                   "after",
                 );
@@ -913,7 +906,7 @@ export default function Editor({
               },
               inserted.map((block) =>
                 blockToNode(
-                  block as any,
+                  toEditorBlock(block),
                   tiptap.schema,
                   editor.schema.styleSchema,
                 ).toJSON(),
@@ -996,8 +989,8 @@ export default function Editor({
               setSelected(
                 // the section with everything nested in it (deleting it removes all)
                 withDescendants(
-                  editor.document as unknown as Block[],
-                  sectionIds(editor.document as unknown as Block[], current.id),
+                  documentBlocks(editor),
+                  sectionIds(documentBlocks(editor), current.id),
                 ),
               );
             }}
@@ -1084,7 +1077,7 @@ export default function Editor({
           formattingToolbar={false}
           slashMenu={false}
           sideMenu={false}
-          onChange={() => onChange(editor.document as unknown as Block[])}
+          onChange={() => onChange(documentBlocks(editor))}
         >
           <LotionSideMenu />
           <FormattingToolbarController
