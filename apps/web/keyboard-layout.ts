@@ -34,3 +34,72 @@ export function latinKey(event: KeyLike): string {
   if (mark) return mark[shiftKey ? 1 : 0];
   return key;
 }
+
+/**
+ * Shortcuts with modifiers (⌘K, ⌘⇧Z, ⌥⇧↑…), by physical key as well.
+ *
+ * - `latinKey` (above) is for single-key commands that care about the typed
+ *   character, e.g. "?" or "G" with Shift.
+ * - `physicalKey` / `matchShortcut` are for modifier shortcuts: modifiers
+ *   change what a key types (⌥R types "®" on a Mac, Shift+2 types "@", Korean
+ *   input types "ㄱ" or "Process"), but `code` stays the same.
+ */
+export type ShortcutLike = KeyLike & {
+  metaKey?: boolean;
+  ctrlKey?: boolean;
+  altKey?: boolean;
+};
+
+/**
+ * The key part of a shortcut: "A"–"Z", "0"–"9", the unshifted punctuation
+ * mark, or a named key ("Enter", "Escape", "ArrowUp"…). Falls back to `key`
+ * when the browser gives no `code`.
+ */
+export function physicalKey(event: KeyLike): string {
+  const { key, code = "" } = event;
+  const letter = /^Key([A-Z])$/.exec(code);
+  if (letter) return letter[1];
+  const digit = /^(?:Digit|Numpad)([0-9])$/.exec(code);
+  if (digit) return digit[1];
+  if (code === "NumpadEnter") return "Enter";
+  const mark = PUNCTUATION[code];
+  if (mark) return mark[0];
+  if (key.length > 1 && key !== "Process" && key !== "Unidentified") return key;
+  return key.length === 1 ? key.toUpperCase() : key;
+}
+
+/** "Mod+Alt+Shift+K" for an event; Mod is ⌘ on a Mac and Ctrl elsewhere. */
+export function shortcutOf(event: ShortcutLike): string {
+  return [
+    event.metaKey || event.ctrlKey ? "Mod" : "",
+    event.altKey ? "Alt" : "",
+    event.shiftKey ? "Shift" : "",
+    physicalKey(event),
+  ]
+    .filter(Boolean)
+    .join("+");
+}
+
+/**
+ * Whether the event is exactly one of the shortcuts, e.g.
+ * `matchShortcut(event, "Mod+Z")` or `matchShortcut(event, "Alt+Shift+ArrowUp",
+ * "Alt+Shift+ArrowDown")`. Modifiers must match exactly (⌘⇧Z is not ⌘Z), and
+ * the key is compared case-insensitively ("Mod+k" is "Mod+K").
+ */
+export function matchShortcut(
+  event: ShortcutLike,
+  ...shortcuts: string[]
+): boolean {
+  const pressed = shortcutOf(event).toLowerCase();
+  return shortcuts.some((shortcut) => {
+    const parts = shortcut.split("+");
+    const key = parts.pop() ?? "";
+    const order = ["Mod", "Alt", "Shift"].filter((m) => parts.includes(m));
+    if (order.length !== parts.length) return false; // unknown modifier name
+    return (
+      [...order, key.length === 1 ? key.toUpperCase() : key]
+        .join("+")
+        .toLowerCase() === pressed
+    );
+  });
+}

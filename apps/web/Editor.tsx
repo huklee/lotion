@@ -6,6 +6,7 @@ import { LinkPreviewCard } from "./LinkPreviewCard";
 import { EditorInteractionOverlays } from "./EditorInteractionOverlays";
 import { LotionSideMenu } from "./DragHandleMenu";
 import { handleBackspace } from "./backspace";
+import { matchShortcut } from "./keyboard-layout";
 import {
   FormattingToolbarController,
   SuggestionMenuController,
@@ -360,11 +361,7 @@ export default function Editor({
   }, [cancelPaste]);
   useEffect(() => {
     const undo = (event: KeyboardEvent) => {
-      if (
-        (event.metaKey || event.ctrlKey) &&
-        event.key.toLowerCase() === "z" &&
-        pendingUploads.current.size
-      ) {
+      if (matchShortcut(event, "Mod+Z") && pendingUploads.current.size) {
         event.preventDefault();
         event.stopImmediatePropagation();
         cancelPendingUploads();
@@ -432,18 +429,15 @@ export default function Editor({
     if (!selected.length) return;
     const copyOrCut = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
-      const key = event.key.toLowerCase();
+      const cut = matchShortcut(event, "Mod+X");
       if (
-        !(event.metaKey || event.ctrlKey) ||
-        event.altKey ||
-        event.shiftKey ||
-        (key !== "c" && key !== "x") ||
+        !(cut || matchShortcut(event, "Mod+C")) ||
         target.closest("input, textarea, select")
       )
         return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      void copySelectedBlocks(key === "x");
+      void copySelectedBlocks(cut);
     };
     window.addEventListener("keydown", copyOrCut, true);
     return () => window.removeEventListener("keydown", copyOrCut, true);
@@ -718,12 +712,7 @@ export default function Editor({
           applyColorStyle(lastColorStyle.current);
           return;
         }
-        if (
-          (e.ctrlKey || e.metaKey) &&
-          !e.altKey &&
-          !e.shiftKey &&
-          e.key === "Enter"
-        ) {
+        if (matchShortcut(e.nativeEvent, "Mod+Enter")) {
           if (toggleChecklists(checklistIdsInTextSelection())) {
             e.preventDefault();
             e.stopPropagation();
@@ -731,8 +720,7 @@ export default function Editor({
           }
         }
         if (
-          (e.metaKey || e.ctrlKey) &&
-          e.key.toLowerCase() === "z" &&
+          matchShortcut(e.nativeEvent, "Mod+Z") &&
           pendingUploads.current.size
         ) {
           e.preventDefault();
@@ -948,9 +936,11 @@ export default function Editor({
           return;
         if (e.key === "Escape") setSelected([]);
         if (
-          e.altKey &&
-          e.shiftKey &&
-          (e.key === "ArrowUp" || e.key === "ArrowDown")
+          matchShortcut(
+            e.nativeEvent,
+            "Alt+Shift+ArrowUp",
+            "Alt+Shift+ArrowDown",
+          )
         ) {
           e.preventDefault();
           directionalMove(e.key === "ArrowUp" ? "up" : "down");

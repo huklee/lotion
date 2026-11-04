@@ -4,6 +4,9 @@ Historical completed work lives in the [implementation history](implementation-h
 
 ## Completed user requests — 2026-10-22
 
+- [x] Refactoring C-1: one physical-key helper for modifier shortcuts; ⌘K, ⌘S, ⌘C/⌘X, ⌘Z and ⌘Enter work with Korean input (0.58.4).
+- [ ] Refactoring C-2: one module for browser preferences (localStorage).
+- [ ] Refactoring C-3: typed editor adapter instead of `as unknown as` casts.
 - [x] Color (text and background) shortcuts work with ⌥ on a Mac, Shift+digits and Korean input, and apply in every open tab (0.58.3).
 - [x] Backspace and cut on selected blocks remove their nested blocks too, instead of lifting them a level (0.58.2).
 - [x] Copying and pasting several blocks keeps underline, colours, highlights and other inline formatting (0.58.1).

@@ -1,5 +1,6 @@
 import { readSetting } from "./storage-compat";
 import { paletteColors } from "./color-palette";
+import { physicalKey, shortcutOf } from "./keyboard-layout";
 
 export const colorPresets = ["default", ...paletteColors] as const;
 
@@ -68,36 +69,11 @@ type ShortcutEvent = Pick<
   "altKey" | "ctrlKey" | "key" | "metaKey" | "shiftKey"
 > & { code?: string };
 
-/**
- * The key of a shortcut by its physical position (`code`), so recording and
- * matching agree whatever the key types: ⌥ on a Mac turns R into "®", Shift+2
- * types "@", and Korean input types "ㄱ" for R. Falls back to `key` when the
- * browser gives no code.
- */
-function shortcutKey(event: ShortcutEvent): string | null {
-  const code = event.code ?? "";
-  const letter = /^Key([A-Z])$/.exec(code);
-  if (letter) return letter[1];
-  const digit = /^(?:Digit|Numpad)([0-9])$/.exec(code);
-  if (digit) return digit[1];
-  if (code === "Enter" || code === "NumpadEnter" || event.key === "Enter")
-    return "Enter";
-  const key = event.key.length === 1 ? event.key.toUpperCase() : event.key;
-  return /^[A-Z0-9]$/.test(key) ? key : null;
-}
-
 export function shortcutFromKeyboardEvent(event: ShortcutEvent): string | null {
   if (!event.metaKey && !event.ctrlKey && !event.altKey) return null;
-  const key = shortcutKey(event);
-  if (!key) return null;
-  return [
-    event.metaKey || event.ctrlKey ? "Mod" : "",
-    event.altKey ? "Alt" : "",
-    event.shiftKey ? "Shift" : "",
-    key,
-  ]
-    .filter(Boolean)
-    .join("+");
+  // by physical key (see keyboard-layout.ts); only letters, digits and Enter
+  if (!/^(?:[A-Z0-9]|Enter)$/.test(physicalKey(event))) return null;
+  return shortcutOf(event);
 }
 
 export function matchesFormattingShortcut(

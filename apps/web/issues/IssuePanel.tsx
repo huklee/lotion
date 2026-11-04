@@ -29,6 +29,7 @@ import {
 } from "../../../packages/issues/model";
 import { issuesApi } from "./issues-api";
 import { DatePicker } from "../DatePicker";
+import { matchShortcut } from "../keyboard-layout";
 import { IssueNoteItem, enterSubmits } from "./IssueNoteItem";
 import { labelColor } from "./board-order";
 
@@ -630,7 +631,7 @@ export function IssuePanel({
           }}
           onKeyDown={(event) => {
             // ⌘/Ctrl+Enter saves and shows the rendered description
-            if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+            if (matchShortcut(event.nativeEvent, "Mod+Enter")) {
               event.preventDefault();
               event.currentTarget.blur();
             }

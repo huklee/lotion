@@ -2,6 +2,23 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.58.4 — 2026-11-04
+
+### Fixed
+
+- **Shortcuts work with Korean input.** With Korean (or another non-Latin) input active, these did nothing, because the browser reports the Korean character instead of the letter:
+  - ⌘/Ctrl+K (search) and ⌘/Ctrl+S (save);
+  - ⌘/Ctrl+C and ⌘/Ctrl+X on selected blocks;
+  - ⌘/Ctrl+Z (cancel pending uploads).
+
+  Every shortcut with ⌘/Ctrl, ⌥/Alt or Shift now follows the physical key, the same way the color shortcuts already did.
+
+### Changed
+
+- One shared helper for modifier shortcuts (`matchShortcut` in `keyboard-layout.ts`). Modifiers match exactly, so for example ⌘⇧K no longer also opens search.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.58.3 — 2026-11-03 · [#83](https://github.com/huklee/lotion/pull/83)
 
 ### Fixed
