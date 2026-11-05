@@ -1,5 +1,14 @@
 # Implementation history log
 
+## 2026-11-05T16:00:00+09:00 — 0.59.0 links to trashed pages are marked
+
+- **`apps/web/trashed-links.tsx`:**
+  - `trashedLinkCss(ids)` builds one stylesheet. Its selectors are `.bn-editor a[href*="#/page/<id>"]`, a contains-match that covers `#/page/<id>`, `#/page/<id>#block=…` and absolute URLs.
+  - The rules: opacity 0.7, line-through on plain links and on a mention chip's label (not its icon), and an "In Trash" `::after` badge (inline-block, so the strike does not run through it).
+  - Ids are escaped for the quoted attribute value.
+  - `TrashedLinkStyles` renders it from the tree's `deletedAt` pages; `App.tsx` mounts it once.
+- **Why CSS instead of changing link content:** documents stay untouched (restore needs no rewrite), and it reaches every editor instance (main, feeds, inline row editors) without passing the tree into BlockNote's inline content renderers.
+
 ## 2026-11-05T14:00:00+09:00 — 0.58.7 Esc closes suggestion menus during IME composition
 
 - **Cause:** BlockNote's suggestion-menu plugin handles Escape through ProseMirror's keydown handling, which skips keys while an IME composition is active. With Korean input the last syllable stays composing, so the menu ignored Esc.

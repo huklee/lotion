@@ -2,6 +2,14 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.59.0 — 2026-11-05
+
+### Added
+
+- **Links to trashed pages say so.** On any page, links to a page that is in the Trash are dimmed and struck through, with an **In Trash** badge. This covers page chips and plain links, in the main editor, meeting feeds and inline row editors. Restore the page and its links look normal again. The documents themselves are not changed.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.58.7 — 2026-11-05 · [#87](https://github.com/huklee/lotion/pull/87)
 
 ### Fixed

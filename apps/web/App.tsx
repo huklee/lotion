@@ -44,6 +44,7 @@ import { applicationFavicon, pageFavicon, setFavicon } from "./favicon";
 import type { SearchResult } from "../../packages/search/index";
 import { matchShortcut } from "./keyboard-layout";
 import { prefs } from "./browser-prefs";
+import { TrashedLinkStyles } from "./trashed-links";
 
 const sessionId = prefs.get("session", "session") ?? crypto.randomUUID();
 prefs.set("session", sessionId, "session");
@@ -729,6 +730,7 @@ export default function App() {
         onIssues={showIssues}
         onChanges={showChanges}
       />
+      <TrashedLinkStyles pages={tree} />
       <RowPagesContext.Provider
         value={{
           load: (id) => api<Document>(`/api/documents/${id}`),
