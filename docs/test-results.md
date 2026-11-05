@@ -1,5 +1,15 @@
 # Test results
 
+## 2026-11-05T14:00:00+09:00 — 0.58.7 Esc closes suggestion menus during IME composition
+
+Focused:
+- New `tests/e2e/suggestion-escape.spec.ts` **6/6** across Chromium, Firefox and WebKit:
+  - "/hea" then Esc closes the menu, keeps the text, and typing on does not reopen it;
+  - Esc while composing "제" after "/" closes the menu. Chromium uses real IME composition through CDP and failed on the previous build; Firefox and WebKit use a composing keydown;
+  - "@" then Esc closes the mention menu.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **333/333**; Playwright **424/424**. Remote CI results are recorded on the pull request.
+
 ## 2026-11-05T10:00:00+09:00 — 0.58.6 refactoring C-3: typed editor adapter
 
 Focused:

@@ -33,7 +33,7 @@ import {
 } from "./selected-block-clipboard";
 import { DatePicker } from "./DatePicker";
 import { FileReferencePicker } from "./FileReferencePicker";
-import { blockToNode } from "@blocknote/core";
+import { blockToNode, SuggestionMenu } from "@blocknote/core";
 import { contentSchema } from "../../packages/document-schema/index";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -682,6 +682,18 @@ export default function Editor({
       onKeyDownCapture={(e) => {
         if ((e.target as HTMLElement).closest("input, textarea, select"))
           return;
+        // Esc closes the / @ [[ menu, also while a Korean (IME) character is
+        // still being composed — the editor ignores keys then, so the menu
+        // stayed open. The typed text stays, as with an ordinary Esc.
+        if (e.key === "Escape" || e.nativeEvent.code === "Escape") {
+          const menu = editor.getExtension(SuggestionMenu);
+          if (menu?.shown()) {
+            e.preventDefault();
+            e.stopPropagation();
+            menu.closeMenu();
+            return;
+          }
+        }
         const color = colorPresets.find((candidate) =>
           matchesFormattingShortcut(
             e.nativeEvent,

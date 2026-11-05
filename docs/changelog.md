@@ -2,6 +2,14 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.58.7 — 2026-11-05 · [#87](https://github.com/huklee/lotion/pull/87)
+
+### Fixed
+
+- **Esc closes the insert menu after typing Korean.** After "/" (or "@", "[["), typing Korean to search the menu kept it open whatever you did. The last syllable is still being composed, and the editor ignores keys until then, so Esc did nothing. Now Esc always closes the menu and leaves what you typed.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.58.6 — 2026-11-05 · [#86](https://github.com/huklee/lotion/pull/86)
 
 ### Changed
