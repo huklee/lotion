@@ -1,5 +1,19 @@
 # Test results
 
+## 2026-11-05T16:00:00+09:00 — 0.59.0 links to trashed pages are marked
+
+Focused:
+- New `tests/unit/trashed-links.test.ts` **3/3**:
+  - no rules for an empty Trash;
+  - selectors for chips, plain links and the badge, for each id;
+  - quotes in an id cannot break out of the selector.
+- New `tests/e2e/trashed-links.spec.ts` **3/3** across Chromium, Firefox and WebKit. A page holds a chip to page A, a chip to page B and a plain block link to A.
+  - After A is trashed, A's chip and plain link show "In Trash" and line-through, and B's chip does not.
+  - After A is restored, its links look normal.
+- The look was checked in a screenshot.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **336/336**; Playwright **427/427**. Remote CI results are recorded on the pull request.
+
 ## 2026-11-05T14:00:00+09:00 — 0.58.7 Esc closes suggestion menus during IME composition
 
 Focused:

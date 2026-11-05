@@ -4,6 +4,7 @@ Historical completed work lives in the [implementation history](implementation-h
 
 ## Completed user requests — 2026-10-22
 
+- [x] Links to pages in the Trash are shown struck through with an "In Trash" badge (0.59.0).
 - [x] Esc closes the / (insert) menu after typing Korean to search it (0.58.7).
 - [x] Refactoring C-1: one physical-key helper for modifier shortcuts; ⌘K, ⌘S, ⌘C/⌘X, ⌘Z and ⌘Enter work with Korean input (0.58.4).
 - [x] Refactoring C-2: one module for browser preferences; the app works when the browser refuses site storage (0.58.5).
