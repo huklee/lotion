@@ -1,5 +1,10 @@
 # Implementation history log
 
+## 2026-11-05T14:00:00+09:00 — 0.58.7 Esc closes suggestion menus during IME composition
+
+- **Cause:** BlockNote's suggestion-menu plugin handles Escape through ProseMirror's keydown handling, which skips keys while an IME composition is active. With Korean input the last syllable stays composing, so the menu ignored Esc.
+- **Fix:** `Editor.tsx` `onKeyDownCapture` checks `editor.getExtension(SuggestionMenu)?.shown()` on Escape (`key` or `code`, including composing keydowns) and calls `closeMenu()`, stopping the event. The typed query text is kept, as BlockNote's own Escape does.
+
 ## 2026-11-05T10:00:00+09:00 — 0.58.6 refactoring C-3: typed editor adapter
 
 - **`apps/web/editor-blocks.ts`:**
