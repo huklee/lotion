@@ -1415,3 +1415,26 @@
 .issue-due-button:hover {
   background: var(--hover);
 }
+.issue-toast.archive-undo kbd {
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 3px;
+  font: inherit;
+  font-size: 0.8em;
+  opacity: 0.8;
+}
+/* show/hide archived: an icon toggle beside the board menu */
+.issues-help.issues-archived-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.issues-help.issues-archived-toggle + .issues-menu-wrap {
+  margin-left: 0;
+}
+.issues-help.issues-archived-toggle.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}

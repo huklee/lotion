@@ -110,8 +110,7 @@ test("keyboard: v and ⇧V select, s / x apply to all, a archives, Delete asks f
   await expect(page.locator(".issue-card")).toHaveCount(0);
 
   // show archived, select all, delete for real with 1
-  await page.getByRole("button", { name: "Board menu" }).click();
-  await page.getByRole("menuitemcheckbox", { name: "Show archived" }).click();
+  await page.getByRole("button", { name: "Show archived issues" }).click();
   await expect(page.locator(".issue-card")).toHaveCount(3);
   await page.locator("body").click({ position: { x: 5, y: 5 } });
   await page.keyboard.press("Shift+V");
