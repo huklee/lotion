@@ -1,5 +1,15 @@
 # Implementation history log
 
+## 2026-11-16T10:00:00+09:00 — 0.60.0 archive Undo and header toggle
+
+- **`issues/ArchiveUndo.tsx`:** `ArchiveUndoToast` takes a batch `{ numbers, id }`.
+  - It shows "Archived #N" or "Archived N issues" with Undo and Dismiss.
+  - It closes after `ARCHIVE_UNDO_MS` (3000). Hover pauses the timer and leaving restarts it, and a new batch restarts it too.
+  - While shown, a capture-phase window keydown matching `Mod+Z` (`matchShortcut`) outside inputs and contenteditable areas undoes the archive.
+- **`IssuesView`:** `archive(numbers)` runs the bulk patch and offers Undo. It is used by the `a` key (when archiving), the bulk bar, and the Done column. For the column, the unarchived numbers are taken before `archiveColumn`. `IssuePanel` gets `onArchived(number)`, called after a successful archive patch.
+- **Undo** runs `bulk({ archived: false }, numbers)` and reloads.
+- **Header:** `.issues-archived-toggle` (lucide `Archive`) uses `aria-pressed` for Show archived. The ⋯ menu entry is removed.
+
 ## 2026-11-05T16:00:00+09:00 — 0.59.0 links to trashed pages are marked
 
 - **`apps/web/trashed-links.tsx`:**

@@ -82,6 +82,7 @@ export function IssuePanel({
   seq,
   focus,
   onChanged,
+  onArchived,
   onClose,
   onError,
   pages = [],
@@ -94,6 +95,8 @@ export function IssuePanel({
   seq: number;
   focus?: PanelFocus | null;
   onChanged: () => Promise<void>;
+  /** The issue was archived from the panel (the board offers Undo). */
+  onArchived?: (number: number) => void;
   onClose: () => void;
   onError: (error: unknown) => void;
   pages?: TreeNode[];
@@ -259,6 +262,7 @@ export function IssuePanel({
       dirty.current.delete(field);
       show(next);
       await onChanged();
+      if (field === "archived" && value === true) onArchived?.(number);
     } catch (error) {
       // a newer version exists: show it next to your edit and let you choose
       if (error instanceof ApiError && error.status === 409) {

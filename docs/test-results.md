@@ -1,5 +1,20 @@
 # Test results
 
+## 2026-11-16T10:00:00+09:00 — 0.60.0 archive Undo and header toggle
+
+Focused:
+- New `tests/e2e/issues-archive-undo.spec.ts` **15/15** across Chromium, Firefox and WebKit:
+  - `a` then ⌘Z restores the issue;
+  - the toast is gone after about 3 s, and ⌘Z then leaves the issue archived;
+  - bulk archive then Undo, where ⌘Z in the filter box is left to the box;
+  - panel Archive then Undo;
+  - Done column Archive then ⌘Z restores both issues;
+  - the header icon toggles archived issues (`aria-pressed`) and is no longer in the ⋯ menu.
+- Tests that used the menu entry now use the icon (`issues-bulk`, `issues-integration`, `issues-focus`). All issue suites: **84/84**.
+- The look was checked in a screenshot.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **336/336**; Playwright **442/442**. Remote CI results are recorded on the pull request.
+
 ## 2026-11-05T16:00:00+09:00 — 0.59.0 links to trashed pages are marked
 
 Focused:

@@ -6,7 +6,7 @@ import {
   useState,
   type DragEvent,
 } from "react";
-import { MessageSquare, MoreHorizontal, Plus, X } from "lucide-react";
+import { Archive, MessageSquare, MoreHorizontal, Plus, X } from "lucide-react";
 import type { TreeNode } from "../../../packages/document-schema/index";
 import { IssueSettings } from "./IssueSettings";
 import { KeyPicker } from "./KeyPicker";
@@ -39,6 +39,7 @@ import {
 import { goToIssues } from "./issues-route";
 import { latinKey } from "../keyboard-layout";
 import { IssuePanel, type PanelFocus } from "./IssuePanel";
+import { ArchiveUndoToast, type ArchivedBatch } from "./ArchiveUndo";
 import "./issues.css";
 
 const STATUS_COLOR: Record<string, string> = {
@@ -268,6 +269,17 @@ export function IssuesView({
     }
     await reload();
   };
+  // archive → a short Undo toast (and ⌘Z) for the issues just archived
+  const [archivedBatch, setArchivedBatch] = useState<ArchivedBatch | null>(
+    null,
+  );
+  const offerArchiveUndo = (numbers: number[]) => {
+    if (numbers.length) setArchivedBatch({ numbers, id: Date.now() });
+  };
+  const archive = async (numbers: number[]) => {
+    await runBulk({ archived: true }, numbers);
+    offerArchiveUndo(numbers);
+  };
   const allLabels = useMemo(
     () =>
       [...new Set((board?.issues ?? []).flatMap((i) => i.labels))].sort(
@@ -435,8 +447,11 @@ export function IssuesView({
           const allArchived = board.issues
             .filter((i) => numbers.includes(i.number))
             .every((i) => i.archivedAt);
-          void runBulk({ archived: !allArchived }, numbers);
-          if (!allArchived) setSelected(new Set());
+          if (allArchived) void runBulk({ archived: false }, numbers);
+          else {
+            void archive(numbers);
+            setSelected(new Set());
+          }
           break;
         }
         case "focusNow":
@@ -688,6 +703,17 @@ export function IssuesView({
               : board.issues.length}
           </span>
           <IssueStats board={board} now={now} />
+          <button
+            className={`issues-help issues-archived-toggle${showArchived ? " on" : ""}`}
+            aria-label="Show archived issues"
+            aria-pressed={showArchived}
+            title={
+              showArchived ? "Hide archived issues" : "Show archived issues"
+            }
+            onClick={() => setShowArchived((v) => !v)}
+          >
+            <Archive size={15} />
+          </button>
           <div className="issues-menu-wrap">
             <button
               className="issues-help"
@@ -708,16 +734,6 @@ export function IssuesView({
                   }}
                 >
                   Board settings…
-                </button>
-                <button
-                  role="menuitemcheckbox"
-                  aria-checked={showArchived}
-                  onClick={() => {
-                    setMenu(false);
-                    setShowArchived((v) => !v);
-                  }}
-                >
-                  {showArchived ? "Hide archived" : "Show archived"}
                 </button>
                 <a role="menuitem" href="/api/issues/export?format=md" download>
                   Export Markdown
@@ -872,9 +888,13 @@ export function IssuesView({
                         className="issues-archive"
                         title="Archive every issue in this column"
                         onClick={async () => {
+                          const numbers = items
+                            .filter((i) => !i.archivedAt)
+                            .map((i) => i.number);
                           try {
                             await issuesApi.archiveColumn(status.key);
                             await reload();
+                            offerArchiveUndo(numbers);
                           } catch (error) {
                             onError(error);
                           }
@@ -940,6 +960,7 @@ export function IssuesView({
           seq={board.seq}
           focus={panelFocus}
           onChanged={reload}
+          onArchived={(number) => offerArchiveUndo([number])}
           onClose={() => {
             goToIssues(null);
             focusCard(openNumber);
@@ -1053,6 +1074,11 @@ export function IssuesView({
             />
           );
         })()}
+      <ArchiveUndoToast
+        batch={archivedBatch}
+        onUndo={(numbers) => void runBulk({ archived: false }, numbers)}
+        onDone={() => setArchivedBatch(null)}
+      />
       {selected.size > 0 && (
         <BulkBar
           count={selected.size}
@@ -1062,7 +1088,7 @@ export function IssuesView({
             const anchor = { left: rect.left, top: rect.top - 8 };
             if (action === "focus") toggleFocus(numbers);
             else if (action === "archive") {
-              void runBulk({ archived: true }, numbers);
+              void archive(numbers);
               setSelected(new Set());
             } else setPicker({ kind: action, numbers, anchor });
           }}

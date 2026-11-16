@@ -2,6 +2,22 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.60.0 — 2026-11-16
+
+### Added
+
+- **Undo after archiving issues.** After archiving, a small toast at the bottom says what was archived and offers **Undo** for 3 seconds. Hovering it keeps it open. **⌘/Ctrl+Z** in that time undoes the archive too, except while typing in a text field, which keeps its own undo. This works for:
+  - archiving a card with `a`;
+  - several selected issues;
+  - the issue panel's Archive button;
+  - the Done column's Archive.
+
+### Changed
+
+- **Show archived is an icon in the board header.** The archive icon beside ⋯ shows or hides archived issues and stays highlighted while they are shown. It is no longer in the ⋯ menu.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.59.0 — 2026-11-05 · [#88](https://github.com/huklee/lotion/pull/88)
 
 ### Added

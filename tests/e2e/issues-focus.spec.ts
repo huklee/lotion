@@ -315,13 +315,11 @@ test("+1d and +7d move the deadline; archived cards are dashed and only shown on
     data: { archived: true },
   });
   await expect(card(page, later)).toHaveCount(0, { timeout: 12000 });
-  await page.getByRole("button", { name: "Board menu" }).click();
-  await page.getByRole("menuitemcheckbox", { name: "Show archived" }).click();
+  await page.getByRole("button", { name: "Show archived issues" }).click();
   await expect(card(page, later)).toBeVisible();
   await expect(card(page, later)).toHaveClass(/archived/);
   await expect(card(page, later)).toHaveCSS("border-top-style", "dashed");
   await expect(card(page, plain)).toHaveCSS("border-top-style", "solid");
-  await page.getByRole("button", { name: "Board menu" }).click();
-  await page.getByRole("menuitemcheckbox", { name: "Hide archived" }).click();
+  await page.getByRole("button", { name: "Show archived issues" }).click();
   await expect(card(page, later)).toHaveCount(0);
 });

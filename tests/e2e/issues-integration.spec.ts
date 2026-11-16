@@ -100,7 +100,9 @@ test("archive the Done column, board settings, export menu and stats", async ({
       name: "Export Markdown",
     }),
   ).toHaveAttribute("href", "/api/issues/export?format=md");
-  await page.getByRole("menuitemcheckbox", { name: "Show archived" }).click();
+  // close the board menu, then show archived issues with the header icon
+  await page.getByRole("button", { name: "Board menu" }).click();
+  await page.getByRole("button", { name: "Show archived issues" }).click();
   await expect(card).toBeVisible();
 
   // label rename in board settings
