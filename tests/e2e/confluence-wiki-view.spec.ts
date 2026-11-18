@@ -168,7 +168,9 @@ test("export: Download .txt saves the wiki markup; Copy wiki markup puts it on t
     page.waitForEvent("download"),
     view(page).getByRole("button", { name: "Download .txt" }).click(),
   ]);
-  expect(download.suggestedFilename().normalize("NFC")).toBe(
+  // browsers may tidy the suggested name: WebKit decomposes Hangul (NFD) on
+  // macOS and turns spaces into "_" on Linux
+  expect(download.suggestedFilename().normalize("NFC").replace(/_/g, " ")).toBe(
     "주간 보고.confluence.txt",
   );
   expect(readFileSync((await download.path())!, "utf8")).toBe(expected);

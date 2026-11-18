@@ -17,6 +17,7 @@ Focused:
   - kept on reopen; Remove; Reset layout;
   - Download .txt gives the exact markup and file name;
   - Copy wiki markup gives the same text (Chromium clipboard).
+  - The download-name check accepts what browsers do to the suggested name: WebKit decomposes Hangul (NFD) on macOS and turns spaces into "_" on Linux, as seen in the first CI run.
 - `confluence.spec.ts` (existing Export preview) and `settings.spec.ts` pass: 43 passed, 2 skipped.
 - The look was checked in screenshots.
 
