@@ -1,5 +1,6 @@
 import {
   ArrowDownToLine,
+  BookOpen,
   Check,
   Copy,
   Maximize2,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import type { TreeNode } from "../../packages/document-schema/index";
 import { NotificationBell } from "./NotificationBell";
+import { useFeature } from "./features";
 
 type WorkspaceTopbarProps = {
   sidebar: boolean;
@@ -26,6 +28,8 @@ type WorkspaceTopbarProps = {
   status: string;
   favorite: boolean;
   onExport: () => void;
+  /** Opens the Confluence wiki view (shown when the feature is on). */
+  onConfluence?: () => void;
   onToggleFavorite: () => void;
   onDuplicate: () => void;
   onMove: () => void;
@@ -48,6 +52,7 @@ export function WorkspaceTopbar({
   status,
   favorite,
   onExport,
+  onConfluence,
   onToggleFavorite,
   onDuplicate,
   onMove,
@@ -55,6 +60,7 @@ export function WorkspaceTopbar({
   wide,
   onToggleWide,
 }: WorkspaceTopbarProps) {
+  const confluence = useFeature("confluence-view");
   return (
     <header className="topbar">
       <div className="breadcrumb">
@@ -108,6 +114,16 @@ export function WorkspaceTopbar({
               )}
               {status}
             </span>
+            {confluence && onConfluence && (
+              <button
+                className="quiet"
+                onClick={onConfluence}
+                title="See this page as a Confluence wiki page"
+              >
+                <BookOpen size={14} />
+                Confluence
+              </button>
+            )}
             <button className="quiet" onClick={onExport}>
               <ArrowDownToLine size={14} />
               Export

@@ -3400,3 +3400,182 @@ kbd {
 .calendar-quick button:hover {
   background: var(--hover);
 }
+
+/* Confluence wiki view: the open page as a Confluence page (always light,
+   like Confluence), with selectable blocks and Expand / panel macros */
+.cf-view {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+}
+.cf-view-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.cf-view-bar [role="tablist"] {
+  display: flex;
+  gap: 4px;
+}
+.cf-view-bar [role="tab"] {
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: var(--muted);
+}
+.cf-view-bar [role="tab"][aria-selected="true"] {
+  background: var(--hover);
+  color: var(--text);
+}
+.cf-view-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.cf-view-actions > button:not(.icon-button) {
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.cf-view-actions > button.primary {
+  border-color: #0052cc;
+  background: #0052cc;
+  color: #fff;
+}
+.cf-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--soft);
+}
+.cf-hint {
+  margin-right: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.cf-toolbar button {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  font-size: 13px;
+}
+.cf-toolbar button[aria-pressed="true"] {
+  border-color: #0052cc;
+  color: #0052cc;
+  font-weight: 600;
+}
+.cf-toolbar input {
+  width: 220px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+.cf-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 24px 16px 64px;
+  background: #f4f5f7;
+}
+.cf-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 40px;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(9 30 66 / 16%);
+  color: #172b4d;
+  font: 14px/1.714 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Noto Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+.cf-storage {
+  flex: 1;
+  margin: 0;
+  overflow: auto;
+  padding: 20px 24px;
+  font: 12.5px/1.6 "SF Mono", Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cf-page h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 500;
+}
+.cf-page h2 { margin: 24px 0 0; font-size: 20px; font-weight: 500; }
+.cf-page h3 { margin: 20px 0 0; font-size: 16px; font-weight: 600; }
+.cf-page h4, .cf-page h5, .cf-page h6 { margin: 16px 0 0; font-size: 14px; font-weight: 600; }
+.cf-page p { margin: 10px 0 0; }
+.cf-page ul, .cf-page ol { margin: 10px 0 0; padding-left: 24px; }
+.cf-page li > ul, .cf-page li > ol { margin-top: 2px; }
+.cf-page a { color: #0052cc; text-decoration: none; }
+.cf-page code { padding: 2px 4px; border-radius: 3px; background: #f4f5f7; font: 12px "SF Mono", Menlo, monospace; }
+.cf-page table { margin: 12px 0 0; border-collapse: collapse; }
+.cf-page th, .cf-page td { padding: 7px 10px; border: 1px solid #c1c7d0; text-align: left; vertical-align: top; }
+.cf-page th { background: #f4f5f7; font-weight: 600; }
+.cf-page blockquote { margin: 12px 0 0; padding-left: 16px; border-left: 2px solid #dfe1e6; color: #6b778c; }
+.cf-page hr { margin: 20px 0; border: 0; border-top: 1px solid #dfe1e6; }
+.cf-page img { max-width: 100%; }
+.cf-code { margin: 12px 0 0; overflow: auto; border: 1px solid #dfe1e6; border-radius: 3px; background: #f4f5f7; }
+.cf-code-title { padding: 6px 12px; border-bottom: 1px solid #dfe1e6; background: #ebecf0; font-size: 12px; font-weight: 600; }
+.cf-code pre { margin: 0; padding: 10px 12px; }
+.cf-code code { padding: 0; background: none; }
+.cf-toc { margin: 12px 0 0; padding: 8px 12px; border: 1px dashed #c1c7d0; border-radius: 3px; color: #6b778c; font-size: 12px; }
+.cf-icon { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; color: #fff; font-size: 11px; font-weight: 700; vertical-align: -3px; }
+.cf-tick { background: #36b37e; }
+.cf-cross { background: #de350b; }
+.cf-info-icon { background: #0065ff; font-style: italic; }
+.cf-warn { background: #ff991f; }
+/* each top-level block can be picked */
+.cf-unit {
+  margin: 0 -8px;
+  padding: 0 8px;
+  border-radius: 4px;
+  outline: 2px solid transparent;
+  cursor: pointer;
+}
+.cf-unit > :first-child { margin-top: 10px; }
+.cf-unit:hover { background: rgb(9 30 66 / 4%); }
+.cf-unit.selected { background: rgb(0 82 204 / 8%); outline-color: #4c9aff; }
+.cf-expand, .cf-panel {
+  margin: 12px 0 0;
+  border-radius: 3px;
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.cf-expand.selected, .cf-panel.selected { outline-color: #4c9aff; }
+.cf-expand { padding: 4px 8px 8px; border: 1px solid #dfe1e6; }
+.cf-expand-title { display: flex; align-items: center; gap: 4px; color: #42526e; font-weight: 500; }
+.cf-panel { padding: 8px 16px 12px; border: 1px solid transparent; }
+.cf-panel-title { font-weight: 600; }
+.cf-panel .cf-macro-body > .cf-unit:first-child > :first-child,
+.cf-panel .cf-macro-body > :first-child { margin-top: 4px; }
+.cf-info { background: #deebff; border-color: #b3d4ff; }
+.cf-note { background: #eae6ff; border-color: #c0b6f2; }
+.cf-warning { background: #fffae6; border-color: #ffe380; }
+.cf-tip { background: #e3fcef; border-color: #abf5d1; }
+.cf-panel:not(.cf-info):not(.cf-note):not(.cf-warning):not(.cf-tip) { background: #f4f5f7; border-color: #dfe1e6; }
+.cf-kind-info[aria-pressed="true"] { background: #deebff; }
+.cf-kind-note[aria-pressed="true"] { background: #eae6ff; }
+.cf-kind-warning[aria-pressed="true"] { background: #fffae6; }
+.cf-kind-tip[aria-pressed="true"] { background: #e3fcef; }
+/* list items are separate blocks: show a run of them as one list */
+.cf-unit:has(> :is(ul, ol):only-child) + .cf-unit > :is(ul, ol):only-child {
+  margin-top: 0;
+}

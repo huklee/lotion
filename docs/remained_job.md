@@ -4,6 +4,7 @@ Historical completed work lives in the [implementation history](implementation-h
 
 ## Completed user requests — 2026-10-22
 
+- [x] Confluence wiki view: the whole page in Confluence wiki markup, rendered, with Expand / Info / Note / Warning / Tip / Panel layout; copy or download the markup; entry point switchable in the Control panel, on by default (0.61.0).
 - [x] Archiving issues shows a 3-second Undo toast, and ⌘Z undoes it; Show archived is an icon in the board header (0.60.0).
 - [x] Links to pages in the Trash are shown struck through with an "In Trash" badge (0.59.0).
 - [x] Esc closes the / (insert) menu after typing Korean to search it (0.58.7).

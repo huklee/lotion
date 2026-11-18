@@ -1,5 +1,24 @@
 # Implementation history log
 
+## 2026-11-19T10:00:00+09:00 — 0.61.0 Confluence wiki view
+
+- **`packages/confluence/wiki-markup.ts`:**
+  - `joinBlocks(blocks, { linkBase })` converts Lotion blocks to Confluence wiki markup:
+    - headings, paragraphs, `*`/`#` lists with nested prefixes, to-dos with `(/)` / `( )`;
+    - `{code:language=…}`, `{quote}`, callout as `{info}`, tables `||h||` / `|c|`, `----`, `{toc}`, images `!url!`, links `[label|url]`; Lotion `#/page` links are made absolute with `linkBase`;
+    - inline `*` `_` `+` `-` marks, using the `{*}` form next to a word; `{{code}}`; `{color:x}`;
+    - backslash escapes for markup characters.
+  - `renderWikiMarkup` / `renderInline` render that subset to HTML. Escapes are held as placeholders, link hrefs are made safe, and text is HTML-escaped.
+- **`packages/confluence/wiki.ts`:** `renderWiki(title, blocks, wraps)` returns `h1. title`, then runs of plain blocks plus macro sections (`{expand:T}`, `{info:title=T}` …), with one part per top-level block for the view.
+  - Wrap edits: `addWrap` (replaces overlapping wraps), `updateWrap`, `removeWrap`, `validWraps` (drops stale ones), `defaultTitle`.
+  - An Expand over a heading takes the heading as its title and leaves it out of the body.
+- **`apps/web/ConfluenceWikiView.tsx`:** a full-screen dialog.
+  - Each unit's HTML is rendered from its own markup; units are selected by click or Shift-click; a layout toolbar with the macro title input and Remove.
+  - Tabs Wiki / Wiki markup; Copy wiki markup (`writeText`) and Download .txt (Blob).
+  - Wraps are stored per page in `prefs` (`confluence-wraps:<id>`). Esc clears the selection, then closes.
+- **`apps/web/features.tsx`:** feature switches in `prefs` (`feature-confluence-view`, default true), a `useFeature` hook (window event plus storage), and `FeatureSettings` rows. These are shown in a new Control panel **Features** section.
+- **Wiring:** `WorkspaceTopbar` shows the **Confluence** button when the feature is on. `App` opens the view with the current draft and closes it when another page opens.
+
 ## 2026-11-16T10:00:00+09:00 — 0.60.0 archive Undo and header toggle
 
 - **`issues/ArchiveUndo.tsx`:** `ArchiveUndoToast` takes a batch `{ numbers, id }`.
