@@ -1,5 +1,27 @@
 # Test results
 
+## 2026-11-19T10:00:00+09:00 — 0.61.0 Confluence wiki view
+
+Focused:
+- New `tests/unit/confluence-wiki.test.ts` **11/11**:
+  - markup for headings, lists (nested and numbered), to-dos;
+  - inline formats (including `{*}` next to a word, colour, code, links, page links made absolute) and escaping;
+  - code, quote, callout, table, divider;
+  - rendering, where escaped text stays text and unsafe hrefs are dropped;
+  - macros and tables;
+  - page markup with Info and Expand (heading as title), kind and title changes (unsafe title characters removed), overlap replacement, stale wraps dropped.
+- New `tests/e2e/confluence-wiki-view.spec.ts` **12/12** across Chromium, Firefox and WebKit:
+  - the Control panel switch (on by default, off hides the button and survives a reload);
+  - the view and its exact markup;
+  - click and Shift-click, then Info, Warning with a title, and Expand titled by the heading;
+  - kept on reopen; Remove; Reset layout;
+  - Download .txt gives the exact markup and file name;
+  - Copy wiki markup gives the same text (Chromium clipboard).
+- `confluence.spec.ts` (existing Export preview) and `settings.spec.ts` pass: 43 passed, 2 skipped.
+- The look was checked in screenshots.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **347/347**; Playwright **454/454**. Remote CI results are recorded on the pull request.
+
 ## 2026-11-16T10:00:00+09:00 — 0.60.0 archive Undo and header toggle
 
 Focused:

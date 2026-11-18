@@ -45,6 +45,7 @@ import type { SearchResult } from "../../packages/search/index";
 import { matchShortcut } from "./keyboard-layout";
 import { prefs } from "./browser-prefs";
 import { TrashedLinkStyles } from "./trashed-links";
+import { ConfluenceWikiView } from "./ConfluenceWikiView";
 
 const sessionId = prefs.get("session", "session") ?? crypto.randomUUID();
 prefs.set("session", sessionId, "session");
@@ -129,6 +130,9 @@ export default function App() {
     [importMode, setImportMode] = useState<ImportMode>("auto"),
     [notice, setNotice] = useState("");
   const [iconPicker, setIconPicker] = useState(false);
+  // the Confluence wiki view of the open page; closes when another page opens
+  const [confluenceView, setConfluenceView] = useState(false);
+  useEffect(() => setConfluenceView(false), [active?.id]);
   const [iconQuery, setIconQuery] = useState("");
   const coordinators = useRef(new Map<string, SaveCoordinator>()),
     loadNumber = useRef(0),
@@ -731,6 +735,17 @@ export default function App() {
         onChanges={showChanges}
       />
       <TrashedLinkStyles pages={tree} />
+      {confluenceView && active && (
+        <ConfluenceWikiView
+          pageId={active.id}
+          title={(coordinators.current.get(active.id)?.content ?? active).title}
+          blocks={
+            (coordinators.current.get(active.id)?.content ?? active).blocks
+          }
+          onClose={() => setConfluenceView(false)}
+          onCopied={setNotice}
+        />
+      )}
       <RowPagesContext.Provider
         value={{
           load: (id) => api<Document>(`/api/documents/${id}`),
@@ -772,6 +787,7 @@ export default function App() {
             status={status}
             favorite={!!active && favorites.includes(active.id)}
             onExport={() => setDialog("export")}
+            onConfluence={() => setConfluenceView(true)}
             onToggleFavorite={() => active && toggleFavorite(active.id)}
             onDuplicate={() => active && void duplicate(active.id)}
             onMove={() => setDialog("move")}

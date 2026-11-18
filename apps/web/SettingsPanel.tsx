@@ -1,4 +1,5 @@
 import { FocusEffectSettings } from "./issues/focus-effect";
+import { FeatureSettings } from "./features";
 import type {
   Dispatch,
   SetStateAction,
@@ -198,6 +199,10 @@ export function SettingsPanel({
       >
         Reset system and editor settings
       </button>
+      <h3 className="settings-heading">Features</h3>
+      <div className="settings-list">
+        <FeatureSettings />
+      </div>
       <h3 className="settings-heading">Formatting shortcuts</h3>
       <p className="settings-description">
         Focus a field and press a modifier shortcut. Backspace clears it.

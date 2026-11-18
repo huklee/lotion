@@ -2,6 +2,23 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.61.0 — 2026-11-19
+
+### Added
+
+- **Confluence wiki view.** The **Confluence** button in a page's top bar shows the whole page as a Confluence wiki page, written in **Confluence wiki markup**: `h2.`, `*bold*`, `* item`, `{code}`, `{expand}`, `{info}`, and so on. The rendered view is drawn from that markup.
+  - **Layout:**
+    - click a block, or Shift-click to select several, then choose **Expand**, **Info**, **Note**, **Warning**, **Tip** or **Panel**;
+    - click a macro to change its kind, edit its title, or **Remove** it;
+    - an Expand that starts with a heading takes the heading as its title;
+    - **Reset layout** removes them all.
+  - Layout choices are kept per page in this browser; the page itself is not changed.
+  - **Wiki markup** shows the source. **Copy wiki markup** puts it on the clipboard, and **Download .txt** saves it as `<title>.confluence.txt`.
+  - In wiki markup, checked to-dos are `(/)` and open ones `( )`. Text colours are kept (`{color}`); highlights are not, since wiki markup has none.
+- **Control panel → Features:** switches the Confluence entry point. It is on by default.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.60.0 — 2026-11-16 · [#89](https://github.com/huklee/lotion/pull/89)
 
 ### Added
