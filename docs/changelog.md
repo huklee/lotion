@@ -2,6 +2,27 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.62.0 — 2026-11-23 · [#91](https://github.com/huklee/lotion/pull/91)
+
+### Added
+
+- **⌘ shortcuts on the Issues board** (Ctrl on Windows and Linux). Unlike the single-letter board keys, they also work while typing in an issue's fields. They act on the selected cards, else the focused card, else the issue open in the panel.
+
+  | Shortcut | Action |
+  |---|---|
+  | ⌘⇧I | New issue (in the current card's column) |
+  | ⌘⇧D | Mark done (again: back to the first column) |
+  | ⌘⇧S / ⌘⇧P / ⌘⇧L | Status / priority picker, labels |
+  | ⌘⇧F | Focus now on / off |
+  | ⌘⇧1 / ⌘⇧7 | Deadline +1d / +7d |
+  | ⌘⇧E | Archive / unarchive (⌘Z undoes) |
+  | ⌘⇧K | Filter the board |
+
+  - Matched by physical key, so they work with Korean input. The board's **?** help lists them too.
+- **Control panel → Issue shortcuts:** focus a field and press a new ⌘ shortcut; Backspace clears it. A shortcut moved to another action is taken from the old one. Shortcuts kept for the browser or Lotion (⌘C, ⌘K, ⌘S, ⌘Z, ⌘W …) are refused with a note. **Reset issue shortcuts** restores the defaults. Changes apply to every open tab.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.61.0 — 2026-11-19 · [#90](https://github.com/huklee/lotion/pull/90)
 
 ### Added

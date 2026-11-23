@@ -1,5 +1,15 @@
 # Test results
 
+## 2026-11-23T10:00:00+09:00 — 0.62.0 Issue ⌘ shortcuts
+
+Focused:
+- New `tests/unit/issue-shortcuts.test.ts` **5/5**: defaults valid, distinct and not reserved; physical-key matching (Korean input, Ctrl, Shift+1); exact modifiers; assignment moves a shortcut; parsing drops reserved, modifier-less, malformed and duplicate values.
+- New `tests/e2e/issues-shortcuts.spec.ts` **18/18** (2 tests × 3 browsers × 3 repeats): while typing in the panel title, ⌘⇧F on/off, ⌘⇧1 then ⌘⇧7 (adds up), ⌘⇧D done with focus kept, ⌘⇧E archive, ⌘⇧K filter; Control panel refuses ⌘C, assigns ⌘⇧J, the old key stops working, kept after reload, reset.
+- First run found ⌘⇧1 then ⌘⇧7 counting from the stale board (Chromium); fixed by reading the issue and queueing shifts.
+- `issues-keyboard`, `issues-archive-undo`, `settings` pass unchanged.
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **352/352**; Playwright 457 passed, 17 skipped, and 3 failed. The failures were the version-panel test, because `dist` had been built before the version bump. After a rebuild it passed 3/3. Remote CI results are recorded on the pull request.
+
 ## 2026-11-19T10:00:00+09:00 — 0.61.0 Confluence wiki view
 
 Focused:
