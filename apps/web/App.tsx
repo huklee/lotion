@@ -19,6 +19,7 @@ import {
 } from "./issues/issues-route";
 import { flashBlockWhenRendered } from "./block-flash";
 import { useGoShortcuts } from "./use-go-shortcuts";
+import { useIssuesShortcut } from "./issues/issue-shortcuts";
 import { useWorkspaceTransfer } from "./use-workspace-transfer";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
 import type { ImportMode, WorkspaceDialogKind } from "./workspace.types";
@@ -177,6 +178,7 @@ export default function App() {
     announceRoute();
   }, []);
   useGoShortcuts({ h: showHome, i: () => showIssues() });
+  useIssuesShortcut(() => showIssues());
   useEffect(() => applyFocusEffect(), []);
   // on a phone, opening a page (or Home, Trash, Recent changes, Issues) shows the page view
   useEffect(() => {

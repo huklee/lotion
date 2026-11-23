@@ -2,6 +2,20 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.63.0 — 2026-11-23 · [#92](https://github.com/huklee/lotion/pull/92)
+
+### Changed
+
+- **⌘⇧I opens the Issues page** from any page, also while typing (Ctrl+Shift+I on Windows and Linux). `g i` still works outside text fields.
+- **Control panel → Issues shortcut** changes the shortcut:
+  - focus the field and press a new ⌘ shortcut;
+  - Backspace clears it, and **Reset Issues shortcut** restores ⌘⇧I.
+  - Shortcuts kept for the browser or Lotion (⌘C, ⌘K, ⌘I …) and formatting shortcuts are refused, with a note.
+  - Changes apply to every open tab.
+- The board ⌘ shortcuts of 0.62.0 are removed. They duplicated the Vimium-style board keys (`x`, `s`, `p`, `a`, …), which are unchanged.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.62.0 — 2026-11-23 · [#91](https://github.com/huklee/lotion/pull/91)
 
 ### Added

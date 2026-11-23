@@ -1,6 +1,6 @@
 import { FocusEffectSettings } from "./issues/focus-effect";
 import { FeatureSettings } from "./features";
-import { IssueShortcutSettings } from "./issues/issue-shortcuts";
+import { IssuesShortcutSetting } from "./issues/issue-shortcuts";
 import type {
   Dispatch,
   SetStateAction,
@@ -255,14 +255,12 @@ export function SettingsPanel({
       >
         Reset formatting shortcuts
       </button>
-      <h3 className="settings-heading">Issue shortcuts</h3>
+      <h3 className="settings-heading">Issues shortcut</h3>
       <p className="settings-description">
-        ⌘ (Ctrl) shortcuts on the Issues board; they also work while typing in
-        an issue&apos;s fields. They act on the selected cards, else the focused
-        card, else the issue open in the panel. Focus a field and press a new
-        shortcut; Backspace clears it.
+        A ⌘ (Ctrl) shortcut that opens the Issues page. Focus the field and
+        press a new one; Backspace clears it.
       </p>
-      <IssueShortcutSettings />
+      <IssuesShortcutSetting />
       <h3 className="settings-heading">Paste</h3>
       <label className="settings-row">
         <span>

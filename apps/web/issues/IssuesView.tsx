@@ -18,7 +18,6 @@ import {
   PRIORITY_NAMES,
   dueLabel,
   focusState,
-  shiftDue,
   matches,
   type IssueBoard,
   type IssueSummary,
@@ -41,14 +40,6 @@ import { goToIssues } from "./issues-route";
 import { latinKey } from "../keyboard-layout";
 import { IssuePanel, type PanelFocus } from "./IssuePanel";
 import { ArchiveUndoToast, type ArchivedBatch } from "./ArchiveUndo";
-import { displayShortcut } from "../format-shortcuts";
-import {
-  ISSUE_SHORTCUT_ACTIONS,
-  ISSUE_SHORTCUT_LABELS,
-  issueShortcutAction,
-  useIssueShortcuts,
-  type IssueShortcutAction,
-} from "./issue-shortcuts";
 import "./issues.css";
 
 const STATUS_COLOR: Record<string, string> = {
@@ -69,21 +60,6 @@ export const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   (target.isContentEditable ||
     ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
-
-/** The board key each ⌘ shortcut stands for (deadlines are handled apart). */
-const SHORTCUT_KEYS: Record<
-  Exclude<IssueShortcutAction, "dueDay" | "dueWeek">,
-  string
-> = {
-  newIssue: "c",
-  markDone: "x",
-  status: "s",
-  priority: "p",
-  labels: "t",
-  focusNow: "n",
-  archive: "a",
-  filter: "/",
-};
 
 const modalOpen = () =>
   !!document.querySelector('[role="dialog"][aria-modal="true"]');
@@ -180,7 +156,6 @@ export function IssuesView({
   const [settings, setSettings] = useState(false);
   const [menu, setMenu] = useState(false);
   const { board, setBoard, reload } = useIssueBoard(onError, showArchived);
-  const shortcuts = useIssueShortcuts();
   const [adding, setAdding] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [drag, setDrag] = useState<{
@@ -301,29 +276,6 @@ export function IssuesView({
   const offerArchiveUndo = (numbers: number[]) => {
     if (numbers.length) setArchivedBatch({ numbers, id: Date.now() });
   };
-  /**
-   * Each deadline moved by whole days (none yet: counts from today 23:59).
-   * Reads the current deadline from the server and runs presses in order, so
-   * ⌘⇧1 then ⌘⇧7 in quick succession adds up to 8 days.
-   */
-  const shiftQueue = useRef<Promise<void>>(Promise.resolve());
-  const shiftDeadlines = (numbers: number[], days: number) => {
-    shiftQueue.current = shiftQueue.current.then(async () => {
-      try {
-        for (const number of numbers) {
-          const issue = await issuesApi.get(number);
-          await issuesApi.bulk({
-            numbers: [number],
-            due: shiftDue(issue.due, days, Date.now()),
-          });
-        }
-      } catch (error) {
-        onError(error);
-      }
-      await reload();
-    });
-    return shiftQueue.current;
-  };
   const archive = async (numbers: number[]) => {
     await runBulk({ archived: true }, numbers);
     offerArchiveUndo(numbers);
@@ -384,29 +336,6 @@ export function IssuesView({
   // handled before the issue panel's own Escape (which closes the panel)
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      const shortcut = issueShortcutAction(event, shortcuts);
-      if (shortcut) {
-        // ⌘ shortcuts also work while typing in a field
-        if (
-          !board ||
-          picker ||
-          hints !== null ||
-          modalOpen() ||
-          (event.target instanceof Element &&
-            event.target.closest("[data-shortcut-capture]"))
-        )
-          return;
-        event.preventDefault();
-        event.stopPropagation();
-        if (shortcut === "dueDay" || shortcut === "dueWeek") {
-          const number = current();
-          if (number !== null)
-            void shiftDeadlines(targets(number), shortcut === "dueDay" ? 1 : 7);
-          return;
-        }
-        act(SHORTCUT_KEYS[shortcut]);
-        return;
-      }
       if (!board || picker || isTyping(event.target) || modalOpen()) return;
       if (hints !== null) {
         event.preventDefault();
@@ -444,33 +373,42 @@ export function IssuesView({
         setSelected(new Set());
         return;
       }
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
-      if (act(latinKey(event))) event.preventDefault();
-    };
-    /** The card keys act on: the focused card, else the one open in the panel. */
-    const current = () =>
-      focused !== null && hintOrder.includes(focused)
-        ? focused
-        : openNumber !== null && hintOrder.includes(openNumber)
-          ? openNumber
-          : null;
-    /** Run a board key (see issue-keys.ts); false when it does nothing here. */
-    const act = (key: string): boolean => {
-      if (!board) return false;
-      if (selected.size && key === "x") {
+      if (
+        selected.size &&
+        latinKey(event) === "x" &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey
+      ) {
         // x on a selection: all done, or all back to the first column
+        event.preventDefault();
         const last = board.statuses.at(-1)!.key;
         const all = [...selected];
         const allDone = board.issues
           .filter((i) => selected.has(i.number))
           .every((i) => i.status === last);
         void runBulk({ status: allDone ? board.statuses[0].key : last }, all);
-        return true;
+        return;
       }
-      // with no card focused, keys act on the issue open in the panel
-      const action = boardKey({ key }, layout, current());
-      if (!action) return false;
+      const action = boardKey(
+        {
+          key: latinKey(event),
+          shift: event.shiftKey,
+          meta: event.metaKey,
+          ctrl: event.ctrlKey,
+          alt: event.altKey,
+        },
+        layout,
+        // with no card focused, keys act on the issue open in the panel
+        focused !== null && hintOrder.includes(focused)
+          ? focused
+          : openNumber !== null && hintOrder.includes(openNumber)
+            ? openNumber
+            : null,
+      );
+      if (!action) return;
       // Enter on a focused link already opens it; let o / Enter share one path
+      event.preventDefault();
       switch (action.type) {
         case "help":
           setHelp(true);
@@ -558,7 +496,6 @@ export function IssuesView({
           });
           break;
       }
-      return true;
     };
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
@@ -575,7 +512,6 @@ export function IssuesView({
     picker,
     selected,
     move,
-    shortcuts,
   ]);
 
   if (!board)
@@ -910,17 +846,6 @@ export function IssuesView({
                     <kbd>{keys}</kbd>
                   </dt>
                   <dd>{what}</dd>
-                </div>
-              ))}
-              {ISSUE_SHORTCUT_ACTIONS.filter((a) => shortcuts[a]).map((a) => (
-                <div key={a}>
-                  <dt>
-                    <kbd>{displayShortcut(shortcuts[a])}</kbd>
-                  </dt>
-                  <dd>
-                    {ISSUE_SHORTCUT_LABELS[a][0]} (also while typing; change in
-                    the Control panel)
-                  </dd>
                 </div>
               ))}
             </dl>

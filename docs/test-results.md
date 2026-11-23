@@ -1,5 +1,23 @@
 # Test results
 
+## 2026-11-23T14:00:00+09:00 — 0.63.0 Open Issues shortcut
+
+Focused:
+- `tests/unit/issue-shortcuts.test.ts` (rewritten) **4/4**:
+  - the default is valid;
+  - physical key with Korean input, with Ctrl, and with Shift+digit;
+  - ⌘/Ctrl is required;
+  - reserved and formatting shortcuts are refused.
+- New `tests/e2e/issues-shortcut.spec.ts` **6/6** (3 browsers × 2 repeats):
+  - ⌘⇧I from the page title field opens Issues;
+  - the Control panel refuses ⌘C and the ⌘⇧H formatting shortcut;
+  - pressing ⌘⇧I in the capture field does not navigate;
+  - ⌘⇧J is assigned, after which the old key does nothing and the new one opens Issues;
+  - the new shortcut is kept after a reload, and Reset restores ⌘⇧I.
+- `settings.spec.ts` and `issues-keyboard.spec.ts` pass (96 runs in total with the above).
+
+Full `npm run check`: ESLint, strict TypeScript and the production build passed; Vitest **351/351**; Playwright **457 passed**, 17 skipped. Remote CI results are recorded on the pull request.
+
 ## 2026-11-23T10:00:00+09:00 — 0.62.0 Issue ⌘ shortcuts
 
 Focused:

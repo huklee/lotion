@@ -1,5 +1,16 @@
 # Implementation history log
 
+## 2026-11-23T14:00:00+09:00 — 0.63.0 Open Issues shortcut
+
+- The owner meant a shortcut to open the Issues page, not ⌘ versions of the board keys. `IssuesView.tsx` is back to its 0.61.0 state, and the board shortcut tests are removed.
+- **`apps/web/issues/issue-shortcuts.tsx`** now holds one shortcut:
+  - `DEFAULT_ISSUES_SHORTCUT` (`Mod+Shift+I`); `issuesShortcutOf` reads ⌘/Ctrl plus a letter or digit by physical key.
+  - `issuesShortcutProblem` refuses reserved shortcuts and the formatting shortcuts saved in this browser.
+  - `readIssuesShortcut` / `saveIssuesShortcut` use `prefs` (`issues-shortcut`) plus a window event.
+  - `useIssuesShortcut(open)` is a window capture listener that skips `[data-shortcut-capture]` fields.
+  - `IssuesShortcutSetting` is the Control panel row.
+- **`App.tsx`:** `useIssuesShortcut(() => showIssues())`, next to `g i`.
+
 ## 2026-11-23T10:00:00+09:00 — 0.62.0 Issue ⌘ shortcuts
 
 - **`apps/web/issues/issue-shortcuts.tsx`:** ten actions with ⌘⇧ defaults; `issueShortcutOf` (⌘/Ctrl + a letter or digit, by physical key), `issueShortcutAction`, `assignIssueShortcut` (moves a shortcut), `parseIssueShortcuts` (invalid, reserved or duplicate values fall back), `RESERVED_SHORTCUTS`.
