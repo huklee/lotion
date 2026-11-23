@@ -1,5 +1,12 @@
 # Implementation history log
 
+## 2026-11-23T10:00:00+09:00 — 0.62.0 Issue ⌘ shortcuts
+
+- **`apps/web/issues/issue-shortcuts.tsx`:** ten actions with ⌘⇧ defaults; `issueShortcutOf` (⌘/Ctrl + a letter or digit, by physical key), `issueShortcutAction`, `assignIssueShortcut` (moves a shortcut), `parseIssueShortcuts` (invalid, reserved or duplicate values fall back), `RESERVED_SHORTCUTS`.
+  - Stored in `prefs` (`issue-shortcuts`); `useIssueShortcuts` follows a window event and `storage`, so every tab updates.
+  - `IssueShortcutSettings`: capture fields, a note for refused keys, and a reset button; shown as the Control panel **Issue shortcuts** section.
+- **`IssuesView.tsx`:** the board's key handler now checks ⌘ shortcuts first, also while typing (not with a picker, hints, a modal open, or in a capture field). Each maps to the same board key path (`act`), shared with the single-letter keys. Deadline shifts read the issue from the server and run in order, so quick presses add up. The **?** help lists the current ⌘ shortcuts.
+
 ## 2026-11-19T10:00:00+09:00 — 0.61.0 Confluence wiki view
 
 - **`packages/confluence/wiki-markup.ts`:**
