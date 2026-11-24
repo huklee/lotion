@@ -1,12 +1,7 @@
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { matchShortcut } from "../keyboard-layout";
-
-// text fields keep their own ⌘Z (same test as the board's isTyping)
-const typingIn = (target: EventTarget | null) =>
-  target instanceof HTMLElement &&
-  (target.isContentEditable ||
-    ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+import { isTyping } from "./board-dom";
 
 /** How long the Undo toast stays after an archive. */
 export const ARCHIVE_UNDO_MS = 3000;
@@ -47,7 +42,8 @@ export function ArchiveUndoToast({
   useEffect(() => {
     if (!batch) return;
     const key = (event: KeyboardEvent) => {
-      if (!matchShortcut(event, "Mod+Z") || typingIn(event.target)) return;
+      // text fields keep their own ⌘Z
+      if (!matchShortcut(event, "Mod+Z") || isTyping(event.target)) return;
       event.preventDefault();
       event.stopPropagation();
       undo();

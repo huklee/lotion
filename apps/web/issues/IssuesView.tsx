@@ -6,31 +6,22 @@ import {
   useState,
   type DragEvent,
 } from "react";
-import { Archive, MessageSquare, MoreHorizontal, Plus, X } from "lucide-react";
+import { Archive, MoreHorizontal, Plus, X } from "lucide-react";
 import type { TreeNode } from "../../../packages/document-schema/index";
 import { IssueSettings } from "./IssueSettings";
 import { KeyPicker } from "./KeyPicker";
 import { BulkBar, BulkLabels } from "./BulkBar";
 import { pillStyle } from "../database-ui";
 import {
-  DUE_SOON_MS,
   PRIORITIES,
   PRIORITY_NAMES,
-  dueLabel,
   focusState,
   matches,
-  type IssueBoard,
   type IssueSummary,
 } from "../../../packages/issues/model";
 import { issuesApi, useIssueBoard } from "./issues-api";
+import { applyLocalMove, boardColumn, dropTarget } from "./board-order";
 import {
-  applyLocalMove,
-  boardColumn,
-  dropTarget,
-  labelColor,
-} from "./board-order";
-import {
-  BOARD_SHORTCUTS,
   boardKey,
   hintLabels,
   matchHint,
@@ -40,6 +31,10 @@ import { goToIssues } from "./issues-route";
 import { latinKey } from "../keyboard-layout";
 import { IssuePanel, type PanelFocus } from "./IssuePanel";
 import { ArchiveUndoToast, type ArchivedBatch } from "./ArchiveUndo";
+import { activate, isTyping, modalOpen, visibleControls } from "./board-dom";
+import { IssueCard, PRIORITY_COLOR } from "./IssueCard";
+import { IssueStats } from "./IssueStats";
+import { BoardShortcutsHelp } from "./BoardShortcutsHelp";
 import "./issues.css";
 
 const STATUS_COLOR: Record<string, string> = {
@@ -48,89 +43,6 @@ const STATUS_COLOR: Record<string, string> = {
   blue: "blue",
   green: "green",
 };
-
-export const PRIORITY_COLOR: Record<string, string> = {
-  low: "gray",
-  medium: "yellow",
-  high: "orange",
-  urgent: "red",
-};
-
-export const isTyping = (target: EventTarget | null) =>
-  target instanceof HTMLElement &&
-  (target.isContentEditable ||
-    ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
-
-const modalOpen = () =>
-  !!document.querySelector('[role="dialog"][aria-modal="true"]');
-
-/** Buttons, links and fields of the issue view that are on screen now. */
-function visibleControls() {
-  const root = document.querySelector(".issues-view");
-  if (!root) return [];
-  return [
-    ...root.querySelectorAll<HTMLElement>(
-      "button, a[href], input, select, textarea, [role='button']",
-    ),
-  ]
-    .filter((el) => {
-      if (el.closest(".issue-card") || (el as HTMLButtonElement).disabled)
-        return false;
-      const r = el.getBoundingClientRect();
-      return (
-        r.width > 0 &&
-        r.height > 0 &&
-        r.bottom > 0 &&
-        r.right > 0 &&
-        r.top < window.innerHeight &&
-        r.left < window.innerWidth
-      );
-    })
-    .map((el) => {
-      const r = el.getBoundingClientRect();
-      return { el, left: r.left, top: r.top };
-    });
-}
-
-/** What choosing a hint does: fields get focus (a select opens), others click. */
-function activate(el: HTMLElement | undefined) {
-  if (!el) return;
-  if (el instanceof HTMLSelectElement) {
-    el.focus();
-    try {
-      el.showPicker?.();
-    } catch {
-      // showPicker needs a user gesture in some browsers; focus is enough
-    }
-    return;
-  }
-  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-    el.focus();
-    return;
-  }
-  el.click();
-}
-
-/** Open issues, in progress, and done in the last 7 days. */
-function IssueStats({ board, now }: { board: IssueBoard; now: number }) {
-  const last = board.statuses.at(-1)?.key;
-  const live = board.issues.filter((i) => !i.archivedAt);
-  const open = live.filter((i) => i.status !== last).length;
-  const doing = live.filter((i) => i.status === "doing").length;
-  const inFocus = live.filter(
-    (i) => focusState(i, board.statuses, now).focused,
-  ).length;
-  const week = Date.now() - 7 * 86400_000;
-  const done = board.issues.filter(
-    (i) => i.closedAt && Date.parse(i.closedAt) >= week,
-  ).length;
-  return (
-    <span className="issues-stats" aria-label="Board summary">
-      {open} open{doing ? ` · ${doing} in progress` : ""}
-      {inFocus ? ` · ${inFocus} in focus` : ""} · {done} done this week
-    </span>
-  );
-}
 
 /** The issue board: one column per status, cards dragged between them. */
 export function IssuesView({
@@ -571,122 +483,38 @@ export function IssuesView({
   const filtered = !!(filter.q.trim() || filter.label || filter.priority);
 
   const card = (issue: IssueSummary) => {
-    const hint =
+    const label =
       hints !== null ? labels[hintOrder.indexOf(issue.number)] : undefined;
-    const focus = focusState(issue, board.statuses, now);
     return (
-      <div key={issue.number}>
-        {drag?.before === issue.number && drag.number !== issue.number && (
-          <div className="issue-drop-line" aria-hidden="true" />
-        )}
-        <a
-          aria-selected={selected.size ? selected.has(issue.number) : undefined}
-          className={`issue-card${selected.has(issue.number) ? " selected" : ""}${openNumber === issue.number ? " open" : ""}${drag?.number === issue.number ? " dragging" : ""}${focused === issue.number ? " focused" : ""}${focus.focused ? " focus-now" : ""}${focus.overdue ? " overdue" : ""}${issue.archivedAt ? " archived" : ""}`}
-          data-focus={focus.reason ?? undefined}
-          title={
-            focus.reason === "manual"
-              ? "Focus now"
-              : focus.reason === "due"
-                ? focus.overdue
-                  ? "In focus: the deadline has passed"
-                  : "In focus: the deadline is within 24 hours"
-                : undefined
-          }
-          href={`#/issues/${issue.number}`}
-          data-issue={issue.number}
-          draggable
-          onFocus={() => setFocused(issue.number)}
-          onDragStart={(event) => {
-            event.dataTransfer.effectAllowed = "move";
-            event.dataTransfer.setData(
-              "text/x-lotion-issue",
-              String(issue.number),
-            );
-            setDrag({
-              number: issue.number,
-              status: issue.status,
-              before: null,
-            });
-          }}
-          onDragEnd={() => setDrag(null)}
-          onClick={(event) => {
-            event.preventDefault();
-            if (event.metaKey || event.ctrlKey)
-              return toggleSelect(issue.number);
-            if (event.shiftKey) return selectRange(issue.number);
-            setFocused(issue.number);
-            goToIssues(issue.number);
-          }}
-        >
-          {hint !== undefined && hint.startsWith(hints ?? "") && (
-            <span className="issue-hint" data-hint={hint}>
-              <b>{hints}</b>
-              {hint.slice((hints ?? "").length)}
-            </span>
-          )}
-          <span
-            role="checkbox"
-            aria-checked={selected.has(issue.number)}
-            aria-label={`Select #${issue.number}`}
-            className="issue-select"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              if (event.shiftKey) selectRange(issue.number);
-              else toggleSelect(issue.number);
-            }}
-          >
-            {selected.has(issue.number) ? "✓" : ""}
-          </span>
-          <span className="issue-card-title">{issue.title}</span>
-          <span className="issue-card-meta">
-            <span className="issue-number">#{issue.number}</span>
-            {issue.priority && issue.priority !== "none" && (
-              <span
-                className="issue-label issue-priority"
-                style={pillStyle(PRIORITY_COLOR[issue.priority])}
-              >
-                {PRIORITY_NAMES[issue.priority]}
-              </span>
-            )}
-            {issue.labels.map((label) => (
-              <span
-                key={label}
-                className="issue-label"
-                style={pillStyle(labelColor(label))}
-              >
-                {label}
-              </span>
-            ))}
-            {focus.dueIn !== null && (
-              <span
-                className={`issue-due${focus.overdue ? " overdue" : focus.dueIn <= DUE_SOON_MS ? " soon" : ""}`}
-                title={`Due ${new Date(issue.due!).toLocaleString()}`}
-              >
-                {focus.overdue ? "Overdue " : "Due "}
-                {dueLabel(focus.dueIn).replace(/ overdue$/, "")}
-              </span>
-            )}
-            {issue.updatedBy && issue.updatedBy !== "me" && (
-              <span
-                className="issue-author"
-                title={`Last changed by ${issue.updatedBy}`}
-              >
-                {issue.updatedBy}
-              </span>
-            )}
-            {issue.noteCount > 1 && (
-              <span
-                className="issue-notes-count"
-                title={`${issue.noteCount - 1} notes`}
-              >
-                <MessageSquare size={12} aria-hidden="true" />
-                {issue.noteCount - 1}
-              </span>
-            )}
-          </span>
-        </a>
-      </div>
+      <IssueCard
+        key={issue.number}
+        issue={issue}
+        focus={focusState(issue, board.statuses, now)}
+        hint={label === undefined ? undefined : { label, typed: hints ?? "" }}
+        selecting={selected.size > 0}
+        selected={selected.has(issue.number)}
+        open={openNumber === issue.number}
+        focused={focused === issue.number}
+        dragging={drag?.number === issue.number}
+        dropBefore={
+          drag?.before === issue.number && drag.number !== issue.number
+        }
+        onFocus={setFocused}
+        onOpen={(number) => {
+          setFocused(number);
+          goToIssues(number);
+        }}
+        onToggleSelect={toggleSelect}
+        onSelectRange={selectRange}
+        onDragStart={(dragged) =>
+          setDrag({
+            number: dragged.number,
+            status: dragged.status,
+            before: null,
+          })
+        }
+        onDragEnd={() => setDrag(null)}
+      />
     );
   };
 
@@ -824,33 +652,7 @@ export function IssuesView({
             </button>
           )}
         </div>
-        {help && (
-          <div
-            className="issues-shortcuts"
-            role="dialog"
-            aria-label="Issue shortcuts"
-          >
-            <div className="issues-shortcuts-head">
-              <strong>Keyboard shortcuts</strong>
-              <button
-                aria-label="Close shortcuts"
-                onClick={() => setHelp(false)}
-              >
-                <X size={14} />
-              </button>
-            </div>
-            <dl>
-              {BOARD_SHORTCUTS.map(([keys, what]) => (
-                <div key={keys}>
-                  <dt>
-                    <kbd>{keys}</kbd>
-                  </dt>
-                  <dd>{what}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        )}
+        {help && <BoardShortcutsHelp onClose={() => setHelp(false)} />}
         <div
           className={`issues-board focus-clock${hints !== null ? " hinting" : ""}`}
           role="list"
