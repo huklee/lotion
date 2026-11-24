@@ -106,3 +106,24 @@ export function displayShortcut(shortcut: string): string {
     .replace("Shift", "⇧")
     .replaceAll("+", " ");
 }
+
+export type ColorShortcutAction =
+  { type: "preset"; color: ColorPreset } | { type: "repeat" } | null;
+
+/**
+ * What a key does to the selection's colours: apply a preset, repeat the last
+ * one (only when there is a last one), or nothing.
+ */
+export function colorShortcutAction(
+  event: ShortcutEvent,
+  shortcuts: FormattingShortcuts,
+  hasLast: boolean,
+): ColorShortcutAction {
+  const color = colorPresets.find((candidate) =>
+    matchesFormattingShortcut(event, shortcuts.colorPresets[candidate]),
+  );
+  if (color) return { type: "preset", color };
+  if (hasLast && matchesFormattingShortcut(event, shortcuts.repeatLast))
+    return { type: "repeat" };
+  return null;
+}

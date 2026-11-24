@@ -5,9 +5,8 @@ import { PasteLinkChooser } from "./PasteLinkChooser";
 import { LinkPreviewCard } from "./LinkPreviewCard";
 import { EditorInteractionOverlays } from "./EditorInteractionOverlays";
 import { LotionSideMenu } from "./DragHandleMenu";
-import { handleBackspace } from "./backspace";
 import { matchShortcut } from "./keyboard-layout";
-import { prefs, safeStorage } from "./browser-prefs";
+import { prefs } from "./browser-prefs";
 import {
   documentBlocks,
   replaceDocument,
@@ -20,7 +19,6 @@ import {
   useCreateBlockNote,
 } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
-import { readableCodeColor } from "./code-colors";
 import { mermaidFromClipboard } from "./mermaid-paste";
 import { clipboardLines, clipboardTextLines } from "./clipboard-lines";
 import { structuredBlocksFromClipboard } from "./structured-block-paste";
@@ -69,14 +67,10 @@ import {
   selectionCoversContent,
 } from "../../packages/editor-adapter/checklist";
 import { toMarkdown } from "../../packages/markdown/convert";
-import { api, authHeaders } from "./api";
+import { authHeaders } from "./api";
 import { editorSchema } from "./editor-schema";
-import {
-  matchesFormattingShortcut,
-  colorPresets,
-  type FormattingShortcuts,
-} from "./format-shortcuts";
-import { blockIdFromHash, pageIdFromHash } from "./block-links";
+import type { FormattingShortcuts } from "./format-shortcuts";
+import { useColorPresets } from "./use-color-presets";
 import { useBlockSelection } from "./use-block-selection";
 import { useDirectBlockLinkTarget } from "./use-direct-block-link";
 import { EditorFormattingToolbar } from "./EditorFormattingToolbar";
@@ -86,23 +80,10 @@ import { useLinkPreviewRefresh } from "./use-link-preview-refresh";
 import { downloadFileReference } from "./file-reference";
 import { DatabaseActionsContext } from "./DatabaseBlock";
 import { ArrowSubstitutionExtension } from "./arrow-substitution";
-import {
-  readLastColorStyle,
-  writeLastColorStyle,
-  type AppliedColorPreset,
-} from "./last-color-style";
-
-function pageIdFromHref(href: string): string | null {
-  const direct = pageIdFromHash(href);
-  if (direct) return direct;
-  try {
-    const url = new URL(href, location.href);
-    if (url.origin !== location.origin) return null;
-    return pageIdFromHash(url.hash);
-  } catch {
-    return null;
-  }
-}
+import { linkTarget, pageIdFromHref } from "./editor-links";
+import { createCodeHighlighter } from "./code-highlighter";
+import { useNestedBackspace } from "./use-nested-backspace";
+import { uploadAsset, useImageUploads } from "./use-image-uploads";
 
 export default function Editor({
   initial,
@@ -137,20 +118,6 @@ export default function Editor({
     () => normalizeEditorContent(initial),
     [initial],
   );
-  const uploadAsset = async (file: File, signal?: AbortSignal) => {
-    const body = new FormData();
-    body.append("file", file);
-    const asset = await api<{ url: string; image: boolean }>("/api/assets", {
-      method: "POST",
-      body,
-      signal,
-    });
-    if (file.type.startsWith("image/") && !asset.image)
-      throw new Error(
-        "This file is not a supported PNG, JPEG, GIF, or WebP image.",
-      );
-    return asset.url;
-  };
   const upload = (file: File, _blockId?: string) => uploadAsset(file);
   const editor = useCreateBlockNote({
     schema: editorSchema,
@@ -161,17 +128,9 @@ export default function Editor({
         const href = anchor?.getAttribute("href");
         if (!href) return false;
         event.preventDefault();
-        const id = pageIdFromHref(href);
-        const destinationHash = (() => {
-          try {
-            return new URL(href, location.href).hash;
-          } catch {
-            return "";
-          }
-        })();
-        if (id && blockIdFromHash(destinationHash))
-          location.hash = destinationHash;
-        else if (id) onOpenPage(id);
+        const target = linkTarget(href, location.href);
+        if (target.type === "block") location.hash = target.hash;
+        else if (target.type === "page") onOpenPage(target.id);
         else window.location.assign(href);
         return true;
       },
@@ -179,34 +138,7 @@ export default function Editor({
     extensions: [
       ArrowSubstitutionExtension,
       SyntaxHighlightingExtension({
-        createHighlighter: async () => {
-          const { createHighlighter } = await import("shiki");
-          const { default: lightTheme } =
-            await import("@shikijs/themes/github-light-high-contrast");
-          return createHighlighter({
-            themes: [
-              {
-                ...lightTheme,
-                // The stock palette targets white, not our warmer beige surface.
-                tokenColors: lightTheme.tokenColors?.map((token) => ({
-                  ...token,
-                  settings: {
-                    ...token.settings,
-                    ...(token.settings.foreground
-                      ? {
-                          foreground: readableCodeColor(
-                            token.settings.foreground,
-                          ),
-                        }
-                      : {}),
-                  },
-                })),
-              },
-              "github-dark",
-            ],
-            langs: ["json", "html", "python", "go", "cpp"],
-          });
-        },
+        createHighlighter: createCodeHighlighter,
       }),
     ],
     initialContent: toEditorBlocks(normalizedInitial.content.blocks),
@@ -222,61 +154,10 @@ export default function Editor({
     },
   });
   const objectUrls = useRef<string[]>([]);
-  const lastColorStyle = useRef<AppliedColorPreset | null>(
-    readLastColorStyle(safeStorage("session")),
-  );
   const mounted = useRef(true);
   const host = useRef<HTMLDivElement>(null);
-  // Backspace at the start of a nested line deletes/merges it instead of lifting it
-  // (which re-parented the following lines); see backspace.ts.
-  useEffect(() => {
-    const element = host.current;
-    if (!element) return;
-    const key = (event: KeyboardEvent) => {
-      if (
-        event.key !== "Backspace" ||
-        event.defaultPrevented ||
-        event.isComposing ||
-        event.shiftKey ||
-        event.altKey ||
-        event.metaKey ||
-        event.ctrlKey
-      )
-        return;
-      const target = event.target as HTMLElement;
-      // only this editor's own text (not a nested feed editor or a form field)
-      if (target.closest(".bn-editor") !== editor.domElement) return;
-      if (target.closest("input, textarea, select")) return;
-      if (handleBackspace(editor)) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-    element.addEventListener("keydown", key, true);
-    return () => element.removeEventListener("keydown", key, true);
-  }, [editor]);
-  const [uploadState, setUploadState] = useState("");
-  const rememberColorStyle = useCallback((style: AppliedColorPreset) => {
-    lastColorStyle.current = style;
-    writeLastColorStyle(safeStorage("session"), style);
-  }, []);
-  const applyColorStyle = useCallback(
-    (style: AppliedColorPreset) => {
-      if (style.color === "default")
-        editor.removeStyles({
-          textColor: style.color,
-          backgroundColor: style.color,
-        });
-      else
-        editor.addStyles({
-          textColor: style.color,
-          backgroundColor: style.color,
-        });
-      rememberColorStyle(style);
-    },
-    [editor, rememberColorStyle],
-  );
-  const [failed, setFailed] = useState<{ file: File; id: string }[]>([]);
+  useNestedBackspace(editor, host);
+  const colors = useColorPresets(editor, formattingShortcuts);
   const [dropLine, setDropLine] = useState<number | null>(null);
   const [previewError, setPreviewError] = useState("");
   const { previewHref, refreshingPreview, setPreviewHref, showLinkPreview } =
@@ -334,14 +215,7 @@ export default function Editor({
       onChange(documentBlocks(editor));
     }
   }, [editor, normalizedInitial.changed, onChange]);
-  const pendingUploads = useRef(new Set<string>());
-  function cancelPendingUploads() {
-    const ids = [...pendingUploads.current].filter((id) => editor.getBlock(id));
-    pendingUploads.current.clear();
-    if (ids.length) editor.removeBlocks(ids);
-    setFailed([]);
-    setUploadState("");
-  }
+  const uploads = useImageUploads({ editor, mounted, onBackgroundImage });
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -359,17 +233,6 @@ export default function Editor({
     window.addEventListener("keydown", escape);
     return () => window.removeEventListener("keydown", escape);
   }, [cancelPaste]);
-  useEffect(() => {
-    const undo = (event: KeyboardEvent) => {
-      if (matchShortcut(event, "Mod+Z") && pendingUploads.current.size) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        cancelPendingUploads();
-      }
-    };
-    window.addEventListener("keydown", undo, true);
-    return () => window.removeEventListener("keydown", undo, true);
-  });
   function applyMove(target: string, side: "before" | "after") {
     const blocks = documentBlocks(editor);
     const next = moveBlocks(blocks, selected, target, side);
@@ -521,30 +384,6 @@ export default function Editor({
         }
       : null;
   };
-  async function finishUpload(file: File, id: string) {
-    try {
-      setUploadState(`Uploading ${file.name}…`);
-      const url = await upload(file);
-      if (!pendingUploads.current.has(id)) return;
-      if (!mounted.current) {
-        onBackgroundImage(id, url, file.name);
-        return;
-      }
-      if (editor.getBlock(id))
-        editor.updateBlock(id, {
-          type: "image",
-          props: { url, name: file.name, caption: "" },
-        });
-      setFailed((f) => f.filter((item) => item.id !== id));
-    } catch (error) {
-      setFailed((f) =>
-        f.some((item) => item.id === id) ? f : [...f, { file, id }],
-      );
-      setUploadState((error as Error).message);
-    } finally {
-      pendingUploads.current.delete(id);
-    }
-  }
   async function dropImages(event: React.DragEvent) {
     const files = [...event.dataTransfer.files];
     if (!files.length || !files.every((f) => f.type.startsWith("image/")))
@@ -552,24 +391,7 @@ export default function Editor({
     event.preventDefault();
     event.stopPropagation();
     setDropLine(null);
-    const target = targetAt(event);
-    const ids = files.map(() => crypto.randomUUID());
-    ids.forEach((id) => pendingUploads.current.add(id));
-    editor.insertBlocks(
-      files.map((file, i) => ({
-        id: ids[i],
-        type: "image" as const,
-        props: {
-          url: "",
-          name: file.name,
-          caption: "Upload pending — retry if this tab was reloaded",
-        },
-      })),
-      target?.id ?? editor.document.at(-1)!.id,
-      target?.side ?? "after",
-    );
-    for (let i = 0; i < files.length; i++) await finishUpload(files[i], ids[i]);
-    setUploadState("");
+    await uploads.insertAndUpload(files, targetAt(event));
   }
   function insertLinkChip(
     href: string,
@@ -626,7 +448,7 @@ export default function Editor({
         value.props?.kind === "page" &&
         typeof value.props.href === "string"
       ) {
-        const pageId = pageIdFromHref(value.props.href);
+        const pageId = pageIdFromHref(value.props.href, location.href);
         const target = pageId
           ? pages.find((page) => page.id === pageId)
           : undefined;
@@ -641,7 +463,7 @@ export default function Editor({
         }
       }
       if (value.type === "link" && typeof value.href === "string") {
-        const pageId = pageIdFromHref(value.href);
+        const pageId = pageIdFromHref(value.href, location.href);
         const target = pageId
           ? pages.find((page) => page.id === pageId)
           : undefined;
@@ -694,28 +516,9 @@ export default function Editor({
             return;
           }
         }
-        const color = colorPresets.find((candidate) =>
-          matchesFormattingShortcut(
-            e.nativeEvent,
-            formattingShortcuts.colorPresets[candidate],
-          ),
-        );
-        if (color) {
+        if (colors.handleKey(e.nativeEvent)) {
           e.preventDefault();
           e.stopPropagation();
-          applyColorStyle({ color });
-          return;
-        }
-        if (
-          lastColorStyle.current &&
-          matchesFormattingShortcut(
-            e.nativeEvent,
-            formattingShortcuts.repeatLast,
-          )
-        ) {
-          e.preventDefault();
-          e.stopPropagation();
-          applyColorStyle(lastColorStyle.current);
           return;
         }
         if (matchShortcut(e.nativeEvent, "Mod+Enter")) {
@@ -725,12 +528,9 @@ export default function Editor({
             return;
           }
         }
-        if (
-          matchShortcut(e.nativeEvent, "Mod+Z") &&
-          pendingUploads.current.size
-        ) {
+        if (matchShortcut(e.nativeEvent, "Mod+Z") && uploads.hasPending()) {
           e.preventDefault();
-          cancelPendingUploads();
+          uploads.cancel();
           return;
         }
       }}
@@ -763,7 +563,7 @@ export default function Editor({
           return;
         }
         const id = anchor
-          ? pageIdFromHref(anchor.getAttribute("href") ?? "")
+          ? pageIdFromHref(anchor.getAttribute("href") ?? "", location.href)
           : null;
         if (!id) return;
         event.preventDefault();
@@ -1096,7 +896,7 @@ export default function Editor({
             formattingToolbar={() => (
               <EditorFormattingToolbar
                 shortcuts={formattingShortcuts}
-                onApplied={rememberColorStyle}
+                onApplied={colors.remember}
               />
             )}
           />
@@ -1185,10 +985,10 @@ export default function Editor({
         directLinkBox={directLinkBox}
         dropLine={dropLine}
         host={host}
-        uploadState={uploadState}
-        failed={failed}
-        onCancelUploads={cancelPendingUploads}
-        onRetryUpload={finishUpload}
+        uploadState={uploads.uploadState}
+        failed={uploads.failed}
+        onCancelUploads={uploads.cancel}
+        onRetryUpload={uploads.retry}
       />
     </div>
   );
