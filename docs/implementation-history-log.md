@@ -1,5 +1,22 @@
 # Implementation history log
 
+## 2026-11-24T10:00:00+09:00 — 0.63.1 Split the files over 1,000 lines
+
+Followed the behaviour-preserving refactor procedure (`orch-refine-code`), with agent-friendly boundaries (explicit props and hook contracts, pure modules with unit tests).
+- Procedure: tests green first, small steps, tests after each step, an independent review for behaviour changes, then the full check.
+- **Issues** (`IssuesView.tsx` 1,109 → 911):
+  - `IssueCard.tsx` (one card, explicit props) and `issue-card-state.ts` (pure: classes, focus tooltip, due badge, board stats);
+  - `IssueStats.tsx` and `BoardShortcutsHelp.tsx`;
+  - `board-dom.ts` (`isTyping`, `modalOpen`, `visibleControls`, `activate`). `ArchiveUndo` now reuses `isTyping`.
+- **App** (`App.tsx` 1,097 → 994):
+  - `use-favorites.ts`, `use-modal-focus.ts` and `use-save-on-leave.ts`;
+  - `page-drafts.ts` (`saveDraftsOrThrow`, which replaced three copies, and `without`).
+- **Editor** (`Editor.tsx` 1,195 → 995):
+  - `editor-links.ts` (pure `pageIdFromHref` / `linkTarget`) and `code-highlighter.ts`;
+  - `use-nested-backspace.ts`, `use-image-uploads.ts` (including `uploadAsset`) and `use-color-presets.ts`;
+  - `colorShortcutAction` in `format-shortcuts.ts`.
+- The independent review found no change in behaviour. Three ordering details are harmless: the favourites load runs later in mount order; a colour shortcut applies before `preventDefault`; and the ⌘Z listener for pending uploads registers earlier.
+
 ## 2026-11-23T14:00:00+09:00 — 0.63.0 Open Issues shortcut
 
 - The owner meant a shortcut to open the Issues page, not ⌘ versions of the board keys. `IssuesView.tsx` is back to its 0.61.0 state, and the board shortcut tests are removed.
