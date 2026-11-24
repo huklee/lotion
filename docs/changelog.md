@@ -2,6 +2,23 @@
 
 Versions are recorded in `package.json` and `package-lock.json`. Each release records additions, fixes and verification here; exact implementation timestamps and detailed test evidence remain in the linked logs. Use a minor increment for backward-compatible features and a patch increment for fixes. Major versions are reserved for major product changes or incompatible changes.
 
+## 0.63.1 — 2026-11-24
+
+### Changed
+
+- **Internal refactor; nothing changes for users.**
+  - The three files over the 1,000-line limit of the [file-structure rules](typescript-file-structure.md) are split into focused modules:
+
+    | File | Before | After |
+    |---|---|---|
+    | `Editor.tsx` | 1,195 | 995 |
+    | `App.tsx` | 1,097 | 994 |
+    | `IssuesView.tsx` | 1,109 | 911 |
+
+  - The pure parts now have unit tests: card state, page drafts, link routing and colour shortcuts.
+
+Verification is recorded in [test results](test-results.md).
+
 ## 0.63.0 — 2026-11-23 · [#92](https://github.com/huklee/lotion/pull/92)
 
 ### Changed

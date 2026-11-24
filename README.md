@@ -6,7 +6,7 @@
 
 [Quick start](#quick-start) · [Features](#features) · [Shortcuts](#keyboard-shortcuts) · [User guide](docs/user-guide.md) · [Changelog](docs/changelog.md) · [Docs](docs/README.md)
 
-![version](https://img.shields.io/badge/version-0.63.0-blue)
+![version](https://img.shields.io/badge/version-0.63.1-blue)
 ![node](https://img.shields.io/badge/node-%E2%89%A522.12-339933?logo=node.js&logoColor=white)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![tests](https://img.shields.io/badge/tests-Vitest%20%2B%20Playwright-6E9F18)
@@ -14,7 +14,7 @@
 
 </div>
 
-Current version: **0.63.0**. See the [changelog](docs/changelog.md) for what changed in each release.
+Current version: **0.63.1**. See the [changelog](docs/changelog.md) for what changed in each release.
 
 Lotion is a Notion-style editor that runs on your own machine. Pages, databases and an issue board live in a plain `data/` folder that you can back up, export as Markdown and read without Lotion. Nothing is sent to an AI service unless you ask for a meeting summary.
 

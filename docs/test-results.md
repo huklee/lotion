@@ -1,5 +1,20 @@
 # Test results
 
+## 2026-11-24T10:00:00+09:00 — 0.63.1 Split the files over 1,000 lines
+
+Focused:
+- New unit tests, 11 in total: `issue-card-state` 4/4, `page-drafts` 3/3 and `editor-links` 4/4 (link routing and colour-shortcut decisions).
+- After each step:
+  - all issue e2e tests, 87/87;
+  - settings, editor-blocks, backspace, navigation, block-links and trashed-links, 96/96;
+  - portability (uploads) and mentions, 24/24.
+
+Full `npm run check` before the version bump:
+- ESLint, strict TypeScript and the production build passed.
+- Vitest **362/362**; Playwright **457 passed**, 17 skipped, none failed.
+
+Second full Playwright run after the version bump and a rebuild: **457 passed**, 17 skipped, none failed.
+
 ## 2026-11-23T14:00:00+09:00 — 0.63.0 Open Issues shortcut
 
 Focused:
