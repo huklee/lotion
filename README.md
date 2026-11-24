@@ -10,6 +10,7 @@
 ![node](https://img.shields.io/badge/node-%E2%89%A522.12-339933?logo=node.js&logoColor=white)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![tests](https://img.shields.io/badge/tests-Vitest%20%2B%20Playwright-6E9F18)
+[![license](https://img.shields.io/badge/license-AGPL--3.0-A42E2B)](LICENSE)
 
 </div>
 
@@ -155,3 +156,13 @@ Browser tests run in parallel on Chromium, Firefox and WebKit. Each worker gets 
 ## Status
 
 Lotion is under active development as a personal workspace. Check the [remaining jobs](docs/remained_job.md) and the latest [test results](docs/test-results.md) for current limitations.
+
+## License
+
+Copyright (C) 2026 huklee.
+
+Lotion is licensed under the [GNU Affero General Public License v3.0 only](LICENSE) (AGPL-3.0-only).
+
+- You may use, study, modify and share it.
+- If you distribute a modified version, or let others use it over a network, you must release your source code under the same license.
+- It comes with no warranty.
