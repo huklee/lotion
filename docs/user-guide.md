@@ -1,0 +1,94 @@
+# Lotion user guide
+
+A detailed tour of what Lotion does. For installation and an overview, see the [README](../README.md); for every change by version, the [changelog](changelog.md).
+
+## Pages and hierarchy
+
+Creating a child from the sidebar, dragging a page under another page, or duplicating a page creates a navigable child-page link in the parent document. Duplicate the current page from the upper-right toolbar or use the matching action on a sidebar row. Moving the child to a different parent moves its managed link as well, while ordinary links you add yourself remain untouched.
+
+The upper-right move action shows the document hierarchy as a collapsible tree. Expand or collapse branches, then choose a page as the new parent; the current page and all of its descendants are excluded to prevent circular hierarchies.
+
+Typing `<-` or `->` in ordinary document text immediately produces `←` or `→`. Pasted text, code blocks, Mermaid source, and active IME composition remain literal.
+
+Type **/database** to add a single table view whose rows are real child pages. Text, number, select, checkbox, and date properties are validated and saved with the containing document; opening the first cell navigates to the row page. Exact bundles preserve the database, while portable Markdown exports a static table with page links.
+
+Every page with headings shows an automatic **page outline** on the right. It lists all headings in document order with nested indentation, updates as you type, highlights the section in view while you scroll, and scrolls to a section when clicked. It is hidden on pages without headings and in windows narrower than 1,200 px; the inline `/toc` block remains available inside documents.
+
+Press **⌘K / Ctrl+K** to search page titles and document content across the workspace. Search includes the active unsaved browser draft, tables, code, attachment labels, and Mermaid source. Selecting a content result opens and highlights its exact block.
+
+Page, external, file, and date mentions render as compact typed reference chips, while a URL pasted with **Paste as URL** remains a conventional underlined link. Internal mention titles and icons follow current page metadata immediately. Saved external OpenGraph metadata refreshes after 15 minutes on hover, with bounded server caching and the previous preview retained if refresh fails. Type **@file** to upload a downloadable file reference up to 20 MB.
+
+## Paste diagrams and copy Markdown
+
+Paste a complete fenced `mermaid` Markdown block into the editor to create a diagram. Pasting it into an existing Mermaid source field replaces that diagram's source and removes the fences.
+
+Use **Export → Copy page as Markdown** to copy the current page's title and full body, including unsaved edits. Mermaid diagrams are copied as fenced source, and blank editor blocks remain blank lines rather than `&#x20;`. This copies the current page only; use ZIP export for subpages and image files.
+
+Select blocks by dragging a selection rectangle in any direction or choosing **Select section**. The selection toolbar's left grip drags the complete group; its copy and cut actions—or **⌘C / Ctrl+C** and **⌘X / Ctrl+X**—place structured Markdown on the clipboard. Pasting that copy back into Lotion in the same browser session restores the exact block types, hierarchy, checklist state, and inline styles, including after an in-tab reload. Cut removes blocks only after the clipboard write succeeds. Press **Backspace** to delete a selection directly. Clicking or selecting another editor/application area clears the block selection, while interacting with its own toolbar retains it. Hold Shift, Command, or Control while drawing another rectangle to extend the selection. Dragging within one block still performs native text selection; drag near the editor's top or bottom edge to scroll while selecting. Use **⌘Z / Ctrl+Z** to undo.
+
+Place the cursor in any block and choose **Copy block link** to copy a direct URL to that exact location. Opening the URL loads the page, scrolls the referenced block into view, and highlights it. If the block was later deleted, the page still opens without forcing a fallback block.
+
+Type **@date** (or type **@** and choose **Date**) to open the calendar, choose a day and insert it. Press Enter once more immediately after opening to insert today. Dates are stored as validated ISO date references and exported to portable Markdown as readable `📅 YYYY-MM-DD` text.
+
+Ordinary clipboard text is checked line by line and pasted as plain paragraphs, preserving literal Markdown/HTML text. On an empty paragraph, an outline made entirely from heading, bullet, numbered-list, or checklist lines is reconstructed as those enhanced block types; mixed prose and rich inline Markdown remain literal. This accepts the structured Markdown produced by selected-block copy. Complete Mermaid fences retain diagram conversion; a single HTTP(S) URL retains the link chooser. Oversized pastes show an error rather than silently dropping text. Use Markdown import when you want broader Markdown formatting interpreted.
+
+Databases (`/database`): each property's **⋯** menu changes its type (values are converted), edits select options, moves or deletes it; each row's **⋯** menu duplicates, moves or deletes the row (its page goes to the trash).
+
+**Recent changes** in the sidebar lists what changed across the workspace — created, edited, renamed, moved, trashed and restored pages, with block counts and an excerpt — newest first and grouped into sittings; click an entry to open the page at that edit — the changed block is scrolled into view and flashes once.
+
+Checklist items can be completed by clicking their checkbox or pressing **Ctrl+Enter / ⌘Enter** while editing the item. With several blocks selected (a text selection across blocks or a block selection), the same shortcut checks every checklist item inside, nested items included, or unchecks them all when all are already checked. A single pasted line stays at the current cursor inside a checklist or callout instead of creating a new block; multi-line plain-text paste inside a checklist retains checklist blocks. A conventional terminal clipboard newline does not create an extra checklist item or separate the existing suffix, while intentional internal blank lines remain intact. Checkbox clicks preserve the document's scroll position. Browser spellcheck is disabled in the document editor to avoid misleading red dictionary underlines on code, product names, and mixed-language text.
+
+## Favorites and navigation
+
+Mark a page with the top-bar star to add it to **Favorites** in the sidebar. Favorites persist in this browser and sync across its tabs; they are not server-side workspace data. Page navigation supports browser Back/Forward. Use ⌘click on macOS or Ctrl+click on Windows/Linux on sidebar links to open another tab (Shift+click follows the browser's new-window behavior).
+
+## Issues
+
+Sidebar → **Issues** (`#/issues`) is a personal issue board: one column per status (Backlog, Todo, In progress, Done), cards dragged between columns, **c** for a new issue, and a side panel with the description, labels and a thread of status notes. Status changes are noted automatically.
+
+Everything works from the keyboard, Vimium style: **f** hints, **j/k/h/l** to move, **⇧H/⇧J/⇧K/⇧L** to move a card, **x** done, **o** open, **m** note, **/** filter, **?** for the full list, and **g i** to reach the board from anywhere. ⌘K also finds and creates issues.
+
+Agents and scripts use the command line against a running server:
+
+```sh
+ln -s "$PWD/bin/lotion" ~/.local/bin/lotion   # once
+export LOTION_URL=http://127.0.0.1:3001 LOTION_TOKEN_FILE=~/.config/lotion/token
+lotion issue new "Fix paste in lists" --label bug --as codex
+lotion issue ls --json
+lotion issue move 12 "in progress"
+lotion issue note 12 "found the cause; fixing"
+```
+
+More commands: `edit`, `label 12 +ui -bug`, `claim`, `close`, `reopen`, `search`, `rm`, and `watch` to follow changes live (`lotion issue --help`).
+
+Agents that speak MCP (Claude Code, Codex, …) can use the issue tools directly:
+
+```sh
+claude mcp add lotion-issues -e LOTION_AUTHOR=claude \
+  -e LOTION_TOKEN_FILE=~/.config/lotion/token -- ~/Work/lotion/bin/lotion-mcp
+```
+
+Issues and pages are connected: **Create issue** in any block's handle menu (⋮⋮) makes an issue from that block (meeting-log action items too), pages list their linked issues under the title, and the issue panel links pages and can move a long description into a page. The board menu (⋯) has board settings (columns and labels), Show archived and Markdown/JSON export.
+
+Changes by agents carry their name on the card, appear in the notification bell, and never silently overwrite what you are typing in an issue.
+
+Design: [ADR-026](docs/adr/026-personal-issue-tracker.md).
+
+## Control panel
+
+Open **Control panel** at the bottom of the sidebar to choose a system/light/dark theme, editor text size, comfortable/wide page width, and whether the sidebar opens on startup. These preferences are stored in this browser and do not change document content. **Reset display settings** restores the defaults.
+
+The editor color menu contains ten combined, Notion-style presets: default plus nine portable hues. Each preset applies a coordinated text and background color together. Dark and black schemes use restrained, low-chroma pastel fills, and every combination maintains at least 4.5:1 text contrast. The control panel lets you assign one modifier-key shortcut to each preset; assigned shortcuts appear on hover or keyboard focus. **⌘ShiftH / Ctrl+Shift+H** reapplies the most recently chosen preset by default. That preset is shared across page navigation and reloads for the lifetime of the current browser tab/session.
+
+The Control panel also has:
+
+- **Features:** switches optional entry points, such as the Confluence button.
+- **Issues shortcut:** sets the ⌘ shortcut that opens the Issues page (⌘⇧I by default).
+- **Meeting summaries:** the summary engine, skill, prompt and meeting-note formats.
+
+## Confluence export
+
+- **Export → Confluence** converts the page to Confluence storage format, with a preview.
+- The **Confluence** button in the top bar shows the whole page as Confluence wiki markup, with a rendered view.
+  - Wrap blocks in **Expand**, **Info**, **Note**, **Warning**, **Tip** or **Panel** macros.
+  - Copy the markup, or download it as `.txt`.

@@ -1,14 +1,57 @@
+<div align="center">
+
 # Lotion
 
-Current version: **0.63.0**. See the [version history and added features](docs/changelog.md).
+**A self-hosted, block-based workspace for documents, meeting notes and issues. No AI inside.**
 
-Release workflow: [version management guide](docs/versioning.md).
+[Quick start](#quick-start) · [Features](#features) · [Shortcuts](#keyboard-shortcuts) · [User guide](docs/user-guide.md) · [Changelog](docs/changelog.md) · [Docs](docs/README.md)
 
-Plan for review: [three approaches to in-document search](docs/document-search-plan.md).
+![version](https://img.shields.io/badge/version-0.63.0-blue)
+![node](https://img.shields.io/badge/node-%E2%89%A522.12-339933?logo=node.js&logoColor=white)
+![typescript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![tests](https://img.shields.io/badge/tests-Vitest%20%2B%20Playwright-6E9F18)
+[![license](https://img.shields.io/badge/license-AGPL--3.0-A42E2B)](LICENSE)
 
-## Install and run
+</div>
 
-Use Node.js 24 LTS and npm (minimum supported Node version: 22.12).
+Current version: **0.63.0**. See the [changelog](docs/changelog.md) for what changed in each release.
+
+Lotion is a Notion-style editor that runs on your own machine. Pages, databases and an issue board live in a plain `data/` folder that you can back up, export as Markdown and read without Lotion. Nothing is sent to an AI service unless you ask for a meeting summary.
+
+## Features
+
+**Writing**
+
+- Block editor: headings, lists, to-dos, callouts, tables, code, images, file attachments and [Mermaid](https://mermaid.js.org) diagrams.
+- Mentions: `@page`, `@file`, `@date`, and links with previews.
+- Automatic saving, with a prompt when an edit conflicts with a change from another tab or agent.
+- Block selection with a drag rectangle; copy and paste keep structure and styles.
+- Copy a link to any block.
+- An automatic page outline, ten colour presets with your own shortcuts, and light, dark and black themes.
+
+**Organising**
+
+- A nested page tree with drag to move, favourites, a trash, and a **Recent changes** feed.
+- `/database` tables whose rows are real pages, with saved views.
+- Meeting logs with a feed view and on-demand summaries.
+- **⌘K** search across titles and content, including unsaved drafts.
+
+**Issues**
+
+- A personal board at `#/issues`: statuses, priorities, labels, deadlines, Focus now, status notes and archive with undo.
+- Every action has a Vimium-style key (`f`, `j`/`k`, `x`, `?` …); **⌘⇧I** opens the board from anywhere.
+- A `lotion issue` CLI and an MCP server, so coding agents can file and update issues.
+
+**Import and export**
+
+- Markdown folder import, Markdown and ZIP export, and copy a page as Markdown.
+- **Confluence:** storage-format export, and a wiki-markup view with Expand / Info / Note panels.
+
+See the [user guide](docs/user-guide.md) for details on each feature.
+
+## Quick start
+
+Requires **Node.js 24 LTS** (22.12 at least) and npm.
 
 ```sh
 git clone https://github.com/huklee/lotion.git
@@ -18,119 +61,108 @@ npm run build
 npm start
 ```
 
-Open **http://127.0.0.1:3001**. Stop with Ctrl+C. Documents and assets are stored in `data/` on the machine running the server.
+Open **http://127.0.0.1:3001**. Documents and assets are stored in `data/` on the machine running the server.
 
-For an existing checkout, start with `cd ~/work/lotion` and run the npm commands above. Only one backend may use a workspace at a time; stop an existing server before starting another on port 3001.
+> [!NOTE]
+> Only one server may use a workspace at a time. Stop a running server before starting another on the same port or data folder.
 
-For development:
+### Development
 
 ```sh
 npm ci
-npm run dev
+npm run dev   # http://127.0.0.1:5173, API proxied to :3001
 ```
 
-Open **http://127.0.0.1:5173**; the development frontend proxies API requests to port 3001.
+## Configuration
 
-Optional environment variables: `LOTION_DATA_DIR` (default `data`), `PORT` (default `3001`), `HOST` (default `127.0.0.1`), and `LOTION_TOKEN`. Non-loopback access requires a token and an HTTPS reverse proxy. See the [runbook](docs/running.md) for configuration and backup/restore.
+| Variable          | Default     | Purpose                                                                                                           |
+| ----------------- | ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| `LOTION_DATA_DIR` | `data`      | Workspace folder (documents, assets, revisions)                                                                   |
+| `PORT`            | `3001`      | HTTP port                                                                                                         |
+| `HOST`            | `127.0.0.1` | Bind address                                                                                                      |
+| `LOTION_TOKEN`    | —           | Access token. Required for anything other than loopback access, which must also go through an HTTPS reverse proxy |
 
-If startup reports a missing, malformed, cyclic, or externally changed document snapshot, stop every backend using that workspace and run `npm run doctor -- --data-dir <workspace>`. The doctor is read-only unless an exact reviewed plan is supplied with `--apply`; see the [diagnosis and reconciliation runbook](docs/running.md#workspace-diagnosis-and-reconciliation).
+The [runbook](docs/running.md) covers deployment, backup and restore.
 
-## About
+If startup reports a missing, malformed or externally changed snapshot, stop every server using that workspace and run:
 
-Lotion is a self-hosted document editor without AI. It supports block editing, automatic saving, page hierarchy, image drops, mentions, Markdown folder import/export, and Mermaid diagrams.
+```sh
+npm run doctor -- --data-dir <workspace>
+```
 
-Creating a child from the sidebar, dragging a page under another page, or duplicating a page creates a navigable child-page link in the parent document. Duplicate the current page from the upper-right toolbar or use the matching action on a sidebar row. Moving the child to a different parent moves its managed link as well, while ordinary links you add yourself remain untouched.
+The doctor is read-only unless you pass it a reviewed plan with `--apply`. See [diagnosis and reconciliation](docs/running.md#workspace-diagnosis-and-reconciliation).
 
-The upper-right move action shows the document hierarchy as a collapsible tree. Expand or collapse branches, then choose a page as the new parent; the current page and all of its descendants are excluded to prevent circular hierarchies.
+## Keyboard shortcuts
 
-Typing `<-` or `->` in ordinary document text immediately produces `←` or `→`. Pasted text, code blocks, Mermaid source, and active IME composition remain literal.
+⌘ is Ctrl on Windows and Linux.
 
-Type **/database** to add a single table view whose rows are real child pages. Text, number, select, checkbox, and date properties are validated and saved with the containing document; opening the first cell navigates to the row page. Exact bundles preserve the database, while portable Markdown exports a static table with page links.
+| Shortcut         | Action                                                          |
+| ---------------- | --------------------------------------------------------------- |
+| ⌘K               | Search pages, content and issues                                |
+| ⌘S               | Save now                                                        |
+| ⌘Z / ⌘⇧Z         | Undo / redo                                                     |
+| ⌘Enter           | Check or uncheck to-dos (in the selection too)                  |
+| ⌘⇧H              | Reapply the last colour preset                                  |
+| `<-` / `->`      | Typed as ← / →                                                  |
+| `g h` / `g i`    | Go to Home / Issues                                             |
+| ⌘⇧I              | Open Issues, also while typing (change it in the Control panel) |
+| `?` on the board | Every issue-board key                                           |
 
-Every page with headings shows an automatic **page outline** on the right. It lists all headings in document order with nested indentation, updates as you type, highlights the section in view while you scroll, and scrolls to a section when clicked. It is hidden on pages without headings and in windows narrower than 1,200 px; the inline `/toc` block remains available inside documents.
-
-Press **⌘K / Ctrl+K** to search page titles and document content across the workspace. Search includes the active unsaved browser draft, tables, code, attachment labels, and Mermaid source. Selecting a content result opens and highlights its exact block.
-
-Page, external, file, and date mentions render as compact typed reference chips, while a URL pasted with **Paste as URL** remains a conventional underlined link. Internal mention titles and icons follow current page metadata immediately. Saved external OpenGraph metadata refreshes after 15 minutes on hover, with bounded server caching and the previous preview retained if refresh fails. Type **@file** to upload a downloadable file reference up to 20 MB.
-
-## Paste diagrams and copy Markdown
-
-Paste a complete fenced `mermaid` Markdown block into the editor to create a diagram. Pasting it into an existing Mermaid source field replaces that diagram's source and removes the fences.
-
-Use **Export → Copy page as Markdown** to copy the current page's title and full body, including unsaved edits. Mermaid diagrams are copied as fenced source, and blank editor blocks remain blank lines rather than `&#x20;`. This copies the current page only; use ZIP export for subpages and image files.
-
-Select blocks by dragging a selection rectangle in any direction or choosing **Select section**. The selection toolbar's left grip drags the complete group; its copy and cut actions—or **⌘C / Ctrl+C** and **⌘X / Ctrl+X**—place structured Markdown on the clipboard. Pasting that copy back into Lotion in the same browser session restores the exact block types, hierarchy, checklist state, and inline styles, including after an in-tab reload. Cut removes blocks only after the clipboard write succeeds. Press **Backspace** to delete a selection directly. Clicking or selecting another editor/application area clears the block selection, while interacting with its own toolbar retains it. Hold Shift, Command, or Control while drawing another rectangle to extend the selection. Dragging within one block still performs native text selection; drag near the editor's top or bottom edge to scroll while selecting. Use **⌘Z / Ctrl+Z** to undo.
-
-Place the cursor in any block and choose **Copy block link** to copy a direct URL to that exact location. Opening the URL loads the page, scrolls the referenced block into view, and highlights it. If the block was later deleted, the page still opens without forcing a fallback block.
-
-Type **@date** (or type **@** and choose **Date**) to open the calendar, choose a day and insert it. Press Enter once more immediately after opening to insert today. Dates are stored as validated ISO date references and exported to portable Markdown as readable `📅 YYYY-MM-DD` text.
-
-Ordinary clipboard text is checked line by line and pasted as plain paragraphs, preserving literal Markdown/HTML text. On an empty paragraph, an outline made entirely from heading, bullet, numbered-list, or checklist lines is reconstructed as those enhanced block types; mixed prose and rich inline Markdown remain literal. This accepts the structured Markdown produced by selected-block copy. Complete Mermaid fences retain diagram conversion; a single HTTP(S) URL retains the link chooser. Oversized pastes show an error rather than silently dropping text. Use Markdown import when you want broader Markdown formatting interpreted.
-
-Databases (`/database`): each property's **⋯** menu changes its type (values are converted), edits select options, moves or deletes it; each row's **⋯** menu duplicates, moves or deletes the row (its page goes to the trash).
-
-**Recent changes** in the sidebar lists what changed across the workspace — created, edited, renamed, moved, trashed and restored pages, with block counts and an excerpt — newest first and grouped into sittings; click an entry to open the page at that edit — the changed block is scrolled into view and flashes once.
-
-Checklist items can be completed by clicking their checkbox or pressing **Ctrl+Enter / ⌘Enter** while editing the item. With several blocks selected (a text selection across blocks or a block selection), the same shortcut checks every checklist item inside, nested items included, or unchecks them all when all are already checked. A single pasted line stays at the current cursor inside a checklist or callout instead of creating a new block; multi-line plain-text paste inside a checklist retains checklist blocks. A conventional terminal clipboard newline does not create an extra checklist item or separate the existing suffix, while intentional internal blank lines remain intact. Checkbox clicks preserve the document's scroll position. Browser spellcheck is disabled in the document editor to avoid misleading red dictionary underlines on code, product names, and mixed-language text.
-
-## Favorites and navigation
-
-Mark a page with the top-bar star to add it to **Favorites** in the sidebar. Favorites persist in this browser and sync across its tabs; they are not server-side workspace data. Page navigation supports browser Back/Forward. Use ⌘click on macOS or Ctrl+click on Windows/Linux on sidebar links to open another tab (Shift+click follows the browser's new-window behavior).
-
-## Issues
-
-Sidebar → **Issues** (`#/issues`) is a personal issue board: one column per status (Backlog, Todo, In progress, Done), cards dragged between columns, **c** for a new issue, and a side panel with the description, labels and a thread of status notes. Status changes are noted automatically.
-
-Everything works from the keyboard, Vimium style: **f** hints, **j/k/h/l** to move, **⇧H/⇧J/⇧K/⇧L** to move a card, **x** done, **o** open, **m** note, **/** filter, **?** for the full list, and **g i** to reach the board from anywhere. ⌘K also finds and creates issues.
-
-Agents and scripts use the command line against a running server:
+## Issues from the command line
 
 ```sh
 ln -s "$PWD/bin/lotion" ~/.local/bin/lotion   # once
 export LOTION_URL=http://127.0.0.1:3001 LOTION_TOKEN_FILE=~/.config/lotion/token
+
 lotion issue new "Fix paste in lists" --label bug --as codex
 lotion issue ls --json
 lotion issue move 12 "in progress"
 lotion issue note 12 "found the cause; fixing"
 ```
 
-More commands: `edit`, `label 12 +ui -bug`, `claim`, `close`, `reopen`, `search`, `rm`, and `watch` to follow changes live (`lotion issue --help`).
+More commands: `edit`, `label`, `claim`, `close`, `reopen`, `search`, `rm` and `watch` (`lotion issue --help`).
 
-Agents that speak MCP (Claude Code, Codex, …) can use the issue tools directly:
+To give an MCP-capable agent (Claude Code, Codex, …) the issue tools:
 
 ```sh
 claude mcp add lotion-issues -e LOTION_AUTHOR=claude \
-  -e LOTION_TOKEN_FILE=~/.config/lotion/token -- ~/Work/lotion/bin/lotion-mcp
+  -e LOTION_TOKEN_FILE=~/.config/lotion/token -- "$PWD/bin/lotion-mcp"
 ```
 
-Issues and pages are connected: **Create issue** in any block's handle menu (⋮⋮) makes an issue from that block (meeting-log action items too), pages list their linked issues under the title, and the issue panel links pages and can move a long description into a page. The board menu (⋯) has board settings (columns and labels), Show archived and Markdown/JSON export.
+The design is described in [ADR-026](docs/adr/026-personal-issue-tracker.md).
 
-Changes by agents carry their name on the card, appear in the notification bell, and never silently overwrite what you are typing in an issue.
-
-Design: [ADR-026](docs/adr/026-personal-issue-tracker.md).
-
-## Control panel
-
-Open **Control panel** at the bottom of the sidebar to choose a system/light/dark theme, editor text size, comfortable/wide page width, and whether the sidebar opens on startup. These preferences are stored in this browser and do not change document content. **Reset display settings** restores the defaults.
-
-The editor color menu contains ten combined, Notion-style presets: default plus nine portable hues. Each preset applies a coordinated text and background color together. Dark and black schemes use restrained, low-chroma pastel fills, and every combination maintains at least 4.5:1 text contrast. The control panel lets you assign one modifier-key shortcut to each preset; assigned shortcuts appear on hover or keyboard focus. **⌘ShiftH / Ctrl+Shift+H** reapplies the most recently chosen preset by default. That preset is shared across page navigation and reloads for the lifetime of the current browser tab/session.
-
-## Tests
+## Testing
 
 ```sh
-npx playwright install chromium firefox webkit
-npm run check
+npx playwright install chromium firefox webkit   # Linux: add --with-deps
+npm run check   # ESLint, strict TypeScript, build, Vitest, Playwright
 ```
 
-On Linux, use `npx playwright install --with-deps chromium firefox webkit`. Browser tests run fully in parallel with an isolated temporary workspace and dynamic localhost port per worker, so they never touch `data/`. Local runs use half of the available logical CPUs; CI uses two workers.
+Browser tests run in parallel on Chromium, Firefox and WebKit. Each worker gets its own temporary workspace and port, so the tests never touch `data/`.
 
 ## Documentation
 
-- [Documentation index](docs/README.md)
-- [TypeScript file and module structure rules](docs/typescript-file-structure.md)
-- [Remaining jobs and known issues](docs/remained_job.md)
-- [Architecture](docs/architecture.md)
-- [Test results](docs/test-results.md)
-- [Implementation history](docs/implementation-history-log.md)
+|                                                                                      |                                           |
+| ------------------------------------------------------------------------------------ | ----------------------------------------- |
+| [User guide](docs/user-guide.md)                                                     | Every feature in detail                   |
+| [Changelog](docs/changelog.md)                                                       | What changed in each version              |
+| [Architecture](docs/architecture.md)                                                 | Stack, boundaries, data and APIs          |
+| [Runbook](docs/running.md)                                                           | Configuration, deployment, backup         |
+| [Versioning](docs/versioning.md)                                                     | Release workflow                          |
+| [Remaining jobs](docs/remained_job.md)                                               | Known gaps and limitations                |
+| [Test results](docs/test-results.md) · [History](docs/implementation-history-log.md) | Verification and implementation records   |
+| [Documentation index](docs/README.md)                                                | Everything else, including ADRs and plans |
 
-This is an actively developed application. Consult the remaining-jobs checklist and dated test results for current limitations.
+## Status
+
+Lotion is under active development as a personal workspace. Check the [remaining jobs](docs/remained_job.md) and the latest [test results](docs/test-results.md) for current limitations.
+
+## License
+
+Copyright (C) 2026 huklee.
+
+Lotion is licensed under the [GNU Affero General Public License v3.0 only](LICENSE) (AGPL-3.0-only).
+
+- You may use, study, modify and share it.
+- If you distribute a modified version, or let others use it over a network, you must release your source code under the same license.
+- It comes with no warranty.
