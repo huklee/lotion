@@ -19,6 +19,10 @@ import {
 } from "./issues/issues-route";
 import { flashBlockWhenRendered } from "./block-flash";
 import { useGoShortcuts } from "./use-go-shortcuts";
+import { useFavorites } from "./use-favorites";
+import { useModalFocus } from "./use-modal-focus";
+import { useSaveOnLeave } from "./use-save-on-leave";
+import { saveDraftsOrThrow, without } from "./page-drafts";
 import { useIssuesShortcut } from "./issues/issue-shortcuts";
 import { useWorkspaceTransfer } from "./use-workspace-transfer";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
@@ -51,14 +55,6 @@ import { ConfluenceWikiView } from "./ConfluenceWikiView";
 const sessionId = prefs.get("session", "session") ?? crypto.randomUUID();
 prefs.set("session", sessionId, "session");
 const draftKey = (id: string) => `lotion-draft:${sessionId}:${id}`;
-/** Favorites kept by an older version in this browser; uploaded to the server once. */
-function readLocalFavorites(): string[] {
-  return prefs.json<string[]>("favorites", [], (value) =>
-    Array.isArray(value)
-      ? [...new Set(value.filter((id): id is string => typeof id === "string"))]
-      : null,
-  );
-}
 export default function App() {
   const {
     themeMode,
@@ -87,30 +83,6 @@ export default function App() {
       prefs.set("sidebar-mini", mini ? "0" : "1");
       return !mini;
     });
-  // Favorites are shared by every browser and device (stored on the server).
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const loadFavorites = useCallback(async () => {
-    const local = readLocalFavorites();
-    if (local.length) {
-      // first run after the move to the server: keep this browser's favorites
-      for (const id of local)
-        await api(`/api/favorites/${encodeURIComponent(id)}`, {
-          method: "PUT",
-        }).catch(() => undefined);
-      prefs.remove("favorites");
-    }
-    const { ids } = await api<{ ids: string[] }>("/api/favorites");
-    setFavorites(ids);
-  }, []);
-  useEffect(() => {
-    const reload = () => {
-      if (document.visibilityState === "visible")
-        void loadFavorites().catch(() => undefined);
-    };
-    reload();
-    document.addEventListener("visibilitychange", reload);
-    return () => document.removeEventListener("visibilitychange", reload);
-  }, [loadFavorites]);
   const [tree, setTree] = useState<TreeNode[]>([]),
     [treeTag, setTreeTag] = useState(""),
     [active, setActive] = useState<Document | null>(null),
@@ -209,6 +181,7 @@ export default function App() {
     if (e instanceof ApiError && e.status === 401) setAuth(true);
     else setError((e as Error).message);
   }, []);
+  const { favorites, toggleFavorite } = useFavorites(handleError);
   const refresh = useCallback(async () => {
     const response = await api<{ nodes: TreeNode[]; tag: string }>("/api/tree");
     setTree(response.nodes);
@@ -350,40 +323,14 @@ export default function App() {
     ? pageFavicon(coordinator?.content.icon ?? active.icon)
     : applicationFavicon;
   useEffect(() => setFavicon(favicon), [favicon]);
-  useEffect(() => {
-    if (!dialog && !search && !auth) return;
-    const previous = search
-      ? searchReturnFocus.current
-      : (document.activeElement as HTMLElement | null);
-    const modal = document.querySelector<HTMLElement>(".modal");
-    const focusable = () =>
-      [
-        ...(modal?.querySelectorAll<HTMLElement>(
-          "button:not([disabled]),input:not([hidden]),select,a[href]",
-        ) ?? []),
-      ].filter((e) => e.offsetParent !== null);
-    if (!modal?.contains(document.activeElement)) focusable()[0]?.focus();
-    const trap = (event: KeyboardEvent) => {
-      if (event.key !== "Tab") return;
-      const items = focusable(),
-        first = items[0],
-        last = items.at(-1);
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    };
-    document.addEventListener("keydown", trap);
-    return () => {
-      document.removeEventListener("keydown", trap);
-      requestAnimationFrame(() => {
-        if (previous?.isConnected) previous.focus();
-      });
-    };
-  }, [dialog, search, auth]);
+  useModalFocus(
+    !!dialog || search || auth,
+    `${dialog}|${search}|${auth}`,
+    () =>
+      search
+        ? searchReturnFocus.current
+        : (document.activeElement as HTMLElement | null),
+  );
   useEffect(() => {
     const navigate = () => {
       const id = pageIdFromHash(location.hash);
@@ -400,35 +347,17 @@ export default function App() {
     window.addEventListener("hashchange", navigate);
     return () => window.removeEventListener("hashchange", navigate);
   }, [openPage]);
-  useEffect(() => {
-    const flush = () => {
-      if (document.visibilityState === "hidden")
-        for (const c of coordinators.current.values()) void c.flush();
-    };
-    document.addEventListener("visibilitychange", flush);
-    const unload = (event: BeforeUnloadEvent) => {
-      if (
-        [...coordinators.current.values()].some((c) => c.status !== "Saved")
-      ) {
-        event.preventDefault();
-      }
-    };
-    window.addEventListener("beforeunload", unload);
-    return () => {
-      document.removeEventListener("visibilitychange", flush);
-      window.removeEventListener("beforeunload", unload);
-    };
-  }, []);
+  useSaveOnLeave(coordinators);
   async function create(parentId: string | null = null) {
     ++loadNumber.current;
     setActive(null);
     try {
-      const parentCoordinator = parentId
-        ? coordinators.current.get(parentId)
-        : undefined;
-      await parentCoordinator?.flush();
-      if (parentCoordinator && parentCoordinator.status !== "Saved")
-        throw new Error("Resolve the parent page draft before adding a child.");
+      if (parentId)
+        await saveDraftsOrThrow(
+          coordinators.current,
+          [parentId],
+          "Resolve the parent page draft before adding a child.",
+        );
       const doc = await api<Document>("/api/documents", {
         method: "POST",
         body: JSON.stringify({
@@ -455,15 +384,11 @@ export default function App() {
       const relevant = [id, initialNode.parentId].filter(
         (item): item is string => !!item,
       );
-      for (const pageId of relevant)
-        await coordinators.current.get(pageId)?.flush();
-      if (
-        relevant.some((pageId) => {
-          const coordinator = coordinators.current.get(pageId);
-          return coordinator !== undefined && coordinator.status !== "Saved";
-        })
-      )
-        throw new Error("Resolve pending page drafts before duplicating.");
+      await saveDraftsOrThrow(
+        coordinators.current,
+        relevant,
+        "Resolve pending page drafts before duplicating.",
+      );
       const nodes = await refresh();
       const node = nodes.find((item) => item.id === id);
       if (!node) throw new Error("Page not found");
@@ -474,11 +399,7 @@ export default function App() {
       });
       await refresh();
       if (copy.parentId)
-        setCollapsed((current) => {
-          const next = new Set(current);
-          next.delete(copy.parentId!);
-          return next;
-        });
+        setCollapsed((current) => without(current, copy.parentId!));
       newId.current = copy.id;
       await openPage(copy.id);
     } catch (error) {
@@ -510,11 +431,7 @@ export default function App() {
         }),
       });
       await refresh();
-      setCollapsed((current) => {
-        const next = new Set(current);
-        next.delete(parentId);
-        return next;
-      });
+      setCollapsed((current) => without(current, parentId));
       return doc;
     } catch (error) {
       handleError(error);
@@ -574,15 +491,11 @@ export default function App() {
       const relevant = (
         action === "move" ? [id, initialNode?.parentId, destination] : [id]
       ).filter((item): item is string => !!item);
-      for (const pageId of relevant)
-        await coordinators.current.get(pageId)?.flush();
-      if (
-        relevant.some((pageId) => {
-          const coordinator = coordinators.current.get(pageId);
-          return coordinator !== undefined && coordinator.status !== "Saved";
-        })
-      )
-        throw new Error("Resolve the unsaved draft before changing this page.");
+      await saveDraftsOrThrow(
+        coordinators.current,
+        relevant,
+        "Resolve the unsaved draft before changing this page.",
+      );
       const c = coordinators.current.get(id);
       const nodes = await refresh();
       const node = nodes.find((n) => n.id === id)!;
@@ -668,22 +581,6 @@ export default function App() {
     } catch (e) {
       handleError(e);
     }
-  }
-  function toggleFavorite(id: string) {
-    const adding = !favorites.includes(id);
-    const before = favorites;
-    // show it right away; the server's answer is the truth
-    setFavorites(
-      adding ? [...favorites, id] : favorites.filter((f) => f !== id),
-    );
-    void api<{ ids: string[] }>(`/api/favorites/${encodeURIComponent(id)}`, {
-      method: adding ? "PUT" : "DELETE",
-    })
-      .then(({ ids }) => setFavorites(ids))
-      .catch((error) => {
-        setFavorites(before);
-        handleError(error);
-      });
   }
   const status = coordinator?.status ?? "Saved";
   void version;
