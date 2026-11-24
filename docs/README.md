@@ -22,6 +22,7 @@ All project plans, design records, implementation notes, test plans, and test re
 
 ## Reading order
 
+- [User guide](user-guide.md): every feature in detail.
 - [Version history](changelog.md): features, fixes and compatibility for each version.
 - [Version management guide](versioning.md): version increments, release documentation and verification.
 - [In-document search plan](document-search-plan.md): three approaches and a recommendation.
